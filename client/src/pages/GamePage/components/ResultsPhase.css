@@ -1,0 +1,127 @@
+/* ResultsPhase Component Styles */
+
+.results-phase {
+    animation: fadeIn 0.3s ease;
+    width: 100%;
+  }
+  
+  .results-content {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  
+  /* Ready button styles */
+  .ready-button {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 16px auto;
+    padding: 14px 24px;
+    background-color: var(--color-accent);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    box-shadow: var(--shadow-button);
+    transition: all 0.2s ease;
+    overflow: hidden;
+  }
+  
+  .ready-button:hover:not([disabled]) {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+  }
+  
+  .ready-button:active:not([disabled]) {
+    transform: translateY(-1px);
+    box-shadow: 0 3px 6px rgba(0,0,0,0.1);
+  }
+  
+  .ready-button.clicked {
+    background-color: #cccccc;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+    opacity: 0.8;
+  }
+  
+  .ready-spinner {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    margin-left: 10px;
+    border: 3px solid rgba(255,255,255,0.3);
+    border-radius: 50%;
+    border-top-color: white;
+    animation: spin 1s linear infinite;
+  }
+  
+  .ready-text {
+    opacity: 0.8;
+  }
+  
+  /* Ready players indicator */
+  .ready-info {
+    background-color: rgba(44, 185, 120, 0.05);
+    border: 1px solid rgba(44, 185, 120, 0.2);
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin-top: 10px;
+    text-align: center;
+  }
+  
+  .player-ready-indicators {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 12px;
+  }
+  
+  .player-ready-badge {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background-color: var(--color-accent);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 14px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    animation: badgeFadeIn 0.3s ease;
+  }
+  
+  @keyframes badgeFadeIn {
+    from { 
+      transform: scale(0.5);
+      opacity: 0; 
+    }
+    to { 
+      transform: scale(1);
+      opacity: 1; 
+    }
+  }
+  
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+  
+  /* Responsive adjustments */
+  @media (max-width: 768px) {
+    .ready-button {
+      padding: 12px 20px;
+      font-size: 14px;
+    }
+    
+    .player-ready-badge {
+      width: 28px;
+      height: 28px;
+      font-size: 12px;
+    }
+  }

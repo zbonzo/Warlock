@@ -1,0 +1,171 @@
+/* ActionPhase Component Styles */
+
+.action-phase {
+    animation: fadeIn 0.3s ease;
+    width: 100%;
+  }
+  
+  .action-selection {
+    margin-bottom: 20px;
+  }
+  
+  .ability-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+  
+  /* Submit message styling */
+  .submit-message {
+    text-align: center;
+    padding: 20px;
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: var(--shadow-card);
+    border: 1px solid #ddd;
+  }
+  
+  .waiting-spinner {
+    margin: 20px auto;
+    width: 40px;
+    height: 40px;
+    border: 4px solid rgba(74, 44, 130, 0.1);
+    border-radius: 50%;
+    border-top-color: var(--color-primary);
+    animation: spin 1s linear infinite;
+  }
+  
+  /* Dead player message */
+  .dead-player {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 400px;
+  }
+  
+  .dead-message {
+    text-align: center;
+    padding: 30px;
+    max-width: 400px;
+    margin: 0 auto;
+    background-color: #f9f9f9;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  }
+  
+  .section-title.danger {
+    color: var(--color-danger);
+  }
+  
+  .skull-icon {
+    font-size: 48px;
+    margin: 20px 0;
+    opacity: 0.7;
+  }
+  
+  /* Submit action button */
+  .action-button {
+    margin-top: 20px;
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .action-button:after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+      90deg, 
+      transparent, 
+      rgba(255, 255, 255, 0.2), 
+      transparent
+    );
+    transition: all 0.5s;
+  }
+  
+  .action-button:hover:after {
+    left: 100%;
+  }
+  
+  .action-button:disabled {
+    background-color: #cccccc;
+    cursor: not-allowed;
+  }
+  
+  /* Racial enhancement styling */
+  .racial-enhancement {
+    margin: 16px 0;
+    padding: 12px;
+    border-radius: 8px;
+    border: 1px dashed #ddd;
+    background-color: rgba(255, 255, 255, 0.7);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  
+  .racial-enhancement.blood-rage {
+    border-color: #8B0000;
+    background-color: rgba(139, 0, 0, 0.05);
+  }
+  
+  .racial-enhancement.keen-senses {
+    border-color: #228B22;
+    background-color: rgba(34, 139, 34, 0.05);
+  }
+  
+  .enhancement-badge {
+    display: flex;
+    align-items: center;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: bold;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    animation: pulse 2s infinite;
+  }
+  
+  .blood-rage-badge {
+    background-color: rgba(139, 0, 0, 0.1);
+    color: #8B0000;
+    border: 1px solid #8B0000;
+  }
+  
+  .keen-senses-badge {
+    background-color: rgba(34, 139, 34, 0.1);
+    color: #228B22;
+    border: 1px solid #228B22;
+  }
+  
+  .enhancement-icon {
+    margin-right: 6px;
+    font-size: 16px;
+  }
+  
+  /* Animation keyframes */
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+  
+  @keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+  }
+  
+  /* Responsive adjustments */
+  @media (max-width: 768px) {
+    .dead-message {
+      padding: 20px;
+    }
+    
+    .enhancement-badge {
+      padding: 4px 10px;
+      font-size: 12px;
+    }
+  }

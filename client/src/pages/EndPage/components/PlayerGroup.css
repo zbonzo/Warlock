@@ -1,0 +1,77 @@
+/* PlayerGroup Component Styles */
+
+.player-group {
+    padding: 16px;
+    border-radius: 8px;
+    animation: fadeIn 0.5s ease;
+  }
+  
+  .group-title {
+    font-family: var(--font-heading);
+    margin-bottom: 12px;
+  }
+  
+  .player-badges {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+  }
+  
+  .player-badge {
+    padding: 8px 16px;
+    background-color: white;
+    border-radius: 6px;
+    border-width: 1px;
+    border-style: solid;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s ease;
+  }
+  
+  .player-badge:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  }
+  
+  .player-badge.dead {
+    background-color: #f0f0f0;
+    opacity: 0.8;
+  }
+  
+  .player-name {
+    font-weight: bold;
+  }
+  
+  .player-separator {
+    opacity: 0.5;
+  }
+  
+  .player-character {
+    opacity: 0.8;
+  }
+  
+  .death-indicator {
+    color: var(--color-danger);
+  }
+  
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  
+  /* Responsive adjustments */
+  @media (max-width: 480px) {
+    .player-badges {
+      gap: 6px;
+    }
+    
+    .player-badge {
+      padding: 6px 10px;
+      font-size: 12px;
+      flex-basis: calc(50% - 6px);
+      justify-content: center;
+    }
+  }

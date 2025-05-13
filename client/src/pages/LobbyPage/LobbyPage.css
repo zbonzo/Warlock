@@ -1,0 +1,439 @@
+/* LobbyPage Component Styles */
+
+.lobby-container {
+    min-height: 100vh;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: linear-gradient(135deg, var(--color-primary)30, var(--color-secondary)20);
+    font-family: var(--font-body);
+  }
+  
+  .lobby-card {
+    max-width: 800px;
+    width: 100%;
+    background-color: white;
+    border-radius: 12px;
+    padding: 30px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    text-align: center;
+    animation: fade-in 0.5s ease;
+  }
+  
+  .lobby-title {
+    color: var(--color-primary);
+    font-family: var(--font-heading);
+    margin-bottom: 8px;
+  }
+  
+  /* Game code section */
+  .game-code-display {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    margin: 20px 0;
+    background-color: var(--color-primary)10;
+    padding: 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+  }
+  
+  .game-code-display:hover {
+    background-color: var(--color-primary)15;
+  }
+  
+  .game-code {
+    font-weight: bold;
+    font-size: 20px;
+  }
+  
+  .copy-button {
+    background: none;
+    border: none;
+    color: var(--color-primary);
+    cursor: pointer;
+    padding: 5px 10px;
+    border-radius: 4px;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    transition: all 0.2s ease;
+  }
+  
+  .copy-button:hover {
+    background-color: var(--color-primary)10;
+  }
+  
+  .copy-icon {
+    display: inline-block;
+  }
+  
+  .hidden-input {
+    position: absolute;
+    left: -9999px;
+  }
+  
+  /* Player count row */
+  .player-count-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: 20px 0;
+  }
+  
+  .player-count {
+    font-size: 18px;
+    font-weight: bold;
+    color: var(--color-dark);
+  }
+  
+  .details-toggle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  
+  .toggle-label {
+    color: #666;
+  }
+  
+  .toggle-switch {
+    width: 40px;
+    height: 20px;
+    background-color: #ccc;
+    border-radius: 10px;
+    position: relative;
+    cursor: pointer;
+    transition: background-color 0.3s;
+  }
+  
+  .toggle-switch.active {
+    background-color: var(--color-primary);
+  }
+  
+  .toggle-slider {
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background-color: white;
+    top: 2px;
+    left: 2px;
+    transition: left 0.3s;
+  }
+  
+  .toggle-switch.active .toggle-slider {
+    left: 22px;
+  }
+  
+  /* Player list styling */
+  .player-list-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 20px;
+    background-color: #f5f5f5;
+    border-radius: 6px;
+    margin-bottom: 10px;
+    font-weight: bold;
+  }
+  
+  .player-name-col {
+    flex: 2;
+    text-align: left;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  
+  .player-race-col,
+  .player-class-col {
+    flex: 1;
+    text-align: center;
+  }
+  
+  .player-status-col {
+    flex: 1;
+    text-align: center;
+  }
+  
+  .player-list {
+    max-height: 300px;
+    overflow-y: auto;
+    margin-bottom: 20px;
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-primary) #f0f0f0;
+  }
+  
+  .player-list::-webkit-scrollbar {
+    width: 8px;
+  }
+  
+  .player-list::-webkit-scrollbar-track {
+    background: #f0f0f0;
+    border-radius: 4px;
+  }
+  
+  .player-list::-webkit-scrollbar-thumb {
+    background-color: var(--color-primary);
+    border-radius: 4px;
+  }
+  
+  .player-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 20px;
+    border-radius: 6px;
+    margin-bottom: 8px;
+    transition: transform 0.2s;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  }
+  
+  .player-row:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+  }
+  
+  .player-row.even {
+    background-color: white;
+  }
+  
+  .player-row.odd {
+    background-color: #f9f9f9;
+  }
+  
+  .host-badge {
+    background-color: var(--color-secondary);
+    color: white;
+    border-radius: 4px;
+    padding: 2px 6px;
+    font-size: 12px;
+    font-weight: bold;
+  }
+  
+  .current-player-indicator {
+    font-size: 12px;
+    color: #888;
+    margin-left: 5px;
+  }
+  
+  .not-selected {
+    color: var(--color-danger);
+    font-size: 14px;
+  }
+  
+  /* Status badges */
+  .status-badge {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-size: 14px;
+    font-weight: bold;
+  }
+  
+  .status-badge.ready {
+    background-color: var(--color-accent)20;
+    color: var(--color-accent);
+  }
+  
+  .status-badge.selecting {
+    background-color: var(--color-danger)20;
+    color: var(--color-danger);
+  }
+  
+  /* Readiness indicator */
+  .readiness-indicator {
+    background-color: var(--color-primary)10;
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  
+  .readiness-info {
+    flex: 1;
+  }
+  
+  .readiness-label {
+    font-weight: bold;
+    margin-bottom: 5px;
+  }
+  
+  .readiness-count {
+    font-size: 14px;
+    color: #666;
+  }
+  
+  .readiness-bar-container {
+    width: 100px;
+    height: 10px;
+    background-color: #e0e0e0;
+    border-radius: 5px;
+    overflow: hidden;
+  }
+  
+  .readiness-bar {
+    height: 100%;
+    background-color: var(--color-secondary);
+    transition: width 0.5s ease;
+  }
+  
+  .readiness-bar.all-ready {
+    background-color: var(--color-accent);
+  }
+  
+  /* Start button */
+  .start-button {
+    padding: 14px 40px;
+    background-color: var(--color-secondary);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 18px;
+    font-weight: bold;
+    cursor: pointer;
+    box-shadow: var(--shadow-button);
+    transition: all 0.2s ease;
+    font-family: var(--font-body);
+  }
+  
+  .start-button:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+  }
+  
+  .start-button:active:not(:disabled) {
+    transform: translateY(1px);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  }
+  
+  .start-button.disabled {
+    background-color: #cccccc;
+    cursor: not-allowed;
+    box-shadow: none;
+  }
+  
+  .waiting-host-message {
+    padding: 14px;
+    background-color: var(--color-primary)20;
+    color: var(--color-primary);
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: bold;
+  }
+  
+  .player-help-message {
+    margin-top: 16px;
+    color: var(--color-dark);
+    font-size: 14px;
+  }
+  
+  /* Instructions section */
+  .instructions-card {
+    margin-top: 20px;
+    border-radius: 8px;
+    padding: 15px;
+    background-color: rgba(255,255,255,0.7);
+    max-width: 800px;
+    width: 100%;
+    animation: slide-up 0.5s ease;
+  }
+  
+  .instructions-title {
+    color: var(--color-primary);
+    font-family: var(--font-heading);
+    margin-bottom: 10px;
+    font-size: 18px;
+  }
+  
+  .instructions-list {
+    padding-left: 20px;
+    color: var(--color-dark);
+    font-size: 14px;
+    line-height: 1.6;
+  }
+  
+  .instructions-list li {
+    margin-bottom: 5px;
+  }
+  
+  /* Animations */
+  @keyframes fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  
+  @keyframes slide-up {
+    from { 
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to { 
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  /* Responsive adjustments */
+  @media (max-width: 768px) {
+    .lobby-card {
+      padding: 20px 15px;
+    }
+    
+    .lobby-title {
+      font-size: 1.8rem;
+    }
+    
+    .game-code {
+      font-size: 18px;
+    }
+    
+    .player-list-header,
+    .player-row {
+      padding: 10px 12px;
+    }
+    
+    .readiness-indicator {
+      flex-direction: column;
+      gap: 10px;
+    }
+    
+    .readiness-bar-container {
+      width: 100%;
+    }
+    
+    .start-button,
+    .waiting-host-message {
+      padding: 12px;
+      font-size: 16px;
+    }
+  }
+  
+  @media (max-width: 480px) {
+    .player-count-row {
+      flex-direction: column;
+      gap: 10px;
+    }
+    
+    .host-badge {
+      padding: 1px 4px;
+      font-size: 10px;
+    }
+    
+    .status-badge {
+      padding: 3px 6px;
+      font-size: 12px;
+    }
+    
+    .instructions-list {
+      padding-left: 15px;
+      font-size: 13px;
+    }
+  }
