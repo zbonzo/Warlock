@@ -1,0 +1,101 @@
+/* AbilityCard Component Styles */
+
+.ability-card {
+    border-width: 2px;
+    border-style: solid;
+    border-radius: 8px;
+    padding: 10px;
+    margin: 8px 0;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-family: var(--font-body);
+    background-color: white;
+  }
+  
+  .ability-card.racial-ability.unavailable {
+    background-color: #f5f5f5;
+    opacity: 0.7;
+    cursor: not-allowed;
+  }
+  
+  .ability-card.selected {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-card);
+  }
+  
+  .ability-header {
+    color: white;
+    padding: 6px 10px;
+    border-radius: 4px;
+    margin-bottom: 8px;
+    font-family: var(--font-heading);
+    font-weight: bold;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  .ability-title {
+    flex: 1;
+  }
+  
+  .ability-subtitle {
+    font-size: 0.85em;
+    opacity: 0.9;
+  }
+  
+  .ability-icon {
+    margin-left: 8px;
+  }
+  
+  .ability-description {
+    margin-top: 8px;
+    font-size: 14px;
+    background-color: rgba(0, 0, 0, 0.03);
+    padding: 6px;
+    border-radius: 4px;
+    color: #555;
+    min-height: 40px;
+  }
+  
+  .racial-status {
+    margin-top: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 14px;
+  }
+  
+  .status-indicator {
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-weight: bold;
+  }
+  
+  .status-indicator.available {
+    background-color: rgba(44, 185, 120, 0.2);
+    color: var(--color-accent);
+  }
+  
+  .status-indicator.unavailable {
+    background-color: rgba(232, 72, 85, 0.2);
+    color: var(--color-danger);
+  }
+  
+  /* Animation effects */
+  .ability-card:hover:not(.unavailable) {
+    transform: translateY(-3px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+  }
+  
+  .ability-card:active:not(.unavailable) {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    transition: all 0.1s ease;
+  }
+  
+  /* Focus state for accessibility */
+  .ability-card:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(74, 44, 130, 0.5);
+  }

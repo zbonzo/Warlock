@@ -1,0 +1,54 @@
+/* ModalStep Component Styles */
+
+.modal-step {
+    animation: fadeIn 0.3s ease;
+  }
+  
+  .step-title {
+    margin-bottom: 20px;
+    font-size: 16px;
+    line-height: 1.5;
+  }
+  
+  .step-content {
+    margin-bottom: 20px;
+  }
+  
+  .back-button {
+    margin-top: 20px;
+    padding: 8px 16px;
+    background-color: var(--color-neutral);
+    color: var(--color-dark);
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-family: var(--font-body);
+  }
+  
+  .back-button:hover {
+    background-color: var(--color-neutral)90;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  }
+  
+  .back-button:active {
+    transform: translateY(1px);
+  }
+  
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  
+  /* Responsive adjustments */
+  @media (max-width: 480px) {
+    .step-title {
+      font-size: 14px;
+      margin-bottom: 15px;
+    }
+    
+    .back-button {
+      padding: 6px 12px;
+      font-size: 14px;
+    }
+  }

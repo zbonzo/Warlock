@@ -1,0 +1,22 @@
+/* ClassList Component Styles */
+
+.class-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 15px;
+    margin-bottom: 20px;
+  }
+  
+  /* Responsive styles */
+  @media (max-width: 768px) {
+    .class-list {
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }
+  
+  @media (max-width: 480px) {
+    .class-list {
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+    }
+  }

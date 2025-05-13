@@ -1,0 +1,107 @@
+/* Tooltip Component Styles */
+
+.tooltip-container {
+    position: relative;
+    display: inline-block;
+  }
+  
+  .tooltip {
+    position: absolute;
+    background-color: var(--color-dark);
+    color: white;
+    padding: 8px 12px;
+    border-radius: 4px;
+    font-size: 14px;
+    font-family: var(--font-body);
+    white-space: nowrap;
+    z-index: 100;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    max-width: 200px;
+    animation: tooltipFadeIn 0.2s ease;
+  }
+  
+  /* Tooltip positions */
+  .tooltip-top {
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    margin-bottom: 8px;
+  }
+  
+  .tooltip-right {
+    left: 100%;
+    top: 50%;
+    transform: translateY(-50%);
+    margin-left: 8px;
+  }
+  
+  .tooltip-bottom {
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    margin-top: 8px;
+  }
+  
+  .tooltip-left {
+    right: 100%;
+    top: 50%;
+    transform: translateY(-50%);
+    margin-right: 8px;
+  }
+  
+  /* Tooltip arrows */
+  .tooltip::after {
+    content: '';
+    position: absolute;
+    border-width: 5px;
+    border-style: solid;
+  }
+  
+  .tooltip-top::after {
+    border-color: var(--color-dark) transparent transparent transparent;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+  
+  .tooltip-right::after {
+    border-color: transparent var(--color-dark) transparent transparent;
+    top: 50%;
+    right: 100%;
+    transform: translateY(-50%);
+  }
+  
+  .tooltip-bottom::after {
+    border-color: transparent transparent var(--color-dark) transparent;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+  
+  .tooltip-left::after {
+    border-color: transparent transparent transparent var(--color-dark);
+    top: 50%;
+    left: 100%;
+    transform: translateY(-50%);
+  }
+  
+  @keyframes tooltipFadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  
+  /* Handle text overflow */
+  .tooltip {
+    white-space: normal;
+    word-wrap: break-word;
+    text-align: center;
+  }
+  
+  /* Responsive styles */
+  @media (max-width: 480px) {
+    .tooltip {
+      font-size: 12px;
+      padding: 6px 10px;
+      max-width: 150px;
+    }
+  }

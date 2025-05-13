@@ -1,0 +1,181 @@
+/* PlayerCard Component Styles */
+
+.player-card {
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 12px;
+    margin: 8px 0;
+    background-color: white;
+    position: relative;
+    font-family: var(--font-body);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+  
+  .player-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+  
+  .player-card.current-player {
+    border: 2px solid var(--color-secondary);
+    box-shadow: var(--shadow-card);
+  }
+  
+  .player-card.dead {
+    background-color: #f0f0f0;
+    opacity: 0.7;
+  }
+  
+  .player-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+  
+  .player-name {
+    margin: 0;
+    color: var(--color-dark);
+    font-family: var(--font-heading);
+    font-size: 1.1rem;
+  }
+  
+  .warlock-indicator {
+    background-color: var(--color-warlock);
+    color: white;
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    cursor: help;
+  }
+  
+  .player-class {
+    color: #666;
+    font-size: 14px;
+    margin-bottom: 8px;
+  }
+  
+  .health-container {
+    margin-bottom: 8px;
+  }
+  
+  .health-text {
+    font-size: 14px;
+    margin-bottom: 2px;
+  }
+  
+  .health-bar {
+    height: 8px;
+    background-color: #e0e0e0;
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  
+  .health-fill {
+    height: 100%;
+    transition: width 0.5s ease, background-color 0.5s ease;
+  }
+  
+  .health-high {
+    background-color: var(--color-accent);
+  }
+  
+  .health-medium {
+    background-color: var(--color-secondary);
+  }
+  
+  .health-low {
+    background-color: var(--color-danger);
+  }
+  
+  .armor-indicator {
+    font-size: 14px;
+    color: var(--color-primary);
+    display: flex;
+    align-items: center;
+    margin-bottom: 4px;
+  }
+  
+  .armor-icon {
+    margin-right: 4px;
+  }
+  
+  .status-effects-container {
+    margin-top: 8px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  
+  .status-effect {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    border-width: 1px;
+    border-style: solid;
+    cursor: help;
+  }
+  
+  .status-poison {
+    background-color: rgba(232, 72, 85, 0.1);
+    border-color: var(--color-danger);
+    color: var(--color-danger);
+  }
+  
+  .status-protected {
+    background-color: rgba(74, 44, 130, 0.1);
+    border-color: var(--color-primary);
+    color: var(--color-primary);
+  }
+  
+  .status-invisible {
+    background-color: rgba(255, 123, 37, 0.1);
+    border-color: var(--color-secondary);
+    color: var(--color-secondary);
+  }
+  
+  .status-stunned {
+    background-color: rgba(147, 112, 219, 0.1);
+    border-color: #9370DB;
+    color: #9370DB;
+  }
+  
+  .dead-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: rgba(255, 255, 255, 0.7);
+    border-radius: 8px;
+    font-size: 24px;
+    font-weight: bold;
+    color: var(--color-danger);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  }
+  
+  /* Animation for new status effects */
+  @keyframes statusPulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+  }
+  
+  .status-effect:not(.fading) {
+    animation: statusPulse 0.5s ease;
+  }
+  
+  /* Animation for fading status effects */
+  .status-effect.fading {
+    opacity: 0.6;
+  }

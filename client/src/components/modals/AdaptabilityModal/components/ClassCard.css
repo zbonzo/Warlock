@@ -1,0 +1,53 @@
+/* ClassCard Component Styles */
+
+.class-card {
+    padding: 15px;
+    border: 1px solid var(--color-neutral);
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    background-color: white;
+    box-shadow: var(--shadow-button);
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .class-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+    border-color: var(--color-primary);
+  }
+  
+  .class-card:active {
+    transform: translateY(1px);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  }
+  
+  .class-icon {
+    font-size: 24px;
+    margin-bottom: 8px;
+  }
+  
+  .class-name {
+    font-weight: bold;
+    font-size: 16px;
+  }
+  
+  /* Responsive adjustments */
+  @media (max-width: 480px) {
+    .class-card {
+      padding: 10px;
+    }
+    
+    .class-icon {
+      font-size: 20px;
+      margin-bottom: 5px;
+    }
+    
+    .class-name {
+      font-size: 14px;
+    }
+  }

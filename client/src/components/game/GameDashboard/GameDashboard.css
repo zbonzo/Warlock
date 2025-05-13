@@ -1,0 +1,87 @@
+/* GameDashboard Component Styles */
+
+.dashboard-container {
+    display: flex;
+    justify-content: space-between;
+    padding: 16px;
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: var(--shadow-card);
+    margin: 16px 0;
+    font-family: var(--font-body);
+  }
+  
+  .dashboard-section {
+    text-align: center;
+    flex: 1;
+  }
+  
+  .dashboard-heading {
+    margin: 0 0 8px 0;
+    color: var(--color-primary);
+    font-family: var(--font-heading);
+    font-size: 1.2rem;
+  }
+  
+  .players-count {
+    font-weight: bold;
+    font-size: 18px;
+    color: var(--color-secondary);
+  }
+  
+  .health-bar-container {
+    position: relative;
+    height: 24px;
+    width: 100%;
+    background-color: #e0e0e0;
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  
+  .health-bar-fill {
+    height: 100%;
+    background-color: var(--color-monster);
+    transition: width 0.5s ease, background-color 0.5s ease;
+  }
+  
+  .health-bar-fill.low-health {
+    background-color: var(--color-danger);
+  }
+  
+  .health-bar-text {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: bold;
+    text-shadow: 0 0 2px rgba(0,0,0,0.5);
+    font-size: 0.9rem;
+  }
+  
+  .damage-indicator {
+    margin-top: 4px;
+    font-size: 14px;
+    color: var(--color-danger);
+  }
+  
+  /* Responsive styles */
+  @media (max-width: 600px) {
+    .dashboard-container {
+      flex-direction: column;
+      gap: 16px;
+    }
+    
+    .dashboard-section {
+      margin-bottom: 12px;
+    }
+    
+    .health-bar-container {
+      max-width: 280px;
+      margin: 0 auto;
+    }
+  }
