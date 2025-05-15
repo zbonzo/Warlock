@@ -1,56 +1,37 @@
-/**
- * @fileoverview Controller for player-related operations
- * Handles player joining, character selection, and disconnection
- */
+// controllers/playerController.js
 const gameService = require('../services/gameService');
 const { validatePlayerName } = require('../middleware/validation');
 const { validateGameAction } = require('../shared/gameChecks');
 const logger = require('../utils/logger');
 const { throwGameStateError, throwValidationError } = require('../utils/errorHandler');
 
-/**
- * Handle player joining a game
- * @param {Object} io - Socket.io instance
- * @param {Object} socket - Client socket
- * @param {string} gameCode - Game code to join
- * @param {string} playerName - Player's display name
- * @returns {boolean} Success status
- */
+// Handle player joining a game
 function handlePlayerJoin(io, socket, gameCode, playerName) {
-  const game = validateGameAction(socket, gameCode, false, false, false);
-  
-  // Validate player name
-  if (!validatePlayerName(socket, playerName)) return false;
-  
-  // Validate game capacity and player eligibility
-  if (!gameService.canPlayerJoinGame(game, socket.id)) return false;
-  
-  // Add player and update game state
-  const sanitizedName = playerName || 'Player';
-  const success = game.addPlayer(socket.id, sanitizedName);
-  if (!success) {
-    throwGameStateError('Could not join game.');
-    return false;
+    const game = validateGameAction(socket, gameCode, false, false, false);
+    
+    // Validate player name
+    if (!validatePlayerName(socket, playerName)) return false;
+    
+    // Validate game capacity and player eligibility
+    if (!gameService.canPlayerJoinGame(game, socket.id)) return false;
+    
+    // Add player and update game state
+    const sanitizedName = playerName || 'Player';
+    const success = game.addPlayer(socket.id, sanitizedName);
+    if (!success) {
+      throwGameStateError('Could not join game.');
+      return false;
+    }
+    
+    // Join socket to game room and update clients
+    socket.join(gameCode);
+    logger.info(`Player ${sanitizedName} joined game ${gameCode}`);
+    gameService.refreshGameTimeout(io, gameCode);
+    gameService.broadcastPlayerList(io, gameCode);
+    
+    return true;
   }
-  
-  // Join socket to game room and update clients
-  socket.join(gameCode);
-  logger.info(`Player ${sanitizedName} joined game ${gameCode}`);
-  gameService.refreshGameTimeout(io, gameCode);
-  gameService.broadcastPlayerList(io, gameCode);
-  
-  return true;
-}
-
-/**
- * Handle player character selection
- * @param {Object} io - Socket.io instance
- * @param {Object} socket - Client socket
- * @param {string} gameCode - Game code
- * @param {string} race - Selected race
- * @param {string} className - Selected class
- * @returns {boolean} Success status
- */
+// Handle player character selection
 function handleSelectCharacter(io, socket, gameCode, race, className) {
   // Use consolidated validation
   const game = validateGameAction(socket, gameCode, false, false);
@@ -71,14 +52,7 @@ function handleSelectCharacter(io, socket, gameCode, race, className) {
   return true;
 }
 
-/**
- * Helper function for character selection validation
- * @param {string} race - Race to validate
- * @param {string} className - Class to validate
- * @param {Object} socket - Client socket
- * @returns {boolean} Whether the combination is valid
- * @private
- */
+// Helper function for character selection validation
 function validateCharacterRaceClass(race, className, socket) {
   const validRaces = ['Human', 'Dwarf', 'Elf', 'Orc', 'Satyr', 'Skeleton'];
   const validClasses = [
@@ -117,11 +91,7 @@ function validateCharacterRaceClass(race, className, socket) {
   return true;
 }
 
-/**
- * Handle player disconnect
- * @param {Object} io - Socket.io instance
- * @param {Object} socket - Client socket
- */
+// Handle player disconnect
 function handlePlayerDisconnect(io, socket) {
   logger.info(`Player disconnected: ${socket.id}`);
   
@@ -148,7 +118,7 @@ function handlePlayerDisconnect(io, socket) {
       
       // Reassign host if needed
       if (wasHost && game.players.size > 0) {
-        const newHostId = Array.from(game.players.keys())[0];
+        const newHostId = Array.from(game.players.keys())[0]; // Fixed this line
         game.hostId = newHostId;
         logger.info(`New host assigned in game ${gameCode}: ${newHostId}`);
       }
