@@ -1,86 +1,82 @@
-/**
- * @fileoverview Main application component that handles routing and state management
- * Entry point for the Warlock game application
- */
-import React, { useEffect, useMemo, useCallback } from 'react';
-import { ThemeProvider } from './contexts/ThemeContext';
-import { AppProvider, useAppContext } from './contexts/AppContext';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import useSocket from './hooks/useSocket';
 
-// Game components
-import JoinGamePage from './pages/JoinGamePage';
-import CharacterSelectPage from './pages/CharacterSelectPage';
-import LobbyPage from './pages/LobbyPage';
-import GamePage from './pages/GamePage';
-import EndPage from './pages/EndPage';
+import { ThemeProvider } from './contexts/ThemeContext';
+import './styles.css';
 
-// Constants
-import { SOCKET_URL, GAME_PHASES } from './config/constants';
+import JoinGamePage from './components/JoinGamePage';
+import CharacterSelectPage from './components/CharacterSelectPage';
+import LobbyPage from './components/LobbyPage';
+import GamePage from './components/GamePage/GamePage';
+import EndScreen from './components/EndScreen';
 
-// Styles
-import './styles/App.css';
+// Determine the WebSocket URL
+let determinedSocketUrl;
 
-/**
- * Main App component 
- * Wraps the application with context providers
- * 
- * @returns {React.ReactElement} The application
- */
-function App() {
-  return (
-    <AppProvider>
-      <ThemeProvider>
-        <AppContent />
-      </ThemeProvider>
-    </AppProvider>
-  );
+if (process.env.NODE_ENV === 'production') {
+  // For production build (inside Docker, served by Nginx)
+  // Connect to the same host and port as the web page, using ws:// or wss://
+  // Nginx will proxy requests to /socket.io/ (or whatever path your WebSocket server uses)
+  const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+  determinedSocketUrl = `${wsProtocol}//${window.location.host}/socket.io/`;
+} else if (process.env.REACT_APP_SOCKET_URL) {
+  // Allow overriding via .env for development (e.g., REACT_APP_SOCKET_URL=ws://localhost:3001/socket.io/)
+  determinedSocketUrl = process.env.REACT_APP_SOCKET_URL;
+} else {
+  // Fallback for development if no env variable is set (ensure ws:// or wss://)
+  determinedSocketUrl = 'http://zacomen:3001/'; // Assuming Socket.IO and default path
 }
+const SOCKET_URL = determinedSocketUrl;
 
-/**
- * AppContent component handles routing and socket connections
- * Uses AppContext for state management
- * 
- * @returns {React.ReactElement} The application content
- */
-function AppContent() {
-  // Get state and actions from context
-  const {
-    screen, gameCode, playerName, players, eventsLog, winner, monster,
-    selectedRace, selectedClass, 
-    setScreen, setGameCode, setPlayerName, setIsHost, setPlayers,
-    addEventLog, setMonster, setWinner, setSelectedRace, setSelectedClass,
-    resetGame, setEventsLog
-  } = useAppContext();
-  
-  // Connect to socket server
+
+function App() {
+  const [screen, setScreen] = useState('join');
+  const [gameCode, setGameCode] = useState('');
+  const [playerName, setPlayerName] = useState('');
+  const [isHost, setIsHost] = useState(false);
+  const [myId, setMyId] = useState(null);
+  const [players, setPlayers] = useState([]);
+  const [eventsLog, setEventsLog] = useState([]);
+  const [winner, setWinner] = useState(null);
+  const [monster, setMonster] = useState({ hp: 100, maxHp: 100, nextDamage: 10 });
+
+  // Character selection state
+  const [selectedRace, setSelectedRace] = useState(null);
+  const [selectedClass, setSelectedClass] = useState(null);
+
+  // Use our custom socket hook
   const { socket, connected, socketId, emit, on } = useSocket(SOCKET_URL);
+
+
   
-  // Initialize socket event listeners
+  // Set myId when socket connects
+  useEffect(() => {
+    if (socketId) {
+      setMyId(socketId);
+    }
+  }, [socketId]);
+
+  // Set up socket event listeners
   useEffect(() => {
     if (!connected) return;
-    
-    // Game creation event
+
+    // Set up event listeners using our custom hook
     const unsubscribeGameCreated = on('gameCreated', ({ gameCode }) => {
       setGameCode(gameCode);
-      setIsHost(true);
-      setScreen(GAME_PHASES.CHARACTER_SELECT);
+      setScreen('charSelect');
     });
-    
-    // Player list updates
+
     const unsubscribePlayerList = on('playerList', ({ players }) => {
       setPlayers(players);
     });
-    
-    // Game started event
+
     const unsubscribeGameStarted = on('gameStarted', payload => {
       const { players: newPlayers, monster: mPayload } = payload;
       setPlayers(newPlayers);
-      
-      // Reset event log for new game
       setEventsLog([]);
       setWinner(null);
-      
-      // Update monster state if provided
+
+      // Use the server's monster if provided, otherwise keep our default
       if (mPayload) {
         setMonster({
           hp: mPayload.hp,
@@ -88,11 +84,10 @@ function AppContent() {
           nextDamage: mPayload.nextDamage
         });
       }
-      
-      setScreen(GAME_PHASES.GAME);
+
+      setScreen('game');
     });
-    
-    // Round results event
+
     const unsubscribeRoundResult = on('roundResult', payload => {
       const {
         players: newPlayers,
@@ -100,14 +95,10 @@ function AppContent() {
         monster: mPayload,
         winner: roundWinner
       } = payload;
-      
-      // Update players
+
       setPlayers(newPlayers);
-      
-      // Add new events to log
-      addEventLog({ turn: payload.turn, events: newEvents });
-      
-      // Update monster if provided
+      setEventsLog(prev => [...prev, { turn: payload.turn, events: newEvents }]);
+
       if (mPayload) {
         setMonster({
           hp: mPayload.hp,
@@ -115,20 +106,18 @@ function AppContent() {
           nextDamage: mPayload.nextDamage
         });
       }
-      
-      // Check for winner
+
       if (roundWinner) {
         setWinner(roundWinner);
-        setScreen(GAME_PHASES.END);
+        setScreen('end');
       }
     });
-    
-    // Error messages
+
     const unsubscribeErrorMessage = on('errorMessage', ({ message }) => {
       alert(message);
     });
-    
-    // Return cleanup function to remove listeners
+
+    // Return cleanup function
     return () => {
       unsubscribeGameCreated();
       unsubscribePlayerList();
@@ -136,26 +125,26 @@ function AppContent() {
       unsubscribeRoundResult();
       unsubscribeErrorMessage();
     };
-  }, [connected, on, setGameCode, setIsHost, setPlayers, addEventLog, setMonster, setWinner, setScreen, setEventsLog]);
-  
-  // Current player data (derived from players list)
+  }, [connected, on]);
+
+  // Memoize the current player data
   const currentPlayer = useMemo(() => {
-    return players.find(p => p.id === socketId) || null;
-  }, [players, socketId]);
-  
-  // Handler functions using useCallback
+    return players.find(p => p.id === myId) || null;
+  }, [players, myId]);
+
+  // Handlers using useCallback for better performance
   const handleCreateGame = useCallback(name => {
     setPlayerName(name);
     emit('createGame', { playerName: name });
-  }, [emit, setPlayerName]);
-  
+  }, [emit]);
+
   const handleJoinGame = useCallback((code, name) => {
     setPlayerName(name);
     setGameCode(code);
     emit('joinGame', { gameCode: code, playerName: name });
-    setScreen(GAME_PHASES.CHARACTER_SELECT);
-  }, [emit, setPlayerName, setGameCode, setScreen]);
-  
+    setScreen('charSelect');
+  }, [emit]);
+
   const handleConfirm = useCallback((race, cls) => {
     setSelectedRace(race);
     setSelectedClass(cls);
@@ -164,33 +153,32 @@ function AppContent() {
       race,
       className: cls
     });
-    setScreen(GAME_PHASES.LOBBY);
-  }, [gameCode, emit, setSelectedRace, setSelectedClass, setScreen]);
-  
+    setScreen('lobby');
+  }, [gameCode, emit]);
+
   const handleStartGame = useCallback(() => {
     emit('startGame', { gameCode });
   }, [gameCode, emit]);
-  
+
   const handleSubmitAction = useCallback((actionType, targetId) => {
     emit('performAction', { gameCode, actionType, targetId });
   }, [gameCode, emit]);
-  
+
   const handlePlayAgain = useCallback(() => {
-    // Reset game state and return to start screen
-    resetGame();
-  }, [resetGame]);
-  
-  // Render the appropriate screen based on the current state
+    window.location.reload();
+  }, []);
+
+  // Render component based on current screen
   const renderScreen = () => {
     switch (screen) {
-      case GAME_PHASES.JOIN:
+      case 'join':
         return (
           <JoinGamePage
             onCreateGame={handleCreateGame}
             onJoinGame={handleJoinGame}
           />
         );
-      case GAME_PHASES.CHARACTER_SELECT:
+      case 'charSelect':
         return (
           <CharacterSelectPage
             playerName={playerName}
@@ -202,7 +190,7 @@ function AppContent() {
             onConfirm={handleConfirm}
           />
         );
-      case GAME_PHASES.LOBBY:
+      case 'lobby':
         return (
           <LobbyPage
             players={players}
@@ -211,7 +199,7 @@ function AppContent() {
             onStartGame={handleStartGame}
           />
         );
-      case GAME_PHASES.GAME:
+      case 'game':
         return (
           <GamePage
             socket={socket}
@@ -223,9 +211,9 @@ function AppContent() {
             onSubmitAction={handleSubmitAction}
           />
         );
-      case GAME_PHASES.END:
+      case 'end':
         return (
-          <EndPage
+          <EndScreen
             winner={winner}
             players={players}
             onPlayAgain={handlePlayAgain}
@@ -235,12 +223,13 @@ function AppContent() {
         return null;
     }
   };
-  
+
+  // Use ThemeProvider to wrap everything
   return (
-    <div className="app-container">
+    <ThemeProvider>
       {renderScreen()}
-    </div>
+    </ThemeProvider>
   );
 }
 
-export default App;
+export default React.memo(App);
