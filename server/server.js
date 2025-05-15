@@ -1,11 +1,17 @@
+/**
+ * @fileoverview Main server entry point
+ * Sets up HTTP server, Socket.IO, and event handlers
+ */
 const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
 const logger = require('./utils/logger');
-const gameController = require('./controllers/gameController');
-const playerController = require('./controllers/playerController');
+const gameController = require('./controllers/GameController');
+const playerController = require('./controllers/PlayerController');
 const { withSocketErrorHandling } = require('./utils/errorHandler');
+const gameService = require('./services/gameService');
 
+// Initialize Express app and HTTP server
 const app = express();
 const PORT = process.env.PORT || 3001;
 const server = http.createServer(app);
@@ -13,16 +19,26 @@ const server = http.createServer(app);
 // Initialize Socket.IO with CORS
 const io = new Server(server, {
   cors: {
-    origin: "*", // for local development - should be restricted in production
+    origin: "*", // For local development - should be restricted in production
   }
 });
 
-// Rate Limiter to verify too many attempts in a small window
+/**
+ * Rate limiter for Socket.IO events
+ * Prevents abuse and excessive requests
+ */
 const socketRateLimiter = {
   // Store socketId -> {action -> {count, lastReset}}
   limits: new Map(),
   
-  // Check if an action should be rate limited
+  /**
+   * Check if an action should be rate limited
+   * @param {string} socketId - Client socket ID
+   * @param {string} action - Action name
+   * @param {number} limit - Maximum allowed actions in time window
+   * @param {number} timeWindow - Time window in milliseconds
+   * @returns {boolean} Whether the action is allowed
+   */
   check(socketId, action, limit = 5, timeWindow = 60000) {
     const now = Date.now();
     
@@ -55,12 +71,19 @@ const socketRateLimiter = {
     return true;
   },
   
-  // Clean up disconnected sockets
+  /**
+   * Clean up disconnected sockets
+   * @param {string} socketId - Client socket ID
+   */
   cleanupSocket(socketId) {
     this.limits.delete(socketId);
   },
   
-  // Reset specific action for a socket
+  /**
+   * Reset specific action for a socket
+   * @param {string} socketId - Client socket ID
+   * @param {string} action - Action name
+   */
   reset(socketId, action) {
     if (this.limits.has(socketId)) {
       const socketLimits = this.limits.get(socketId);
@@ -104,6 +127,27 @@ io.on('connection', (socket) => {
     'starting game'
   ));
 
+  // Dedicated reconnection event that bypasses the "game started" check
+  socket.on('reconnectToGame', withSocketErrorHandling(socket,
+    ({ gameCode, playerName }) => {
+      // Skip normal validation that would block joining started games
+      try {
+        // Check if game exists
+        const game = gameService.games.get(gameCode);
+        if (!game) {
+          socket.emit('errorMessage', { message: 'Game not found.' });
+          return false;
+        }
+        
+        // Attempt reconnection
+        return playerController.handlePlayerReconnection(io, socket, gameCode, playerName);
+      } catch (error) {
+        socket.emit('errorMessage', { message: error.message || 'Reconnection failed.' });
+        return false;
+      }
+    },
+    'reconnecting to game'
+  ));
   // Player performs an action during a turn
   socket.on('performAction', withSocketErrorHandling(socket,
     ({ gameCode, actionType, targetId, bloodRageActive, keenSensesActive }) => {
@@ -115,99 +159,39 @@ io.on('connection', (socket) => {
     'performing action'
   ));
   
+  // Player uses a racial ability
   socket.on('useRacialAbility', withSocketErrorHandling(socket,
     ({ gameCode, targetId, abilityType }) => gameController.handleRacialAbility(io, socket, gameCode, targetId, abilityType),
     'using racial ability'
   ));
 
-  // Socket handler for Adaptability ability
-socket.on('adaptabilityReplaceAbility', withSocketErrorHandling(socket, ({ gameCode, oldAbilityType, newAbilityType, level }) => {
-  const game = gameService.games.get(gameCode);
-  if (!game) {
-    socket.emit('errorMessage', { message: 'Game not found.' });
-    return false;
-  }
-  
-  const player = game.players.get(socket.id);
-  if (!player || player.race !== 'Human') {
-    socket.emit('errorMessage', { message: 'Only Humans can use Adaptability.' });
-    return false;
-  }
-  
-  // Find the ability to replace
-  const oldAbilityIndex = player.abilities.findIndex(a => a.type === oldAbilityType);
-  if (oldAbilityIndex === -1) {
-    socket.emit('errorMessage', { message: 'Ability not found.' });
-    return false;
-  }
-  
-  // Get the new ability from the class ability definitions
-  const allClassAbilities = require('./config/classAbilities');
-  const allClasses = Object.keys(allClassAbilities);
-  
-  // Find the class that has this ability
-  let newAbility = null;
-  for (const cls of allClasses) {
-    const foundAbility = allClassAbilities[cls].find(a => a.type === newAbilityType && a.unlockAt === parseInt(level));
-    if (foundAbility) {
-      newAbility = { ...foundAbility };
-      break;
-    }
-  }
-  
-  if (!newAbility) {
-    socket.emit('errorMessage', { message: 'New ability not found.' });
-    return false;
-  }
-  
-  // Remember old ability name for log
-  const oldAbilityName = player.abilities[oldAbilityIndex].name;
-  
-  // Replace the ability
-  player.abilities[oldAbilityIndex] = newAbility;
-  
-  // Update unlocked abilities
-  player.unlocked = player.abilities.filter(a => a.unlockAt <= game.level);
-  
-  // Create log entry (will be shown next round)
-  const logEntry = `${player.name} used Adaptability to replace ${oldAbilityName} with ${newAbility.name}!`;
-  logger.info(logEntry);
-  
-  // Clear racial ability usage (Human Adaptability is once per game)
-  if (player.racialAbility && player.racialAbility.type === 'adaptability') {
-    player.racialUsesLeft = 0;
-  }
-  
-  // Notify all players of the updated player list
-  io.to(gameCode).emit('playerList', { players: game.getPlayersInfo() });
-  
-  // Emit an event to the player to confirm the ability change
-  socket.emit('adaptabilityComplete', {
-    oldAbility: { type: oldAbilityType, name: oldAbilityName },
-    newAbility: { type: newAbility.type, name: newAbility.name }
-  });
-  
-  return true;
-}, 'adaptability replacement'));
+  // Player uses Human Adaptability to replace an ability
+socket.on('adaptabilityReplaceAbility', withSocketErrorHandling(socket,
+  ({ gameCode, oldAbilityType, newAbilityType, level, newClassName }) => 
+    gameController.handleAdaptabilityReplace(io, socket, gameCode, oldAbilityType, newAbilityType, level, newClassName),
+  'replacing ability with adaptability'
+));
+
+  // Receive abilities to pick for Human Adaptability
+  socket.on('getClassAbilities', withSocketErrorHandling(socket,
+  ({ gameCode, className, level }) => 
+    gameController.handleGetClassAbilities(io, socket, gameCode, className, level || 1),
+  'getting class abilities'
+  ));
+
+  // Player is ready for next round
+  socket.on('playerNextReady', withSocketErrorHandling(socket,
+    ({ gameCode }) => gameController.handlePlayerNextReady(io, socket, gameCode),
+    'preparing for next round'
+  ));
 
   // Handle player disconnection
   socket.on('disconnect', () => {
     try {
       playerController.handlePlayerDisconnect(io, socket);
+      socketRateLimiter.cleanupSocket(socket.id);
     } catch (error) {
       logger.error(`Error handling disconnect: ${error.message}`, error);
-    }
-  });
-
-  socket.on('playerNextReady', (data) => {
-    console.log(`Raw playerNextReady event received from ${socket.id} with data:`, data);
-    
-    try {
-      const result = gameController.handlePlayerNextReady(io, socket, data.gameCode);
-      console.log(`handlePlayerNextReady result:`, result);
-    } catch (error) {
-      console.error(`Direct error in playerNextReady:`, error);
-      socket.emit('errorMessage', { message: 'Error preparing for next round. Please try again.' });
     }
   });
 });
