@@ -2,7 +2,7 @@
  * @fileoverview Entry point for the game where users can enter their name,
  * create a new game, or join an existing game with a code.
  */
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { useTheme } from '@contexts/ThemeContext';
 import GameTutorial from '@components/modals/GameTutorial';
@@ -15,9 +15,10 @@ import './JoinGamePage.css';
  * @param {Object} props - Component props
  * @param {Function} props.onCreateGame - Callback when creating a new game
  * @param {Function} props.onJoinGame - Callback when joining an existing game
+ * @param {Function} props.onReconnect - Callback for reconnecting to a game
  * @returns {React.ReactElement} The rendered component
  */
-const JoinGamePage = ({ onCreateGame, onJoinGame }) => {
+const JoinGamePage = ({ onCreateGame, onJoinGame, onReconnect }) => {
   const theme = useTheme();
   
   // Form state
@@ -28,6 +29,25 @@ const JoinGamePage = ({ onCreateGame, onJoinGame }) => {
   const [showTutorial, setShowTutorial] = useState(false);
   const [showCodeHelp, setShowCodeHelp] = useState(false);
   const [isGeneratingName, setIsGeneratingName] = useState(false);
+  const [showReconnectPrompt, setShowReconnectPrompt] = useState(false);
+  const [lastGameInfo, setLastGameInfo] = useState(null);
+
+  /**
+   * Check for a previous game session on component mount
+   */
+  useEffect(() => {
+    const lastGameCode = localStorage.getItem('lastGameCode');
+    const lastPlayerName = localStorage.getItem('lastPlayerName');
+    
+    if (lastGameCode && lastPlayerName) {
+      setLastGameInfo({ gameCode: lastGameCode, playerName: lastPlayerName });
+      setShowReconnectPrompt(true);
+      
+      // Pre-fill the form with the saved values
+      setJoinCode(lastGameCode);
+      setName(lastPlayerName);
+    }
+  }, []);
 
   /**
    * Generate a random player name
@@ -52,6 +72,9 @@ const JoinGamePage = ({ onCreateGame, onJoinGame }) => {
       alert("Please enter your name to create a game.");
       return;
     }
+    // If creating a new game, clear any previous session
+    localStorage.removeItem('lastGameCode');
+    localStorage.removeItem('lastPlayerName');
     onCreateGame(name);
   };
 
@@ -63,7 +86,28 @@ const JoinGamePage = ({ onCreateGame, onJoinGame }) => {
       alert("Please enter a game code and your name to join.");
       return;
     }
+    // Save info for potential reconnection
+    localStorage.setItem('lastGameCode', joinCode);
+    localStorage.setItem('lastPlayerName', name);
     onJoinGame(joinCode.trim(), name);
+  };
+  
+  /**
+   * Handle reconnecting to the previous game
+   */
+  const handleReconnect = () => {
+    if (lastGameInfo) {
+      onReconnect(lastGameInfo.gameCode, lastGameInfo.playerName);
+    }
+  };
+  
+  /**
+   * Decline reconnection and clear saved game
+   */
+  const handleDeclineReconnect = () => {
+    setShowReconnectPrompt(false);
+    localStorage.removeItem('lastGameCode');
+    localStorage.removeItem('lastPlayerName');
   };
 
   /**
@@ -81,6 +125,22 @@ const JoinGamePage = ({ onCreateGame, onJoinGame }) => {
     <div className="join-page-container">
       {/* Game tutorial modal */}
       {showTutorial && <GameTutorial onComplete={() => setShowTutorial(false)} />}
+      
+      {/* Reconnection prompt */}
+      {showReconnectPrompt && (
+        <div className="reconnect-prompt">
+          <h3>Rejoin Previous Game?</h3>
+          <p>You were playing as <strong>{lastGameInfo?.playerName}</strong> in game <strong>{lastGameInfo?.gameCode}</strong>.</p>
+          <div className="reconnect-buttons">
+            <button className="reconnect-button" onClick={handleReconnect}>
+              Rejoin Game
+            </button>
+            <button className="decline-reconnect-button" onClick={handleDeclineReconnect}>
+              Start Fresh
+            </button>
+          </div>
+        </div>
+      )}
       
       <div className="join-card">
         <h1 className="game-logo">Warlock</h1>
@@ -185,7 +245,8 @@ const JoinGamePage = ({ onCreateGame, onJoinGame }) => {
 
 JoinGamePage.propTypes = {
   onCreateGame: PropTypes.func.isRequired,
-  onJoinGame: PropTypes.func.isRequired
+  onJoinGame: PropTypes.func.isRequired,
+  onReconnect: PropTypes.func
 };
 
 export default JoinGamePage;
