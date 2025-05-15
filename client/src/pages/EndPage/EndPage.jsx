@@ -34,6 +34,10 @@ const EndPage = ({ winner, players, onPlayAgain }) => {
     
     return () => clearTimeout(timer);
   }, []);
+
+    useEffect(() => {
+    localStorage.removeItem('lastPlayerName');
+  }, []);
   
   // Separate players into teams
   const goodPlayers = players.filter(p => !p.isWarlock);
