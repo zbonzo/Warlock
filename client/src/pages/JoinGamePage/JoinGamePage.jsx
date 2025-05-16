@@ -124,7 +124,10 @@ const JoinGamePage = ({ onCreateGame, onJoinGame, onReconnect }) => {
   return (
     <div className="join-page-container">
       {/* Game tutorial modal */}
-      {showTutorial && <GameTutorial onComplete={() => setShowTutorial(false)} />}
+      <GameTutorial 
+        isOpen={showTutorial} 
+        onComplete={() => setShowTutorial(false)}
+      />
       
       {/* Reconnection prompt */}
       {showReconnectPrompt && (

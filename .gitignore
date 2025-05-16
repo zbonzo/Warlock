@@ -60,3 +60,8 @@ build/Release
 .env.development.local
 .env.test.local
 .env.production.local
+
+# Simulation files
+simulation/
+run-simulation.js
+simulation.js
