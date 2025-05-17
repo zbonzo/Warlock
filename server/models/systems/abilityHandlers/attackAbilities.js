@@ -53,6 +53,12 @@ function register(registry) {
  * @returns {boolean} Whether the ability was successful
  */
 function handleAttack(actor, target, ability, log, systems) {
+  // If target is a player (not monster) and is invisible, attack should fail
+  if (target !== '__monster__' && target.hasStatusEffect && target.hasStatusEffect('invisible')) {
+    log.push(`${actor.name} tries to attack ${target.name}, but they are invisible and cannot be seen!`);
+    return false;
+  }
+  
   if (target === '__monster__') {
     return handleMonsterAttack(actor, ability, log, systems);
   }
@@ -69,6 +75,12 @@ function handleAttack(actor, target, ability, log, systems) {
  * @returns {boolean} Whether the ability was successful
  */
 function handlePoisonStrike(actor, target, ability, log, systems) {
+  // Check if target is invisible
+  if (target !== '__monster__' && target.hasStatusEffect && target.hasStatusEffect('invisible')) {
+    log.push(`${actor.name} tries to use Poison Strike on ${target.name}, but they are invisible!`);
+    return false;
+  }
+  
   // First apply regular attack damage
   const attackResult = handleAttack(actor, target, ability, log, systems);
   

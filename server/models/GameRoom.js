@@ -114,6 +114,21 @@ class GameRoom {
     // Assign racial ability
     if (racialAbilities[race]) {
       p.setRacialAbility(racialAbilities[race]);
+      
+      // Double-check Undying for Skeletons - ensure it's properly set up
+      if (race === 'Skeleton') {
+        console.log(`Skeleton racial ability set for ${p.name}:`, p.racialEffects);
+        
+        // If not set correctly, set it manually
+        if (!p.racialEffects || !p.racialEffects.resurrect) {
+          console.log(`Manually setting up Undying for ${p.name}`);
+          p.racialEffects = p.racialEffects || {};
+          p.racialEffects.resurrect = {
+            resurrectedHp: racialAbilities[race].params.resurrectedHp || 1
+          };
+          console.log(`Undying now set:`, p.racialEffects);
+        }
+      }
     }
   }
 
@@ -278,19 +293,19 @@ updateUnlockedAbilities() {
     for (let player of this.players.values()) {
       player.resetRacialPerRoundUses();
     }
-  
+
     // Process racial abilities first
     this.processRacialAbilities(log);
-  
+
     // Monster ages and prepares to strike
     this.systems.monsterController.ageMonster();
-  
-    // Process player actions using the ability registry
+
+    // Process player actions - this now handles sorting
     this.processPlayerActions(log);
-  
+
     // Monster attacks using CombatSystem for unified damage logic
     this.systems.monsterController.attack(log, this.systems.combatSystem); 
-  
+
     // Status effects tick-down
     this.systems.statusEffectManager.processTimedEffects(log);
     
@@ -304,16 +319,16 @@ updateUnlockedAbilities() {
     
     // Process racial effects
     this.systems.racialAbilitySystem.processEndOfRoundEffects(log);
-  
+
     // Process pending deaths (including Undying resurrections)
     this.systems.combatSystem.processPendingDeaths(log);
-  
+
     // Monster death & level-up
     const oldLevel = this.level; // Store old level for comparison
     const monsterDeathResult = this.systems.monsterController.handleDeathAndRespawn(this.level, log);
     this.level = monsterDeathResult.newLevel;
     
-    // Check for level-up - use oldLevel instead of levelup
+    // Check for level-up
     if (this.level > oldLevel) {
       console.log(`Game level up: ${oldLevel} -> ${this.level}`);
       log.push(`The party has advanced to level ${this.level}!`);
@@ -326,27 +341,24 @@ updateUnlockedAbilities() {
         }
       }
     }
-      const levelUp = (this.level > oldLevel) ? {
+
+    const levelUp = (this.level > oldLevel) ? {
     oldLevel,
     newLevel: this.level
   } : null;
 
-    if (monsterDeathResult.newLevel > this.level) {
-      this.updateUnlockedAbilities();
-    }
+  // Update aliveCount before checking win conditions
+  this.aliveCount = this.getAlivePlayers().length; 
+  const winner = this.systems.gameStateUtils.checkWinConditions(
+    this.systems.warlockSystem.getWarlockCount(), 
+    this.aliveCount
+  );
   
-    // Update aliveCount before checking win conditions
-    this.aliveCount = this.getAlivePlayers().length; 
-    const winner = this.systems.gameStateUtils.checkWinConditions(
-      this.systems.warlockSystem.getWarlockCount(), 
-      this.aliveCount
-    );
-    
-    if (!winner) {
-      this.round++;
-    }
-  
-    return {
+  if (!winner) {
+    this.round++;
+  }
+
+  return {
     eventsLog: log,
     players: this.getPlayersInfo(),
     monster: this.systems.monsterController.getState(),
@@ -354,8 +366,8 @@ updateUnlockedAbilities() {
     level: this.level,
     levelUp: this.level > oldLevel ? { oldLevel, newLevel: this.level } : null,
     winner
-    };
-  }
+  };
+}
 
   /**
    * Process all pending racial abilities
@@ -398,6 +410,42 @@ updateUnlockedAbilities() {
    * @param {Array} log - Event log to append messages to
    */
   processPlayerActions(log) {
+    // Debug log the actions before sorting
+    console.log("Actions before sorting:");
+    this.pendingActions.forEach(action => {
+      const player = this.players.get(action.actorId);
+      const ability = player?.unlocked.find(a => a.type === action.actionType);
+      console.log(`${player?.name} - ${ability?.name} (Order: ${ability?.order || 'undefined'})`);
+    });
+
+    // Sort actions by their order value (lower numbers first)
+    this.pendingActions.sort((a, b) => {
+      const actor1 = this.players.get(a.actorId);
+      const actor2 = this.players.get(b.actorId);
+      
+      if (!actor1 || !actor2) return 0;
+      
+      const ability1 = actor1.unlocked.find(ability => ability.type === a.actionType);
+      const ability2 = actor2.unlocked.find(ability => ability.type === b.actionType);
+      
+      if (!ability1 || !ability2) return 0;
+      
+      // Default to high order if order is undefined
+      const order1 = typeof ability1.order === 'number' ? ability1.order : 999999;
+      const order2 = typeof ability2.order === 'number' ? ability2.order : 999999;
+      
+      return order1 - order2;
+    });
+    
+    // Debug log the actions after sorting
+    console.log("Actions after sorting:");
+    this.pendingActions.forEach(action => {
+      const player = this.players.get(action.actorId);
+      const ability = player?.unlocked.find(a => a.type === action.actionType);
+      console.log(`${player?.name} - ${ability?.name} (Order: ${ability?.order || 'undefined'})`);
+    });
+    
+    // Process actions in the sorted order
     for (const action of this.pendingActions) {
       const actor = this.players.get(action.actorId);
       if (!actor || !actor.isAlive || this.systems.statusEffectManager.isPlayerStunned(action.actorId)) {
@@ -410,8 +458,22 @@ updateUnlockedAbilities() {
       const ability = actor.unlocked.find(a => a.type === action.actionType);
       if (!ability) continue;
       
-      const target = action.targetId === '__monster__' ? 
+      const target = action.targetId === '__monster__' ?
         '__monster__' : this.players.get(action.targetId);
+      
+      if (target !== '__monster__' && !target) {
+        console.log(`Invalid target ${action.targetId} for action by ${actor.name}`);
+        continue;
+      }
+      
+      // Check for invisibility right before executing the ability
+      if (target !== '__monster__' && 
+          ability.category === 'Attack' && 
+          target.hasStatusEffect && 
+          target.hasStatusEffect('invisible')) {
+        log.push(`${actor.name} tries to attack ${target.name}, but they are invisible and cannot be seen!`);
+        continue;
+      }
       
       log.push(`${actor.name} uses ${ability.name} on ${target === '__monster__' ? 'the Monster' : target.name}.`);
       
@@ -423,9 +485,10 @@ updateUnlockedAbilities() {
         log
       );
     }
+    
+    // Clear the pending actions queue
     this.pendingActions = [];
   }
-
   /**
    * Get info about all players for client updates
    * @returns {Array} Array of player info objects

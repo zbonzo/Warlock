@@ -99,9 +99,15 @@ class MonsterController {
     
     // Find the target (lowest HP player who isn't invisible)
     const target = this.selectTarget();
+
     if (!target) {
       log.push(`The Monster looks for a target, but no one is visible.`);
       return null;
+    }
+
+    if (target.hasStatusEffect && target.hasStatusEffect('invisible')) {
+    log.push(`The Monster tries to attack ${target.name}, but they have vanished from sight!`);
+    return null;
     }
     
     // Calculate damage
@@ -122,15 +128,19 @@ class MonsterController {
    * @private
    */
   selectTarget() {
-    // Try to find the player with lowest HP who isn't invisible
-    const lowestHpPlayer = this.gameStateUtils.getLowestHpPlayer(false);
+    // Get all visible players
+    const visiblePlayers = Array.from(this.players.values()).filter(p => 
+      p.isAlive && (!p.hasStatusEffect || !p.hasStatusEffect('invisible'))
+    );
     
-    // If no visible targets, pick the player with highest HP
-    if (!lowestHpPlayer) {
-      return this.gameStateUtils.getHighestHpPlayer(true);
+    // If no visible targets, return null
+    if (visiblePlayers.length === 0) {
+      return null;
     }
     
-    return lowestHpPlayer;
+    // Select a random visible player
+    const randomIndex = Math.floor(Math.random() * visiblePlayers.length);
+    return visiblePlayers[randomIndex];
   }
   
   /**

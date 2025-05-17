@@ -20,6 +20,8 @@ const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
     origin: "*", // For local development - should be restricted in production
+    methods: ['GET', 'POST'],
+    allowedHeaders: ['Content-Type']
   }
 });
 
@@ -95,7 +97,7 @@ const socketRateLimiter = {
 };
 
 // Start the server
-server.listen(PORT, () => {
+server.listen(PORT, '0.0.0.0', () => {
   logger.info(`Game server running on port ${PORT}`);
 });
 

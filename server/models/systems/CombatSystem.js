@@ -107,6 +107,17 @@ class CombatSystem {
    */
   applyDamageToPlayer(target, damageAmount, attacker, log = [], isKeenSensesAttack = false) {
     if (!target || !target.isAlive) return false;
+
+    // Check if target is invisible and should be immune to targeting
+    if (target.hasStatusEffect && target.hasStatusEffect('invisible')) {
+      log.push(`${attacker.name || 'The Monster'} tries to attack ${target.name}, but they are invisible!`);
+      return false;
+    }
+
+      // Ensure Undying is set up for Skeletons
+    if (target.race === 'Skeleton') {
+      this.checkAndSetupUndyingIfNeeded(target);
+    }
     
     // Check for immunity effects
     if (this.checkImmunityEffects(target, attacker, log)) {
@@ -199,8 +210,16 @@ class CombatSystem {
    * @private
    */
   handlePotentialDeath(target, attacker, log) {
+    // Add extensive logging for debugging
+    console.log(`Checking potential death for ${target.name}`);
+    console.log(`Race: ${target.race}, Has racial ability:`, Boolean(target.racialAbility));
+    if (target.racialAbility) {
+      console.log(`Racial ability type: ${target.racialAbility.type}`);
+    }
+    console.log(`Racial effects:`, JSON.stringify(target.racialEffects));
+    
     // Check for Undying racial ability (Skeleton)
-    if (target.racialEffects && target.racialEffects.resurrect) {
+    if (target.race === 'Skeleton' && target.racialEffects && target.racialEffects.resurrect) {
       // Resurrect the player
       target.hp = target.racialEffects.resurrect.resurrectedHp || 1;
       log.push(`${target.name} avoided death through Undying! Resurrected with ${target.hp} HP.`);
@@ -247,8 +266,15 @@ class CombatSystem {
   processPendingDeaths(log = []) {
     for (const player of this.players.values()) {
       if (player.pendingDeath) {
+        console.log(`Processing pending death for ${player.name}`);
+        console.log(`Race: ${player.race}, Has racial ability:`, Boolean(player.racialAbility));
+        if (player.racialAbility) {
+          console.log(`Racial ability type: ${player.racialAbility.type}`);
+        }
+        console.log(`Racial effects:`, JSON.stringify(player.racialEffects));
+        
         // Check if player has Undying effect
-        if (player.racialEffects && player.racialEffects.resurrect) {
+        if (player.race === 'Skeleton' && player.racialEffects && player.racialEffects.resurrect) {
           // Resurrect the player
           player.hp = player.racialEffects.resurrect.resurrectedHp || 1;
           log.push(`${player.name} avoided death through Undying! Resurrected with ${player.hp} HP.`);
@@ -344,6 +370,19 @@ class CombatSystem {
     
     return affectedTargets;
   }
+
+  checkAndSetupUndyingIfNeeded(player) {
+  if (player && player.race === 'Skeleton' && (!player.racialEffects || !player.racialEffects.resurrect)) {
+    console.log(`Undying not properly set for ${player.name}, setting it up now`);
+    player.racialEffects = player.racialEffects || {};
+    player.racialEffects.resurrect = {
+      resurrectedHp: 1 // Default value if params not available
+    };
+    console.log(`Fixed Undying effect:`, player.racialEffects);
+    return true;
+  }
+  return false;
+}
 }
 
 module.exports = CombatSystem;

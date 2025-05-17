@@ -24,6 +24,7 @@ function register(registry) {
   registry.registerRacialAbility('forestsGrace', handleForestsGrace);
   
   // Skeleton racial ability - Undying
+  console.log("Registering Undying racial ability");
   registry.registerRacialAbility('undying', handleUndying);
 }
 
@@ -184,7 +185,7 @@ function handleUndying(actor, target, racialAbility, log, systems) {
     resurrectedHp: racialAbility.params.resurrectedHp || 1
   };
   
-  log.push(`${actor.name} prepares Undying, ready to cheat death once.`);
+  log.push(`${actor.name}'s Undying ability is already active and will trigger automatically when needed.`);
   
   return true;
 }

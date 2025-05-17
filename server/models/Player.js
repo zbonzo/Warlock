@@ -187,7 +187,14 @@ class Player {
     }
     
     this.racialCooldown = 0;
-    this.racialEffects = {};
+    if (abilityData.type === 'undying') {
+      this.racialEffects = this.racialEffects || {};
+      this.racialEffects.resurrect = {
+        resurrectedHp: abilityData.params.resurrectedHp || 1
+       };
+    } else {
+      this.racialEffects = {};
+    }
   }
   
   /**
