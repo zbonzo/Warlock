@@ -125,7 +125,7 @@ class WarlockSystem {
     // Conversion chance: 20% base + 30% scaled by warlock ratio, max 70%
     // Modified by rateModifier parameter (e.g. 0.5 for AOE abilities)
     const alivePlayersCount = this.gameStateUtils.getAlivePlayers().length;
-    const baseChance = Math.min(0.7, 0.2 + (this.numWarlocks / alivePlayersCount) * 0.3);
+    const baseChance = Math.min(0.5, 0.2 + (this.numWarlocks / alivePlayersCount) * 0.3);
     const finalChance = baseChance * rateModifier;
     
     if (Math.random() < finalChance) {

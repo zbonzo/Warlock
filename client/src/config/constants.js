@@ -3,7 +3,23 @@
  */
 
 // API & Socket
-export const SOCKET_URL = process.env.REACT_APP_SOCKET_URL || 'http://localhost:3001';
+export const SOCKET_URL = (() => {
+  const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+  
+  // In development with different ports for client (3000) and server (3001)
+  if (process.env.NODE_ENV === 'development') {
+    // Special case: If running on localhost with Webpack dev server
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+      return `${protocol === 'wss:' ? 'https:' : 'http:'}//${window.location.hostname}:3001`;
+    }
+    // Otherwise, assume server is on same machine but different port
+    return `${protocol === 'wss:' ? 'https:' : 'http:'}//${window.location.hostname}:3001`;
+  }
+  
+  // In production, assume same origin
+  return window.location.origin;
+})();
+
 export const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
 
 // Game configuration
