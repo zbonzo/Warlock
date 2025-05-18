@@ -25,7 +25,7 @@ const PlayerColumn = ({ isVisible, me, players }) => {
   
   return (
     <div className="player-column">
-      <h2 className="section-title">Your Status</h2>
+      <h2 className="section-title">Your Character</h2>
       
       {/* Current player card */}
       <PlayerCard 
