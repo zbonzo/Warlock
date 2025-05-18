@@ -286,6 +286,10 @@ updateUnlockedAbilities() {
    * Process a game round
    * @returns {Object} Round result with events and state updates
    */
+  /**
+ * Process a game round
+ * @returns {Object} Round result with events and state updates
+ */
   processRound() {
     const log = [];
     
@@ -300,11 +304,11 @@ updateUnlockedAbilities() {
     // Monster ages and prepares to strike
     this.systems.monsterController.ageMonster();
 
-    // Process player actions - this now handles sorting
+    // Process player actions
     this.processPlayerActions(log);
 
-    // Monster attacks using CombatSystem for unified damage logic
-    this.systems.monsterController.attack(log, this.systems.combatSystem); 
+    // Monster attacks
+    this.systems.monsterController.attack(log, this.systems.combatSystem);
 
     // Status effects tick-down
     this.systems.statusEffectManager.processTimedEffects(log);
@@ -320,55 +324,129 @@ updateUnlockedAbilities() {
     // Process racial effects
     this.systems.racialAbilitySystem.processEndOfRoundEffects(log);
 
-    // Process pending deaths (including Undying resurrections)
+    // Process pending deaths
     this.systems.combatSystem.processPendingDeaths(log);
 
     // Monster death & level-up
-    const oldLevel = this.level; // Store old level for comparison
+    const oldLevel = this.level;
     const monsterDeathResult = this.systems.monsterController.handleDeathAndRespawn(this.level, log);
     this.level = monsterDeathResult.newLevel;
     
-    // Check for level-up
+    // Handle level-up
     if (this.level > oldLevel) {
       console.log(`Game level up: ${oldLevel} -> ${this.level}`);
-      log.push(`The party has advanced to level ${this.level}!`);
+      
+      const levelUpLog = {
+        type: 'level_up',
+        public: true,
+        message: `The party has advanced to level ${this.level}!`,
+        privateMessage: `You've reached level ${this.level}! New abilities await.`,
+        attackerMessage: null
+      };
+      log.push(levelUpLog);
+      
       this.updateUnlockedAbilities();
       
-      // Add level-up messages for each player
+      // Add individual ability unlock messages
       for (const player of this.players.values()) {
         if (player.isAlive) {
-          log.push(`${player.name} gains access to new abilities at level ${this.level}!`);
+          const abilityUnlockLog = {
+            type: 'ability_unlock',
+            public: false,
+            targetId: player.id,
+            message: '',
+            privateMessage: `You gained access to new abilities at level ${this.level}!`,
+            attackerMessage: null
+          };
+          log.push(abilityUnlockLog);
         }
       }
     }
 
-    const levelUp = (this.level > oldLevel) ? {
-    oldLevel,
-    newLevel: this.level
-  } : null;
+    // Sort log entries - move corruption messages to the end
+    const sortedLog = this.sortLogEntries(log);
 
-  // Update aliveCount before checking win conditions
-  this.aliveCount = this.getAlivePlayers().length; 
-  const winner = this.systems.gameStateUtils.checkWinConditions(
-    this.systems.warlockSystem.getWarlockCount(), 
-    this.aliveCount
-  );
-  
-  if (!winner) {
-    this.round++;
+    // Update game state
+    this.aliveCount = this.getAlivePlayers().length;
+    const winner = this.systems.gameStateUtils.checkWinConditions(
+      this.systems.warlockSystem.getWarlockCount(),
+      this.aliveCount
+    );
+
+    // Process log for clients
+    const processedLog = this.processLogForClients(sortedLog);
+
+      // LOG THE EVENTS FOR FRONTEND TEAM
+      console.log('=== EVENTS LOG FOR FRONTEND ===');
+      console.log(`Game: ${this.code}, Round: ${this.round}`);
+      console.log(JSON.stringify(processedLog, null, 2));
+      console.log('=== END EVENTS LOG ===');
+
+    return {
+      eventsLog: processedLog,
+      players: this.getPlayersInfo(),
+      monster: this.systems.monsterController.getState(),
+      turn: this.round++,
+      level: this.level,
+      levelUp: this.level > oldLevel ? { oldLevel, newLevel: this.level } : null,
+      winner
+    };
   }
 
-  return {
-    eventsLog: log,
-    players: this.getPlayersInfo(),
-    monster: this.systems.monsterController.getState(),
-    turn: this.round,
-    level: this.level,
-    levelUp: this.level > oldLevel ? { oldLevel, newLevel: this.level } : null,
-    winner
-  };
-}
+  /**
+   * Sort log entries to put certain types at the end
+   * @param {Array} log - Raw log entries
+   * @returns {Array} Sorted log entries
+   * @private
+   */
+  sortLogEntries(log) {
+    const regularEntries = [];
+    const endEntries = [];
+    
+    log.forEach(entry => {
+      if (entry.moveToEnd || entry.type === 'corruption') {
+        endEntries.push(entry);
+      } else {
+        regularEntries.push(entry);
+      }
+    });
+    
+    return [...regularEntries, ...endEntries];
+  }
 
+  /**
+   * Process the log to ensure it works with both enhanced and legacy systems
+   * @param {Array} log - Raw log entries
+   * @returns {Array} Processed log entries
+   * @private
+   */
+  processLogForClients(log) {
+    return log.map(entry => {
+      // If it's already a string, keep it as is (legacy support)
+      if (typeof entry === 'string') {
+        return {
+          type: 'basic',
+          public: true,
+          message: entry,
+          privateMessage: entry,
+          attackerMessage: entry
+        };
+      }
+      
+      // If it's an enhanced log object, ensure it has all required properties
+      return {
+        type: entry.type || 'basic',
+        public: entry.public !== false, // Default to public
+        targetId: entry.targetId || null,
+        attackerId: entry.attackerId || null,
+        message: entry.message || '',
+        privateMessage: entry.privateMessage || entry.message || '',
+        attackerMessage: entry.attackerMessage || entry.message || '',
+        // Include any additional metadata
+        ...entry
+      };
+    });
+  }
   /**
    * Process all pending racial abilities
    * @param {Array} log - Event log to append messages to
@@ -405,19 +483,12 @@ updateUnlockedAbilities() {
     this.pendingRacialActions = [];
   }
 
+
   /**
    * Process all pending player actions
    * @param {Array} log - Event log to append messages to
    */
   processPlayerActions(log) {
-    // Debug log the actions before sorting
-    console.log("Actions before sorting:");
-    this.pendingActions.forEach(action => {
-      const player = this.players.get(action.actorId);
-      const ability = player?.unlocked.find(a => a.type === action.actionType);
-      console.log(`${player?.name} - ${ability?.name} (Order: ${ability?.order || 'undefined'})`);
-    });
-
     // Sort actions by their order value (lower numbers first)
     this.pendingActions.sort((a, b) => {
       const actor1 = this.players.get(a.actorId);
@@ -437,20 +508,20 @@ updateUnlockedAbilities() {
       return order1 - order2;
     });
     
-    // Debug log the actions after sorting
-    console.log("Actions after sorting:");
-    this.pendingActions.forEach(action => {
-      const player = this.players.get(action.actorId);
-      const ability = player?.unlocked.find(a => a.type === action.actionType);
-      console.log(`${player?.name} - ${ability?.name} (Order: ${ability?.order || 'undefined'})`);
-    });
-    
     // Process actions in the sorted order
     for (const action of this.pendingActions) {
       const actor = this.players.get(action.actorId);
       if (!actor || !actor.isAlive || this.systems.statusEffectManager.isPlayerStunned(action.actorId)) {
         if (actor && this.systems.statusEffectManager.isPlayerStunned(action.actorId)) {
-          log.push(`${actor.name} is stunned and cannot act.`);
+          const stunnedLog = {
+            type: 'stunned',
+            public: false,
+            targetId: actor.id,
+            message: '',
+            privateMessage: 'You are stunned and cannot act.',
+            attackerMessage: ''
+          };
+          log.push(stunnedLog);
         }
         continue;
       }
@@ -471,12 +542,36 @@ updateUnlockedAbilities() {
           ability.category === 'Attack' && 
           target.hasStatusEffect && 
           target.hasStatusEffect('invisible')) {
-        log.push(`${actor.name} tries to attack ${target.name}, but they are invisible and cannot be seen!`);
+        
+        const invisibleLog = {
+          type: 'attack_invisible',
+          public: false,
+          attackerId: actor.id,
+          targetId: target.id,
+          message: '',
+          privateMessage: '',
+          attackerMessage: `You try to attack ${target.name}, but they are invisible and cannot be seen!`
+        };
+        log.push(invisibleLog);
         continue;
       }
       
-      log.push(`${actor.name} uses ${ability.name} on ${target === '__monster__' ? 'the Monster' : target.name}.`);
+      // Create action announcement log - this shows who used what on whom
+      const actionLog = {
+        type: 'action_announcement',
+        public: true,
+        attackerId: actor.id,
+        targetId: target === '__monster__' ? 'monster' : target.id,
+        abilityName: ability.name,
+        // Public message shows the action (visible to people involved)
+        message: `${actor.name} uses ${ability.name} on ${target === '__monster__' ? 'the Monster' : target.name}.`,
+        // Private messages are empty since this is just an announcement
+        privateMessage: '',
+        attackerMessage: ''
+      };
+      log.push(actionLog);
       
+      // Execute the ability (this will generate additional logs for damage, healing, etc.)
       this.systems.abilityRegistry.executeClassAbility(
         action.actionType,
         actor,

@@ -105,36 +105,52 @@ class CombatSystem {
    * @param {boolean} isKeenSensesAttack - Whether this is a Keen Senses attack
    * @returns {boolean} Whether the attack was successful
    */
+/**
+ * Apply damage to a player, considering armor and effects
+ * @param {Object} target - Target player
+ * @param {number} damageAmount - Amount of damage
+ * @param {Object} attacker - Attacker (player or monster)
+ * @param {Array} log - Event log to append messages to
+ * @param {boolean} isKeenSensesAttack - Whether this is a Keen Senses attack
+ * @returns {boolean} Whether the attack was successful
+ */
   applyDamageToPlayer(target, damageAmount, attacker, log = [], isKeenSensesAttack = false) {
     if (!target || !target.isAlive) return false;
-
-    // Check if target is invisible and should be immune to targeting
-    if (target.hasStatusEffect && target.hasStatusEffect('invisible')) {
-      log.push(`${attacker.name || 'The Monster'} tries to attack ${target.name}, but they are invisible!`);
-      return false;
-    }
-
-      // Ensure Undying is set up for Skeletons
-    if (target.race === 'Skeleton') {
-      this.checkAndSetupUndyingIfNeeded(target);
-    }
     
-    // Check for immunity effects
+    // Check for immunity effects first
     if (this.checkImmunityEffects(target, attacker, log)) {
-      return false;
+      return false; // No damage was dealt
     }
     
     // Calculate damage reduction from armor
     const finalDamage = target.calculateDamageReduction(damageAmount);
-    
-    // Add damage log message
-    if (damageAmount > 0) {
-      this.logDamageMessage(target, finalDamage, damageAmount, attacker, log);
-    }
+    const reductionPercent = Math.round(((damageAmount - finalDamage) / damageAmount) * 100);
     
     // Apply damage
     target.hp = Math.max(0, target.hp - finalDamage);
     
+    // Create enhanced log entry
+    const isMonsterAttacker = !attacker.id;
+    
+    const logEvent = {
+      type: 'damage',
+      public: true,
+      targetId: target.id,
+      targetName: target.name,
+      attackerId: attacker.id || 'monster',
+      attackerName: attacker.name || 'The Monster',
+      damage: {
+        initial: damageAmount,
+        final: finalDamage,
+        reduction: reductionPercent
+      },
+      message: `${target.name} was attacked and lost ${finalDamage} health.`,
+      privateMessage: `${attacker.name || 'The Monster'} attacked you for ${finalDamage} damage, reduced by ${reductionPercent}% from your armor.`,
+      attackerMessage: isMonsterAttacker ? '' : `You attacked ${target.name} for ${finalDamage} damage (initial ${damageAmount}, reduced by ${reductionPercent}% from armor).`
+    };
+    
+    log.push(logEvent);
+      
     // Handle Keen Senses racial ability for Elves
     if (isKeenSensesAttack) {
       this.handleKeenSensesAttack(target, attacker, log);
@@ -160,16 +176,29 @@ class CombatSystem {
    * @returns {boolean} Whether the target is immune to damage
    * @private
    */
+
   checkImmunityEffects(target, attacker, log) {
     // Check for Stone Resolve immunity (Dwarf racial)
     if (target.racialEffects && target.racialEffects.immuneNextDamage) {
-      log.push(`${target.name}'s Stone Resolve absorbed all damage from ${attacker.name || 'the Monster'}!`);
+      // Create an anonymous immunity message
+      const immunityLog = {
+        type: 'immunity',
+        public: true,
+        targetId: target.id,
+        attackerId: attacker.id || 'monster',
+        message: `${target.name}'s Stone Resolve absorbed all damage from an attack!`,
+        privateMessage: `Your Stone Resolve absorbed all damage from ${attacker.name || 'The Monster'}!`,
+        attackerMessage: attacker.id ? `${target.name}'s Stone Resolve absorbed all your damage!` : ''
+      };
+      log.push(immunityLog);
+      
       delete target.racialEffects.immuneNextDamage;
       return true;
     }
     
     return false;
   }
+
 
   /**
    * Add damage message to the log
@@ -221,13 +250,34 @@ class CombatSystem {
     // Check for Undying racial ability (Skeleton)
     if (target.race === 'Skeleton' && target.racialEffects && target.racialEffects.resurrect) {
       // Resurrect the player
-      target.hp = target.racialEffects.resurrect.resurrectedHp || 1;
-      log.push(`${target.name} avoided death through Undying! Resurrected with ${target.hp} HP.`);
+    target.hp = target.racialEffects.resurrect.resurrectedHp || 1;
+    
+    const resurrectLog = {
+      type: 'resurrect',
+      public: true,
+      targetId: target.id,
+      message: `${target.name} avoided death through Undying!`,
+      privateMessage: 'You were resurrected by Undying.',
+      attackerMessage: `${target.name} avoided death through Undying.`
+    };
+    log.push(resurrectLog);
+    
       delete target.racialEffects.resurrect;
     } else {
       // Mark for pending death
       target.pendingDeath = true;
       target.deathAttacker = attacker.name || 'The Monster';
+
+      const deathLog = {
+        type: 'death',
+        public: true,
+        targetId: target.id,
+        attackerId: attacker.id || 'monster',
+        message: `${target.name} has fallen.`,
+        privateMessage: `You were killed by ${attacker.name || 'The Monster'}.`,
+        attackerMessage: `You killed ${target.name}.`
+      };
+    log.push(deathLog);
     }
   }
 
@@ -256,9 +306,11 @@ class CombatSystem {
    * @returns {boolean} Whether the attack was successful
    */
   applyDamageToMonster(amount, attacker, log = []) {
-    return this.monsterController.takeDamage(amount, attacker, log);
+    const result = this.monsterController.takeDamage(amount, attacker, log);
+    
+    // Monster attacks don't need enhanced logs, just return result
+    return result;
   }
-
   /**
    * Process all pending deaths
    * @param {Array} log - Event log to append messages to

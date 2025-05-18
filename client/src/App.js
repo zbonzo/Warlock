@@ -279,6 +279,7 @@ function AppContent() {
           <EndPage
             winner={winner}
             players={players}
+            eventsLog={eventsLog} 
             onPlayAgain={handlePlayAgain}
           />
         );

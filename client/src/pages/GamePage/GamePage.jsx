@@ -445,6 +445,8 @@ const handleAdaptabilityChoose = (data) => {
         <HistoryColumn 
           isVisible={!isMobile || activeTab === 'history'}
           eventsLog={eventsLog}
+          currentPlayerId={me?.id}
+          players={players}
         />
       </div>
     </div>

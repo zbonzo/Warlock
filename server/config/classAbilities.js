@@ -71,15 +71,15 @@ const classAbilities = {
   ],
   Oracle: [
     { type: 'holyBolt',     name: 'Holy Bolt',       category: 'Attack',  effect: null,       target: 'Single', params: { damage: 25 }, unlockAt: 1, order: 1041 },
-    { type: 'foresight',    name: 'Foresight Shield',category: 'Defense', effect: 'protected', target: 'Self',   params: { armor: 3, duration: 1 }, unlockAt: 2, order: 16 },
+    { type: 'foresight',    name: 'Foresight Shield',category: 'Defense', effect: 'protected', target: 'Self',   params: { armor: 3, duration: 1 }, unlockAt: 4, order: 16 },
     { type: 'divineBalm',   name: 'Divine Balm',     category: 'Heal',    effect: null,       target: 'Single', params: { amount: 25 }, unlockAt: 3, order: 10060 },
-    { type: 'fatesEye',     name: 'Eye of Fate',      category: 'Special', effect: 'detect',    target: 'Single', params: {}, unlockAt: 4, order: 100 }
+    { type: 'fatesEye',     name: 'Eye of Fate',      category: 'Special', effect: 'detect',    target: 'Single', params: {}, unlockAt: 2, order: 100 }
   ],
   Seer: [
     { type: 'psychicBolt',  name: 'Psychic Bolt',    category: 'Attack',  effect: null,       target: 'Single', params: { damage: 28 }, unlockAt: 1, order: 1050 },
-    { type: 'spiritGuard',  name: 'Spirit Guard',    category: 'Defense', effect: 'protected', target: 'Self',   params: { armor: 3, duration: 1 }, unlockAt: 2, order: 17 },
-    { type: 'spiritMend',   name: 'Spirit Mend',     category: 'Heal',    effect: null,       target: 'Self',   params: { amount: 20 }, unlockAt: 3, order: 10070 },
-    { type: 'revealSecret', name: 'Reveal Secret',   category: 'Special', effect: 'detect',    target: 'Single', params: {}, unlockAt: 4, order: 101 }
+    { type: 'spiritGuard',  name: 'Spirit Guard',    category: 'Defense', effect: 'protected', target: 'Self',   params: { armor: 3, duration: 1 }, unlockAt: 3, order: 17 },
+    { type: 'spiritMend',   name: 'Spirit Mend',     category: 'Heal',    effect: null,       target: 'Self',   params: { amount: 20 }, unlockAt: 4, order: 10070 },
+    { type: 'revealSecret', name: 'Reveal Secret',   category: 'Special', effect: 'detect',    target: 'Single', params: {}, unlockAt: 2, order: 101 }
   ],
   Shaman: [
     { type: 'lightningBolt', name: 'Lightning Bolt',  category: 'Attack',  effect: null,       target: 'Single', params: { damage: 30 }, unlockAt: 1, order: 1060 },

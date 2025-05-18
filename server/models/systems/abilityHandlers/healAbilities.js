@@ -37,19 +37,50 @@ function handleHeal(actor, target, ability, log, systems) {
   healAmount = Math.floor(healAmount * actor.getHealingModifier());
   
   if (!target.isWarlock) {
-    // Normal healing for non-warlocks
+    // Normal healing
     const actualHeal = Math.min(healAmount, target.maxHp - target.hp);
     target.hp += actualHeal;
+    
     if (actualHeal > 0) {
-      log.push(`${target.name} is healed for ${actualHeal} HP.`);
+      const healLog = {
+        type: 'heal',
+        public: true,
+        targetId: target.id,
+        attackerId: actor.id,
+        heal: actualHeal,
+        message: `${target.name} was healed for ${actualHeal} health.`,
+        privateMessage: `${actor.name} healed you for ${actualHeal} health.`,
+        attackerMessage: `You healed ${target.name} for ${actualHeal} health.`
+      };
+      log.push(healLog);
     } else {
-      log.push(`${target.name} is already at full health.`);
+      const healLog = {
+        type: 'heal_full',
+        public: false,
+        targetId: target.id,
+        attackerId: actor.id,
+        message: '',
+        privateMessage: `${actor.name} tried to heal you, but you're already at full health.`,
+        attackerMessage: `${target.name} is already at full health.`
+      };
+      log.push(healLog);
     }
-  } else { 
-    // Healing a Warlock triggers a special effect
+  } else {
+    // Healing a Warlock
     const actualHeal = Math.min(healAmount, actor.maxHp - actor.hp);
     actor.hp += actualHeal;
-    log.push(`${actor.name} (a Warlock) attempts to heal ${target.name} (also a Warlock), healing themselves for ${actualHeal} HP instead and generating corruption!`);
+    
+    const healLog = {
+      type: 'heal_warlock',
+      public: false,
+      targetId: target.id,
+      attackerId: actor.id,
+      heal: actualHeal,
+      message: '', // No public message
+      privateMessage: `You rejected the healing from ${actor.name}.`,
+      attackerMessage: `You attempted to heal ${target.name} (a Warlock), but healed yourself for ${actualHeal} HP instead.`
+    };
+    log.push(healLog);
     
     // Trigger potential conversion
     systems.warlockSystem.attemptConversion(actor, target, log);

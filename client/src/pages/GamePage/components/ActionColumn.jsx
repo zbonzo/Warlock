@@ -51,6 +51,7 @@ const ActionColumn = ({
   racialSelected,
   bloodRageActive,
   keenSensesActive,
+  players,
   onSetActionType, 
   onSelectTarget,
   onRacialAbilityUse,
@@ -175,7 +176,11 @@ const ActionColumn = ({
           </h2>
           
           {/* Event log */}
-          <EventsLog events={lastEvent.events} />
+          <EventsLog 
+            events={lastEvent.events} 
+            currentPlayerId={me.id}
+            players={players}
+          />
           
           {/* Ready button */}
           {me.isAlive && (
@@ -229,6 +234,12 @@ ActionColumn.propTypes = {
     readyPlayers: PropTypes.array,
     players: PropTypes.array
   }).isRequired,
+    players: PropTypes.arrayOf(
+    PropTypes.shape({
+      id: PropTypes.string.isRequired,
+      name: PropTypes.string.isRequired
+    })
+  ).isRequired,
   unlocked: PropTypes.array.isRequired,
   alivePlayers: PropTypes.array.isRequired,
   monster: PropTypes.object.isRequired,

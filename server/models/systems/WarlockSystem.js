@@ -131,10 +131,22 @@ class WarlockSystem {
     if (Math.random() < finalChance) {
       target.isWarlock = true;
       this.incrementWarlockCount();
-      log.push(`Corruption spreads! ${target.name} has been turned into a Warlock by ${actor.name}!`);
+      
+      // Enhanced log entry
+      const conversionLog = {
+        type: 'corruption',
+        public: true,
+        message: 'Another hero has been corrupted!', // Vague public message
+        targetId: target.id,
+        attackerId: actor.id,
+        privateMessage: 'You were corrupted.', // Simple message for target
+        attackerMessage: `You corrupted ${target.name}.`, // Clear message for warlock
+        moveToEnd: true // Move to end of log for clarity
+      };
+      log.push(conversionLog);
+      
       return true;
     }
-    
     return false;
   }
   

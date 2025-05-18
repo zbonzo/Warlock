@@ -1,6 +1,6 @@
 /**
- * @fileoverview End game page that displays the final results
- * Shows the winner, player teams, and game statistics
+ * @fileoverview Enhanced End game page that displays the final results with complete game history
+ * Shows the winner, player teams, game statistics, and unredacted battle log
  */
 import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
@@ -8,6 +8,7 @@ import { useTheme } from '@contexts/ThemeContext';
 import Confetti from './components/Confetti';
 import PlayerGroup from './components/PlayerGroup';
 import StatsPanel from './components/StatsPanel';
+import HistoryColumn from '@pages/GamePage/components/HistoryColumn';
 import './EndPage.css';
 
 /**
@@ -16,12 +17,14 @@ import './EndPage.css';
  * @param {Object} props - Component props
  * @param {string} props.winner - Which team won ('Good' or 'Evil')
  * @param {Array} props.players - List of all players with their final state
+ * @param {Array} props.eventsLog - Complete game history
  * @param {Function} props.onPlayAgain - Callback when player wants to play again
  * @returns {React.ReactElement} The rendered component
  */
-const EndPage = ({ winner, players, onPlayAgain }) => {
+const EndPage = ({ winner, players, eventsLog = [], onPlayAgain }) => {
   const theme = useTheme();
   const [showConfetti, setShowConfetti] = useState(false);
+  const [showHistory, setShowHistory] = useState(false);
   
   // Show confetti effect when component mounts
   useEffect(() => {
@@ -35,7 +38,7 @@ const EndPage = ({ winner, players, onPlayAgain }) => {
     return () => clearTimeout(timer);
   }, []);
 
-    useEffect(() => {
+  useEffect(() => {
     localStorage.removeItem('lastPlayerName');
   }, []);
   
@@ -105,6 +108,29 @@ const EndPage = ({ winner, players, onPlayAgain }) => {
           
           <StatsPanel stats={stats} />
         </div>
+
+        {/* Game History Toggle */}
+        <div className="history-toggle-container">
+          <button 
+            className="history-toggle-button"
+            onClick={() => setShowHistory(!showHistory)}
+          >
+            {showHistory ? 'Hide' : 'Show'} Complete Game History
+          </button>
+        </div>
+
+        {/* Complete Game History */}
+        {showHistory && eventsLog.length > 0 && (
+          <div className="complete-history-container">
+            <HistoryColumn
+              isVisible={true}
+              eventsLog={eventsLog}
+              currentPlayerId="unredacted" // Special ID for unredacted view
+              players={players}
+              showAllEvents={true} // Show all events without filtering
+            />
+          </div>
+        )}
         
         <button
           className="play-again-button"
@@ -129,6 +155,12 @@ EndPage.propTypes = {
       isAlive: PropTypes.bool.isRequired
     })
   ).isRequired,
+  eventsLog: PropTypes.arrayOf(
+    PropTypes.shape({
+      turn: PropTypes.number.isRequired,
+      events: PropTypes.array.isRequired
+    })
+  ),
   onPlayAgain: PropTypes.func.isRequired
 };
 

@@ -97,26 +97,48 @@ class MonsterController {
     // Don't attack if defeated
     if (this.monster.hp <= 0) return null;
     
-    // Find the target (lowest HP player who isn't invisible)
+    // Find the target
     const target = this.selectTarget();
-
     if (!target) {
-      log.push(`The Monster looks for a target, but no one is visible.`);
+      // Enhanced log for no target found
+      const logEvent = {
+        type: 'monster_no_target',
+        public: true,
+        message: 'The Monster looks around but finds no targets.',
+        privateMessage: 'The Monster looks around but finds no targets.',
+        attackerMessage: 'The Monster looks around but finds no targets.'
+      };
+      log.push(logEvent);
       return null;
     }
-
+    
+    // Check again for invisibility right before attacking
     if (target.hasStatusEffect && target.hasStatusEffect('invisible')) {
-    log.push(`The Monster tries to attack ${target.name}, but they have vanished from sight!`);
-    return null;
+      const logEvent = {
+        type: 'monster_invisible_target',
+        public: true,
+        message: 'The Monster swipes at shadows.',
+        privateMessage: 'The Monster swipes at shadows.',
+        attackerMessage: 'The Monster swipes at shadows.'
+      };
+      log.push(logEvent);
+      return null;
     }
     
     // Calculate damage
     const damage = this.calculateNextAttackDamage();
     
-    // Log attack
-    log.push(`The Monster attacks ${target.name}!`);
+    // Create a general "Monster attacks" message
+    const attackAnnouncement = {
+      type: 'monster_attack_announcement',
+      public: true,
+      message: 'The Monster attacks!',
+      privateMessage: 'The Monster attacks!',
+      attackerMessage: 'The Monster attacks!'
+    };
+    log.push(attackAnnouncement);
     
-    // Apply damage
+    // Apply damage (this will create the personalized damage log)
     combatSystem.applyDamageToPlayer(target, damage, { name: 'The Monster' }, log);
     
     return target;

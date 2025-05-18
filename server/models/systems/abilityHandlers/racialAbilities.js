@@ -61,14 +61,9 @@ function handleAdaptability(actor, target, racialAbility, log, systems) {
   return true;
 }
 
+
 /**
  * Handler for Dwarf's Stone Resolve ability
- * @param {Object} actor - Actor using the ability
- * @param {Object} target - Target of the ability (always self)
- * @param {Object} racialAbility - Racial ability configuration
- * @param {Array} log - Event log to append messages to
- * @param {Object} systems - Game systems
- * @returns {boolean} Whether the ability was successful
  */
 function handleStoneResolve(actor, target, racialAbility, log, systems) {
   if (!actor.racialEffects) {
@@ -76,7 +71,19 @@ function handleStoneResolve(actor, target, racialAbility, log, systems) {
   }
   
   actor.racialEffects.immuneNextDamage = true;
-  log.push(`${actor.name} activates Stone Resolve, gaining immunity to the next damage instance.`);
+  
+  // Create a public log entry for racial ability use
+  const stoneResolveLog = {
+    type: 'racial_ability_use',
+    public: true, // Everyone sees racial ability activations
+    targetId: actor.id,
+    attackerId: actor.id,
+    message: `${actor.name} activates Stone Resolve, gaining immunity to the next damage instance.`,
+    privateMessage: 'You activate Stone Resolve, gaining immunity to the next damage instance.',
+    attackerMessage: 'You activate Stone Resolve, gaining immunity to the next damage instance.'
+  };
+  log.push(stoneResolveLog);
+  
   return true;
 }
 
