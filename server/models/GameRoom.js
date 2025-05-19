@@ -114,6 +114,12 @@ class GameRoom {
     // Assign racial ability
     if (racialAbilities[race]) {
       p.setRacialAbility(racialAbilities[race]);
+
+      // Special setup for Stone Armor (Dwarf)
+      if (race === 'Dwarf') {
+        console.log(`Dwarf ${p.name} starts with Stone Armor: ${p.stoneArmorValue} armor`);
+        console.log(`Total effective armor: ${p.getEffectiveArmor()}`);
+      }
       
       // Double-check Undying for Skeletons - ensure it's properly set up
       if (race === 'Skeleton') {
@@ -645,7 +651,12 @@ class GameRoom {
       racialCooldown: p.racialCooldown,
       level: this.level,
       statusEffects: p.statusEffects,
-      abilityCooldowns: p.abilityCooldowns || {}
+      abilityCooldowns: p.abilityCooldowns || {},
+      stoneArmor: p.stoneArmorIntact ? {
+        active: true,
+        value: p.stoneArmorValue,
+        effectiveArmor: p.getEffectiveArmor()
+      } : null
     }));
   }
 

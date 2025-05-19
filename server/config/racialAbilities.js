@@ -38,15 +38,18 @@ const racialAbilities = {
   },
   
   Dwarf: {
-    type: 'stoneResolve',
-    name: 'Stone Resolve',
-    description: 'Gain immunity to the next damage you would take',
-    usageLimit: 'perGame',
-    maxUses: 1,
+    type: 'stoneArmor',
+    name: 'Stone Armor',
+    description: 'Start with 10 armor that degrades by 1 with each hit taken. Can go negative for increased vulnerability.',
+    usageLimit: 'passive', // Passive ability, always active
+    maxUses: 0,
     cooldown: 0,
-    effect: 'immuneNextDamage',
+    effect: 'stoneArmor',
     target: 'Self',
-    params: {}
+    params: {
+      initialArmor: 10,
+      degradationPerHit: 1
+    }
   },
   
   Elf: {

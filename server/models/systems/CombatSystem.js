@@ -105,15 +105,15 @@ class CombatSystem {
    * @param {boolean} isKeenSensesAttack - Whether this is a Keen Senses attack
    * @returns {boolean} Whether the attack was successful
    */
-/**
- * Apply damage to a player, considering armor and effects
- * @param {Object} target - Target player
- * @param {number} damageAmount - Amount of damage
- * @param {Object} attacker - Attacker (player or monster)
- * @param {Array} log - Event log to append messages to
- * @param {boolean} isKeenSensesAttack - Whether this is a Keen Senses attack
- * @returns {boolean} Whether the attack was successful
- */
+  /**
+   * Apply damage to a player, considering armor and effects
+   * @param {Object} target - Target player
+   * @param {number} damageAmount - Amount of damage
+   * @param {Object} attacker - Attacker (player or monster)
+   * @param {Array} log - Event log to append messages to
+   * @param {boolean} isKeenSensesAttack - Whether this is a Keen Senses attack
+   * @returns {boolean} Whether the attack was successful
+   */
   applyDamageToPlayer(target, damageAmount, attacker, log = [], isKeenSensesAttack = false) {
     if (!target || !target.isAlive) return false;
     
@@ -122,7 +122,15 @@ class CombatSystem {
       return false; // No damage was dealt
     }
     
-    // Calculate damage reduction from armor
+    // Initialize armor degradation info
+    let armorDegradationInfo = null;
+    
+    // Process Stone Armor degradation for Dwarves (before damage calculation)
+    if (target.race === 'Dwarf' && target.stoneArmorIntact) {
+      armorDegradationInfo = target.processStoneArmorDegradation(damageAmount);
+    }
+    
+    // Calculate damage reduction from armor (this now includes the degraded stone armor)
     const finalDamage = target.calculateDamageReduction(damageAmount);
     const reductionPercent = Math.round(((damageAmount - finalDamage) / damageAmount) * 100);
     
@@ -150,6 +158,25 @@ class CombatSystem {
     };
     
     log.push(logEvent);
+    
+    // Add Stone Armor degradation message if applicable
+    if (armorDegradationInfo && armorDegradationInfo.degraded) {
+      const armorLogEvent = {
+        type: 'stone_armor_degradation',
+        public: true,
+        targetId: target.id,
+        message: `${target.name}'s Stone Armor cracks and weakens! (${armorDegradationInfo.oldValue} → ${armorDegradationInfo.newArmorValue})`,
+        privateMessage: `Your Stone Armor degrades from ${armorDegradationInfo.oldValue} to ${armorDegradationInfo.newArmorValue}!`,
+        attackerMessage: `${target.name}'s Stone Armor weakens from your attack!`
+      };
+      
+      if (armorDegradationInfo.destroyed && armorDegradationInfo.newArmorValue <= 0) {
+        armorLogEvent.message = `${target.name}'s Stone Armor is completely shattered! They now take increased damage!`;
+        armorLogEvent.privateMessage = `Your Stone Armor is destroyed! You now take ${Math.abs(armorDegradationInfo.newArmorValue) * 10}% more damage!`;
+      }
+      
+      log.push(armorLogEvent);
+    }
       
     // Handle Keen Senses racial ability for Elves
     if (isKeenSensesAttack) {

@@ -99,37 +99,37 @@ const CLASS_BASE_STATS = {
 const RACE_MODIFIERS = {
   Human: {
     hpMod: 1.1,     // +10% HP
-    armorMod: 0,    // No armor bonus
+    armorMod: 3,    // No armor bonus
     damageMod: 1.1, // +10% damage
     description: "Versatile and adaptable with bonuses to HP and damage"
   },
   Dwarf: {
-    hpMod: 1.0,     // Standard HP
-    armorMod: 2,    // +2 armor
+    hpMod: .2,     // Standard HP
+    armorMod: 3,    // +2 armor
     damageMod: 1.0, // Standard damage
-    description: "Natural armor makes them tough to kill"
+    description: "Stone Armor provides high defense but degrades with each hit"
   },
   Elf: {
     hpMod: 0.9,     // -10% HP
-    armorMod: 0,    // No armor bonus
+    armorMod: 3,    // No armor bonus
     damageMod: 1.2, // +20% damage
     description: "Naturally agile and powerful, but less sturdy"
   },
   Orc: {
     hpMod: 1.2,     // +20% HP
-    armorMod: 0,    // No armor bonus 
+    armorMod: 3,    // No armor bonus 
     damageMod: 1.0, // Standard damage
     description: "Naturally tough with high HP"
   },
   Satyr: {
     hpMod: 1.0,     // Standard HP
-    armorMod: 0,    // No armor bonus
+    armorMod: 3,    // No armor bonus
     damageMod: 1.1, // +10% damage
     description: "Nimble forest dwellers with damage bonuses"
   },
   Skeleton: {
     hpMod: 0.8,     // -20% HP
-    armorMod: 1,    // +1 armor
+    armorMod: 4,    // +1 armor
     damageMod: 1.1, // +10% damage
     description: "Undead with low HP but natural armor and damage"
   }

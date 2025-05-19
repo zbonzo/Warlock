@@ -168,9 +168,25 @@ class StatusEffectManager {
     
     const poison = player.statusEffects.poison;
     
+    // Process Stone Armor degradation for Dwarves (before applying poison damage)
+    let armorDegradationInfo = null;
+    if (player.race === 'Dwarf' && player.stoneArmorIntact) {
+      armorDegradationInfo = player.processStoneArmorDegradation(poison.damage);
+    }
+    
     // Apply poison damage
     player.hp = Math.max(0, player.hp - poison.damage);
     log.push(`${player.name} suffers ${poison.damage} poison damage.`);
+    
+    // Add Stone Armor degradation message if applicable
+    if (armorDegradationInfo && armorDegradationInfo.degraded) {
+      const armorMessage = `${player.name}'s Stone Armor weakens from the poison! (${armorDegradationInfo.oldValue} → ${armorDegradationInfo.newArmorValue})`;
+      log.push(armorMessage);
+      
+      if (armorDegradationInfo.destroyed && armorDegradationInfo.newArmorValue <= 0) {
+        log.push(`${player.name}'s Stone Armor is completely dissolved by the poison!`);
+      }
+    }
     
     // Check if died from poison
     if (player.hp === 0) {

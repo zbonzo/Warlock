@@ -37,6 +37,10 @@ class Player {
     
     // Ability cooldown tracking
     this.abilityCooldowns = {};    // { abilityType: turnsRemaining }
+
+    // Stone Armor tracking
+    this.stoneArmorIntact = false; // Whether the dwarf has stone armor
+    this.stoneArmorValue = 0; // Current stone armor value
   }
   
   /**
@@ -138,27 +142,71 @@ class Player {
   }
   
   /**
-   * Calculate effective armor including protection buffs
+   * Calculate effective armor including protection buffs and stone armor
    * @returns {number} Total armor value
    */
   getEffectiveArmor() {
-    const baseArmor = this.armor || 0;
-    if (this.hasStatusEffect('protected')) {
-      return baseArmor + (this.statusEffects.protected.armor || 0);
+    let totalArmor = this.armor || 0;
+    
+    // Add stone armor for Dwarves
+    if (this.stoneArmorIntact) {
+      totalArmor += this.stoneArmorValue;
     }
-    return baseArmor;
+    
+    // Add protection effect armor
+    if (this.hasStatusEffect('protected')) {
+      totalArmor += (this.statusEffects.protected.armor || 0);
+    }
+    
+    return totalArmor;
   }
   
   /**
-   * Calculate damage reduction from armor
+   * Process Stone Armor degradation when taking any damage
+   * @param {number} damage - Amount of damage being taken (before armor calculation)
+   * @returns {Object} Information about armor degradation
+   */
+  processStoneArmorDegradation(damage) {
+    if (!this.stoneArmorIntact || damage <= 0) {
+      return { degraded: false, newArmorValue: this.stoneArmorValue };
+    }
+    
+    // Degrade stone armor by 1 for each hit
+    const oldValue = this.stoneArmorValue;
+    this.stoneArmorValue -= 1;
+    
+    console.log(`${this.name}'s Stone Armor degrades from ${oldValue} to ${this.stoneArmorValue}`);
+    
+    // Check if stone armor is completely destroyed
+    if (this.stoneArmorValue <= -10) {
+      // Cap negative armor at -10 for balance
+      this.stoneArmorValue = -10;
+    }
+    
+    return { 
+      degraded: true, 
+      oldValue, 
+      newArmorValue: this.stoneArmorValue,
+      destroyed: this.stoneArmorValue <= 0
+    };
+  }
+  
+  /**
+   * Calculate damage reduction from armor (updated to handle negative armor)
    * @param {number} damage - Incoming damage
    * @returns {number} Reduced damage after armor
    */
   calculateDamageReduction(damage) {
     const totalArmor = this.getEffectiveArmor();
-    if (totalArmor <= 0) return damage;
     
-    const reductionPercent = Math.min(1, totalArmor * 0.1); // Cap at 100% reduction
+    if (totalArmor <= 0) {
+      // Negative armor increases damage taken
+      const damageMultiplier = 1 + Math.abs(totalArmor) * 0.1;
+      return Math.floor(damage * damageMultiplier);
+    }
+    
+    // Positive armor reduces damage
+    const reductionPercent = Math.min(0.9, totalArmor * 0.1); // Cap at 90% reduction
     return Math.floor(damage * (1 - reductionPercent));
   }
   
@@ -255,16 +303,24 @@ class Player {
     if (abilityData.usageLimit === 'perGame') {
       this.racialUsesLeft = abilityData.maxUses || 1;
     } else if (abilityData.usageLimit === 'perRound') {
-      // For perRound, we'll reset this each round in GameRoom
       this.racialUsesLeft = abilityData.maxUses || 1;
+    } else if (abilityData.usageLimit === 'passive') {
+      this.racialUsesLeft = 0; // Passive abilities don't have uses
     }
     
     this.racialCooldown = 0;
+    
+    // Special handling for different racial abilities
     if (abilityData.type === 'undying') {
       this.racialEffects = this.racialEffects || {};
       this.racialEffects.resurrect = {
         resurrectedHp: abilityData.params.resurrectedHp || 1
-       };
+      };
+    } else if (abilityData.type === 'stoneArmor') {
+      // Initialize Stone Armor
+      this.stoneArmorIntact = true;
+      this.stoneArmorValue = abilityData.params.initialArmor || 10;
+      console.log(`${this.name} gains Stone Armor with ${this.stoneArmorValue} armor`);
     } else {
       this.racialEffects = {};
     }

@@ -11,8 +11,8 @@ function register(registry) {
   // Human racial ability - Adaptability
   registry.registerRacialAbility('adaptability', handleAdaptability);
   
-  // Dwarf racial ability - Stone Resolve
-  registry.registerRacialAbility('stoneResolve', handleStoneResolve);
+  // Dwarf racial ability - Stone Armor
+  // Passive ability, no handler needed
   
   // Elf racial ability - Keen Senses
   registry.registerRacialAbility('keenSenses', handleKeenSenses);
@@ -61,31 +61,6 @@ function handleAdaptability(actor, target, racialAbility, log, systems) {
   return true;
 }
 
-
-/**
- * Handler for Dwarf's Stone Resolve ability
- */
-function handleStoneResolve(actor, target, racialAbility, log, systems) {
-  if (!actor.racialEffects) {
-    actor.racialEffects = {};
-  }
-  
-  actor.racialEffects.immuneNextDamage = true;
-  
-  // Create a public log entry for racial ability use
-  const stoneResolveLog = {
-    type: 'racial_ability_use',
-    public: true, // Everyone sees racial ability activations
-    targetId: actor.id,
-    attackerId: actor.id,
-    message: `${actor.name} activates Stone Resolve, gaining immunity to the next damage instance.`,
-    privateMessage: 'You activate Stone Resolve, gaining immunity to the next damage instance.',
-    attackerMessage: 'You activate Stone Resolve, gaining immunity to the next damage instance.'
-  };
-  log.push(stoneResolveLog);
-  
-  return true;
-}
 
 /**
  * Handler for Elf's Keen Senses ability
