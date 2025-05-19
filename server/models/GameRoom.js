@@ -346,22 +346,50 @@ updateUnlockedAbilities() {
       log.push(levelUpLog);
       
       this.updateUnlockedAbilities();
-      
-      // Add individual ability unlock messages
-      for (const player of this.players.values()) {
-        if (player.isAlive) {
-          const abilityUnlockLog = {
-            type: 'ability_unlock',
-            public: false,
-            targetId: player.id,
-            message: '',
-            privateMessage: `You gained access to new abilities at level ${this.level}!`,
-            attackerMessage: null
-          };
-          log.push(abilityUnlockLog);
-        }
+
+    // Apply level up bonuses to all living players
+    for (const player of this.players.values()) {
+      if (player.isAlive) {
+        // Full heal
+        const oldHp = player.hp;
+        player.hp = player.maxHp;
+        
+        // 20% HP increase
+        const hpIncrease = Math.floor(player.maxHp * 0.2);
+        player.maxHp += hpIncrease;
+        player.hp = player.maxHp; // Set to new max after increase
+        
+        // 25% damage increase
+        player.damageMod *= 1.25;
+        
+        // Log individual improvements
+        const improvementLog = {
+          type: 'level_up_bonus',
+          public: false,
+          targetId: player.id,
+          message: '',
+          privateMessage: `Level ${this.level} bonuses: Fully healed! Max HP increased by ${hpIncrease}! Damage increased by 25%!`,
+          attackerMessage: null
+        };
+        log.push(improvementLog);
       }
     }
+      
+    // Add individual ability unlock messages
+    for (const player of this.players.values()) {
+      if (player.isAlive) {
+        const abilityUnlockLog = {
+          type: 'ability_unlock',
+          public: false,
+          targetId: player.id,
+          message: '',
+          privateMessage: `You gained access to new abilities at level ${this.level}!`,
+          attackerMessage: null
+        };
+        log.push(abilityUnlockLog);
+      }
+    }
+  }
 
     // Sort log entries - move corruption messages to the end
     const sortedLog = this.sortLogEntries(log);
