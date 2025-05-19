@@ -1,11 +1,11 @@
 /**
- * @fileoverview Player model representing a player in the game
- * Manages player state, abilities, status effects, and racial abilities
+ * @fileoverview Player model with ability cooldown support
+ * Manages player state, abilities, status effects, and cooldowns
  */
 
 /**
  * Player class representing a single player in the game
- * Handles player state, abilities, and effects
+ * Handles player state, abilities, effects, and cooldowns
  */
 class Player {
   /**
@@ -34,6 +34,9 @@ class Player {
     this.racialUsesLeft = 0;       // Number of uses left in the current game
     this.racialCooldown = 0;       // Rounds until ability can be used again
     this.racialEffects = {};       // Active racial ability effects
+    
+    // Ability cooldown tracking
+    this.abilityCooldowns = {};    // { abilityType: turnsRemaining }
   }
   
   /**
@@ -62,6 +65,76 @@ class Player {
     if (this.hasStatusEffect(effectName)) {
       delete this.statusEffects[effectName];
     }
+  }
+  
+  /**
+   * Check if an ability is on cooldown
+   * @param {string} abilityType - Type of ability to check
+   * @returns {boolean} Whether the ability is on cooldown
+   */
+  isAbilityOnCooldown(abilityType) {
+    return this.abilityCooldowns[abilityType] && this.abilityCooldowns[abilityType] > 0;
+  }
+  
+  /**
+   * Get remaining cooldown for an ability
+   * @param {string} abilityType - Type of ability to check
+   * @returns {number} Turns remaining on cooldown (0 if not on cooldown)
+   */
+  getAbilityCooldown(abilityType) {
+    return this.abilityCooldowns[abilityType] || 0;
+  }
+  
+  /**
+   * Put an ability on cooldown
+   * @param {string} abilityType - Type of ability
+   * @param {number} cooldownTurns - Number of turns for cooldown
+   */
+  putAbilityOnCooldown(abilityType, cooldownTurns) {
+    if (cooldownTurns > 0) {
+      this.abilityCooldowns[abilityType] = cooldownTurns;
+    }
+  }
+  
+  /**
+   * Check if an ability can be used (not on cooldown and unlocked)
+   * @param {string} abilityType - Type of ability to check
+   * @returns {boolean} Whether the ability can be used
+   */
+  canUseAbility(abilityType) {
+    // Check if ability is unlocked
+    const hasAbility = this.unlocked.some(a => a.type === abilityType);
+    if (!hasAbility) return false;
+    
+    // Check if ability is on cooldown
+    if (this.isAbilityOnCooldown(abilityType)) return false;
+    
+    return true;
+  }
+  
+  /**
+   * Process ability cooldowns at the end of a round
+   * Decrements all active cooldowns by 1
+   */
+  processAbilityCooldowns() {
+    for (const abilityType in this.abilityCooldowns) {
+      if (this.abilityCooldowns[abilityType] > 0) {
+        this.abilityCooldowns[abilityType]--;
+        
+        // Remove cooldown if it reaches 0
+        if (this.abilityCooldowns[abilityType] <= 0) {
+          delete this.abilityCooldowns[abilityType];
+        }
+      }
+    }
+  }
+  
+  /**
+   * Get list of abilities that are ready to use (not on cooldown)
+   * @returns {Array} Array of available ability objects
+   */
+  getAvailableAbilities() {
+    return this.unlocked.filter(ability => this.canUseAbility(ability.type));
   }
   
   /**

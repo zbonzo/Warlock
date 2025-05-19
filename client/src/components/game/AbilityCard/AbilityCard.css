@@ -1,5 +1,3 @@
-/* AbilityCard Component Styles */
-
 .ability-card {
     border-width: 2px;
     border-style: solid;
@@ -10,12 +8,20 @@
     transition: all 0.2s ease;
     font-family: var(--font-body);
     background-color: white;
+    position: relative;
   }
   
   .ability-card.racial-ability.unavailable {
     background-color: #f5f5f5;
     opacity: 0.7;
     cursor: not-allowed;
+  }
+  
+  .ability-card.unavailable {
+    background-color: #f5f5f5;
+    opacity: 0.6;
+    cursor: not-allowed;
+    border-color: #ccc;
   }
   
   .ability-card.selected {
@@ -41,6 +47,7 @@
     justify-content: center;
     font-size: 14px;
     font-weight: bold;
+    z-index: 2;
   }
   
   .ability-header {
@@ -76,6 +83,71 @@
     border-radius: 4px;
     color: #555;
     min-height: 40px;
+  }
+  
+  /* Cooldown styles */
+  .ability-cooldown {
+    margin-top: 8px;
+    padding: 6px 8px;
+    background-color: rgba(255, 69, 0, 0.1);
+    border-radius: 4px;
+    border: 1px solid rgba(255, 69, 0, 0.3);
+  }
+  
+  .cooldown-indicator {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  
+  .cooldown-icon {
+    font-size: 16px;
+  }
+  
+  .cooldown-text {
+    font-size: 14px;
+    font-weight: bold;
+    color: #ff4500;
+  }
+  
+  .ability-cooldown-info {
+    margin-top: 8px;
+    padding: 4px 8px;
+    background-color: rgba(0, 0, 0, 0.05);
+    border-radius: 4px;
+    border: 1px dashed #ddd;
+  }
+  
+  .cooldown-info-text {
+    font-size: 12px;
+    color: #666;
+    font-style: italic;
+  }
+  
+  /* Unavailable overlay */
+  .ability-unavailable-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.6);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1;
+  }
+  
+  .unavailable-reason {
+    background-color: rgba(255, 69, 0, 0.9);
+    color: white;
+    padding: 6px 12px;
+    border-radius: 4px;
+    font-weight: bold;
+    font-size: 14px;
+    text-align: center;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
   }
   
   .racial-status {
@@ -118,4 +190,43 @@
   .ability-card:focus {
     outline: none;
     box-shadow: 0 0 0 2px rgba(74, 44, 130, 0.5);
+  }
+  
+  /* Disabled interaction for unavailable abilities */
+  .ability-card.unavailable:hover {
+    transform: none;
+    box-shadow: none;
+  }
+  
+  /* Cooldown animation */
+  @keyframes cooldownPulse {
+    0% { opacity: 0.6; }
+    50% { opacity: 0.9; }
+    100% { opacity: 0.6; }
+  }
+  
+  .ability-card.unavailable .cooldown-indicator {
+    animation: cooldownPulse 2s infinite;
+  }
+  
+  /* Responsive adjustments */
+  @media (max-width: 768px) {
+    .ability-card {
+      margin: 6px 0;
+      padding: 8px;
+    }
+    
+    .ability-description {
+      font-size: 13px;
+      min-height: 35px;
+    }
+    
+    .cooldown-text {
+      font-size: 13px;
+    }
+    
+    .unavailable-reason {
+      font-size: 13px;
+      padding: 4px 10px;
+    }
   }

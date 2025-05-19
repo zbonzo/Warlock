@@ -1,6 +1,6 @@
 /**
- * @fileoverview Card component that displays game abilities with their properties
- * and visual indicators for selection state and availability.
+ * @fileoverview Enhanced AbilityCard component with cooldown support
+ * Displays abilities with cooldown information and visual indicators
  */
 import React from 'react';
 import PropTypes from 'prop-types';
@@ -8,7 +8,7 @@ import { useTheme } from '@contexts/ThemeContext';
 import './AbilityCard.css';
 
 /**
- * AbilityCard component renders ability information in a card format
+ * AbilityCard component renders ability information with cooldown support
  * 
  * @param {Object} props - Component props
  * @param {Object} props.ability - The ability data to display
@@ -18,6 +18,7 @@ import './AbilityCard.css';
  * @param {string} [props.raceName=null] - The name of the race (for racial abilities)
  * @param {number} [props.usesLeft=null] - Number of uses remaining (for racial abilities)
  * @param {number} [props.cooldown=null] - Cooldown turns remaining (for racial abilities)
+ * @param {number} [props.abilityCooldown=0] - Class ability cooldown remaining
  * @returns {React.ReactElement|null} The rendered component or null if unavailable
  */
 const AbilityCard = ({ 
@@ -27,7 +28,8 @@ const AbilityCard = ({
   isRacial = false, 
   raceName = null,
   usesLeft = null,
-  cooldown = null
+  cooldown = null,
+  abilityCooldown = 0
 }) => {
   const theme = useTheme();
   
@@ -36,8 +38,25 @@ const AbilityCard = ({
     return null;
   }
   
-  // Determine if ability is available (for racial)
-  const isAvailable = isRacial ? (usesLeft > 0 && cooldown === 0) : true;
+  // Determine if ability is available
+  let isAvailable = true;
+  let unavailableReason = null;
+  
+  if (isRacial) {
+    // Racial ability availability
+    isAvailable = usesLeft > 0 && cooldown === 0;
+    if (usesLeft <= 0) {
+      unavailableReason = 'No uses remaining';
+    } else if (cooldown > 0) {
+      unavailableReason = `${cooldown} turn${cooldown > 1 ? 's' : ''} remaining`;
+    }
+  } else {
+    // Class ability availability (check cooldown)
+    isAvailable = abilityCooldown === 0;
+    if (abilityCooldown > 0) {
+      unavailableReason = `${abilityCooldown} turn${abilityCooldown > 1 ? 's' : ''} remaining`;
+    }
+  }
   
   // Get the right color based on ability type
   const cardColor = isRacial 
@@ -47,10 +66,17 @@ const AbilityCard = ({
   // For racial abilities, get status message
   const racialStatus = getRacialStatus(usesLeft, cooldown);
   
+  // Handle click
+  const handleClick = () => {
+    if (isAvailable) {
+      onSelect(ability.type);
+    }
+  };
+  
   return (
     <div 
       className={`ability-card ${isRacial ? 'racial-ability' : ''} ${selected ? 'selected' : ''} ${!isAvailable ? 'unavailable' : ''}`}
-      onClick={() => isAvailable && onSelect(ability.type)}
+      onClick={handleClick}
     >
       <div className="ability-header" style={{ backgroundColor: cardColor }}>
         <span className="ability-title">
@@ -66,6 +92,27 @@ const AbilityCard = ({
         {getEffectDescription(ability, isRacial)}
       </div>
       
+      {/* Cooldown indicator for class abilities */}
+      {!isRacial && abilityCooldown > 0 && (
+        <div className="ability-cooldown">
+          <div className="cooldown-indicator">
+            <span className="cooldown-icon">⏳</span>
+            <span className="cooldown-text">
+              Cooldown: {abilityCooldown} turn{abilityCooldown > 1 ? 's' : ''}
+            </span>
+          </div>
+        </div>
+      )}
+      
+      {/* Base cooldown info for class abilities (when not on cooldown) */}
+      {!isRacial && abilityCooldown === 0 && ability.cooldown > 0 && (
+        <div className="ability-cooldown-info">
+          <span className="cooldown-info-text">
+            Cooldown: {ability.cooldown} turn{ability.cooldown > 1 ? 's' : ''}
+          </span>
+        </div>
+      )}
+      
       {/* Racial ability status info */}
       {isRacial && (
         <div className="racial-status">
@@ -78,6 +125,15 @@ const AbilityCard = ({
               {racialStatus}
             </div>
           )}
+        </div>
+      )}
+      
+      {/* Unavailable overlay */}
+      {!isAvailable && (
+        <div className="ability-unavailable-overlay">
+          <div className="unavailable-reason">
+            {unavailableReason}
+          </div>
         </div>
       )}
     </div>
@@ -247,14 +303,16 @@ AbilityCard.propTypes = {
     target: PropTypes.string,
     description: PropTypes.string,
     params: PropTypes.object,
-    usageLimit: PropTypes.string
+    usageLimit: PropTypes.string,
+    cooldown: PropTypes.number
   }).isRequired,
   selected: PropTypes.bool.isRequired,
   onSelect: PropTypes.func.isRequired,
   isRacial: PropTypes.bool,
   raceName: PropTypes.string,
   usesLeft: PropTypes.number,
-  cooldown: PropTypes.number
+  cooldown: PropTypes.number,
+  abilityCooldown: PropTypes.number
 };
 
 export default AbilityCard;

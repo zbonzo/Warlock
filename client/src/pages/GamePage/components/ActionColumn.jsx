@@ -125,6 +125,7 @@ const ActionColumn = ({
                     ability={ability}
                     selected={actionType === ability.type}
                     onSelect={onSetActionType}
+                    abilityCooldown={me.abilityCooldowns?.[ability.type] || 0}
                   />
                 ))}
               </div>

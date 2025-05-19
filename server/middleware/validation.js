@@ -139,6 +139,44 @@ const validateAction = (socket, gameCode, actionType, targetId) => {
 
   return true;
 };
+/**
+ * Validate action with cooldown checks
+ * @param {Object} socket - Client socket
+ * @param {string} gameCode - Game code
+ * @param {string} actionType - Action type
+ * @param {string} targetId - Target ID
+ * @returns {boolean} Whether the action is valid
+ */
+const validateActionWithCooldown = (socket, gameCode, actionType, targetId) => {
+  const game = games.get(gameCode);
+  const player = game.players.get(socket.id);
+
+  // Check if action type is valid for this player
+  const validAction = player.unlocked.some(a => a.type === actionType);
+  if (!validAction) {
+    socket.emit('errorMessage', { message: 'Invalid action type.' });
+    return false;
+  }
+
+  // Check if ability is on cooldown
+  if (player.isAbilityOnCooldown && player.isAbilityOnCooldown(actionType)) {
+    const cooldownRemaining = player.getAbilityCooldown(actionType);
+    socket.emit('errorMessage', { 
+      message: `${actionType} is on cooldown for ${cooldownRemaining} more turn${cooldownRemaining > 1 ? 's' : ''}.`
+    });
+    return false;
+  }
+
+  // Validate target exists
+  if (targetId !== '__monster__') {
+    if (!game.players.has(targetId) || !game.players.get(targetId).isAlive) {
+      socket.emit('errorMessage', { message: 'Invalid target.' });
+      return false;
+    }
+  }
+
+  return true;
+};
 
 module.exports = {
   validateGame,
@@ -146,5 +184,5 @@ module.exports = {
   validateGameState,
   validateHost,
   validatePlayerName,
-  validateAction
+  validateAction: validateActionWithCooldown // Replace the old validateAction
 };

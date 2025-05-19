@@ -1,6 +1,6 @@
 /**
- * @fileoverview Game room model that manages game state and coordinates systems
- * Core class for game logic processing and state management
+ * @fileoverview Game room model with cooldown support
+ * Manages game state, players, and coordinates systems with ability cooldowns
  */
 const Player = require('./Player');
 const classAbilities = require('../config/classAbilities');
@@ -9,7 +9,7 @@ const { calculateStats } = require('../config/balancing');
 const SystemsFactory = require('./systems/SystemsFactory');
 
 /**
- * GameRoom class represents a single game instance
+ * GameRoom class represents a single game instance with cooldown support
  * Manages game state, players, and coordinating game systems
  */
 class GameRoom {
@@ -141,7 +141,7 @@ class GameRoom {
   }
 
   /**
-   * Add a player action to the pending actions queue
+   * Add a player action to the pending actions queue (with cooldown validation)
    * @param {string} actorId - Player performing the action
    * @param {string} actionType - Type of action
    * @param {string} targetId - Target of the action
@@ -159,6 +159,12 @@ class GameRoom {
     // Find the ability being used
     const ability = actor.unlocked.find(a => a.type === actionType);
     if (!ability) return false; // Ability not found or not unlocked
+    
+    // Check if ability is on cooldown
+    if (actor.isAbilityOnCooldown(actionType)) {
+      console.log(`Player ${actor.name} tried to use ${actionType} but it's on cooldown for ${actor.getAbilityCooldown(actionType)} more turns`);
+      return false; // Ability is on cooldown
+    }
     
     // Check if our registry knows this ability type
     if (!this.systems.abilityRegistry.hasClassAbility(actionType)) {
@@ -179,6 +185,11 @@ class GameRoom {
         
         if (!finalTargetId) return false; // No valid redirect target
       }
+    }
+    
+    // Put ability on cooldown
+    if (ability.cooldown > 0) {
+      actor.putAbilityOnCooldown(actionType, ability.cooldown);
     }
     
     // Add the action to pending actions
@@ -215,7 +226,7 @@ class GameRoom {
     if (targetId !== '__monster__' && targetId !== actorId) {
       const targetPlayer = this.players.get(targetId);
       if (!targetPlayer || !targetPlayer.isAlive) return false; // Invalid player target
-      if (targetPlayer.hasStatusEffect('invisible')) {
+      if (targetPlayer.hasStatusEffect && targetPlayer.hasStatusEffect('invisible')) {
         finalTargetId = this.systems.gameStateUtils.getRandomTarget(actorId, { 
           excludeIds: [targetId], 
           onlyPlayers: true 
@@ -234,33 +245,33 @@ class GameRoom {
     return true;
   }
 
-/**
- * Update player unlocked abilities based on current level
- * Called after level up
- */
-updateUnlockedAbilities() {
-  for (const player of this.players.values()) {
-    if (!player.abilities || !player.abilities.length) continue;
-    
-    // Check all abilities to see if they should be unlocked at the current level
-    const newlyUnlocked = [];
-    
-    for (const ability of player.abilities) {
-      const alreadyUnlocked = player.unlocked.some(a => a.type === ability.type);
+  /**
+   * Update player unlocked abilities based on current level
+   * Called after level up
+   */
+  updateUnlockedAbilities() {
+    for (const player of this.players.values()) {
+      if (!player.abilities || !player.abilities.length) continue;
       
-      if (ability.unlockAt <= this.level && !alreadyUnlocked) {
-        // Create a copy to avoid reference issues
-        const abilityCopy = { ...ability };
-        player.unlocked.push(abilityCopy);
-        newlyUnlocked.push(ability.name);
+      // Check all abilities to see if they should be unlocked at the current level
+      const newlyUnlocked = [];
+      
+      for (const ability of player.abilities) {
+        const alreadyUnlocked = player.unlocked.some(a => a.type === ability.type);
+        
+        if (ability.unlockAt <= this.level && !alreadyUnlocked) {
+          // Create a copy to avoid reference issues
+          const abilityCopy = { ...ability };
+          player.unlocked.push(abilityCopy);
+          newlyUnlocked.push(ability.name);
+        }
+      }
+      
+      if (newlyUnlocked.length > 0) {
+        console.log(`Player ${player.name} unlocked abilities: ${newlyUnlocked.join(', ')}`);
       }
     }
-    
-    if (newlyUnlocked.length > 0) {
-      console.log(`Player ${player.name} unlocked abilities: ${newlyUnlocked.join(', ')}`);
-    }
   }
-}
 
   /**
    * Get a list of currently alive players
@@ -283,19 +294,17 @@ updateUnlockedAbilities() {
   }
 
   /**
-   * Process a game round
+   * Process a game round (updated to handle cooldowns)
    * @returns {Object} Round result with events and state updates
    */
-  /**
- * Process a game round
- * @returns {Object} Round result with events and state updates
- */
   processRound() {
     const log = [];
     
-    // Reset per-round racial ability uses for all players
+    // Reset per-round racial ability uses and process cooldowns for all players
     for (let player of this.players.values()) {
       player.resetRacialPerRoundUses();
+      // Process ability cooldowns
+      player.processAbilityCooldowns();
     }
 
     // Process racial abilities first
@@ -347,49 +356,49 @@ updateUnlockedAbilities() {
       
       this.updateUnlockedAbilities();
 
-    // Apply level up bonuses to all living players
-    for (const player of this.players.values()) {
-      if (player.isAlive) {
-        // Full heal
-        const oldHp = player.hp;
-        player.hp = player.maxHp;
+      // Apply level up bonuses to all living players
+      for (const player of this.players.values()) {
+        if (player.isAlive) {
+          // Full heal
+          const oldHp = player.hp;
+          player.hp = player.maxHp;
+          
+          // 20% HP increase
+          const hpIncrease = Math.floor(player.maxHp * 0.2);
+          player.maxHp += hpIncrease;
+          player.hp = player.maxHp; // Set to new max after increase
+          
+          // 25% damage increase
+          player.damageMod *= 1.25;
+          
+          // Log individual improvements
+          const improvementLog = {
+            type: 'level_up_bonus',
+            public: false,
+            targetId: player.id,
+            message: '',
+            privateMessage: `Level ${this.level} bonuses: Fully healed! Max HP increased by ${hpIncrease}! Damage increased by 25%!`,
+            attackerMessage: null
+          };
+          log.push(improvementLog);
+        }
+      }
         
-        // 20% HP increase
-        const hpIncrease = Math.floor(player.maxHp * 0.2);
-        player.maxHp += hpIncrease;
-        player.hp = player.maxHp; // Set to new max after increase
-        
-        // 25% damage increase
-        player.damageMod *= 1.25;
-        
-        // Log individual improvements
-        const improvementLog = {
-          type: 'level_up_bonus',
-          public: false,
-          targetId: player.id,
-          message: '',
-          privateMessage: `Level ${this.level} bonuses: Fully healed! Max HP increased by ${hpIncrease}! Damage increased by 25%!`,
-          attackerMessage: null
-        };
-        log.push(improvementLog);
+      // Add individual ability unlock messages
+      for (const player of this.players.values()) {
+        if (player.isAlive) {
+          const abilityUnlockLog = {
+            type: 'ability_unlock',
+            public: false,
+            targetId: player.id,
+            message: '',
+            privateMessage: `You gained access to new abilities at level ${this.level}!`,
+            attackerMessage: null
+          };
+          log.push(abilityUnlockLog);
+        }
       }
     }
-      
-    // Add individual ability unlock messages
-    for (const player of this.players.values()) {
-      if (player.isAlive) {
-        const abilityUnlockLog = {
-          type: 'ability_unlock',
-          public: false,
-          targetId: player.id,
-          message: '',
-          privateMessage: `You gained access to new abilities at level ${this.level}!`,
-          attackerMessage: null
-        };
-        log.push(abilityUnlockLog);
-      }
-    }
-  }
 
     // Sort log entries - move corruption messages to the end
     const sortedLog = this.sortLogEntries(log);
@@ -475,6 +484,7 @@ updateUnlockedAbilities() {
       };
     });
   }
+
   /**
    * Process all pending racial abilities
    * @param {Array} log - Event log to append messages to
@@ -510,7 +520,6 @@ updateUnlockedAbilities() {
     
     this.pendingRacialActions = [];
   }
-
 
   /**
    * Process all pending player actions
@@ -612,8 +621,9 @@ updateUnlockedAbilities() {
     // Clear the pending actions queue
     this.pendingActions = [];
   }
+
   /**
-   * Get info about all players for client updates
+   * Get info about all players for client updates (including cooldowns)
    * @returns {Array} Array of player info objects
    */
   getPlayersInfo() {
@@ -634,69 +644,70 @@ updateUnlockedAbilities() {
       racialUsesLeft: p.racialUsesLeft,
       racialCooldown: p.racialCooldown,
       level: this.level,
-      statusEffects: p.statusEffects
+      statusEffects: p.statusEffects,
+      abilityCooldowns: p.abilityCooldowns || {}
     }));
   }
 
-/**
- * Transfer player ID when they reconnect
- * @param {string} oldId - Old socket ID
- * @param {string} newId - New socket ID
- * @returns {boolean} Whether the transfer was successful
- */
-transferPlayerId(oldId, newId) {
-  // Check if the old ID exists
-  if (!this.players.has(oldId)) {
-    return false;
+  /**
+   * Transfer player ID when they reconnect
+   * @param {string} oldId - Old socket ID
+   * @param {string} newId - New socket ID
+   * @returns {boolean} Whether the transfer was successful
+   */
+  transferPlayerId(oldId, newId) {
+    // Check if the old ID exists
+    if (!this.players.has(oldId)) {
+      return false;
+    }
+    
+    // Get the player
+    const player = this.players.get(oldId);
+    
+    // Remove from old ID
+    this.players.delete(oldId);
+    
+    // Update player's ID
+    player.id = newId;
+    
+    // Add to new ID
+    this.players.set(newId, player);
+    
+    // Update host if needed
+    if (this.hostId === oldId) {
+      this.hostId = newId;
+    }
+    
+    // Also check and update pending actions
+    this.pendingActions = this.pendingActions.map(action => {
+      if (action.actorId === oldId) {
+        action.actorId = newId;
+      }
+      if (action.targetId === oldId) {
+        action.targetId = newId;
+      }
+      return action;
+    });
+    
+    // Update pending racial actions
+    this.pendingRacialActions = this.pendingRacialActions.map(action => {
+      if (action.actorId === oldId) {
+        action.actorId = newId;
+      }
+      if (action.targetId === oldId) {
+        action.targetId = newId;
+      }
+      return action;
+    });
+    
+    // Update ready players set
+    if (this.nextReady.has(oldId)) {
+      this.nextReady.delete(oldId);
+      this.nextReady.add(newId);
+    }
+    
+    return true;
   }
-  
-  // Get the player
-  const player = this.players.get(oldId);
-  
-  // Remove from old ID
-  this.players.delete(oldId);
-  
-  // Update player's ID
-  player.id = newId;
-  
-  // Add to new ID
-  this.players.set(newId, player);
-  
-  // Update host if needed
-  if (this.hostId === oldId) {
-    this.hostId = newId;
-  }
-  
-  // Also check and update pending actions
-  this.pendingActions = this.pendingActions.map(action => {
-    if (action.actorId === oldId) {
-      action.actorId = newId;
-    }
-    if (action.targetId === oldId) {
-      action.targetId = newId;
-    }
-    return action;
-  });
-  
-  // Update pending racial actions
-  this.pendingRacialActions = this.pendingRacialActions.map(action => {
-    if (action.actorId === oldId) {
-      action.actorId = newId;
-    }
-    if (action.targetId === oldId) {
-      action.targetId = newId;
-    }
-    return action;
-  });
-  
-  // Update ready players set
-  if (this.nextReady.has(oldId)) {
-    this.nextReady.delete(oldId);
-    this.nextReady.add(newId);
-  }
-  
-  return true;
-}
 }
 
 module.exports = { GameRoom, classAbilities };
