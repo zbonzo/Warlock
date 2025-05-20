@@ -3,10 +3,9 @@
  * Manages game state, players, and coordinates systems with ability cooldowns
  */
 const Player = require('./Player');
-const classAbilities = require('../config/classAbilities');
-const racialAbilities = require('../config/racialAbilities');
-const { calculateStats } = require('../config/balancing');
+const config = require('@config');
 const SystemsFactory = require('./systems/SystemsFactory');
+const logger = require('@utils/logger');
 
 /**
  * GameRoom class represents a single game instance with cooldown support
@@ -29,12 +28,12 @@ class GameRoom {
     this.pendingRacialActions = [];
     this.nextReady = new Set();
 
-    // Monster setup
+    // Monster setup from config
     this.monster = {
-      hp: 100,
-      maxHp: 100,
-      baseDmg: 10,
-      age: 0
+      hp: config.gameBalance.monster.baseHp,
+      maxHp: config.gameBalance.monster.baseHp,
+      baseDmg: config.gameBalance.monster.baseDamage,
+      age: config.gameBalance.monster.baseAge
     };
     
     // Initialize systems using SystemsFactory
@@ -48,7 +47,7 @@ class GameRoom {
    * @returns {boolean} Success status
    */
   addPlayer(id, name) {
-    if (this.started || this.players.size >= 20) return false;
+    if (this.started || this.players.size >= config.maxPlayers) return false;
     
     const p = new Player(id, name);
     this.players.set(id, p);
@@ -92,12 +91,15 @@ class GameRoom {
     p.race = race;
     p.class = cls;
     
-    // Apply abilities list from class definition
-    p.abilities = (classAbilities[cls] || []).map(a => ({...a}));
+    // Apply abilities list from class definition using config
+    p.abilities = (config.classAbilities[cls] || []).map(a => ({...a}));
     p.unlocked = p.abilities.filter(a => a.unlockAt <= this.level);
     
-    // Apply racial and class stat modifications
-    const stats = calculateStats(race, cls);
+    // Apply racial and class stat modifications from gameBalance config
+    const stats = config.gameBalance.calculateStats ? 
+      config.gameBalance.calculateStats(race, cls) : 
+      null;
+      
     if (stats) {
       p.maxHp = stats.maxHp;
       p.armor = stats.armor;
@@ -107,32 +109,34 @@ class GameRoom {
       p.maxHp = 80;
       p.armor = 0;
       p.damageMod = 1.0;
+      logger.warn(`Invalid race/class combination: ${race}/${cls} for player ${p.name}`);
     }
     
     p.hp = p.maxHp; // Set current HP to max HP
     
-    // Assign racial ability
-    if (racialAbilities[race]) {
-      p.setRacialAbility(racialAbilities[race]);
+    // Assign racial ability from config
+    const racialAbility = config.racialAbilities[race];
+    if (racialAbility) {
+      p.setRacialAbility(racialAbility);
 
       // Special setup for Stone Armor (Dwarf)
       if (race === 'Dwarf') {
-        console.log(`Dwarf ${p.name} starts with Stone Armor: ${p.stoneArmorValue} armor`);
-        console.log(`Total effective armor: ${p.getEffectiveArmor()}`);
+        logger.debug(`Dwarf ${p.name} starts with Stone Armor: ${p.stoneArmorValue} armor`);
+        logger.debug(`Total effective armor: ${p.getEffectiveArmor()}`);
       }
       
       // Double-check Undying for Skeletons - ensure it's properly set up
       if (race === 'Skeleton') {
-        console.log(`Skeleton racial ability set for ${p.name}:`, p.racialEffects);
+        logger.debug(`Skeleton racial ability set for ${p.name}:`, p.racialEffects);
         
         // If not set correctly, set it manually
         if (!p.racialEffects || !p.racialEffects.resurrect) {
-          console.log(`Manually setting up Undying for ${p.name}`);
+          logger.debug(`Manually setting up Undying for ${p.name}`);
           p.racialEffects = p.racialEffects || {};
           p.racialEffects.resurrect = {
-            resurrectedHp: racialAbilities[race].params.resurrectedHp || 1
+            resurrectedHp: racialAbility.params.resurrectedHp || 1
           };
-          console.log(`Undying now set:`, p.racialEffects);
+          logger.debug(`Undying now set:`, p.racialEffects);
         }
       }
     }
@@ -168,13 +172,13 @@ class GameRoom {
     
     // Check if ability is on cooldown
     if (actor.isAbilityOnCooldown(actionType)) {
-      console.log(`Player ${actor.name} tried to use ${actionType} but it's on cooldown for ${actor.getAbilityCooldown(actionType)} more turns`);
+      logger.debug(`Player ${actor.name} tried to use ${actionType} but it's on cooldown for ${actor.getAbilityCooldown(actionType)} more turns`);
       return false; // Ability is on cooldown
     }
     
     // Check if our registry knows this ability type
     if (!this.systems.abilityRegistry.hasClassAbility(actionType)) {
-      console.warn(`Unknown ability type: ${actionType}`);
+      logger.warn(`Unknown ability type: ${actionType}`);
       return false;
     }
     
@@ -224,7 +228,7 @@ class GameRoom {
     
     // Check if our registry knows this racial ability type
     if (!actor.racialAbility || !this.systems.abilityRegistry.hasRacialAbility(actor.racialAbility.type)) {
-      console.warn(`Unknown racial ability type: ${actor.racialAbility?.type}`);
+      logger.warn(`Unknown racial ability type: ${actor.racialAbility?.type}`);
       return false;
     }
     
@@ -274,7 +278,7 @@ class GameRoom {
       }
       
       if (newlyUnlocked.length > 0) {
-        console.log(`Player ${player.name} unlocked abilities: ${newlyUnlocked.join(', ')}`);
+        logger.info(`Player ${player.name} unlocked abilities: ${newlyUnlocked.join(', ')}`);
       }
     }
   }
@@ -349,13 +353,14 @@ class GameRoom {
     
     // Handle level-up
     if (this.level > oldLevel) {
-      console.log(`Game level up: ${oldLevel} -> ${this.level}`);
+      logger.info(`Game level up: ${oldLevel} -> ${this.level}`);
       
+      // Use config for level up message
       const levelUpLog = {
         type: 'level_up',
         public: true,
-        message: `The party has advanced to level ${this.level}!`,
-        privateMessage: `You've reached level ${this.level}! New abilities await.`,
+        message: config.messages.getEvent('levelUp', { level: this.level }),
+        privateMessage: config.messages.success.newAbilitiesUnlocked.replace('{level}', this.level),
         attackerMessage: null
       };
       log.push(levelUpLog);
@@ -369,13 +374,13 @@ class GameRoom {
           const oldHp = player.hp;
           player.hp = player.maxHp;
           
-          // 20% HP increase
-          const hpIncrease = Math.floor(player.maxHp * 0.2);
+          // Apply HP increase from config
+          const hpIncrease = Math.floor(player.maxHp * config.gameBalance.player.levelUp.hpIncrease);
           player.maxHp += hpIncrease;
           player.hp = player.maxHp; // Set to new max after increase
           
-          // 25% damage increase
-          player.damageMod *= 1.25;
+          // Apply damage increase from config
+          player.damageMod *= config.gameBalance.player.levelUp.damageIncrease;
           
           // Log individual improvements
           const improvementLog = {
@@ -383,7 +388,10 @@ class GameRoom {
             public: false,
             targetId: player.id,
             message: '',
-            privateMessage: `Level ${this.level} bonuses: Fully healed! Max HP increased by ${hpIncrease}! Damage increased by 25%!`,
+            privateMessage: config.messages.getSuccess('bonusesApplied', {
+              level: this.level,
+              hpIncrease: hpIncrease
+            }),
             attackerMessage: null
           };
           log.push(improvementLog);
@@ -398,7 +406,7 @@ class GameRoom {
             public: false,
             targetId: player.id,
             message: '',
-            privateMessage: `You gained access to new abilities at level ${this.level}!`,
+            privateMessage: config.messages.success.newAbilitiesUnlocked.replace('{level}', this.level),
             attackerMessage: null
           };
           log.push(abilityUnlockLog);
@@ -419,11 +427,11 @@ class GameRoom {
     // Process log for clients
     const processedLog = this.processLogForClients(sortedLog);
 
-      // LOG THE EVENTS FOR FRONTEND TEAM
-      console.log('=== EVENTS LOG FOR FRONTEND ===');
-      console.log(`Game: ${this.code}, Round: ${this.round}`);
-      console.log(JSON.stringify(processedLog, null, 2));
-      console.log('=== END EVENTS LOG ===');
+    // LOG THE EVENTS FOR FRONTEND TEAM
+    logger.debug('=== EVENTS LOG FOR FRONTEND ===');
+    logger.debug(`Game: ${this.code}, Round: ${this.round}`);
+    logger.debug(JSON.stringify(processedLog.slice(0, 5), null, 2) + '... and more');
+    logger.debug('=== END EVENTS LOG ===');
 
     return {
       eventsLog: processedLog,
@@ -519,7 +527,7 @@ class GameRoom {
             log
           );
         } catch (error) {
-          console.error(`Error executing racial ability ${action.racialType}:`, error);
+          logger.error(`Error executing racial ability ${action.racialType}:`, error);
         }
       }
     }
@@ -544,9 +552,10 @@ class GameRoom {
       
       if (!ability1 || !ability2) return 0;
       
-      // Default to high order if order is undefined
-      const order1 = typeof ability1.order === 'number' ? ability1.order : 999999;
-      const order2 = typeof ability2.order === 'number' ? ability2.order : 999999;
+      // Use default order from config if order is undefined
+      const defaultOrder = config.gameBalance.combat.defaultOrders.special;
+      const order1 = typeof ability1.order === 'number' ? ability1.order : defaultOrder;
+      const order2 = typeof ability2.order === 'number' ? ability2.order : defaultOrder;
       
       return order1 - order2;
     });
@@ -561,7 +570,7 @@ class GameRoom {
             public: false,
             targetId: actor.id,
             message: '',
-            privateMessage: 'You are stunned and cannot act.',
+            privateMessage: config.messages.private.youAreStunned,
             attackerMessage: ''
           };
           log.push(stunnedLog);
@@ -576,7 +585,7 @@ class GameRoom {
         '__monster__' : this.players.get(action.targetId);
       
       if (target !== '__monster__' && !target) {
-        console.log(`Invalid target ${action.targetId} for action by ${actor.name}`);
+        logger.warn(`Invalid target ${action.targetId} for action by ${actor.name}`);
         continue;
       }
       
@@ -593,7 +602,9 @@ class GameRoom {
           targetId: target.id,
           message: '',
           privateMessage: '',
-          attackerMessage: `You try to attack ${target.name}, but they are invisible and cannot be seen!`
+          attackerMessage: config.messages.getEvent('attackInvisible', {
+            targetName: target.name
+          })
         };
         log.push(invisibleLog);
         continue;
@@ -607,7 +618,11 @@ class GameRoom {
         targetId: target === '__monster__' ? 'monster' : target.id,
         abilityName: ability.name,
         // Public message shows the action (visible to people involved)
-        message: `${actor.name} uses ${ability.name} on ${target === '__monster__' ? 'the Monster' : target.name}.`,
+        message: config.messages.getEvent('playerAttacks', {
+          playerName: actor.name,
+          abilityName: ability.name,
+          targetName: target === '__monster__' ? 'the Monster' : target.name
+        }),
         // Private messages are empty since this is just an announcement
         privateMessage: '',
         attackerMessage: ''
@@ -721,4 +736,4 @@ class GameRoom {
   }
 }
 
-module.exports = { GameRoom, classAbilities };
+module.exports = { GameRoom };

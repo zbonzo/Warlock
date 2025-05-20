@@ -8,7 +8,6 @@ const { validateGameAction } = require('@shared/gameChecks');
 const logger = require('@utils/logger');
 const config = require('@config');
 const { throwGameStateError } = require('@utils/errorHandler');
-const classAbilities = require('@config/classAbilities');
 
 /**
  * Handle game creation request
@@ -58,14 +57,16 @@ function handleStartGame(io, socket, gameCode) {
   
   // Check minimum player count
   if (game.players.size < config.minPlayers) {
-    throwGameStateError(`Need at least ${config.minPlayers} players to start a game.`);
+    throwGameStateError(config.messages.getError('notEnoughPlayers', {
+      minPlayers: config.minPlayers
+    }));
     return false;
   }
   
   // Check if all players have selected characters
   const allPlayersReady = Array.from(game.players.values()).every(p => p.race && p.class);
   if (!allPlayersReady) {
-    throwGameStateError('All players must select a character before starting.');
+    throwGameStateError(config.messages.errors.allPlayersNotReady);
     return false;
   }
   
@@ -85,7 +86,7 @@ function handleStartGame(io, socket, gameCode) {
     monster: {
       hp: game.monster.hp,
       maxHp: game.monster.maxHp,
-      nextDamage: game.monster.baseDmg * (game.monster.age + 1)
+      nextDamage: config.gameBalance.calculateMonsterDamage(game.monster.age)
     }
   });
   
@@ -143,75 +144,69 @@ function handleRacialAbility(io, socket, gameCode, targetId, abilityType) {
   // Get player info
   const player = game.players.get(socket.id);
   
-// Special handling for Human Adaptability
-if (abilityType === 'adaptability' && player.race === 'Human') {
-  console.log(`Player ${player.name} (${socket.id}) is using Human Adaptability`);
-  
-  // First check if they have uses left
-  if (player.racialUsesLeft <= 0) {
-    console.log(`Player ${player.name} has no Adaptability uses left`);
-    socket.emit('racialAbilityUsed', { 
-      success: false, 
-      message: 'No uses left for Adaptability ability' 
-    });
-    return false;
-  }
-  
-  // Mark the ability as used
-  const success = game.addRacialAction(socket.id, targetId);
-  
-  if (success) {
-    // Get the player's current abilities and level for the modal
-    const abilities = player.abilities;
-    //const maxLevel = player.level;
-    const maxLevel = 1;
-
-    console.log("=== ADAPTABILITY DEBUG ===");
-    console.log(`Player: ${player.name} (${socket.id})`);
-    console.log(`Level: ${maxLevel}`);
-    console.log("Abilities Data Structure:");
-    console.log(JSON.stringify(abilities, null, 2));
-    console.log("=== END DEBUG ===");
+  // Special handling for Human Adaptability
+  if (abilityType === 'adaptability' && player.race === 'Human') {
+    logger.debug(`Player ${player.name} (${socket.id}) is using Human Adaptability`);
     
-    // If abilities is not properly formatted, convert it
-    let formattedAbilities = abilities;
-    
-    // Check if abilities is an array instead of expected object format
-    if (Array.isArray(abilities)) {
-      console.log("Converting abilities array to object by level...");
-      formattedAbilities = abilities.reduce((acc, ability) => {
-        const level = ability.unlockAt || 1;
-        acc[level] = acc[level] || [];
-        acc[level].push(ability);
-        return acc;
-      }, {});
-      console.log("Formatted abilities:", JSON.stringify(formattedAbilities, null, 2));
+    // First check if they have uses left
+    if (player.racialUsesLeft <= 0) {
+      logger.debug(`Player ${player.name} has no Adaptability uses left`);
+      socket.emit('racialAbilityUsed', { 
+        success: false, 
+        message: config.messages.getError('noUsesLeft', { abilityName: 'Adaptability' })
+      });
+      return false;
     }
     
-    // Send the adaptability modal data
-    socket.emit('adaptabilityChooseAbility', {
-      abilities: formattedAbilities,
-      maxLevel
-    });
+    // Mark the ability as used
+    const success = game.addRacialAction(socket.id, targetId);
     
-    // Update all players with new player state
-    io.to(gameCode).emit('playerList', { players: game.getPlayersInfo() });
-    socket.emit('racialAbilityUsed', { 
-      success: true, 
-      message: 'Adaptability ability triggered' 
-    });
-  } else {
-    console.log(`Failed to use Adaptability for player ${player.name}`);
-    socket.emit('racialAbilityUsed', { 
-      success: false, 
-      message: 'Failed to use Adaptability ability' 
-    });
+    if (success) {
+      // Get the player's current abilities and level for the modal
+      const abilities = player.abilities;
+      const maxLevel = player.level || 1;
+
+      logger.debug(`=== ADAPTABILITY DEBUG ===
+        Player: ${player.name} (${socket.id})
+        Level: ${maxLevel}
+      `);
+      
+      // If abilities is not properly formatted, convert it
+      let formattedAbilities = abilities;
+      
+      // Check if abilities is an array instead of expected object format
+      if (Array.isArray(abilities)) {
+        logger.debug("Converting abilities array to object by level...");
+        formattedAbilities = abilities.reduce((acc, ability) => {
+          const level = ability.unlockAt || 1;
+          acc[level] = acc[level] || [];
+          acc[level].push(ability);
+          return acc;
+        }, {});
+      }
+      
+      // Send the adaptability modal data
+      socket.emit('adaptabilityChooseAbility', {
+        abilities: formattedAbilities,
+        maxLevel
+      });
+      
+      // Update all players with new player state
+      io.to(gameCode).emit('playerList', { players: game.getPlayersInfo() });
+      socket.emit('racialAbilityUsed', { 
+        success: true, 
+        message: config.messages.success.adaptabilityTriggered
+      });
+    } else {
+      logger.warn(`Failed to use Adaptability for player ${player.name}`);
+      socket.emit('racialAbilityUsed', { 
+        success: false, 
+        message: config.messages.errors.adaptabilityFailed
+      });
+    }
+    
+    return success;
   }
-  
-  return success;
-}
-
-
 
   // Handle other racial abilities
   const success = game.addRacialAction(socket.id, targetId);
@@ -221,12 +216,12 @@ if (abilityType === 'adaptability' && player.race === 'Human') {
     io.to(gameCode).emit('playerList', { players: game.getPlayersInfo() });
     socket.emit('racialAbilityUsed', { 
       success: true, 
-      message: 'Racial ability used successfully' 
+      message: config.messages.success.racialAbilityUsed
     });
   } else {
     socket.emit('racialAbilityUsed', { 
       success: false, 
-      message: 'Failed to use racial ability' 
+      message: config.messages.errors.racialAbilityUsed
     });
   }
  
@@ -241,6 +236,7 @@ if (abilityType === 'adaptability' && player.race === 'Human') {
  * @param {string} oldAbilityType - Ability being replaced
  * @param {string} newAbilityType - New ability
  * @param {number} level - Ability level
+ * @param {string} newClassName - Class to take ability from
  * @returns {boolean} Success status
  */
 function handleAdaptabilityReplace(io, socket, gameCode, oldAbilityType, newAbilityType, level, newClassName) {
@@ -253,36 +249,42 @@ function handleAdaptabilityReplace(io, socket, gameCode, oldAbilityType, newAbil
   if (!player || player.race !== 'Human') {
     socket.emit('adaptabilityComplete', { 
       success: false, 
-      message: 'Only Humans can use Adaptability' 
+      message: config.messages.errors.adaptabilityFailed
     });
     return false;
   }
   
-  console.log(`Player ${player.name} trying to replace ${oldAbilityType} with ${newAbilityType} from ${newClassName} at level ${level}`);
-  
-  // Load class abilities
-  const classAbilities = require('../config/classAbilities');
+  logger.debug(`Player ${player.name} trying to replace ${oldAbilityType} with ${newAbilityType} from ${newClassName} at level ${level}`);
   
   // Find the old ability
   const oldAbilityIndex = player.abilities.findIndex(a => a.type === oldAbilityType);
   if (oldAbilityIndex === -1) {
-    console.error(`Old ability ${oldAbilityType} not found for player ${player.name}`);
-    socket.emit('adaptabilityComplete', { success: false, message: 'Original ability not found' });
+    logger.error(`Old ability ${oldAbilityType} not found for player ${player.name}`);
+    socket.emit('adaptabilityComplete', { 
+      success: false, 
+      message: config.messages.errors.abilityNotFound 
+    });
     return false;
   }
   
   // Find the new ability in the target class
-  const targetClassAbilities = classAbilities[newClassName];
+  const targetClassAbilities = config.classAbilities[newClassName];
   if (!targetClassAbilities) {
-    console.error(`Class ${newClassName} not found in abilities config`);
-    socket.emit('adaptabilityComplete', { success: false, message: `Class ${newClassName} not found` });
+    logger.error(`Class ${newClassName} not found in abilities config`);
+    socket.emit('adaptabilityComplete', { 
+      success: false, 
+      message: config.messages.getError('invalidClass')
+    });
     return false;
   }
   
   const newAbilityTemplate = targetClassAbilities.find(a => a.type === newAbilityType && a.unlockAt === parseInt(level, 10));
   if (!newAbilityTemplate) {
-    console.error(`Ability ${newAbilityType} at level ${level} not found for class ${newClassName}`);
-    socket.emit('adaptabilityComplete', { success: false, message: 'Ability not found at specified level' });
+    logger.error(`Ability ${newAbilityType} at level ${level} not found for class ${newClassName}`);
+    socket.emit('adaptabilityComplete', { 
+      success: false, 
+      message: config.messages.errors.abilityNotUnlocked
+    });
     return false;
   }
   
@@ -297,19 +299,20 @@ function handleAdaptabilityReplace(io, socket, gameCode, oldAbilityType, newAbil
     player.unlocked[unlockedIndex] = newAbility;
   }
   
-  console.log(`Successfully replaced ${oldAbilityType} with ${newAbilityType} for player ${player.name}`);
+  logger.info(`Successfully replaced ${oldAbilityType} with ${newAbilityType} for player ${player.name}`);
   
   // Update clients
   io.to(gameCode).emit('playerList', { players: game.getPlayersInfo() });
   socket.emit('adaptabilityComplete', {
     success: true,
-    message: 'Ability replacement successful',
+    message: config.messages.success.adaptabilityComplete,
     oldAbility: oldAbilityType,
     newAbility: newAbilityType
   });
   
   return true;
 }
+
 /**
  * Handle class abilities request for Adaptability
  * @param {Object} io - Socket.io instance
@@ -324,23 +327,17 @@ function handleGetClassAbilities(io, socket, gameCode, className, level) {
   const game = validateGameAction(socket, gameCode, true, false);
   gameService.refreshGameTimeout(io, gameCode);
  
-  console.log(`Getting ${className} abilities for level ${level}`);
+  logger.debug(`Getting ${className} abilities for level ${level}`);
  
   try {
     // Find abilities for the requested class and level
     let matchingAbilities = [];
    
-    // Check if class abilities exist
-    if (classAbilities[className]) {
-      // Filter abilities by level
-      matchingAbilities = classAbilities[className]
-        .filter(ability => ability.unlockAt === parseInt(level, 10));
+    // Use config helper to get abilities
+    matchingAbilities = config.getClassAbilities(className)
+      .filter(ability => ability.unlockAt === parseInt(level, 10));
       
-      console.log(`Found ${matchingAbilities.length} abilities for ${className} at level ${level}`);
-      console.log(JSON.stringify(matchingAbilities, null, 2));
-    } else {
-      console.log(`No abilities found for class: ${className}`);
-    }
+    logger.debug(`Found ${matchingAbilities.length} abilities for ${className} at level ${level}`);
    
     // Send the response with the matching abilities
     socket.emit('classAbilitiesResponse', {
@@ -352,7 +349,7 @@ function handleGetClassAbilities(io, socket, gameCode, className, level) {
    
     return true;
   } catch (error) {
-    console.error(`Error getting abilities: ${error.message}`, error);
+    logger.error(`Error getting abilities: ${error.message}`, error);
     socket.emit('classAbilitiesResponse', {
       success: false,
       abilities: [],

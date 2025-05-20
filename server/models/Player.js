@@ -2,6 +2,8 @@
  * @fileoverview Player model with ability cooldown support
  * Manages player state, abilities, status effects, and cooldowns
  */
+const config = require('@config');
+const logger = require('@utils/logger');
 
 /**
  * Player class representing a single player in the game
@@ -18,8 +20,8 @@ class Player {
     this.name = name;
     this.race = null;
     this.class = null;
-    this.hp = 100;
-    this.maxHp = 100;
+    this.hp = config.gameBalance.player.baseHp || 100;
+    this.maxHp = config.gameBalance.player.baseHp || 100;
     this.armor = 0;
     this.damageMod = 1.0;    // Damage modifier from race and class
     this.isWarlock = false;
@@ -173,14 +175,14 @@ class Player {
     
     // Degrade stone armor by 1 for each hit
     const oldValue = this.stoneArmorValue;
-    this.stoneArmorValue -= 1;
+    this.stoneArmorValue -= config.gameBalance.stoneArmor.degradationPerHit || 1;
     
-    console.log(`${this.name}'s Stone Armor degrades from ${oldValue} to ${this.stoneArmorValue}`);
+    logger.debug(`${this.name}'s Stone Armor degrades from ${oldValue} to ${this.stoneArmorValue}`);
     
     // Check if stone armor is completely destroyed
-    if (this.stoneArmorValue <= -10) {
-      // Cap negative armor at -10 for balance
-      this.stoneArmorValue = -10;
+    if (this.stoneArmorValue <= config.gameBalance.stoneArmor.minimumValue) {
+      // Cap negative armor at minimum
+      this.stoneArmorValue = config.gameBalance.stoneArmor.minimumValue;
     }
     
     return { 
@@ -199,15 +201,10 @@ class Player {
   calculateDamageReduction(damage) {
     const totalArmor = this.getEffectiveArmor();
     
-    if (totalArmor <= 0) {
-      // Negative armor increases damage taken
-      const damageMultiplier = 1 + Math.abs(totalArmor) * 0.1;
-      return Math.floor(damage * damageMultiplier);
-    }
-    
-    // Positive armor reduces damage
-    const reductionPercent = Math.min(0.9, totalArmor * 0.1); // Cap at 90% reduction
-    return Math.floor(damage * (1 - reductionPercent));
+    // Use gameBalance config for calculations
+    return config.gameBalance.calculateDamageReduction ?
+      Math.floor(damage * (1 - config.gameBalance.calculateDamageReduction(totalArmor))) :
+      damage; // Fallback if config function not available
   }
   
   /**
@@ -235,7 +232,8 @@ class Player {
    * @returns {number} Healing modifier value
    */
   getHealingModifier() {
-    return 2.0 - (this.damageMod || 1.0);
+    const baseHealingMod = config.gameBalance.player.healing.modifierBase || 2.0;
+    return baseHealingMod - (this.damageMod || 1.0);
   }
   
   /**
@@ -319,8 +317,9 @@ class Player {
     } else if (abilityData.type === 'stoneArmor') {
       // Initialize Stone Armor
       this.stoneArmorIntact = true;
-      this.stoneArmorValue = abilityData.params.initialArmor || 10;
-      console.log(`${this.name} gains Stone Armor with ${this.stoneArmorValue} armor`);
+      this.stoneArmorValue = abilityData.params.initialArmor || 
+                            config.gameBalance.stoneArmor.initialValue || 10;
+      logger.debug(`${this.name} gains Stone Armor with ${this.stoneArmorValue} armor`);
     } else {
       this.racialEffects = {};
     }
