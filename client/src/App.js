@@ -5,6 +5,7 @@
 
 import React, { useEffect } from 'react';
 import { ThemeProvider } from './contexts/ThemeContext';
+import ThemeToggle from './components/common/ThemeToggle';
 import { ConfigProvider } from '@contexts/ConfigContext';
 import { AppProvider, useAppContext } from './contexts/AppContext';
 import LoadingScreen from './components/common/LoadingScreen';

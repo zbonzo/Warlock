@@ -7,27 +7,30 @@
   cursor: pointer;
   transition: all 0.2s ease;
   font-family: var(--font-body);
-  background-color: white;
+  background-color: var(--color-surface);
   position: relative;
 }
 
 .ability-card.racial-ability.unavailable {
-  background-color: #f5f5f5;
+  background-color: var(--color-neutral);
   opacity: 0.7;
   cursor: not-allowed;
 }
 
 .ability-card.unavailable {
-  background-color: #f5f5f5;
+  background-color: var(--color-neutral);
   opacity: 0.6;
   cursor: not-allowed;
-  border-color: #ccc;
+  border-color: var(--color-border);
 }
 
 .ability-card.selected {
   transform: translateY(-2px);
   box-shadow: 0 0 0 2px var(--color-primary); /* Thick outline */
-  background-color: rgba(74, 44, 130, 0.1); /* Light purple background */
+  background-color: rgba(
+    var(--color-primary-rgb),
+    0.1
+  ); /* Light purple background */
   border-color: var(--color-primary); /* Purple border */
 }
 
@@ -78,10 +81,10 @@
 .ability-description {
   margin-top: 8px;
   font-size: 14px;
-  background-color: rgba(0, 0, 0, 0.03);
+  background-color: var(--color-neutral);
   padding: 6px;
   border-radius: 4px;
-  color: #555;
+  color: var(--color-text-muted);
   min-height: 40px;
 }
 
@@ -89,9 +92,9 @@
 .ability-cooldown {
   margin-top: 8px;
   padding: 6px 8px;
-  background-color: rgba(255, 69, 0, 0.1);
+  background-color: rgba(var(--color-danger-rgb), 0.1);
   border-radius: 4px;
-  border: 1px solid rgba(255, 69, 0, 0.3);
+  border: 1px solid rgba(var(--color-danger-rgb), 0.3);
 }
 
 .cooldown-indicator {
@@ -107,20 +110,20 @@
 .cooldown-text {
   font-size: 14px;
   font-weight: bold;
-  color: #ff4500;
+  color: var(--color-danger);
 }
 
 .ability-cooldown-info {
   margin-top: 8px;
   padding: 4px 8px;
-  background-color: rgba(0, 0, 0, 0.05);
+  background-color: var(--color-neutral);
   border-radius: 4px;
   border: 1px dashed #ddd;
 }
 
 .cooldown-info-text {
   font-size: 12px;
-  color: #666;
+  color: var(--color-text-muted);
   font-style: italic;
 }
 
@@ -140,7 +143,7 @@
 }
 
 .unavailable-reason {
-  background-color: rgba(255, 69, 0, 0.9);
+  background-color: rgba(var(--color-danger-rgb), 0.9);
   color: white;
   padding: 6px 12px;
   border-radius: 4px;
@@ -165,12 +168,12 @@
 }
 
 .status-indicator.available {
-  background-color: rgba(44, 185, 120, 0.2);
+  background-color: rgba(var(--color-accent-rgb), 0.2);
   color: var(--color-accent);
 }
 
 .status-indicator.unavailable {
-  background-color: rgba(232, 72, 85, 0.2);
+  background-color: rgba(var(--color-danger-rgb), 0.2);
   color: var(--color-danger);
 }
 
@@ -189,7 +192,7 @@
 /* Focus state for accessibility */
 .ability-card:focus {
   outline: none;
-  box-shadow: 0 0 0 2px rgba(74, 44, 130, 0.5);
+  box-shadow: 0 0 0 2px rgba(var(--color-primary-rgb), 0.5);
 }
 
 /* Disabled interaction for unavailable abilities */
@@ -239,7 +242,7 @@
 
 .ability-flavor-text {
   font-size: 0.9em; /* Adjust as needed */
-  color: #666; /* Adjust as needed */
+  color: var(--color-text-muted); /* Adjust as needed */
   margin-top: 5px; /* Adjust as needed */
   padding: 0 10px; /* Match other padding if necessary */
   font-style: italic;

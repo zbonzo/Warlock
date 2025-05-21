@@ -1,41 +1,41 @@
 /* AbilityCard Component Styles */
 
 .ability-card {
-    padding: 10px;
-    border: 1px solid var(--color-neutral);
-    border-radius: 4px;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    background-color: white;
-    box-shadow: var(--shadow-button);
-  }
-  
-  .ability-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
-  }
-  
-  .ability-card:active {
-    transform: translateY(1px);
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-  }
-  
-  .ability-name {
-    font-weight: bold;
-    margin-bottom: 5px;
-  }
-  
-  .ability-category {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    font-size: 14px;
-  }
-  
-  .category-icon {
-    font-size: 16px;
-  }
-  
-  .category-name {
-    opacity: 0.8;
-  }
+  padding: 10px;
+  border: 1px solid var(--color-neutral);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background-color: var(--color-surface);
+  box-shadow: var(--shadow-button);
+}
+
+.ability-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.ability-card:active {
+  transform: translateY(1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.ability-name {
+  font-weight: bold;
+  margin-bottom: 5px;
+}
+
+.ability-category {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 14px;
+}
+
+.category-icon {
+  font-size: 16px;
+}
+
+.category-name {
+  opacity: 0.8;
+}

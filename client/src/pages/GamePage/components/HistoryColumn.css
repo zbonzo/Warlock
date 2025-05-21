@@ -1,10 +1,9 @@
-
 .history-column {
   padding: 15px;
   height: 100%;
   display: flex;
   flex-direction: column;
-  background-color: white;
+  background-color: var(--color-surface);
   border-radius: 8px;
   box-shadow: var(--shadow-card);
   animation: fadeIn 0.5s ease;
@@ -48,7 +47,7 @@
   content: '';
   flex: 1;
   height: 1px;
-  background-color: rgba(74, 44, 130, 0.2);
+  background-color: rgba(var(--color-primary-rgb), 0.2);
   margin-left: 10px;
 }
 
@@ -80,7 +79,7 @@
 }
 
 .event-item:nth-child(even) {
-  background-color: #f5f5f5;
+  background-color: var(--color-neutral);
 }
 
 /* Perspective-based styling */
@@ -96,7 +95,7 @@
 
 .event-item.event-you-target {
   border-left: 3px solid var(--color-primary);
-  background-color: rgba(74, 44, 130, 0.1);
+  background-color: rgba(var(--color-primary-rgb), 0.1);
   font-weight: 500;
 }
 
@@ -227,12 +226,12 @@
 }
 
 .event-item.level-event {
-  color: #9370DB;
+  color: #9370db;
   font-weight: bold;
 }
 
 .event-item.level-event:before {
-  background-color: #9370DB;
+  background-color: #9370db;
 }
 
 /* Empty state */
@@ -241,7 +240,7 @@
   color: #888;
   padding: 30px;
   font-style: italic;
-  background-color: #f9f9f9;
+  background-color: var(--color-neutral);
   border-radius: 8px;
   border: 1px dashed #ddd;
 }
@@ -263,13 +262,23 @@
 
 /* Animations */
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 @keyframes slideIn {
-  from { transform: translateY(10px); opacity: 0; }
-  to { transform: translateY(0); opacity: 1; }
+  from {
+    transform: translateY(10px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
 }
 
 /* Add indicators for personalized events */
@@ -304,25 +313,25 @@
   .history-column {
     padding: 10px;
   }
-  
+
   .section-title {
     font-size: 1.2rem;
     margin-bottom: 12px;
   }
-  
+
   .round-title {
     font-size: 1rem;
   }
-  
+
   .event-item {
     font-size: 13px;
     padding: 5px 8px;
   }
-  
+
   .empty-history {
     padding: 20px;
   }
-  
+
   .event-item.event-you-acted::after,
   .event-item.event-you-target::after {
     display: none; /* Hide indicators on mobile for space */

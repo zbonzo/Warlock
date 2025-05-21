@@ -63,12 +63,12 @@
 }
 
 .racial-enhancement.blood-rage {
-  border-color: #8B0000;
+  border-color: #8b0000;
   background-color: rgba(139, 0, 0, 0.05);
 }
 
 .racial-enhancement.keen-senses {
-  border-color: #228B22;
+  border-color: #228b22;
   background-color: rgba(34, 139, 34, 0.05);
 }
 
@@ -79,20 +79,20 @@
   border-radius: 20px;
   font-size: 14px;
   font-weight: bold;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   animation: pulse 2s infinite;
 }
 
 .blood-rage-badge {
   background-color: rgba(139, 0, 0, 0.1);
-  color: #8B0000;
-  border: 1px solid #8B0000;
+  color: #8b0000;
+  border: 1px solid #8b0000;
 }
 
 .keen-senses-badge {
   background-color: rgba(34, 139, 34, 0.1);
-  color: #228B22;
-  border: 1px solid #228B22;
+  color: #228b22;
+  border: 1px solid #228b22;
 }
 
 .enhancement-icon {
@@ -105,7 +105,7 @@
 .dead-message {
   text-align: center;
   padding: 30px;
-  background-color: white;
+  background-color: var(--color-surface);
   border-radius: 8px;
   box-shadow: var(--shadow-card);
   margin: 20px 0;
@@ -122,7 +122,7 @@
   margin: 20px auto;
   width: 40px;
   height: 40px;
-  border: 4px solid rgba(74, 44, 130, 0.1);
+  border: 4px solid rgba(var(--color-primary-rgb), 0.1);
   border-radius: 50%;
   border-top-color: var(--color-primary);
   animation: spin 1s linear infinite;
@@ -143,9 +143,9 @@
   width: 100%;
   height: 100%;
   background: linear-gradient(
-    90deg, 
-    transparent, 
-    rgba(255, 255, 255, 0.2), 
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.2),
     transparent
   );
   transition: all 0.5s;
@@ -181,10 +181,10 @@
 /* Ready players section */
 .ready-players {
   margin-top: 20px;
-  background-color: #f9f9f9;
+  background-color: var(--color-neutral);
   border-radius: 8px;
   padding: 16px;
-  border: 1px solid #eee;
+  border: 1px solid var(--color-border);
 }
 
 .ready-info {
@@ -202,7 +202,7 @@
 .ready-player {
   display: flex;
   align-items: center;
-  background-color: rgba(44, 185, 120, 0.1);
+  background-color: rgba(var(--color-accent-rgb), 0.1);
   border-radius: 20px;
   padding: 4px 8px 4px 4px;
   font-size: 14px;
@@ -229,25 +229,37 @@
 }
 
 .no-ready-players {
-  color: #999;
+  color: var(--color-text-muted);
   font-style: italic;
   padding: 10px;
 }
 
 /* Animations */
 @keyframes pulse {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.05); }
-  100% { transform: scale(1); }
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1);
+  }
 }
 
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 /* Scrollbar styling */
@@ -270,22 +282,22 @@
   .action-column {
     padding: 10px;
   }
-  
+
   .submit-message,
   .dead-message {
     padding: 20px;
   }
-  
+
   .skull-icon {
     font-size: 36px;
     margin: 15px 0;
   }
-  
+
   .enhancement-badge {
     padding: 4px 10px;
     font-size: 12px;
   }
-  
+
   .ability-list {
     max-height: 250px;
   }

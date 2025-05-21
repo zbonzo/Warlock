@@ -1,141 +1,154 @@
 /* TargetSelector Component Styles */
 
 .target-selector {
-    margin-top: 16px;
-    font-family: var(--font-body);
+  margin-top: 16px;
+  font-family: var(--font-body);
+}
+
+.target-selector-title {
+  color: var(--color-primary);
+  font-family: var(--font-heading);
+  margin-bottom: 12px;
+  font-size: 1.1rem;
+}
+
+.target-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.target-option {
+  display: flex;
+  align-items: center;
+  padding: 8px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  transition: all 0.2s ease;
+}
+
+.target-option:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.target-option.selected {
+  border-width: 2px;
+  border-style: solid;
+  padding: 7px 11px; /* Adjust padding to keep size consistent with border change */
+}
+
+.target-option.selected:not(.monster) {
+  border-color: var(--color-primary);
+  background-color: rgba(var(--color-primary-rgb), 0.1);
+}
+
+.target-option.monster.selected {
+  border-color: var(--color-monster);
+  background-color: rgba(139, 0, 0, 0.1);
+}
+
+.target-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background-color: var(--color-primary);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 12px;
+  font-weight: bold;
+  font-size: 16px;
+  transition: transform 0.2s ease;
+}
+
+.target-option:hover .target-avatar {
+  transform: scale(1.05);
+}
+
+.target-avatar.current-player {
+  background-color: var(--color-secondary);
+}
+
+.target-avatar.monster {
+  background-color: var(--color-monster);
+}
+
+.target-info {
+  flex: 1;
+}
+
+.target-name {
+  font-weight: bold;
+  margin-bottom: 2px;
+}
+
+.target-health {
+  font-size: 14px;
+  color: var(--color-text-muted);
+}
+
+.target-restriction-message {
+  padding: 10px;
+  background-color: rgba(var(--color-primary-rgb), 0.1);
+  border-radius: 6px;
+  color: var(--color-primary);
+  margin-top: 8px;
+  font-size: 14px;
+  border-left: 3px solid var(--color-primary);
+}
+
+/* Subtle pulse animation for selected targets */
+@keyframes selectedPulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(var(--color-primary-rgb), 0.3);
   }
-  
-  .target-selector-title {
-    color: var(--color-primary);
-    font-family: var(--font-heading);
-    margin-bottom: 12px;
-    font-size: 1.1rem;
+  70% {
+    box-shadow: 0 0 0 6px rgba(74, 44, 130, 0);
   }
-  
-  .target-list {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
+  100% {
+    box-shadow: 0 0 0 0 rgba(74, 44, 130, 0);
   }
-  
+}
+
+.target-option.selected:not(.monster) {
+  animation: selectedPulse 2s infinite;
+}
+
+@keyframes monsterSelectedPulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(139, 0, 0, 0.3);
+  }
+  70% {
+    box-shadow: 0 0 0 6px rgba(139, 0, 0, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(139, 0, 0, 0);
+  }
+}
+
+.target-option.monster.selected {
+  animation: monsterSelectedPulse 2s infinite;
+}
+
+/* Responsive styles */
+@media (max-width: 480px) {
   .target-option {
-    display: flex;
-    align-items: center;
-    padding: 8px 12px;
-    border-radius: 6px;
-    cursor: pointer;
-    background-color: white;
-    border: 1px solid #ddd;
-    transition: all 0.2s ease;
+    padding: 6px 10px;
   }
-  
-  .target-option:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  }
-  
-  .target-option.selected {
-    border-width: 2px;
-    border-style: solid;
-    padding: 7px 11px; /* Adjust padding to keep size consistent with border change */
-  }
-  
-  .target-option.selected:not(.monster) {
-    border-color: var(--color-primary);
-    background-color: rgba(74, 44, 130, 0.1);
-  }
-  
-  .target-option.monster.selected {
-    border-color: var(--color-monster);
-    background-color: rgba(139, 0, 0, 0.1);
-  }
-  
+
   .target-avatar {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    background-color: var(--color-primary);
-    color: white;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-right: 12px;
-    font-weight: bold;
-    font-size: 16px;
-    transition: transform 0.2s ease;
+    width: 36px;
+    height: 36px;
+    font-size: 14px;
+    margin-right: 8px;
   }
-  
-  .target-option:hover .target-avatar {
-    transform: scale(1.05);
-  }
-  
-  .target-avatar.current-player {
-    background-color: var(--color-secondary);
-  }
-  
-  .target-avatar.monster {
-    background-color: var(--color-monster);
-  }
-  
-  .target-info {
-    flex: 1;
-  }
-  
-  .target-name {
-    font-weight: bold;
-    margin-bottom: 2px;
-  }
-  
+
+  .target-name,
   .target-health {
-    font-size: 14px;
-    color: #666;
+    font-size: 0.9rem;
   }
-  
-  .target-restriction-message {
-    padding: 10px;
-    background-color: rgba(74, 44, 130, 0.1);
-    border-radius: 6px;
-    color: var(--color-primary);
-    margin-top: 8px;
-    font-size: 14px;
-    border-left: 3px solid var(--color-primary);
-  }
-  
-  /* Subtle pulse animation for selected targets */
-  @keyframes selectedPulse {
-    0% { box-shadow: 0 0 0 0 rgba(74, 44, 130, 0.3); }
-    70% { box-shadow: 0 0 0 6px rgba(74, 44, 130, 0); }
-    100% { box-shadow: 0 0 0 0 rgba(74, 44, 130, 0); }
-  }
-  
-  .target-option.selected:not(.monster) {
-    animation: selectedPulse 2s infinite;
-  }
-  
-  @keyframes monsterSelectedPulse {
-    0% { box-shadow: 0 0 0 0 rgba(139, 0, 0, 0.3); }
-    70% { box-shadow: 0 0 0 6px rgba(139, 0, 0, 0); }
-    100% { box-shadow: 0 0 0 0 rgba(139, 0, 0, 0); }
-  }
-  
-  .target-option.monster.selected {
-    animation: monsterSelectedPulse 2s infinite;
-  }
-  
-  /* Responsive styles */
-  @media (max-width: 480px) {
-    .target-option {
-      padding: 6px 10px;
-    }
-    
-    .target-avatar {
-      width: 36px;
-      height: 36px;
-      font-size: 14px;
-      margin-right: 8px;
-    }
-    
-    .target-name, .target-health {
-      font-size: 0.9rem;
-    }
-  }
+}

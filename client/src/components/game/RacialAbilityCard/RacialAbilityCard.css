@@ -1,132 +1,132 @@
 /* RacialAbilityCard Component Styles */
 
 .racial-ability-card {
-    border-width: 2px;
-    border-style: solid;
-    border-radius: 8px;
-    padding: 12px;
-    margin: 10px 0;
-    font-family: var(--font-body);
-    transition: all 0.2s ease;
+  border-width: 2px;
+  border-style: solid;
+  border-radius: 8px;
+  padding: 12px;
+  margin: 10px 0;
+  font-family: var(--font-body);
+  transition: all 0.2s ease;
+}
+
+.racial-ability-card.available {
+  background-color: rgba(var(--color-primary-rgb), 0.9);
+  cursor: pointer;
+  box-shadow: var(--shadow-card);
+}
+
+.racial-ability-card.unavailable {
+  background-color: var(--color-neutral);
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.racial-ability-card.available:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+}
+
+.racial-ability-card.available:active {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+.ability-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.ability-title {
+  color: white;
+  padding: 6px 10px;
+  border-radius: 4px;
+  font-family: var(--font-heading);
+  font-weight: bold;
+  flex-grow: 1;
+  margin-right: 10px;
+}
+
+.ability-icon-container {
+  font-size: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+}
+
+.ability-description {
+  font-size: 14px;
+  color: var(--color-text-muted);
+  margin-bottom: 10px;
+  background-color: var(--color-neutral);
+  padding: 8px;
+  border-radius: 4px;
+  min-height: 60px;
+}
+
+.ability-status {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 14px;
+}
+
+.status-indicator {
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-weight: bold;
+}
+
+.status-indicator.available {
+  background-color: rgba(var(--color-accent-rgb), 0.2);
+  color: var(--color-accent);
+}
+
+.status-indicator.unavailable {
+  background-color: rgba(var(--color-danger-rgb), 0.2);
+  color: var(--color-danger);
+}
+
+.usage-indicators {
+  margin-top: 8px;
+  display: flex;
+  justify-content: center;
+}
+
+.usage-dots {
+  display: flex;
+  gap: 5px;
+}
+
+.usage-dot {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  transition: background-color 0.3s;
+}
+
+.usage-dot.inactive {
+  background-color: #ddd;
+}
+
+/* Pulse animation for available abilities */
+@keyframes pulseBorder {
+  0% {
+    box-shadow: 0 0 0 0 rgba(var(--color-accent-rgb), 0.4);
   }
-  
-  .racial-ability-card.available {
-    background-color: rgba(255, 255, 255, 0.95);
-    cursor: pointer;
-    box-shadow: var(--shadow-card);
+  70% {
+    box-shadow: 0 0 0 6px rgba(44, 185, 120, 0);
   }
-  
-  .racial-ability-card.unavailable {
-    background-color: #f5f5f5;
-    cursor: not-allowed;
-    opacity: 0.7;
+  100% {
+    box-shadow: 0 0 0 0 rgba(44, 185, 120, 0);
   }
-  
-  .racial-ability-card.available:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
-  }
-  
-  .racial-ability-card.available:active {
-    transform: translateY(-1px);
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-  }
-  
-  .ability-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 8px;
-  }
-  
-  .ability-title {
-    color: white;
-    padding: 6px 10px;
-    border-radius: 4px;
-    font-family: var(--font-heading);
-    font-weight: bold;
-    flex-grow: 1;
-    margin-right: 10px;
-  }
-  
-  .ability-icon-container {
-    font-size: 24px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-  }
-  
-  .ability-description {
-    font-size: 14px;
-    color: #555;
-    margin-bottom: 10px;
-    background-color: rgba(0, 0, 0, 0.03);
-    padding: 8px;
-    border-radius: 4px;
-    min-height: 60px;
-  }
-  
-  .ability-status {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-size: 14px;
-  }
-  
-  .status-indicator {
-    padding: 4px 8px;
-    border-radius: 4px;
-    font-weight: bold;
-  }
-  
-  .status-indicator.available {
-    background-color: rgba(44, 185, 120, 0.2);
-    color: var(--color-accent);
-  }
-  
-  .status-indicator.unavailable {
-    background-color: rgba(232, 72, 85, 0.2);
-    color: var(--color-danger);
-  }
-  
-  .usage-indicators {
-    margin-top: 8px;
-    display: flex;
-    justify-content: center;
-  }
-  
-  .usage-dots {
-    display: flex;
-    gap: 5px;
-  }
-  
-  .usage-dot {
-    width: 20px;
-    height: 20px;
-    border-radius: 50%;
-    transition: background-color 0.3s;
-  }
-  
-  .usage-dot.inactive {
-    background-color: #ddd;
-  }
-  
-  /* Pulse animation for available abilities */
-  @keyframes pulseBorder {
-    0% {
-      box-shadow: 0 0 0 0 rgba(44, 185, 120, 0.4);
-    }
-    70% {
-      box-shadow: 0 0 0 6px rgba(44, 185, 120, 0);
-    }
-    100% {
-      box-shadow: 0 0 0 0 rgba(44, 185, 120, 0);
-    }
-  }
-  
-  .racial-ability-card.available:not(:hover) .status-indicator.available {
-    animation: pulseBorder 2s infinite;
-  }
+}
+
+.racial-ability-card.available:not(:hover) .status-indicator.available {
+  animation: pulseBorder 2s infinite;
+}

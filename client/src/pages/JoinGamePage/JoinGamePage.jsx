@@ -5,6 +5,7 @@
 import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { useTheme } from '@contexts/ThemeContext';
+import ThemeToggle from '@components/common/ThemeToggle';
 import GameTutorial from '@components/modals/GameTutorial';
 import { RANDOM_NAMES } from './constants';
 import './JoinGamePage.css';
@@ -256,6 +257,7 @@ const JoinGamePage = ({ onCreateGame, onJoinGame, onReconnect }) => {
 
       {/* Footer */}
       <div className="join-page-footer">
+        <ThemeToggle variant="dropdown" showLabel={true} />
         &copy; 2025 bonzo.dev • Play with 5+ friends for best experience
       </div>
     </div>

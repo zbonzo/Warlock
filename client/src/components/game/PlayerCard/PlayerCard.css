@@ -1,247 +1,261 @@
 /* PlayerCard Component Styles */
 
 .player-card {
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    padding: 12px;
-    margin: 8px 0;
-    background-color: white;
-    position: relative;
-    font-family: var(--font-body);
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
-  }
-  
-  .player-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  }
-  
-  .player-card.current-player {
-    border: 2px solid var(--color-secondary);
-    box-shadow: var(--shadow-card);
-  }
-  
-  .player-card.dead {
-    background-color: #f0f0f0;
-    opacity: 0.7;
-  }
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  padding: 12px;
+  margin: 8px 0;
+  background-color: var(--color-surface);
+  position: relative;
+  font-family: var(--font-body);
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
 
-  .player-card.warlock-player {
-    border: 2px solid var(--color-warlock);
-    background: linear-gradient(145deg, #ffffff, #f0f0f5);
-    box-shadow: 0 2px 8px rgba(34, 0, 51, 0.15);
+.player-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.player-card.current-player {
+  border: 2px solid var(--color-secondary);
+  box-shadow: var(--shadow-card);
+}
+
+.player-card.dead {
+  background-color: var(--color-neutral);
+  opacity: 0.7;
+}
+
+.player-card.warlock-player {
+  border: 2px solid var(--color-warlock);
+  background: linear-gradient(
+    145deg,
+    var(--color-surface-rgb),
+    var(--color-border-rgb)
+  );
+  box-shadow: 0 2px 8px rgba(34, 0, 51, 0.15);
+}
+
+/* Character header styles */
+.character-header {
+  margin-bottom: 12px;
+  border-bottom: 1px solid rgba(var(--color-primary-rgb), 0.1);
+  padding-bottom: 8px;
+}
+
+.character-name {
+  margin: 0;
+  color: var(--color-dark);
+  font-family: var(--font-heading);
+  font-size: 1.1rem;
+  line-height: 1.3;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  hyphens: auto;
+}
+
+.character-name.warlock-text {
+  color: var(--color-warlock);
+  font-weight: bold;
+  text-shadow: 0 0 3px rgba(34, 0, 51, 0.3);
+  letter-spacing: 0.5px;
+  font-size: 1rem; /* Slightly smaller to accommodate zalgo characters */
+  line-height: 1.5; /* More spacing for zalgo characters */
+}
+
+/* Health container styles */
+.health-container {
+  margin-bottom: 8px;
+}
+
+.health-text {
+  font-size: 14px;
+  margin-bottom: 4px;
+  font-weight: 600;
+  color: var(--color-dark);
+}
+
+.health-bar {
+  height: 10px;
+  background-color: #e0e0e0;
+  border-radius: 5px;
+  overflow: hidden;
+  border: 1px solid #d0d0d0;
+}
+
+.health-fill {
+  height: 100%;
+  transition:
+    width 0.5s ease,
+    background-color 0.5s ease;
+}
+
+.health-high {
+  background-color: var(--color-accent);
+}
+
+.health-medium {
+  background-color: var(--color-secondary);
+}
+
+.health-low {
+  background-color: var(--color-danger);
+}
+
+/* Armor indicator styles */
+.armor-indicator {
+  font-size: 14px;
+  color: var(--color-primary);
+  display: flex;
+  align-items: center;
+  margin-bottom: 8px;
+  background-color: rgba(var(--color-primary-rgb), 0.05);
+  padding: 4px 8px;
+  border-radius: 4px;
+  border: 1px solid rgba(var(--color-primary-rgb), 0.1);
+}
+
+.armor-icon {
+  margin-right: 6px;
+  font-size: 16px;
+}
+
+/* Status effects container */
+.status-effects-container {
+  margin-top: 12px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.status-effect {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  border-width: 1px;
+  border-style: solid;
+  cursor: help;
+  transition: transform 0.2s ease;
+}
+
+.status-effect:hover {
+  transform: scale(1.05);
+}
+
+.status-poison {
+  background-color: rgba(var(--color-danger-rgb), 0.1);
+  border-color: var(--color-danger);
+  color: var(--color-danger);
+}
+
+.status-protected {
+  background-color: rgba(var(--color-primary-rgb), 0.1);
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.status-invisible {
+  background-color: rgba(255, 123, 37, 0.1);
+  border-color: var(--color-secondary);
+  color: var(--color-secondary);
+}
+
+.status-stunned {
+  background-color: rgba(147, 112, 219, 0.1);
+  border-color: #9370db;
+  color: #9370db;
+}
+
+/* Dead overlay */
+.dead-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(255, 255, 255, 0.8);
+  border-radius: 8px;
+  font-size: 24px;
+  font-weight: bold;
+  color: var(--color-danger);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(2px);
+}
+
+/* Animation for new status effects */
+@keyframes statusPulse {
+  0% {
+    transform: scale(1);
   }
-  
-  /* Character header styles */
-  .character-header {
-    margin-bottom: 12px;
-    border-bottom: 1px solid rgba(74, 44, 130, 0.1);
-    padding-bottom: 8px;
+  50% {
+    transform: scale(1.05);
   }
-  
+  100% {
+    transform: scale(1);
+  }
+}
+
+.status-effect:not(.fading) {
+  animation: statusPulse 0.5s ease;
+}
+
+/* Animation for fading status effects */
+.status-effect.fading {
+  opacity: 0.6;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
   .character-name {
-    margin: 0;
-    color: var(--color-dark);
-    font-family: var(--font-heading);
-    font-size: 1.1rem;
-    line-height: 1.3;
-    word-wrap: break-word;
-    overflow-wrap: break-word;
-    hyphens: auto;
+    font-size: 1rem;
   }
 
   .character-name.warlock-text {
-    color: var(--color-warlock);
-    font-weight: bold;
-    text-shadow: 0 0 3px rgba(34, 0, 51, 0.3);
-    letter-spacing: 0.5px;
-    font-size: 1.0rem; /* Slightly smaller to accommodate zalgo characters */
-    line-height: 1.5; /* More spacing for zalgo characters */
+    font-size: 0.9rem;
+    line-height: 1.6;
   }
-  
-  /* Health container styles */
-  .health-container {
-    margin-bottom: 8px;
-  }
-  
+
   .health-text {
-    font-size: 14px;
-    margin-bottom: 4px;
-    font-weight: 600;
-    color: var(--color-dark);
+    font-size: 13px;
   }
-  
-  .health-bar {
-    height: 10px;
-    background-color: #e0e0e0;
-    border-radius: 5px;
-    overflow: hidden;
-    border: 1px solid #d0d0d0;
-  }
-  
-  .health-fill {
-    height: 100%;
-    transition: width 0.5s ease, background-color 0.5s ease;
-  }
-  
-  .health-high {
-    background-color: var(--color-accent);
-  }
-  
-  .health-medium {
-    background-color: var(--color-secondary);
-  }
-  
-  .health-low {
-    background-color: var(--color-danger);
-  }
-  
-  /* Armor indicator styles */
+
   .armor-indicator {
-    font-size: 14px;
-    color: var(--color-primary);
-    display: flex;
-    align-items: center;
-    margin-bottom: 8px;
-    background-color: rgba(74, 44, 130, 0.05);
-    padding: 4px 8px;
-    border-radius: 4px;
-    border: 1px solid rgba(74, 44, 130, 0.1);
+    font-size: 13px;
   }
-  
-  .armor-icon {
-    margin-right: 6px;
-    font-size: 16px;
-  }
-  
-  /* Status effects container */
-  .status-effects-container {
-    margin-top: 12px;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-  }
-  
+
   .status-effect {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    padding: 4px 8px;
-    border-radius: 4px;
-    font-size: 12px;
-    border-width: 1px;
-    border-style: solid;
-    cursor: help;
-    transition: transform 0.2s ease;
+    font-size: 11px;
+    padding: 3px 6px;
+  }
+}
+
+@media (max-width: 480px) {
+  .player-card {
+    padding: 10px;
   }
 
-  .status-effect:hover {
-    transform: scale(1.05);
+  .character-name {
+    font-size: 0.95rem;
   }
-  
-  .status-poison {
-    background-color: rgba(232, 72, 85, 0.1);
-    border-color: var(--color-danger);
-    color: var(--color-danger);
+
+  .character-name.warlock-text {
+    font-size: 0.85rem;
+    line-height: 1.7;
   }
-  
-  .status-protected {
-    background-color: rgba(74, 44, 130, 0.1);
-    border-color: var(--color-primary);
-    color: var(--color-primary);
+
+  .health-bar {
+    height: 8px;
   }
-  
-  .status-invisible {
-    background-color: rgba(255, 123, 37, 0.1);
-    border-color: var(--color-secondary);
-    color: var(--color-secondary);
-  }
-  
-  .status-stunned {
-    background-color: rgba(147, 112, 219, 0.1);
-    border-color: #9370DB;
-    color: #9370DB;
-  }
-  
-  /* Dead overlay */
+
   .dead-overlay {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background-color: rgba(255, 255, 255, 0.8);
-    border-radius: 8px;
-    font-size: 24px;
-    font-weight: bold;
-    color: var(--color-danger);
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
-    backdrop-filter: blur(2px);
+    font-size: 20px;
   }
-  
-  /* Animation for new status effects */
-  @keyframes statusPulse {
-    0% { transform: scale(1); }
-    50% { transform: scale(1.05); }
-    100% { transform: scale(1); }
-  }
-  
-  .status-effect:not(.fading) {
-    animation: statusPulse 0.5s ease;
-  }
-  
-  /* Animation for fading status effects */
-  .status-effect.fading {
-    opacity: 0.6;
-  }
-
-  /* Responsive adjustments */
-  @media (max-width: 768px) {
-    .character-name {
-      font-size: 1.0rem;
-    }
-
-    .character-name.warlock-text {
-      font-size: 0.9rem;
-      line-height: 1.6;
-    }
-    
-    .health-text {
-      font-size: 13px;
-    }
-    
-    .armor-indicator {
-      font-size: 13px;
-    }
-    
-    .status-effect {
-      font-size: 11px;
-      padding: 3px 6px;
-    }
-  }
-
-  @media (max-width: 480px) {
-    .player-card {
-      padding: 10px;
-    }
-    
-    .character-name {
-      font-size: 0.95rem;
-    }
-
-    .character-name.warlock-text {
-      font-size: 0.85rem;
-      line-height: 1.7;
-    }
-    
-    .health-bar {
-      height: 8px;
-    }
-    
-    .dead-overlay {
-      font-size: 20px;
-    }
-  }
+}
