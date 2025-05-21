@@ -309,7 +309,7 @@ const classAbilities = {
       effect: null,
       target: 'Single',
       params: { damage: 40 },
-      unlockAt: 3,
+      unlockAt: 1,
       order: 1020,
       cooldown: 0,
       flavorText:

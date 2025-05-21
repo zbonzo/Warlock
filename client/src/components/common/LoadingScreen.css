@@ -1,0 +1,68 @@
+/**
+ * client/src/components/common/LoadingScreen.css
+ * Styles for the loading screen component
+ */
+
+.loading-screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  background: linear-gradient(
+    135deg,
+    var(--color-primary) 30,
+    var(--color-secondary) 20
+  );
+  color: var(--color-dark);
+  font-family: var(--font-body);
+}
+
+.loading-spinner {
+  width: 60px;
+  height: 60px;
+  border: 6px solid rgba(74, 44, 130, 0.1);
+  border-radius: 50%;
+  border-top-color: var(--color-primary);
+  animation: spin 1s linear infinite;
+  margin-bottom: 20px;
+}
+
+.loading-message {
+  font-size: 1.2rem;
+  color: var(--color-primary);
+  text-align: center;
+  max-width: 80%;
+  animation: pulse 1.5s infinite ease-in-out;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes pulse {
+  0% {
+    opacity: 0.6;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0.6;
+  }
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .loading-spinner {
+    width: 50px;
+    height: 50px;
+    border-width: 5px;
+  }
+
+  .loading-message {
+    font-size: 1rem;
+  }
+}

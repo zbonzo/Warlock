@@ -1,107 +1,146 @@
 /**
- * Application-wide constants and configuration values
+ * client/src/config/constants.js
+ * Client-specific constants that don't require server synchronization
  */
 
-// API & Socket
+// Socket URL based on environment
 export const SOCKET_URL = (() => {
   const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-  
+
   // In development with different ports for client (3000) and server (3001)
   if (process.env.NODE_ENV === 'development') {
     // Special case: If running on localhost with Webpack dev server
-    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+    if (
+      window.location.hostname === 'localhost' ||
+      window.location.hostname === '127.0.0.1'
+    ) {
       return `${protocol === 'wss:' ? 'https:' : 'http:'}//${window.location.hostname}:3001`;
     }
     // Otherwise, assume server is on same machine but different port
     return `${protocol === 'wss:' ? 'https:' : 'http:'}//${window.location.hostname}:3001`;
   }
-  
+
   // In production, assume same origin
   return window.location.origin;
 })();
 
-export const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
+// API base URL
+export const API_URL =
+  process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
 
-// Game configuration
-export const MIN_PLAYERS = 2;
-export const MAX_PLAYERS = 20;
-export const DEFAULT_MONSTER_HP = 100;
-export const DEFAULT_MONSTER_DAMAGE = 10;
-
-// Game phases
+// Game phases - defines the different screens in the application
 export const GAME_PHASES = {
-  JOIN: 'join',
-  CHARACTER_SELECT: 'charSelect',
-  LOBBY: 'lobby',
-  GAME: 'game',
-  END: 'end'
+  JOIN: 'join', // Initial join/create game screen
+  CHARACTER_SELECT: 'charSelect', // Race/class selection screen
+  LOBBY: 'lobby', // Waiting for players and game start
+  GAME: 'game', // Active gameplay
+  END: 'end', // Game results
 };
 
-// Action phases
+// Game action phases during gameplay
 export const ACTION_PHASES = {
-  ACTION: 'action',
-  RESULTS: 'results'
+  ACTION: 'action', // Player selects and submits actions
+  RESULTS: 'results', // Round results are displayed
 };
 
-// Random player names to choose from
-export const RANDOM_NAMES = [
-  'Astra', 'Bolt', 'Cinder', 'Drake', 'Echo',
-  'Frost', 'Gale', 'Havoc', 'Indigo', 'Jinx',
-  'Knight', 'Lyric', 'Mist', 'Nebula', 'Onyx',
-  'Phoenix', 'Quartz', 'Raven', 'Storm', 'Torch',
-  'Umbra', 'Vortex', 'Willow', 'Xenon', 'Yelena',
-  'Zephyr', 'Ash', 'Blaze', 'Cosmos', 'Dash',
-  'Ember', 'Flint', 'Ghost', 'Hex', 'Ivy',
-  'Jester', 'Kairos', 'Luna', 'Mirage', 'Nimbus'
-];
-
-// Races and classes mapping
-export const CLASS_TO_RACES = {
-  Warrior: ['Human', 'Dwarf', 'Skeleton'],
-  Pyromancer: ['Dwarf', 'Skeleton', 'Orc'],
-  Wizard: ['Human', 'Elf', 'Skeleton'],
-  Assassin: ['Human', 'Elf', 'Skeleton'],
-  Rogue: ['Human', 'Elf', 'Satyr'],
-  Priest: ['Human', 'Dwarf', 'Skeleton'],
-  Oracle: ['Dwarf', 'Satyr', 'Orc'],
-  Seer: ['Elf', 'Satyr', 'Orc'],
-  Shaman: ['Dwarf', 'Satyr', 'Orc'],
-  Gunslinger: ['Human', 'Dwarf', 'Skeleton'],
-  Tracker: ['Elf', 'Satyr', 'Orc'],
-  Druid: ['Elf', 'Satyr', 'Orc']
+// Status effect types
+export const STATUS_EFFECTS = {
+  POISON: 'poison',
+  PROTECTED: 'protected',
+  INVISIBLE: 'invisible',
+  STUNNED: 'stunned',
 };
 
-// Derive races to classes mapping
-export const RACE_TO_CLASSES = Object.entries(CLASS_TO_RACES).reduce((acc, [cls, races]) => {
-  races.forEach(r => {
-    acc[r] = acc[r] || [];
-    acc[r].push(cls);
-  });
-  return acc;
-}, {});
+// UI constants
+export const UI = {
+  // Animation settings
+  ANIMATION: {
+    DURATION: {
+      FAST: 150,
+      MEDIUM: 300,
+      SLOW: 500,
+    },
+    EASING: 'ease-in-out',
+  },
 
-// Race colors
-export const RACE_COLORS = {
-  Human: '#4169E1',    // Royal Blue
-  Dwarf: '#8B4513',    // Saddle Brown
-  Elf: '#228B22',      // Forest Green
-  Orc: '#8B0000',      // Dark Red
-  Satyr: '#9932CC',    // Dark Orchid
-  Skeleton: '#36454F'  // Charcoal
+  // Layout breakpoints
+  BREAKPOINTS: {
+    MOBILE: 480,
+    TABLET: 768,
+    DESKTOP: 1024,
+    LARGE: 1440,
+  },
+
+  // Default theme settings
+  THEME: {
+    DEFAULT_MODE: 'light',
+    AVAILABLE_MODES: ['light', 'dark', 'colorblind'],
+  },
+
+  // Display settings
+  DISPLAY: {
+    MAX_PLAYERS_PER_PAGE: 10,
+    LOG_ENTRIES_PER_PAGE: 20,
+  },
 };
 
-// Class colors
-export const CLASS_COLORS = {
-  Warrior: '#cd7f32',      // Bronze
-  Pyromancer: '#ff4500',   // Red-Orange
-  Wizard: '#4169e1',       // Royal Blue
-  Assassin: '#2f4f4f',     // Dark Slate Gray
-  Rogue: '#708090',        // Slate Gray
-  Priest: '#ffd700',       // Gold
-  Oracle: '#9370db',       // Medium Purple
-  Seer: '#00ced1',         // Dark Turquoise
-  Shaman: '#228b22',       // Forest Green
-  Gunslinger: '#8b4513',   // Saddle Brown
-  Tracker: '#556b2f',      // Dark Olive Green
-  Druid: '#006400'         // Dark Green
+// Class and race icons (these are UI-specific and don't need to be fetched)
+export const ICONS = {
+  RACES: {
+    Human: '👤',
+    Dwarf: '🧔‍♂️',
+    Elf: '🧝',
+    Orc: '👹',
+    Satyr: '👺',
+    Skeleton: '💀',
+  },
+
+  CLASSES: {
+    Warrior: '⚔️',
+    Pyromancer: '🔥',
+    Wizard: '🧙',
+    Assassin: '🗡️',
+    Rogue: '👥',
+    Priest: '✝️',
+    Oracle: '🔮',
+    Seer: '👁️',
+    Shaman: '🌪️',
+    Gunslinger: '🔫',
+    Tracker: '🏹',
+    Druid: '🌿',
+  },
+
+  ABILITIES: {
+    attack: '⚔️',
+    heal: '💚',
+    defense: '🛡️',
+    special: '✨',
+  },
+
+  STATUS: {
+    poison: '☠️',
+    protected: '🛡️',
+    invisible: '👻',
+    stunned: '⚡',
+  },
+};
+
+// Local storage keys
+export const STORAGE_KEYS = {
+  LAST_GAME_CODE: 'lastGameCode',
+  LAST_PLAYER_NAME: 'lastPlayerName',
+  TUTORIAL_SEEN: 'tutorialSeen',
+  THEME_PREFERENCE: 'themePreference',
+};
+
+// Export all constants
+export default {
+  SOCKET_URL,
+  API_URL,
+  GAME_PHASES,
+  ACTION_PHASES,
+  STATUS_EFFECTS,
+  UI,
+  ICONS,
+  STORAGE_KEYS,
 };

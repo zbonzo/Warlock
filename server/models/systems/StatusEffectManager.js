@@ -133,7 +133,7 @@ class StatusEffectManager {
     // Add log message if effect was present
     if (hadEffect) {
       log.push(
-        config.getEffectMessage(effectName, 'expired', {
+        config.statusEffects.getEffectMessage(effectName, 'expired', {
           playerName: player.name,
         })
       );
@@ -260,7 +260,7 @@ class StatusEffectManager {
     player.hp = Math.max(0, player.hp - poison.damage);
 
     log.push(
-      config.getEffectMessage('poison', 'damage', {
+      config.statusEffects.getEffectMessage('poison', 'damage', {
         playerName: player.name,
         damage: poison.damage,
       })
@@ -301,7 +301,7 @@ class StatusEffectManager {
     if (poison.turns <= 0) {
       player.removeStatusEffect('poison');
       log.push(
-        config.getEffectMessage('poison', 'expired', {
+        config.statusEffects.getEffectMessage('poison', 'expired', {
           playerName: player.name,
         })
       );

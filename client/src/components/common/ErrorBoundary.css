@@ -1,0 +1,105 @@
+/**
+ * client/src/components/common/ErrorBoundary.css
+ * Styles for the error boundary component
+ */
+
+.error-boundary {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #f5f5f5, #e0e0e0);
+  padding: 20px;
+  font-family: var(--font-body);
+}
+
+.error-container {
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  padding: 30px;
+  max-width: 600px;
+  width: 100%;
+  text-align: center;
+}
+
+.error-title {
+  color: var(--color-danger);
+  font-family: var(--font-heading);
+  margin-bottom: 20px;
+  font-size: 1.8rem;
+}
+
+.error-message {
+  margin-bottom: 30px;
+  font-size: 1.1rem;
+  color: #555;
+  line-height: 1.5;
+}
+
+.error-actions {
+  margin: 30px 0;
+}
+
+.error-reset-button {
+  background-color: var(--color-primary);
+  color: white;
+  border: none;
+  padding: 12px 25px;
+  border-radius: 6px;
+  font-size: 1rem;
+  cursor: pointer;
+  font-weight: bold;
+  transition: all 0.2s ease;
+}
+
+.error-reset-button:hover {
+  background-color: var(--color-secondary);
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+.error-details {
+  text-align: left;
+  margin-top: 30px;
+  border-top: 1px solid #eee;
+  padding-top: 20px;
+}
+
+.error-details summary {
+  cursor: pointer;
+  color: var(--color-secondary);
+  font-weight: bold;
+  margin-bottom: 10px;
+}
+
+.error-details pre {
+  background-color: #f5f5f5;
+  padding: 15px;
+  border-radius: 6px;
+  overflow-x: auto;
+  max-height: 200px;
+  font-size: 0.9rem;
+  color: #666;
+  margin-top: 10px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .error-container {
+    padding: 20px;
+  }
+
+  .error-title {
+    font-size: 1.5rem;
+  }
+
+  .error-message {
+    font-size: 1rem;
+  }
+
+  .error-reset-button {
+    padding: 10px 20px;
+    font-size: 0.9rem;
+  }
+}

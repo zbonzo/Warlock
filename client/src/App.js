@@ -1,10 +1,14 @@
 /**
- * @fileoverview Main application component that handles routing and state management
- * Entry point for the Warlock game application
+ * client/src/App.js
+ * Main application component with ConfigProvider integration
  */
-import React, { useEffect, useMemo, useCallback } from 'react';
+
+import React, { useEffect } from 'react';
 import { ThemeProvider } from './contexts/ThemeContext';
+import { ConfigProvider } from '@contexts/ConfigContext';
 import { AppProvider, useAppContext } from './contexts/AppContext';
+import LoadingScreen from './components/common/LoadingScreen';
+import ErrorBoundary from './components/common/ErrorBoundary';
 import useSocket from './hooks/useSocket';
 
 // Game components
@@ -22,23 +26,27 @@ import './styles/App.css';
 
 /**
  * Main App component
- * Wraps the application with context providers
+ * Wraps the application with context providers including ConfigProvider
  *
  * @returns {React.ReactElement} The application
  */
 function App() {
   return (
-    <AppProvider>
-      <ThemeProvider>
-        <AppContent />
-      </ThemeProvider>
-    </AppProvider>
+    <ErrorBoundary>
+      <ConfigProvider>
+        <AppProvider>
+          <ThemeProvider>
+            <AppContent />
+          </ThemeProvider>
+        </AppProvider>
+      </ConfigProvider>
+    </ErrorBoundary>
   );
 }
 
 /**
  * AppContent component handles routing and socket connections
- * Uses AppContext for state management
+ * Uses ConfigContext and AppContext for state management
  *
  * @returns {React.ReactElement} The application content
  */
@@ -209,12 +217,12 @@ function AppContent() {
   ]);
 
   // Current player data (derived from players list)
-  const currentPlayer = useMemo(() => {
+  const currentPlayer = React.useMemo(() => {
     return players.find((p) => p.id === socketId) || null;
   }, [players, socketId]);
 
   // Handler functions using useCallback
-  const handleCreateGame = useCallback(
+  const handleCreateGame = React.useCallback(
     (name) => {
       setPlayerName(name);
       emit('createGame', { playerName: name });
@@ -222,7 +230,7 @@ function AppContent() {
     [emit, setPlayerName]
   );
 
-  const handleJoinGame = useCallback(
+  const handleJoinGame = React.useCallback(
     (code, name) => {
       setPlayerName(name);
       setGameCode(code);
@@ -232,7 +240,7 @@ function AppContent() {
     [emit, setPlayerName, setGameCode, setScreen]
   );
 
-  const handleConfirm = useCallback(
+  const handleConfirm = React.useCallback(
     (race, cls) => {
       setSelectedRace(race);
       setSelectedClass(cls);
@@ -250,14 +258,14 @@ function AppContent() {
     [gameCode, emit, setSelectedRace, setSelectedClass, setScreen]
   );
 
-  const handleStartGame = useCallback(() => {
+  const handleStartGame = React.useCallback(() => {
     // Add the scroll behavior at the beginning
     window.scrollTo({ top: 0, behavior: 'smooth' });
 
     emit('startGame', { gameCode });
   }, [gameCode, emit]);
 
-  const handleReconnect = useCallback(
+  const handleReconnect = React.useCallback(
     (code, name) => {
       emit('reconnectToGame', { gameCode: code, playerName: name });
       setPlayerName(name);
@@ -266,21 +274,43 @@ function AppContent() {
     [emit, setPlayerName, setGameCode]
   );
 
-  const handleSubmitAction = useCallback(
+  const handleSubmitAction = React.useCallback(
     (actionType, targetId) => {
       emit('performAction', { gameCode, actionType, targetId });
     },
     [gameCode, emit]
   );
 
-  const handlePlayAgain = useCallback(() => {
+  const handlePlayAgain = React.useCallback(() => {
     // Reset game state and return to start screen
     localStorage.removeItem('lastGameCode');
     resetGame();
   }, [resetGame]);
-
   // Render the appropriate screen based on the current state
   const renderScreen = () => {
+    // Get configuration loading state from context
+    const { loading: configLoading, error: configError } = {
+      loading: false,
+      error: null,
+    };
+
+    // Show loading screen while configuration is loading
+    if (configLoading) {
+      return <LoadingScreen message="Loading game configuration..." />;
+    }
+
+    // Show error screen if configuration loading failed
+    if (configError) {
+      return (
+        <div className="error-screen">
+          <h2>Configuration Error</h2>
+          <p>{configError}</p>
+          <button onClick={() => window.location.reload()}>Retry</button>
+        </div>
+      );
+    }
+
+    // Render the appropriate game screen
     switch (screen) {
       case GAME_PHASES.JOIN:
         return (
