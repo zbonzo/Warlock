@@ -2,6 +2,8 @@
  * @fileoverview System for managing warlock players, conversion, and related game mechanics
  * Centralizes warlock-specific logic for consistent behavior
  */
+const config = require('@config');
+const logger = require('@utils/logger');
 
 /**
  * WarlockSystem manages all warlock-related operations
@@ -37,6 +39,7 @@ class WarlockSystem {
     if (warlock) {
       warlock.isWarlock = true;
       this.numWarlocks = 1;
+      logger.info(`Player ${warlock.name} assigned as initial warlock`);
       return warlock;
     }
     
@@ -56,6 +59,7 @@ class WarlockSystem {
    */
   incrementWarlockCount() {
     this.numWarlocks++;
+    logger.debug(`Warlock count increased to ${this.numWarlocks}`);
   }
 
   /**
@@ -65,6 +69,7 @@ class WarlockSystem {
   decrementWarlockCount() {
     if (this.numWarlocks > 0) {
       this.numWarlocks--;
+      logger.debug(`Warlock count decreased to ${this.numWarlocks}`);
     }
     return this.numWarlocks;
   }
@@ -122,25 +127,36 @@ class WarlockSystem {
     // Skip if target is invalid, dead, or already a warlock
     if (!target.isAlive || target.isWarlock) return false;
    
-    // Conversion chance: 20% base + 30% scaled by warlock ratio, max 70%
-    // Modified by rateModifier parameter (e.g. 0.5 for AOE abilities)
+    // Get conversion settings from config
+    const conversionSettings = config.gameBalance.warlock.conversion;
+    
+    // Calculate conversion chance based on config
     const alivePlayersCount = this.gameStateUtils.getAlivePlayers().length;
-    const baseChance = Math.min(0.5, 0.2 + (this.numWarlocks / alivePlayersCount) * 0.3);
+    const baseChance = Math.min(
+      conversionSettings.maxChance || 0.5, 
+      (conversionSettings.baseChance || 0.2) + 
+      (this.numWarlocks / alivePlayersCount) * (conversionSettings.scalingFactor || 0.3)
+    );
+    
+    // Apply rate modifier
     const finalChance = baseChance * rateModifier;
     
+    // Attempt conversion
     if (Math.random() < finalChance) {
       target.isWarlock = true;
       this.incrementWarlockCount();
       
-      // Enhanced log entry
+      // Enhanced log entry using messages from config
       const conversionLog = {
         type: 'corruption',
         public: true,
-        message: 'Another hero has been corrupted!', // Vague public message
+        message: config.messages.getEvent('playerCorrupted'),
         targetId: target.id,
         attackerId: actor.id,
-        privateMessage: 'You were corrupted.', // Simple message for target
-        attackerMessage: `You corrupted ${target.name}.`, // Clear message for warlock
+        privateMessage: config.messages.getMessage('private', 'youWereCorrupted'),
+        attackerMessage: config.messages.getMessage('private', 'youCorrupted', { 
+          targetName: target.name 
+        }),
         moveToEnd: true // Move to end of log for clarity
       };
       log.push(conversionLog);
@@ -170,8 +186,14 @@ class WarlockSystem {
     const randomIdx = Math.floor(Math.random() * eligiblePlayers.length);
     const target = eligiblePlayers[randomIdx];
     
-    // Untargeted conversions have a lower base chance (using the rateModifier)
-    return this.attemptConversion(actor, target, log, rateModifier);
+    // Get untargeted conversion modifier from config
+    const randomModifier = config.gameBalance.warlock.conversion.randomModifier || 0.5;
+    
+    // Apply combined modifier
+    const totalModifier = rateModifier * randomModifier;
+    
+    // Attempt conversion with modified chance
+    return this.attemptConversion(actor, target, log, totalModifier);
   }
   
   /**
@@ -201,8 +223,11 @@ class WarlockSystem {
     const aliveCount = this.gameStateUtils.getAlivePlayers().length;
     const aliveWarlockCount = this.countAliveWarlocks();
     
-    // Warlocks are winning if they are majority
-    return aliveWarlockCount > aliveCount / 2;
+    // Get majority threshold from config
+    const majorityThreshold = config.gameBalance.warlock.winConditions.majorityThreshold || 0.5;
+    
+    // Warlocks are winning if they exceed the threshold
+    return aliveWarlockCount > aliveCount * majorityThreshold;
   }
 }
 

@@ -9,25 +9,26 @@
 const poison = {
   // Default values when not specified
   default: {
-    damage: 5,        // Damage per turn
-    turns: 3          // Number of turns active
+    damage: 5, // Damage per turn
+    turns: 3, // Number of turns active
   },
-  
+
   // Effect behavior
-  stackable: false,     // Can multiple poisons stack?
-  refreshable: true,    // Can poison be refreshed/renewed?
-  
+  stackable: false, // Can multiple poisons stack?
+  refreshable: true, // Can poison be refreshed/renewed?
+
   // Interaction with other systems
-  triggersStoneDegradation: true,  // Causes stone armor to degrade
-  canCauseDeath: true,             // Can kill player when HP reaches 0
-  
+  triggersStoneDegradation: true, // Causes stone armor to degrade
+  canCauseDeath: true, // Can kill player when HP reaches 0
+
   // Display settings
   messages: {
-    applied: "{playerName} is poisoned for {damage} damage over {turns} turns.",
-    refreshed: "{playerName}'s poison is refreshed for {damage} damage over {turns} turns.",
-    damage: "{playerName} suffers {damage} poison damage.",
-    expired: "The poison affecting {playerName} has worn off."
-  }
+    applied: '{playerName} is poisoned for {damage} damage over {turns} turns.',
+    refreshed:
+      "{playerName}'s poison is refreshed for {damage} damage over {turns} turns.",
+    damage: '{playerName} suffers {damage} poison damage.',
+    expired: 'The poison affecting {playerName} has worn off.',
+  },
 };
 
 /**
@@ -36,23 +37,24 @@ const poison = {
 const protected = {
   // Default values
   default: {
-    armor: 2,         // Additional armor provided
-    turns: 1          // Duration in turns
+    armor: 2, // Additional armor provided
+    turns: 1, // Duration in turns
   },
-  
+
   // Effect behavior
-  stackable: false,     // Multiple protections don't stack
-  refreshable: true,    // Can be refreshed to extend duration
-  
+  stackable: false, // Multiple protections don't stack
+  refreshable: true, // Can be refreshed to extend duration
+
   // Mechanics
-  armorStacks: true,    // Adds to existing armor
-  
+  armorStacks: true, // Adds to existing armor
+
   // Display settings
   messages: {
-    applied: "{playerName} is protected with {armor} armor for {turns} turn(s).",
+    applied:
+      '{playerName} is protected with {armor} armor for {turns} turn(s).',
     refreshed: "{playerName}'s protection is refreshed for {turns} turn(s).",
-    expired: "{playerName} is no longer protected."
-  }
+    expired: '{playerName} is no longer protected.',
+  },
 };
 
 /**
@@ -61,29 +63,30 @@ const protected = {
 const invisible = {
   // Default values
   default: {
-    turns: 1          // Duration in turns
+    turns: 1, // Duration in turns
   },
-  
+
   // Effect behavior
-  stackable: false,     // Multiple invisibility don't stack
-  refreshable: true,    // Can extend duration
-  
+  stackable: false, // Multiple invisibility don't stack
+  refreshable: true, // Can extend duration
+
   // Mechanics
-  preventsTargeting: true,      // Cannot be targeted by attacks
-  allowsSelfTargeting: true,    // Can still target self
-  breaksOnAction: false,        // Doesn't break when acting
-  
+  preventsTargeting: true, // Cannot be targeted by attacks
+  allowsSelfTargeting: true, // Can still target self
+  breaksOnAction: false, // Doesn't break when acting
+
   // Interaction rules
-  redirectsAttacks: true,       // Attacks redirect to other targets
-  affectsMonster: true,         // Monster cannot target invisible players
-  
+  redirectsAttacks: true, // Attacks redirect to other targets
+  affectsMonster: true, // Monster cannot target invisible players
+
   // Display settings
   messages: {
-    applied: "{playerName} becomes invisible for {turns} turn(s).",
+    applied: '{playerName} becomes invisible for {turns} turn(s).',
     refreshed: "{playerName}'s invisibility is extended for {turns} turn(s).",
-    expired: "{playerName} is no longer invisible.",
-    attackMissed: "{attackerName} tries to attack {playerName}, but they are invisible!"
-  }
+    expired: '{playerName} is no longer invisible.',
+    attackMissed:
+      '{attackerName} tries to attack {playerName}, but they are invisible!',
+  },
 };
 
 /**
@@ -92,25 +95,25 @@ const invisible = {
 const stunned = {
   // Default values
   default: {
-    turns: 1          // Duration in turns
+    turns: 1, // Duration in turns
   },
-  
+
   // Effect behavior
-  stackable: false,     // Multiple stuns don't stack
-  refreshable: true,    // Can extend duration
-  
+  stackable: false, // Multiple stuns don't stack
+  refreshable: true, // Can extend duration
+
   // Mechanics
-  preventsActions: true,        // Cannot perform any actions
+  preventsActions: true, // Cannot perform any actions
   preventsRacialAbilities: true, // Cannot use racial abilities
-  allowsPassiveEffects: true,   // Still affected by poison, etc.
-  
+  allowsPassiveEffects: true, // Still affected by poison, etc.
+
   // Display settings
   messages: {
-    applied: "{playerName} is stunned for {turns} turn(s).",
-    refreshed: "{playerName} remains stunned for {turns} more turn(s).",
-    expired: "{playerName} is no longer stunned.",
-    cannotAct: "You are stunned and cannot act."
-  }
+    applied: '{playerName} is stunned for {turns} turn(s).',
+    refreshed: '{playerName} remains stunned for {turns} more turn(s).',
+    expired: '{playerName} is no longer stunned.',
+    cannotAct: 'You are stunned and cannot act.',
+  },
 };
 
 /**
@@ -118,10 +121,10 @@ const stunned = {
  * Lower numbers are processed first each round
  */
 const processingOrder = {
-  poison: 1,        // Process poison damage first
-  protected: 2,     // Then update protection
-  invisible: 3,     // Then handle invisibility
-  stunned: 4        // Finally process stun effects
+  poison: 1, // Process poison damage first
+  protected: 2, // Then update protection
+  invisible: 3, // Then handle invisibility
+  stunned: 4, // Finally process stun effects
 };
 
 /**
@@ -130,18 +133,18 @@ const processingOrder = {
 const global = {
   // Maximum effects per player
   maxEffectsPerPlayer: 10,
-  
+
   // Effect duration limits
-  maxTurns: 10,           // No effect lasts longer than 10 turns
-  minTurns: 1,            // All effects last at least 1 turn
-  
+  maxTurns: 10, // No effect lasts longer than 10 turns
+  minTurns: 1, // All effects last at least 1 turn
+
   // Processing settings
-  processBeforeActions: true,   // Process effects before player actions
-  processAfterActions: false,   // Don't process again after actions
-  
+  processBeforeActions: true, // Process effects before player actions
+  processAfterActions: false, // Don't process again after actions
+
   // Cleanup settings
   removeExpiredImmediately: true,
-  allowZeroTurnEffects: false   // Remove effects with 0 turns remaining
+  allowZeroTurnEffects: false, // Remove effects with 0 turns remaining
 };
 
 /**
@@ -178,11 +181,27 @@ function isEffectRefreshable(effectName) {
  * Helper function to get effect message template
  * @param {string} effectName - Name of the effect
  * @param {string} messageType - Type of message (applied, expired, etc.)
+ * @param {Object} data - Data for message formatting
  * @returns {string|null} Message template or null if not found
  */
-function getEffectMessage(effectName, messageType) {
+function getEffectMessage(effectName, messageType, data = {}) {
+  // Use local variables instead of referring to config
   const effects = { poison, protected, invisible, stunned };
-  return effects[effectName]?.messages?.[messageType] || null;
+  const template = effects[effectName]?.messages?.[messageType];
+
+  if (!template) {
+    // Fallback messages
+    if (messageType === 'applied') {
+      return `${data.playerName} is affected by ${effectName}.`;
+    } else if (messageType === 'refreshed') {
+      return `${data.playerName}'s ${effectName} effect is refreshed.`;
+    } else if (messageType === 'expired') {
+      return `The ${effectName} effect on ${data.playerName} has worn off.`;
+    }
+    return '';
+  }
+
+  return formatEffectMessage(template, data);
 }
 
 /**
@@ -193,7 +212,7 @@ function getEffectMessage(effectName, messageType) {
  */
 function formatEffectMessage(template, data = {}) {
   if (!template) return '';
-  
+
   return template.replace(/{(\w+)}/g, (match, key) => {
     return data[key] || match;
   });
@@ -206,11 +225,11 @@ module.exports = {
   stunned,
   processingOrder,
   global,
-  
+
   // Helper functions
   getEffectDefaults,
   isEffectStackable,
   isEffectRefreshable,
   getEffectMessage,
-  formatEffectMessage
+  formatEffectMessage,
 };

@@ -2,6 +2,7 @@
  * @fileoverview Utility functions for game state management
  * Provides common operations and queries on the game state
  */
+const config = require('@config');
 
 /**
  * Helper class with utility functions for game state
@@ -36,8 +37,8 @@ class GameStateUtils {
 
   /**
    * Get a random target excluding specified IDs
-   * @param {string} actorId - ID of the acting player
    * @param {Object} options - Targeting options
+   * @param {string} options.actorId - ID of the acting player
    * @param {Array} [options.excludeIds=[]] - IDs to exclude from targeting
    * @param {boolean} [options.includeMonster=false] - Whether to include monster as target
    * @param {Object} [options.monsterRef=null] - Monster state reference if included
@@ -102,11 +103,14 @@ class GameStateUtils {
    * @returns {string|null} Winner ('Good', 'Evil') or null if game continues
    */
   checkWinConditions(numWarlocks, aliveCount) {
+    // Use win conditions from config
+    const winConditions = config.gameBalance.warlock.winConditions;
+    
     // Good players win if all warlocks are eliminated
-    if (numWarlocks <= 0 && aliveCount > 0) return 'Good';
+    if (numWarlocks <= 0 && aliveCount > 0) return winConditions.allWarlocksGone || 'Good';
     
     // Warlocks win if all remaining players are warlocks
-    if (numWarlocks > 0 && numWarlocks === aliveCount) return 'Evil';
+    if (numWarlocks > 0 && numWarlocks === aliveCount) return winConditions.allPlayersWarlocks || 'Evil';
     
     // Game continues
     return null;
@@ -263,7 +267,16 @@ class GameStateUtils {
    * @returns {string} Category (Attack, Defense, Heal, Special)
    */
   getAbilityCategory(abilityType) {
-    // This is a simplified example - you would have your own logic based on your game
+    // Look up ability in config
+    for (const className in config.classAbilities) {
+      const abilities = config.classAbilities[className];
+      const ability = abilities.find(a => a.type === abilityType);
+      if (ability) {
+        return ability.category;
+      }
+    }
+    
+    // Fallback to pattern matching if not found in config
     const attackTypes = ['fireball', 'slash', 'strike', 'shot', 'blast'];
     const healTypes = ['heal', 'bandage', 'restoration', 'mend'];
     const defenseTypes = ['shield', 'protect', 'barrier', 'dodge'];
@@ -284,6 +297,14 @@ class GameStateUtils {
     return 'Special';
   }
 
+  /**
+   * Replace player ability (for Human Adaptability)
+   * @param {string} playerId - Player ID
+   * @param {string} oldAbilityType - Ability type to replace
+   * @param {string} newAbilityType - New ability type
+   * @param {number} level - Ability level
+   * @returns {boolean} Whether the replacement was successful
+   */
   replacePlayerAbility(playerId, oldAbilityType, newAbilityType, level) {
     // Find the player
     const player = this.players.get(playerId);
@@ -300,21 +321,11 @@ class GameStateUtils {
     const oldAbility = player.abilities[oldAbilityIndex];
     if (oldAbility.unlockAt !== level) return false;
     
-    // Import class abilities definitions
-    const classAbilities = require('../../config/classAbilities');
-    
-    // Find the new ability in the class abilities definitions
-    const classAbilitiesList = classAbilities[player.class] || [];
-    const newAbilityTemplate = classAbilitiesList.find(a => a.type === newAbilityType);
+    // Find the new ability in the class abilities
+    const newAbilityTemplate = config.getClassAbilitiesByLevel(player.class, level)
+      .find(a => a.type === newAbilityType);
     
     if (!newAbilityTemplate) {
-      console.error(`Ability type "${newAbilityType}" not found for class "${player.class}"`);
-      return false;
-    }
-    
-    // Verify the new ability is the same level
-    if (newAbilityTemplate.unlockAt !== level) {
-      console.error(`New ability level (${newAbilityTemplate.unlockAt}) doesn't match required level (${level})`);
       return false;
     }
     
@@ -330,11 +341,8 @@ class GameStateUtils {
       player.unlocked[unlockedIndex] = newAbility;
     }
     
-    console.log(`Player ${player.name} replaced ${oldAbilityType} with ${newAbilityType} (level ${level})`);
     return true;
   }
 }
-
-
 
 module.exports = GameStateUtils;

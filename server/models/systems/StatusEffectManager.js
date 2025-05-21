@@ -2,6 +2,8 @@
  * @fileoverview System for managing player status effects and their durations
  * Handles application, removal, and round-based processing of effects
  */
+const config = require('@config');
+const logger = require('@utils/logger');
 
 /**
  * Manages all status effects across players
@@ -16,30 +18,6 @@ class StatusEffectManager {
   constructor(players, gameStateUtils) {
     this.players = players;
     this.gameStateUtils = gameStateUtils;
-    
-    // Effect definitions with default parameters and behavior
-    this.effectDefinitions = {
-      poison: {
-        default: { damage: 5, turns: 3 },
-        stackable: false,
-        refreshable: true
-      },
-      protected: {
-        default: { armor: 2, turns: 1 },
-        stackable: false,
-        refreshable: true
-      },
-      invisible: {
-        default: { turns: 1 },
-        stackable: false,
-        refreshable: true
-      },
-      stunned: {
-        default: { turns: 1 },
-        stackable: false,
-        refreshable: true
-      }
-    };
   }
 
   /**
@@ -53,36 +31,59 @@ class StatusEffectManager {
   applyEffect(playerId, effectName, effectData, log = []) {
     const player = this.players.get(playerId);
     if (!player || !player.isAlive) return false;
-    
-    // Get the effect definition
-    const definition = this.effectDefinitions[effectName];
-    if (!definition) {
-      log.push(`Unknown effect ${effectName} could not be applied to ${player.name}.`);
+
+    // Get the effect definition from config
+    const effectDefinition = config.statusEffects[effectName];
+    if (!effectDefinition) {
+      log.push(
+        `Unknown effect ${effectName} could not be applied to ${player.name}.`
+      );
       return false;
     }
-    
+
     // Check if already has the effect
     const hasEffect = player.hasStatusEffect(effectName);
-    
+
     // Apply default values for any missing parameters
+    // Use directly from config.statusEffects instead of calling a function
+    const effectDefaults = config.statusEffects[effectName]?.default || {};
     const finalData = {
-      ...definition.default,
-      ...effectData
+      ...effectDefaults,
+      ...effectData,
     };
-    
+
     // Apply the effect to the player
     player.applyStatusEffect(effectName, finalData);
-    
-    // Add log message if not already present
+
+    // Add log message
     if (!hasEffect) {
-      log.push(this.getEffectApplicationMessage(player.name, effectName, finalData));
+      // Use config messages module directly
+      const template = config.statusEffects.getEffectMessage
+        ? config.statusEffects.getEffectMessage(effectName, 'applied')
+        : `${player.name} is affected by ${effectName}.`;
+
+      log.push(
+        config.messages.formatMessage(template, {
+          playerName: player.name,
+          ...finalData,
+        })
+      );
     } else {
-      log.push(this.getEffectRefreshMessage(player.name, effectName, finalData));
+      // Use config messages module directly
+      const template = config.statusEffects.getEffectMessage
+        ? config.statusEffects.getEffectMessage(effectName, 'refreshed')
+        : `${player.name}'s ${effectName} effect is refreshed.`;
+
+      log.push(
+        config.messages.formatMessage(template, {
+          playerName: player.name,
+          ...finalData,
+        })
+      );
     }
-    
+
     return true;
   }
-
   /**
    * Remove a status effect from a player
    * @param {string} playerId - Target player's ID
@@ -93,23 +94,27 @@ class StatusEffectManager {
   removeEffect(playerId, effectName, log = []) {
     const player = this.players.get(playerId);
     if (!player) return false;
-    
+
     const hadEffect = player.hasStatusEffect(effectName);
-    
+
     // Remove the effect
     player.removeStatusEffect(effectName);
-    
+
     // Add log message if effect was present
     if (hadEffect) {
-      log.push(`The ${effectName} effect on ${player.name} has worn off.`);
+      log.push(
+        config.getEffectMessage(effectName, 'expired', {
+          playerName: player.name,
+        })
+      );
     }
-    
+
     return hadEffect;
   }
 
   /**
    * Check if a player has a particular status effect
-   * @param {string} playerId - Target player's ID 
+   * @param {string} playerId - Target player's ID
    * @param {string} effectName - Name of the effect to check
    * @returns {boolean} Whether the player has the effect
    */
@@ -127,7 +132,7 @@ class StatusEffectManager {
   getEffectData(playerId, effectName) {
     const player = this.players.get(playerId);
     if (!player || !player.hasStatusEffect(effectName)) return null;
-    
+
     return player.statusEffects[effectName];
   }
 
@@ -147,13 +152,29 @@ class StatusEffectManager {
    */
   processTimedEffects(log = []) {
     const alivePlayers = this.gameStateUtils.getAlivePlayers();
-    
-    for (const player of alivePlayers) {
-      // Process each type of effect
-      this.processPoisonEffect(player, log);
-      this.processTimedEffect(player, 'protected', log);
-      this.processTimedEffect(player, 'invisible', log);
-      this.processTimedEffect(player, 'stunned', log);
+
+    // Process effects in order defined in config
+    const processingOrder = config.statusEffects.processingOrder || {
+      poison: 1,
+      protected: 2,
+      invisible: 3,
+      stunned: 4,
+    };
+
+    // Sort effect types by processing order
+    const effectTypes = Object.keys(processingOrder).sort((a, b) => {
+      return processingOrder[a] - processingOrder[b];
+    });
+
+    // Process each effect type in order
+    for (const effectType of effectTypes) {
+      for (const player of alivePlayers) {
+        if (effectType === 'poison') {
+          this.processPoisonEffect(player, log);
+        } else {
+          this.processTimedEffect(player, effectType, log);
+        }
+      }
     }
   }
 
@@ -165,42 +186,64 @@ class StatusEffectManager {
    */
   processPoisonEffect(player, log) {
     if (!player.hasStatusEffect('poison')) return;
-    
+
     const poison = player.statusEffects.poison;
-    
+
     // Process Stone Armor degradation for Dwarves (before applying poison damage)
     let armorDegradationInfo = null;
     if (player.race === 'Dwarf' && player.stoneArmorIntact) {
       armorDegradationInfo = player.processStoneArmorDegradation(poison.damage);
     }
-    
+
     // Apply poison damage
     player.hp = Math.max(0, player.hp - poison.damage);
-    log.push(`${player.name} suffers ${poison.damage} poison damage.`);
-    
+
+    log.push(
+      config.getEffectMessage('poison', 'damage', {
+        playerName: player.name,
+        damage: poison.damage,
+      })
+    );
+
     // Add Stone Armor degradation message if applicable
     if (armorDegradationInfo && armorDegradationInfo.degraded) {
-      const armorMessage = `${player.name}'s Stone Armor weakens from the poison! (${armorDegradationInfo.oldValue} → ${armorDegradationInfo.newArmorValue})`;
-      log.push(armorMessage);
-      
-      if (armorDegradationInfo.destroyed && armorDegradationInfo.newArmorValue <= 0) {
-        log.push(`${player.name}'s Stone Armor is completely dissolved by the poison!`);
+      log.push(
+        config.messages.getEvent('dwarfStoneArmor', {
+          playerName: player.name,
+          oldValue: armorDegradationInfo.oldValue,
+          newValue: armorDegradationInfo.newArmorValue,
+        })
+      );
+
+      if (
+        armorDegradationInfo.destroyed &&
+        armorDegradationInfo.newArmorValue <= 0
+      ) {
+        log.push(
+          config.messages.getEvent('stoneArmorDestroyed', {
+            playerName: player.name,
+          })
+        );
       }
     }
-    
+
     // Check if died from poison
     if (player.hp === 0) {
       player.pendingDeath = true;
-      player.deathAttacker = "Poison";
+      player.deathAttacker = 'Poison';
     }
-    
+
     // Decrement turns
     poison.turns--;
-    
+
     // Remove if expired
     if (poison.turns <= 0) {
       player.removeStatusEffect('poison');
-      log.push(`The poison affecting ${player.name} has worn off.`);
+      log.push(
+        config.getEffectMessage('poison', 'expired', {
+          playerName: player.name,
+        })
+      );
     }
   }
 
@@ -213,84 +256,20 @@ class StatusEffectManager {
    */
   processTimedEffect(player, effectName, log) {
     if (!player.hasStatusEffect(effectName)) return;
-    
+
     const effect = player.statusEffects[effectName];
-    
+
     // Decrement turns
     effect.turns--;
-    
+
     // Remove if expired
     if (effect.turns <= 0) {
       player.removeStatusEffect(effectName);
-      log.push(this.getEffectExpirationMessage(player.name, effectName));
-    }
-  }
-
-  /**
-   * Get a message for effect application
-   * @param {string} playerName - Name of the affected player
-   * @param {string} effectName - Name of the effect
-   * @param {Object} effectData - Effect data
-   * @returns {string} Formatted message
-   * @private
-   */
-  getEffectApplicationMessage(playerName, effectName, effectData) {
-    switch (effectName) {
-      case 'poison':
-        return `${playerName} is poisoned for ${effectData.damage} damage over ${effectData.turns} turns.`;
-      case 'protected':
-        return `${playerName} is protected with ${effectData.armor} armor for ${effectData.turns} turn(s).`;
-      case 'invisible':
-        return `${playerName} becomes invisible for ${effectData.turns} turn(s).`;
-      case 'stunned':
-        return `${playerName} is stunned for ${effectData.turns} turn(s).`;
-      default:
-        return `${playerName} is affected by ${effectName}.`;
-    }
-  }
-
-  /**
-   * Get a message for effect refresh
-   * @param {string} playerName - Name of the affected player
-   * @param {string} effectName - Name of the effect
-   * @param {Object} effectData - Effect data
-   * @returns {string} Formatted message
-   * @private
-   */
-  getEffectRefreshMessage(playerName, effectName, effectData) {
-    switch (effectName) {
-      case 'poison':
-        return `${playerName}'s poison is refreshed for ${effectData.damage} damage over ${effectData.turns} turns.`;
-      case 'protected':
-        return `${playerName}'s protection is refreshed for ${effectData.turns} turn(s).`;
-      case 'invisible':
-        return `${playerName}'s invisibility is extended for ${effectData.turns} turn(s).`;
-      case 'stunned':
-        return `${playerName} remains stunned for ${effectData.turns} more turn(s).`;
-      default:
-        return `${playerName}'s ${effectName} effect is refreshed.`;
-    }
-  }
-
-  /**
-   * Get a message for effect expiration
-   * @param {string} playerName - Name of the affected player
-   * @param {string} effectName - Name of the effect
-   * @returns {string} Formatted message
-   * @private
-   */
-  getEffectExpirationMessage(playerName, effectName) {
-    switch (effectName) {
-      case 'poison':
-        return `The poison affecting ${playerName} has worn off.`;
-      case 'protected':
-        return `${playerName} is no longer protected.`;
-      case 'invisible':
-        return `${playerName} is no longer invisible.`;
-      case 'stunned':
-        return `${playerName} is no longer stunned.`;
-      default:
-        return `The ${effectName} effect on ${playerName} has worn off.`;
+      log.push(
+        config.statusEffects.getEffectMessage(effectName, 'expired', {
+          playerName: player.name,
+        })
+      );
     }
   }
 }

@@ -2,6 +2,8 @@
  * @fileoverview System for managing racial abilities and their usage
  * Handles validation, queuing, and processing of racial ability effects
  */
+const config = require('@config');
+const logger = require('@utils/logger');
 
 /**
  * RacialAbilitySystem manages all racial ability operations
@@ -52,6 +54,7 @@ class RacialAbilitySystem {
     
     // Validate racial ability exists and is registered
     if (!actor.racialAbility || !this.abilityRegistry?.hasRacialAbility(actor.racialAbility.type)) {
+      logger.warn(`Unknown racial ability type: ${actor.racialAbility?.type}`);
       return false;
     }
 
@@ -119,7 +122,18 @@ class RacialAbilitySystem {
     if (player.racialCooldown > 0) {
       player.racialCooldown--;
       if (player.racialCooldown === 0) {
-        log.push(`${player.name}'s racial ability is ready to use again.`);
+        // Use private message from config
+        const racialReadyMessage = config.messages.getMessage('private', 'racialAbilityReady');
+        
+        const cooldownLog = {
+          type: 'racial_cooldown',
+          public: false,
+          targetId: player.id,
+          message: '',
+          privateMessage: racialReadyMessage,
+          attackerMessage: ''
+        };
+        log.push(cooldownLog);
       }
     }
   }
@@ -145,7 +159,10 @@ class RacialAbilitySystem {
       const actualHeal = player.hp - oldHp;
       
       if (actualHeal > 0) {
-        log.push(`${player.name} heals for ${actualHeal} HP from Forest's Grace.`);
+        log.push(config.messages.getEvent('playerHealed', {
+          playerName: player.name,
+          amount: actualHeal
+        }));
       }
     }
     

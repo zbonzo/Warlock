@@ -13,7 +13,7 @@ import './ActionColumn.css';
 
 /**
  * ActionColumn component handles the main game interaction
- * 
+ *
  * @param {Object} props - Component props
  * @param {boolean} props.isVisible - Whether this column is currently visible
  * @param {string} props.phase - Current game phase ('action' or 'results')
@@ -36,15 +36,15 @@ import './ActionColumn.css';
  * @param {Function} props.onReadyClick - Callback for ready button click
  * @returns {React.ReactElement|null} The rendered component or null if not visible
  */
-const ActionColumn = ({ 
+const ActionColumn = ({
   isVisible,
-  phase, 
-  me, 
-  lastEvent, 
-  unlocked, 
-  alivePlayers, 
-  monster, 
-  actionType, 
+  phase,
+  me,
+  lastEvent,
+  unlocked,
+  alivePlayers,
+  monster,
+  actionType,
   selectedTarget,
   submitted,
   readyClicked,
@@ -52,14 +52,19 @@ const ActionColumn = ({
   bloodRageActive,
   keenSensesActive,
   players,
-  onSetActionType, 
+  onSetActionType,
   onSelectTarget,
   onRacialAbilityUse,
   onSubmitAction,
-  onReadyClick
+  onReadyClick,
 }) => {
   const theme = useTheme();
-  
+
+  const validPlayers =
+    Array.isArray(players) && players.length > 0
+      ? players
+      : lastEvent.players || [];
+
   // Don't render if not visible
   if (!isVisible) return null;
 
@@ -71,38 +76,34 @@ const ActionColumn = ({
           <h2 className="section-title">
             Turn {lastEvent.turn} – Choose Action
           </h2>
-          
+
           {/* Dead player view */}
           {!me.isAlive && (
             <div className="dead-message card">
-              <h3 className="section-title danger">
-                You are dead
-              </h3>
-              <p>You can only watch as the remaining players continue the battle.</p>
+              <h3 className="section-title danger">You are dead</h3>
+              <p>
+                You can only watch as the remaining players continue the battle.
+              </p>
               <div className="skull-icon">💀</div>
             </div>
           )}
-          
+
           {/* Waiting for others view */}
           {me.isAlive && submitted && (
             <div className="submit-message card">
-              <h3 className="section-title">
-                Action submitted
-              </h3>
+              <h3 className="section-title">Action submitted</h3>
               <p>Waiting for other players to take their actions...</p>
               <div className="waiting-spinner"></div>
             </div>
           )}
-          
+
           {/* Action selection view */}
           {me.isAlive && !submitted && (
             <div className="action-selection">
               {/* Racial ability */}
               {me.racialAbility && (
                 <div className="racial-ability-container">
-                  <h3 className="section-title secondary">
-                    Racial Ability
-                  </h3>
+                  <h3 className="section-title secondary">Racial Ability</h3>
                   <RacialAbilityCard
                     ability={me.racialAbility}
                     usesLeft={me.racialUsesLeft}
@@ -112,14 +113,12 @@ const ActionColumn = ({
                   />
                 </div>
               )}
-              
+
               {/* Class abilities */}
-              <h3 className="section-title secondary">
-                Your Abilities
-              </h3>
-              
+              <h3 className="section-title secondary">Your Abilities</h3>
+
               <div className="ability-list">
-                {unlocked.map(ability => (
+                {unlocked.map((ability) => (
                   <AbilityCard
                     key={ability.type}
                     ability={ability}
@@ -129,26 +128,32 @@ const ActionColumn = ({
                   />
                 ))}
               </div>
-              
+
               {/* Racial enhancement indicators */}
               {(bloodRageActive || keenSensesActive) && (
-                <div className={`racial-enhancement ${bloodRageActive ? 'blood-rage' : ''} ${keenSensesActive ? 'keen-senses' : ''}`}>
+                <div
+                  className={`racial-enhancement ${bloodRageActive ? 'blood-rage' : ''} ${keenSensesActive ? 'keen-senses' : ''}`}
+                >
                   {bloodRageActive && (
                     <div className="enhancement-badge blood-rage-badge">
                       <span className="enhancement-icon">💢</span>
-                      <span className="enhancement-text">Blood Rage Active</span>
+                      <span className="enhancement-text">
+                        Blood Rage Active
+                      </span>
                     </div>
                   )}
-                  
+
                   {keenSensesActive && (
                     <div className="enhancement-badge keen-senses-badge">
                       <span className="enhancement-icon">👁️</span>
-                      <span className="enhancement-text">Keen Senses Active</span>
+                      <span className="enhancement-text">
+                        Keen Senses Active
+                      </span>
                     </div>
                   )}
                 </div>
               )}
-              
+
               {/* Target selector */}
               <TargetSelector
                 alivePlayers={alivePlayers}
@@ -158,7 +163,7 @@ const ActionColumn = ({
                 onSelectTarget={onSelectTarget}
                 disableMonster={keenSensesActive}
               />
-              
+
               {/* Submit button */}
               <button
                 className="button action-button"
@@ -172,17 +177,15 @@ const ActionColumn = ({
         </div>
       ) : (
         <div className="results-phase">
-          <h2 className="section-title">
-            Round {lastEvent.turn} Results
-          </h2>
-          
+          <h2 className="section-title">Round {lastEvent.turn} Results</h2>
+
           {/* Event log */}
-          <EventsLog 
-            events={lastEvent.events} 
+          <EventsLog
+            events={lastEvent.events}
             currentPlayerId={me.id}
-            players={players}
+            players={validPlayers}
           />
-          
+
           {/* Ready button */}
           {me.isAlive && (
             <button
@@ -192,7 +195,9 @@ const ActionColumn = ({
             >
               {readyClicked ? (
                 <>
-                  <span className="ready-text">Waiting for other players...</span>
+                  <span className="ready-text">
+                    Waiting for other players...
+                  </span>
                   <span className="ready-spinner"></span>
                 </>
               ) : (
@@ -200,21 +205,26 @@ const ActionColumn = ({
               )}
             </button>
           )}
-          
+
           {/* Ready player indicators */}
           <div className="ready-players">
             <p className="ready-info">Players ready for next round:</p>
             <div className="ready-indicators">
-              {lastEvent.readyPlayers?.map(playerId => {
-                const player = lastEvent.players?.find(p => p.id === playerId);
+              {lastEvent.readyPlayers?.map((playerId) => {
+                const player = lastEvent.players?.find(
+                  (p) => p.id === playerId
+                );
                 return player ? (
                   <div key={playerId} className="ready-player">
-                    <div className="ready-player-icon">{player.name.charAt(0)}</div>
+                    <div className="ready-player-icon">
+                      {player.name.charAt(0)}
+                    </div>
                     <div className="ready-player-name">{player.name}</div>
                   </div>
                 ) : null;
               })}
-              {(!lastEvent.readyPlayers || lastEvent.readyPlayers.length === 0) && (
+              {(!lastEvent.readyPlayers ||
+                lastEvent.readyPlayers.length === 0) && (
                 <p className="no-ready-players">No players ready yet</p>
               )}
             </div>
@@ -233,12 +243,12 @@ ActionColumn.propTypes = {
     turn: PropTypes.number.isRequired,
     events: PropTypes.array.isRequired,
     readyPlayers: PropTypes.array,
-    players: PropTypes.array
+    players: PropTypes.array,
   }).isRequired,
-    players: PropTypes.arrayOf(
+  players: PropTypes.arrayOf(
     PropTypes.shape({
       id: PropTypes.string.isRequired,
-      name: PropTypes.string.isRequired
+      name: PropTypes.string.isRequired,
     })
   ).isRequired,
   unlocked: PropTypes.array.isRequired,
@@ -255,7 +265,7 @@ ActionColumn.propTypes = {
   onSelectTarget: PropTypes.func.isRequired,
   onRacialAbilityUse: PropTypes.func.isRequired,
   onSubmitAction: PropTypes.func.isRequired,
-  onReadyClick: PropTypes.func.isRequired
+  onReadyClick: PropTypes.func.isRequired,
 };
 
 export default ActionColumn;

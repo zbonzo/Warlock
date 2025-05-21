@@ -2,6 +2,8 @@
  * @fileoverview System for managing combat, damage calculation, and death processing
  * Centralizes combat logic for consistent damage calculation
  */
+const config = require('@config');
+const logger = require('@utils/logger');
 
 /**
  * CombatSystem handles all combat-related operations
@@ -105,15 +107,6 @@ class CombatSystem {
    * @param {boolean} isKeenSensesAttack - Whether this is a Keen Senses attack
    * @returns {boolean} Whether the attack was successful
    */
-  /**
-   * Apply damage to a player, considering armor and effects
-   * @param {Object} target - Target player
-   * @param {number} damageAmount - Amount of damage
-   * @param {Object} attacker - Attacker (player or monster)
-   * @param {Array} log - Event log to append messages to
-   * @param {boolean} isKeenSensesAttack - Whether this is a Keen Senses attack
-   * @returns {boolean} Whether the attack was successful
-   */
   applyDamageToPlayer(target, damageAmount, attacker, log = [], isKeenSensesAttack = false) {
     if (!target || !target.isAlive) return false;
     
@@ -152,9 +145,21 @@ class CombatSystem {
         final: finalDamage,
         reduction: reductionPercent
       },
-      message: `${target.name} was attacked and lost ${finalDamage} health.`,
-      privateMessage: `${attacker.name || 'The Monster'} attacked you for ${finalDamage} damage, reduced by ${reductionPercent}% from your armor.`,
-      attackerMessage: isMonsterAttacker ? '' : `You attacked ${target.name} for ${finalDamage} damage (initial ${damageAmount}, reduced by ${reductionPercent}% from armor).`
+      message: config.messages.getEvent('playerTakesDamage', {
+        playerName: target.name,
+        damage: finalDamage
+      }),
+      privateMessage: config.messages.getMessage('private', 'youWereAttacked', {
+        attackerName: attacker.name || 'The Monster',
+        damage: finalDamage,
+        reduction: reductionPercent
+      }),
+      attackerMessage: isMonsterAttacker ? '' : config.messages.getMessage('private', 'youAttacked', {
+        targetName: target.name,
+        damage: finalDamage,
+        initialDamage: damageAmount,
+        reduction: reductionPercent
+      })
     };
     
     log.push(logEvent);
@@ -165,13 +170,19 @@ class CombatSystem {
         type: 'stone_armor_degradation',
         public: true,
         targetId: target.id,
-        message: `${target.name}'s Stone Armor cracks and weakens! (${armorDegradationInfo.oldValue} → ${armorDegradationInfo.newArmorValue})`,
+        message: config.messages.getEvent('dwarfStoneArmor', {
+          playerName: target.name,
+          oldValue: armorDegradationInfo.oldValue,
+          newValue: armorDegradationInfo.newArmorValue
+        }),
         privateMessage: `Your Stone Armor degrades from ${armorDegradationInfo.oldValue} to ${armorDegradationInfo.newArmorValue}!`,
         attackerMessage: `${target.name}'s Stone Armor weakens from your attack!`
       };
       
       if (armorDegradationInfo.destroyed && armorDegradationInfo.newArmorValue <= 0) {
-        armorLogEvent.message = `${target.name}'s Stone Armor is completely shattered! They now take increased damage!`;
+        armorLogEvent.message = config.messages.getEvent('stoneArmorDestroyed', {
+          playerName: target.name
+        });
         armorLogEvent.privateMessage = `Your Stone Armor is destroyed! You now take ${Math.abs(armorDegradationInfo.newArmorValue) * 10}% more damage!`;
       }
       
@@ -203,7 +214,6 @@ class CombatSystem {
    * @returns {boolean} Whether the target is immune to damage
    * @private
    */
-
   checkImmunityEffects(target, attacker, log) {
     // Check for Stone Resolve immunity (Dwarf racial)
     if (target.racialEffects && target.racialEffects.immuneNextDamage) {
@@ -226,26 +236,6 @@ class CombatSystem {
     return false;
   }
 
-
-  /**
-   * Add damage message to the log
-   * @param {Object} target - Target player
-   * @param {number} finalDamage - Final damage after reduction
-   * @param {number} initialDamage - Initial damage before reduction
-   * @param {Object} attacker - Attacker (player or monster)
-   * @param {Array} log - Event log to append messages to
-   * @private
-   */
-  logDamageMessage(target, finalDamage, initialDamage, attacker, log) {
-    const attackerName = attacker.name || 'The Monster';
-    
-    if (finalDamage !== initialDamage) {
-      log.push(`${target.name} takes ${finalDamage} damage from ${attackerName}. Armor reduced initial ${initialDamage} damage.`);
-    } else {
-      log.push(`${target.name} takes ${finalDamage} damage from ${attackerName}.`);
-    }
-  }
-
   /**
    * Handle Keen Senses racial ability attack
    * @param {Object} target - Target player
@@ -254,8 +244,12 @@ class CombatSystem {
    * @private
    */
   handleKeenSensesAttack(target, attacker, log) {
-    // Reveal warlock status
-    log.push(`${attacker.name}'s Keen Senses reveal that ${target.name} ${target.isWarlock ? 'IS' : 'is NOT'} a Warlock!`);
+    // Use config for warlock revelation messages
+    const revealMessage = target.isWarlock ? 
+      config.messages.getEvent('warlockRevealed', { playerName: target.name }) :
+      config.messages.getEvent('notWarlock', { playerName: target.name });
+    
+    log.push(revealMessage);
   }
 
   /**
@@ -267,27 +261,30 @@ class CombatSystem {
    */
   handlePotentialDeath(target, attacker, log) {
     // Add extensive logging for debugging
-    console.log(`Checking potential death for ${target.name}`);
-    console.log(`Race: ${target.race}, Has racial ability:`, Boolean(target.racialAbility));
+    logger.debug(`Checking potential death for ${target.name}`);
+    logger.debug(`Race: ${target.race}, Has racial ability:`, Boolean(target.racialAbility));
     if (target.racialAbility) {
-      console.log(`Racial ability type: ${target.racialAbility.type}`);
+      logger.debug(`Racial ability type: ${target.racialAbility.type}`);
     }
-    console.log(`Racial effects:`, JSON.stringify(target.racialEffects));
+    logger.debug(`Racial effects:`, JSON.stringify(target.racialEffects));
     
     // Check for Undying racial ability (Skeleton)
     if (target.race === 'Skeleton' && target.racialEffects && target.racialEffects.resurrect) {
       // Resurrect the player
-    target.hp = target.racialEffects.resurrect.resurrectedHp || 1;
+      target.hp = target.racialEffects.resurrect.resurrectedHp || 1;
     
-    const resurrectLog = {
-      type: 'resurrect',
-      public: true,
-      targetId: target.id,
-      message: `${target.name} avoided death through Undying!`,
-      privateMessage: 'You were resurrected by Undying.',
-      attackerMessage: `${target.name} avoided death through Undying.`
-    };
-    log.push(resurrectLog);
+      const resurrectLog = {
+        type: 'resurrect',
+        public: true,
+        targetId: target.id,
+        message: config.messages.getEvent('playerResurrected', {
+          playerName: target.name,
+          abilityName: 'Undying'
+        }),
+        privateMessage: 'You were resurrected by Undying.',
+        attackerMessage: `${target.name} avoided death through Undying.`
+      };
+      log.push(resurrectLog);
     
       delete target.racialEffects.resurrect;
     } else {
@@ -300,11 +297,13 @@ class CombatSystem {
         public: true,
         targetId: target.id,
         attackerId: attacker.id || 'monster',
-        message: `${target.name} has fallen.`,
+        message: config.messages.getEvent('playerDies', {
+          playerName: target.name
+        }),
         privateMessage: `You were killed by ${attacker.name || 'The Monster'}.`,
         attackerMessage: `You killed ${target.name}.`
       };
-    log.push(deathLog);
+      log.push(deathLog);
     }
   }
 
@@ -338,6 +337,7 @@ class CombatSystem {
     // Monster attacks don't need enhanced logs, just return result
     return result;
   }
+
   /**
    * Process all pending deaths
    * @param {Array} log - Event log to append messages to
@@ -345,18 +345,23 @@ class CombatSystem {
   processPendingDeaths(log = []) {
     for (const player of this.players.values()) {
       if (player.pendingDeath) {
-        console.log(`Processing pending death for ${player.name}`);
-        console.log(`Race: ${player.race}, Has racial ability:`, Boolean(player.racialAbility));
+        logger.debug(`Processing pending death for ${player.name}`);
+        logger.debug(`Race: ${player.race}, Has racial ability:`, Boolean(player.racialAbility));
         if (player.racialAbility) {
-          console.log(`Racial ability type: ${player.racialAbility.type}`);
+          logger.debug(`Racial ability type: ${player.racialAbility.type}`);
         }
-        console.log(`Racial effects:`, JSON.stringify(player.racialEffects));
+        logger.debug(`Racial effects:`, JSON.stringify(player.racialEffects));
         
         // Check if player has Undying effect
         if (player.race === 'Skeleton' && player.racialEffects && player.racialEffects.resurrect) {
           // Resurrect the player
           player.hp = player.racialEffects.resurrect.resurrectedHp || 1;
-          log.push(`${player.name} avoided death through Undying! Resurrected with ${player.hp} HP.`);
+          
+          log.push(config.messages.getEvent('playerResurrected', {
+            playerName: player.name,
+            abilityName: 'Undying'
+          }));
+          
           delete player.racialEffects.resurrect;
           delete player.pendingDeath;
           delete player.deathAttacker;
@@ -364,7 +369,11 @@ class CombatSystem {
           // Player dies
           player.isAlive = false;
           if (player.isWarlock) this.warlockSystem.decrementWarlockCount();
-          log.push(`${player.name} has died from wounds inflicted by ${player.deathAttacker}!`);
+          
+          log.push(config.messages.getEvent('playerDies', {
+            playerName: player.name
+          }));
+          
           delete player.pendingDeath;
           delete player.deathAttacker;
         }
@@ -382,7 +391,11 @@ class CombatSystem {
    * @returns {Array} Array of affected targets
    */
   applyAreaDamage(source, baseDamage, targets, log = [], options = {}) {
-    const { excludeSelf = true, warlockConversionChance = 0.5 } = options;
+    const { excludeSelf = true } = options;
+    
+    // Get warlock conversion modifier from config
+    const warlockConversionChance = config.gameBalance.warlock.conversion.aoeModifier || 0.5;
+    
     const affectedTargets = [];
     
     // Modify damage based on source's modifier
@@ -420,7 +433,10 @@ class CombatSystem {
    * @returns {Array} Array of affected targets
    */
   applyAreaHealing(source, baseAmount, targets, log = [], options = {}) {
-    const { excludeSelf = false, excludeWarlocks = true } = options;
+    // Use config for healing options
+    const excludeSelf = options.excludeSelf ?? false;
+    const excludeWarlocks = options.excludeWarlocks ?? config.gameBalance.player.healing.rejectWarlockHealing ?? true;
+    
     const affectedTargets = [];
     
     // Modify healing based on source's modifier
@@ -441,7 +457,10 @@ class CombatSystem {
       target.hp += actualHeal;
       
       if (actualHeal > 0) {
-        log.push(`${target.name} is healed for ${actualHeal} HP by ${source.name}'s ability.`);
+        log.push(config.messages.getEvent('playerHealed', {
+          playerName: target.name, 
+          amount: actualHeal
+        }));
       }
       
       affectedTargets.push(target);
@@ -450,18 +469,23 @@ class CombatSystem {
     return affectedTargets;
   }
 
+  /**
+   * Check and setup Undying racial ability if needed
+   * @param {Object} player - Player to check
+   * @returns {boolean} Whether setup was needed
+   */
   checkAndSetupUndyingIfNeeded(player) {
-  if (player && player.race === 'Skeleton' && (!player.racialEffects || !player.racialEffects.resurrect)) {
-    console.log(`Undying not properly set for ${player.name}, setting it up now`);
-    player.racialEffects = player.racialEffects || {};
-    player.racialEffects.resurrect = {
-      resurrectedHp: 1 // Default value if params not available
-    };
-    console.log(`Fixed Undying effect:`, player.racialEffects);
-    return true;
+    if (player && player.race === 'Skeleton' && (!player.racialEffects || !player.racialEffects.resurrect)) {
+      logger.debug(`Undying not properly set for ${player.name}, setting it up now`);
+      player.racialEffects = player.racialEffects || {};
+      player.racialEffects.resurrect = {
+        resurrectedHp: 1 // Default value if params not available
+      };
+      logger.debug(`Fixed Undying effect:`, player.racialEffects);
+      return true;
+    }
+    return false;
   }
-  return false;
-}
 }
 
 module.exports = CombatSystem;
