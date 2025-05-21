@@ -20,11 +20,11 @@ class CombatSystem {
    * @param {GameStateUtils} gameStateUtils - Game state utilities
    */
   constructor(
-    players, 
-    monsterController, 
-    statusEffectManager, 
-    racialAbilitySystem, 
-    warlockSystem, 
+    players,
+    monsterController,
+    statusEffectManager,
+    racialAbilitySystem,
+    warlockSystem,
     gameStateUtils
   ) {
     this.players = players;
@@ -44,38 +44,47 @@ class CombatSystem {
    * @param {Array} pendingActions - List of pending actions to add to
    * @returns {boolean} Whether the action was successfully queued
    */
-  validateAndQueueAction(actorId, actionType, targetId, options, pendingActions) {
+  validateAndQueueAction(
+    actorId,
+    actionType,
+    targetId,
+    options,
+    pendingActions
+  ) {
     const actor = this.players.get(actorId);
-    
+
     // Basic validation
     if (!actor || !actor.isAlive) return false;
     if (this.statusEffectManager.isPlayerStunned(actorId)) return false;
-    if (pendingActions.some(a => a.actorId === actorId)) return false; // Already acted
-    
+    if (pendingActions.some((a) => a.actorId === actorId)) return false; // Already acted
+
     // Find the ability being used
-    const ability = actor.unlocked.find(a => a.type === actionType);
+    const ability = actor.unlocked.find((a) => a.type === actionType);
     if (!ability) return false; // Ability not found or not unlocked
-    
+
     // Basic target validation
     if (targetId !== '__monster__' && targetId !== actorId) {
       const targetPlayer = this.players.get(targetId);
       if (!targetPlayer || !targetPlayer.isAlive) return false; // Invalid player target
-      
+
       // Handle invisible targets (redirect if needed)
-      if (targetPlayer.hasStatusEffect && targetPlayer.hasStatusEffect('invisible')) {
+      if (
+        targetPlayer.hasStatusEffect &&
+        targetPlayer.hasStatusEffect('invisible')
+      ) {
         const redirectTarget = this.gameStateUtils.getRandomTarget({
-          actorId, 
-          excludeIds: [targetId], 
+          actorId,
+          excludeIds: [targetId],
           includeMonster: true,
-          monsterRef: this.monsterController.getState()
+          monsterRef: this.monsterController.getState(),
         });
-        
+
         if (!redirectTarget) return false; // No valid target to redirect to
         targetId = redirectTarget; // Update target to the redirected one
       }
     }
-    
-    // Sanitize options object
+
+    // Sanitize options objectapplyDamageToPlayer
     const safeOptions = {};
     if (options && typeof options === 'object') {
       // Only allow specific properties
@@ -86,15 +95,15 @@ class CombatSystem {
         safeOptions.keenSensesActive = options.keenSensesActive;
       }
     }
-    
+
     // Add the action to pending actions
-    pendingActions.push({ 
-      actorId, 
-      actionType, 
-      targetId, 
-      options: safeOptions
+    pendingActions.push({
+      actorId,
+      actionType,
+      targetId,
+      options: safeOptions,
     });
-    
+
     return true;
   }
 
@@ -107,32 +116,47 @@ class CombatSystem {
    * @param {boolean} isKeenSensesAttack - Whether this is a Keen Senses attack
    * @returns {boolean} Whether the attack was successful
    */
-  applyDamageToPlayer(target, damageAmount, attacker, log = [], isKeenSensesAttack = false) {
+  applyDamageToPlayer(
+    target,
+    damageAmount,
+    attacker,
+    log = [],
+    isKeenSensesAttack = false
+  ) {
     if (!target || !target.isAlive) return false;
-    
+
     // Check for immunity effects first
     if (this.checkImmunityEffects(target, attacker, log)) {
       return false; // No damage was dealt
     }
-    
+
     // Initialize armor degradation info
     let armorDegradationInfo = null;
-    
+
     // Process Stone Armor degradation for Dwarves (before damage calculation)
     if (target.race === 'Dwarf' && target.stoneArmorIntact) {
       armorDegradationInfo = target.processStoneArmorDegradation(damageAmount);
     }
-    
-    // Calculate damage reduction from armor (this now includes the degraded stone armor)
-    const finalDamage = target.calculateDamageReduction(damageAmount);
-    const reductionPercent = Math.round(((damageAmount - finalDamage) / damageAmount) * 100);
-    
-    // Apply damage
-    target.hp = Math.max(0, target.hp - finalDamage);
-    
+
+    // Add vulnerability status logging
+    if (target.isVulnerable) {
+      // Log vulnerability effect before applying damage
+      log.push(
+        `${target.name} is VULNERABLE and takes ${target.vulnerabilityIncrease}% more damage!`
+      );
+    }
+
+    // Apply damage with built-in vulnerability handling
+    const finalDamage = target.takeDamage(damageAmount, attacker);
+
+    // Calculate reduction percentage for logs (based on original damage)
+    const reductionPercent = Math.round(
+      ((damageAmount - finalDamage) / damageAmount) * 100
+    );
+
     // Create enhanced log entry
     const isMonsterAttacker = !attacker.id;
-    
+
     const logEvent = {
       type: 'damage',
       public: true,
@@ -143,27 +167,29 @@ class CombatSystem {
       damage: {
         initial: damageAmount,
         final: finalDamage,
-        reduction: reductionPercent
+        reduction: reductionPercent,
+        isVulnerable: target.isVulnerable,
       },
       message: config.messages.getEvent('playerTakesDamage', {
         playerName: target.name,
-        damage: finalDamage
+        damage: finalDamage,
       }),
       privateMessage: config.messages.getMessage('private', 'youWereAttacked', {
         attackerName: attacker.name || 'The Monster',
         damage: finalDamage,
-        reduction: reductionPercent
+        reduction: reductionPercent,
       }),
-      attackerMessage: isMonsterAttacker ? '' : config.messages.getMessage('private', 'youAttacked', {
-        targetName: target.name,
-        damage: finalDamage,
-        initialDamage: damageAmount,
-        reduction: reductionPercent
-      })
+      attackerMessage: isMonsterAttacker
+        ? ''
+        : config.messages.getMessage('private', 'youAttacked', {
+            targetName: target.name,
+            damage: finalDamage,
+            initialDamage: damageAmount,
+            reduction: reductionPercent,
+          }),
     };
-    
+
     log.push(logEvent);
-    
     // Add Stone Armor degradation message if applicable
     if (armorDegradationInfo && armorDegradationInfo.degraded) {
       const armorLogEvent = {
@@ -173,36 +199,42 @@ class CombatSystem {
         message: config.messages.getEvent('dwarfStoneArmor', {
           playerName: target.name,
           oldValue: armorDegradationInfo.oldValue,
-          newValue: armorDegradationInfo.newArmorValue
+          newValue: armorDegradationInfo.newArmorValue,
         }),
         privateMessage: `Your Stone Armor degrades from ${armorDegradationInfo.oldValue} to ${armorDegradationInfo.newArmorValue}!`,
-        attackerMessage: `${target.name}'s Stone Armor weakens from your attack!`
+        attackerMessage: `${target.name}'s Stone Armor weakens from your attack!`,
       };
-      
-      if (armorDegradationInfo.destroyed && armorDegradationInfo.newArmorValue <= 0) {
-        armorLogEvent.message = config.messages.getEvent('stoneArmorDestroyed', {
-          playerName: target.name
-        });
+
+      if (
+        armorDegradationInfo.destroyed &&
+        armorDegradationInfo.newArmorValue <= 0
+      ) {
+        armorLogEvent.message = config.messages.getEvent(
+          'stoneArmorDestroyed',
+          {
+            playerName: target.name,
+          }
+        );
         armorLogEvent.privateMessage = `Your Stone Armor is destroyed! You now take ${Math.abs(armorDegradationInfo.newArmorValue) * 10}% more damage!`;
       }
-      
+
       log.push(armorLogEvent);
     }
-      
+
     // Handle Keen Senses racial ability for Elves
     if (isKeenSensesAttack) {
       this.handleKeenSensesAttack(target, attacker, log);
     }
-    
+
     // Process potential death
     if (target.hp === 0) {
       this.handlePotentialDeath(target, attacker, log);
       return true;
     }
-    
+
     // Check for warlock conversion opportunities
     this.checkWarlockConversion(target, attacker, log);
-    
+
     return true;
   }
 
@@ -225,14 +257,16 @@ class CombatSystem {
         attackerId: attacker.id || 'monster',
         message: `${target.name}'s Stone Resolve absorbed all damage from an attack!`,
         privateMessage: `Your Stone Resolve absorbed all damage from ${attacker.name || 'The Monster'}!`,
-        attackerMessage: attacker.id ? `${target.name}'s Stone Resolve absorbed all your damage!` : ''
+        attackerMessage: attacker.id
+          ? `${target.name}'s Stone Resolve absorbed all your damage!`
+          : '',
       };
       log.push(immunityLog);
-      
+
       delete target.racialEffects.immuneNextDamage;
       return true;
     }
-    
+
     return false;
   }
 
@@ -245,10 +279,10 @@ class CombatSystem {
    */
   handleKeenSensesAttack(target, attacker, log) {
     // Use config for warlock revelation messages
-    const revealMessage = target.isWarlock ? 
-      config.messages.getEvent('warlockRevealed', { playerName: target.name }) :
-      config.messages.getEvent('notWarlock', { playerName: target.name });
-    
+    const revealMessage = target.isWarlock
+      ? config.messages.getEvent('warlockRevealed', { playerName: target.name })
+      : config.messages.getEvent('notWarlock', { playerName: target.name });
+
     log.push(revealMessage);
   }
 
@@ -262,30 +296,37 @@ class CombatSystem {
   handlePotentialDeath(target, attacker, log) {
     // Add extensive logging for debugging
     logger.debug(`Checking potential death for ${target.name}`);
-    logger.debug(`Race: ${target.race}, Has racial ability:`, Boolean(target.racialAbility));
+    logger.debug(
+      `Race: ${target.race}, Has racial ability:`,
+      Boolean(target.racialAbility)
+    );
     if (target.racialAbility) {
       logger.debug(`Racial ability type: ${target.racialAbility.type}`);
     }
     logger.debug(`Racial effects:`, JSON.stringify(target.racialEffects));
-    
+
     // Check for Undying racial ability (Skeleton)
-    if (target.race === 'Skeleton' && target.racialEffects && target.racialEffects.resurrect) {
+    if (
+      target.race === 'Skeleton' &&
+      target.racialEffects &&
+      target.racialEffects.resurrect
+    ) {
       // Resurrect the player
       target.hp = target.racialEffects.resurrect.resurrectedHp || 1;
-    
+
       const resurrectLog = {
         type: 'resurrect',
         public: true,
         targetId: target.id,
         message: config.messages.getEvent('playerResurrected', {
           playerName: target.name,
-          abilityName: 'Undying'
+          abilityName: 'Undying',
         }),
         privateMessage: 'You were resurrected by Undying.',
-        attackerMessage: `${target.name} avoided death through Undying.`
+        attackerMessage: `${target.name} avoided death through Undying.`,
       };
       log.push(resurrectLog);
-    
+
       delete target.racialEffects.resurrect;
     } else {
       // Mark for pending death
@@ -298,10 +339,10 @@ class CombatSystem {
         targetId: target.id,
         attackerId: attacker.id || 'monster',
         message: config.messages.getEvent('playerDies', {
-          playerName: target.name
+          playerName: target.name,
         }),
         privateMessage: `You were killed by ${attacker.name || 'The Monster'}.`,
-        attackerMessage: `You killed ${target.name}.`
+        attackerMessage: `You killed ${target.name}.`,
       };
       log.push(deathLog);
     }
@@ -317,7 +358,7 @@ class CombatSystem {
   checkWarlockConversion(target, attacker, log) {
     // Only player attackers can cause conversions
     if (!attacker.id || attacker === target) return;
-    
+
     // Check if attacker is a warlock
     if (attacker.isWarlock) {
       this.warlockSystem.attemptConversion(attacker, target, log);
@@ -333,7 +374,7 @@ class CombatSystem {
    */
   applyDamageToMonster(amount, attacker, log = []) {
     const result = this.monsterController.takeDamage(amount, attacker, log);
-    
+
     // Monster attacks don't need enhanced logs, just return result
     return result;
   }
@@ -346,22 +387,31 @@ class CombatSystem {
     for (const player of this.players.values()) {
       if (player.pendingDeath) {
         logger.debug(`Processing pending death for ${player.name}`);
-        logger.debug(`Race: ${player.race}, Has racial ability:`, Boolean(player.racialAbility));
+        logger.debug(
+          `Race: ${player.race}, Has racial ability:`,
+          Boolean(player.racialAbility)
+        );
         if (player.racialAbility) {
           logger.debug(`Racial ability type: ${player.racialAbility.type}`);
         }
         logger.debug(`Racial effects:`, JSON.stringify(player.racialEffects));
-        
+
         // Check if player has Undying effect
-        if (player.race === 'Skeleton' && player.racialEffects && player.racialEffects.resurrect) {
+        if (
+          player.race === 'Skeleton' &&
+          player.racialEffects &&
+          player.racialEffects.resurrect
+        ) {
           // Resurrect the player
           player.hp = player.racialEffects.resurrect.resurrectedHp || 1;
-          
-          log.push(config.messages.getEvent('playerResurrected', {
-            playerName: player.name,
-            abilityName: 'Undying'
-          }));
-          
+
+          log.push(
+            config.messages.getEvent('playerResurrected', {
+              playerName: player.name,
+              abilityName: 'Undying',
+            })
+          );
+
           delete player.racialEffects.resurrect;
           delete player.pendingDeath;
           delete player.deathAttacker;
@@ -369,11 +419,13 @@ class CombatSystem {
           // Player dies
           player.isAlive = false;
           if (player.isWarlock) this.warlockSystem.decrementWarlockCount();
-          
-          log.push(config.messages.getEvent('playerDies', {
-            playerName: player.name
-          }));
-          
+
+          log.push(
+            config.messages.getEvent('playerDies', {
+              playerName: player.name,
+            })
+          );
+
           delete player.pendingDeath;
           delete player.deathAttacker;
         }
@@ -392,34 +444,42 @@ class CombatSystem {
    */
   applyAreaDamage(source, baseDamage, targets, log = [], options = {}) {
     const { excludeSelf = true } = options;
-    
+
     // Get warlock conversion modifier from config
-    const warlockConversionChance = config.gameBalance.warlock.conversion.aoeModifier || 0.5;
-    
+    const warlockConversionChance =
+      config.gameBalance.warlock.conversion.aoeModifier || 0.5;
+
     const affectedTargets = [];
-    
+
     // Modify damage based on source's modifier
-    const modifiedDamage = source.modifyDamage ? source.modifyDamage(baseDamage) : baseDamage;
-    
+    const modifiedDamage = source.modifyDamage
+      ? source.modifyDamage(baseDamage)
+      : baseDamage;
+
     // Filter targets
-    const validTargets = targets.filter(target => {
+    const validTargets = targets.filter((target) => {
       if (!target || !target.isAlive) return false;
       if (excludeSelf && target.id === source.id) return false;
       return true;
     });
-    
+
     // Apply damage to each target
     for (const target of validTargets) {
       this.applyDamageToPlayer(target, modifiedDamage, source, log);
-      
+
       // Check for warlock conversion with reduced chance
       if (source.isWarlock && target.isAlive && !target.isWarlock) {
-        this.warlockSystem.attemptConversion(source, target, log, warlockConversionChance);
+        this.warlockSystem.attemptConversion(
+          source,
+          target,
+          log,
+          warlockConversionChance
+        );
       }
-      
+
       affectedTargets.push(target);
     }
-    
+
     return affectedTargets;
   }
 
@@ -435,37 +495,44 @@ class CombatSystem {
   applyAreaHealing(source, baseAmount, targets, log = [], options = {}) {
     // Use config for healing options
     const excludeSelf = options.excludeSelf ?? false;
-    const excludeWarlocks = options.excludeWarlocks ?? config.gameBalance.player.healing.rejectWarlockHealing ?? true;
-    
+    const excludeWarlocks =
+      options.excludeWarlocks ??
+      config.gameBalance.player.healing.rejectWarlockHealing ??
+      true;
+
     const affectedTargets = [];
-    
+
     // Modify healing based on source's modifier
-    const healingMod = source.getHealingModifier ? source.getHealingModifier() : 1.0;
+    const healingMod = source.getHealingModifier
+      ? source.getHealingModifier()
+      : 1.0;
     const modifiedAmount = Math.floor(baseAmount * healingMod);
-    
+
     // Filter targets
-    const validTargets = targets.filter(target => {
+    const validTargets = targets.filter((target) => {
       if (!target || !target.isAlive) return false;
       if (excludeSelf && target.id === source.id) return false;
       if (excludeWarlocks && target.isWarlock) return false;
       return true;
     });
-    
+
     // Apply healing to each target
     for (const target of validTargets) {
       const actualHeal = Math.min(modifiedAmount, target.maxHp - target.hp);
       target.hp += actualHeal;
-      
+
       if (actualHeal > 0) {
-        log.push(config.messages.getEvent('playerHealed', {
-          playerName: target.name, 
-          amount: actualHeal
-        }));
+        log.push(
+          config.messages.getEvent('playerHealed', {
+            playerName: target.name,
+            amount: actualHeal,
+          })
+        );
       }
-      
+
       affectedTargets.push(target);
     }
-    
+
     return affectedTargets;
   }
 
@@ -475,11 +542,17 @@ class CombatSystem {
    * @returns {boolean} Whether setup was needed
    */
   checkAndSetupUndyingIfNeeded(player) {
-    if (player && player.race === 'Skeleton' && (!player.racialEffects || !player.racialEffects.resurrect)) {
-      logger.debug(`Undying not properly set for ${player.name}, setting it up now`);
+    if (
+      player &&
+      player.race === 'Skeleton' &&
+      (!player.racialEffects || !player.racialEffects.resurrect)
+    ) {
+      logger.debug(
+        `Undying not properly set for ${player.name}, setting it up now`
+      );
       player.racialEffects = player.racialEffects || {};
       player.racialEffects.resurrect = {
-        resurrectedHp: 1 // Default value if params not available
+        resurrectedHp: 1, // Default value if params not available
       };
       logger.debug(`Fixed Undying effect:`, player.racialEffects);
       return true;

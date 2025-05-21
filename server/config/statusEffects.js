@@ -117,14 +117,41 @@ const stunned = {
 };
 
 /**
+ * Vulnerability effect configuration
+ */
+const vulnerable = {
+  // Default values
+  default: {
+    damageIncrease: 25, // Percentage to increase damage taken
+    turns: 2, // Duration in turns
+  },
+
+  // Effect behavior
+  stackable: false, // Multiple vulnerabilities don't stack
+  refreshable: true, // Can be refreshed to extend duration
+
+  // Mechanics
+  affectsDamageCalculation: true, // Increases damage taken
+
+  // Display settings
+  messages: {
+    applied:
+      '{playerName} is vulnerable and will take {damageIncrease}% more damage for {turns} turn(s).',
+    refreshed: "{playerName}'s vulnerability is refreshed for {turns} turn(s).",
+    expired: '{playerName} is no longer vulnerable.',
+  },
+};
+
+/**
  * Effect processing order
  * Lower numbers are processed first each round
  */
 const processingOrder = {
   poison: 1, // Process poison damage first
   protected: 2, // Then update protection
-  invisible: 3, // Then handle invisibility
-  stunned: 4, // Finally process stun effects
+  vulnerable: 3, // Handle vulnerability effects
+  invisible: 4, // Then handle invisibility
+  stunned: 5, // Finally process stun effects
 };
 
 /**
@@ -153,7 +180,7 @@ const global = {
  * @returns {Object|null} Default parameters or null if not found
  */
 function getEffectDefaults(effectName) {
-  const effects = { poison, protected, invisible, stunned };
+  const effects = { poison, protected, invisible, stunned, vulnerable };
   return effects[effectName]?.default || null;
 }
 
@@ -163,7 +190,7 @@ function getEffectDefaults(effectName) {
  * @returns {boolean} Whether the effect can stack
  */
 function isEffectStackable(effectName) {
-  const effects = { poison, protected, invisible, stunned };
+  const effects = { poison, protected, invisible, stunned, vulnerable };
   return effects[effectName]?.stackable || false;
 }
 
@@ -173,7 +200,7 @@ function isEffectStackable(effectName) {
  * @returns {boolean} Whether the effect can be refreshed
  */
 function isEffectRefreshable(effectName) {
-  const effects = { poison, protected, invisible, stunned };
+  const effects = { poison, protected, invisible, stunned, vulnerable };
   return effects[effectName]?.refreshable || false;
 }
 
@@ -186,7 +213,7 @@ function isEffectRefreshable(effectName) {
  */
 function getEffectMessage(effectName, messageType, data = {}) {
   // Use local variables instead of referring to config
-  const effects = { poison, protected, invisible, stunned };
+  const effects = { poison, protected, invisible, stunned, vulnerable };
   const template = effects[effectName]?.messages?.[messageType];
 
   if (!template) {
@@ -221,6 +248,7 @@ function formatEffectMessage(template, data = {}) {
 module.exports = {
   poison,
   protected,
+  vulnerable,
   invisible,
   stunned,
   processingOrder,

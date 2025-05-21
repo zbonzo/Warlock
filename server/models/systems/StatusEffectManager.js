@@ -32,9 +32,14 @@ class StatusEffectManager {
     const player = this.players.get(playerId);
     if (!player || !player.isAlive) return false;
 
+    console.log(`Applying effect ${effectName} to ${player.name}:`, effectData);
+
     // Get the effect definition from config
     const effectDefinition = config.statusEffects[effectName];
     if (!effectDefinition) {
+      console.warn(
+        `Unknown effect ${effectName} could not be applied to ${player.name}.`
+      );
       log.push(
         `Unknown effect ${effectName} could not be applied to ${player.name}.`
       );
@@ -43,17 +48,32 @@ class StatusEffectManager {
 
     // Check if already has the effect
     const hasEffect = player.hasStatusEffect(effectName);
+    console.log(`Player already has ${effectName}?`, hasEffect);
 
     // Apply default values for any missing parameters
-    // Use directly from config.statusEffects instead of calling a function
     const effectDefaults = config.statusEffects[effectName]?.default || {};
     const finalData = {
       ...effectDefaults,
       ...effectData,
     };
 
-    // Apply the effect to the player
+    // Special handling for vulnerability
+    if (effectName === 'vulnerable') {
+      player.applyVulnerability(finalData.damageIncrease, finalData.turns);
+
+      // Special log for vulnerability
+      log.push(
+        `${player.name} is VULNERABLE and will take ${finalData.damageIncrease}% more damage for ${finalData.turns} turn(s)!`
+      );
+      console.log(
+        `Applied vulnerability to ${player.name}: ${finalData.damageIncrease}% for ${finalData.turns} turns`
+      );
+      return true;
+    }
+
+    // For other effects, apply normally
     player.applyStatusEffect(effectName, finalData);
+    console.log(`Applied ${effectName} to ${player.name}`);
 
     // Add log message
     if (!hasEffect) {
@@ -84,6 +104,7 @@ class StatusEffectManager {
 
     return true;
   }
+
   /**
    * Remove a status effect from a player
    * @param {string} playerId - Target player's ID
@@ -97,7 +118,16 @@ class StatusEffectManager {
 
     const hadEffect = player.hasStatusEffect(effectName);
 
-    // Remove the effect
+    // Special handling for vulnerability
+    if (effectName === 'vulnerable' && player.isVulnerable) {
+      player.isVulnerable = false;
+      player.vulnerabilityIncrease = 0;
+      delete player.statusEffects.vulnerable;
+      log.push(`${player.name} is no longer vulnerable.`);
+      return true;
+    }
+
+    // For other effects, remove normally
     player.removeStatusEffect(effectName);
 
     // Add log message if effect was present
@@ -120,6 +150,9 @@ class StatusEffectManager {
    */
   hasEffect(playerId, effectName) {
     const player = this.players.get(playerId);
+    if (effectName === 'vulnerable') {
+      return player && player.isVulnerable;
+    }
     return player && player.hasStatusEffect(effectName);
   }
 
@@ -131,8 +164,16 @@ class StatusEffectManager {
    */
   getEffectData(playerId, effectName) {
     const player = this.players.get(playerId);
-    if (!player || !player.hasStatusEffect(effectName)) return null;
+    if (!player) return null;
 
+    if (effectName === 'vulnerable' && player.isVulnerable) {
+      return {
+        damageIncrease: player.vulnerabilityIncrease,
+        turns: player.statusEffects.vulnerable?.turns || 0,
+      };
+    }
+
+    if (!player.hasStatusEffect(effectName)) return null;
     return player.statusEffects[effectName];
   }
 
@@ -153,12 +194,29 @@ class StatusEffectManager {
   processTimedEffects(log = []) {
     const alivePlayers = this.gameStateUtils.getAlivePlayers();
 
+    // Process vulnerability directly
+    for (const player of alivePlayers) {
+      if (player.isVulnerable) {
+        const expired = player.processVulnerability();
+
+        if (expired) {
+          log.push(`${player.name} is no longer vulnerable.`);
+        } else {
+          const increase = player.vulnerabilityIncrease;
+          const turns = player.statusEffects.vulnerable?.turns || 0;
+          log.push(
+            `${player.name} remains VULNERABLE (${increase}% more damage) for ${turns} more turn(s).`
+          );
+        }
+      }
+    }
+
     // Process effects in order defined in config
     const processingOrder = config.statusEffects.processingOrder || {
       poison: 1,
       protected: 2,
-      invisible: 3,
-      stunned: 4,
+      invisible: 4,
+      stunned: 5,
     };
 
     // Sort effect types by processing order
@@ -168,6 +226,9 @@ class StatusEffectManager {
 
     // Process each effect type in order
     for (const effectType of effectTypes) {
+      // Skip vulnerability as it's handled separately
+      if (effectType === 'vulnerable') continue;
+
       for (const player of alivePlayers) {
         if (effectType === 'poison') {
           this.processPoisonEffect(player, log);
