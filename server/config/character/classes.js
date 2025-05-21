@@ -137,10 +137,11 @@ const classAttributes = {
  * - category: Attack, Defense, Heal, or Special
  * - effect: Status effect applied (if any)
  * - target: Single, Self, or Multi
- * - params: Parameters for the ability effect
+ * - params: Parameters for the ability effect (vulnerability, hits, etc.)
+ * - flavorText: Description of the ability
  * - unlockAt: Level at which this ability becomes available
  * - order: Determines the sequence in which abilities act (lower numbers act first)
- * - cooldown: Cooldown time in seconds (0 for no cooldown)
+ * - cooldown: Cooldown time in rounds (0 for no cooldown)
  */
 const classAbilities = {
   Warrior: [
@@ -508,7 +509,7 @@ const classAbilities = {
       params: {},
       unlockAt: 2,
       order: 100,
-      cooldown: 0,
+      cooldown: 4,
       flavorText:
         'Peer through the veil of deception, revealing that which is hidden.',
     },
@@ -559,7 +560,7 @@ const classAbilities = {
       params: {},
       unlockAt: 2,
       order: 101,
-      cooldown: 0,
+      cooldown: 4,
       flavorText: "Uncover hidden truths and expose the enemy's deceptions.",
     },
   ],
