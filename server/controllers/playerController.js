@@ -2,13 +2,14 @@
  * @fileoverview Controller for player-related operations
  * Handles player joining, character selection, and disconnection
  */
-const gameService = require('../services/gameService');
-const { validatePlayerName } = require('../middleware/validation');
+const gameService = require('@services/gameService');
+const { validatePlayerName } = require('@middleware/validation');
 const { validateGame } = require('@middleware/validation')
-const { validateGameAction } = require('../shared/gameChecks');
-const logger = require('../utils/logger');
-const { throwGameStateError, throwValidationError } = require('../utils/errorHandler');
+const { validateGameAction } = require('@shared/gameChecks');
+const logger = require('@utils/logger');
+const { throwGameStateError, throwValidationError } = require('@utils/errorHandler');
 const playerSessionManager = require('@services/PlayerSessionManager');
+const config = require('@config');
 
 /**
  * Handle player joining a game
@@ -28,10 +29,10 @@ function handlePlayerJoin(io, socket, gameCode, playerName) {
   if (!gameService.canPlayerJoinGame(game, socket.id)) return false;
   
   // Add player and update game state
-  const sanitizedName = playerName || 'Player';
+  const sanitizedName = playerName || config.defaultPlayerName || 'Player';
   const success = game.addPlayer(socket.id, sanitizedName);
   if (!success) {
-    throwGameStateError('Could not join game.');
+    throwGameStateError(config.messages.errors.joinFailed || 'Could not join game.');
     return false;
   }
   
@@ -98,14 +99,14 @@ function handlePlayerReconnection(io, socket, gameCode, playerName) {
     // because that will fail. Instead, inform the player they can't join.
     const game = gameService.games.get(gameCode);
     if (game && game.started) {
-      throw new Error("Cannot join a game that has already started.");
+      throw new Error(config.messages.errors.gameStarted || "Cannot join a game that has already started.");
     }
     
     // If reconnection failed and game hasn't started, handle as new join attempt
     return handlePlayerJoin(io, socket, gameCode, playerName);
   } catch (error) {
     socket.emit('errorMessage', { 
-      message: error.message || "Failed to reconnect to game."
+      message: error.message || config.messages.errors.reconnectionFailed || "Failed to reconnect to game."
     });
     return false;
   }
@@ -149,22 +150,22 @@ function handleSelectCharacter(io, socket, gameCode, race, className) {
  * @private
  */
 function validateCharacterRaceClass(race, className, socket) {
-  const validRaces = ['Human', 'Dwarf', 'Elf', 'Orc', 'Satyr', 'Skeleton'];
-  const validClasses = [
+  const validRaces = config.races || ['Human', 'Dwarf', 'Elf', 'Orc', 'Satyr', 'Skeleton'];
+  const validClasses = config.classes || [
     'Warrior', 'Pyromancer', 'Wizard', 'Assassin', 'Rogue', 'Priest',
     'Oracle', 'Seer', 'Shaman', 'Gunslinger', 'Tracker', 'Druid'
   ];
   
   if (!validRaces.includes(race)) {
-    throwValidationError('Invalid race selection.');
+    throwValidationError(config.messages.errors.invalidRace || 'Invalid race selection.');
   }
   
   if (!validClasses.includes(className)) {
-    throwValidationError('Invalid class selection.');
+    throwValidationError(config.messages.errors.invalidClass || 'Invalid class selection.');
   }
   
-  // Check if race and class combination is valid
-  const classToRaces = {
+  // Use class-race compatibility from config if available
+  const classToRaces = config.classRaceCompatibility || {
     Warrior: ['Human', 'Dwarf', 'Skeleton'],
     Pyromancer: ['Dwarf', 'Skeleton', 'Orc'],
     Wizard: ['Human', 'Elf', 'Skeleton'],
@@ -180,7 +181,7 @@ function validateCharacterRaceClass(race, className, socket) {
   };
   
   if (!classToRaces[className] || !classToRaces[className].includes(race)) {
-    throwValidationError('Invalid race and class combination.');
+    throwValidationError(config.messages.errors.invalidCombination || 'Invalid race and class combination.');
   }
   
   return true;
@@ -218,7 +219,10 @@ function handlePlayerDisconnect(io, socket) {
     isHost: (socket.id === game.hostId)
   });
   
-  // Schedule a delayed check - if player doesn't reconnect in 60 seconds,
+  // Get reconnection window from config or use default
+  const reconnectionWindow = config.player?.reconnectionWindow || 60 * 1000; // Default: 60 seconds
+  
+  // Schedule a delayed check - if player doesn't reconnect in the window
   // then consider them permanently disconnected
   setTimeout(() => {
     // If the session is gone (expired or player properly removed), then
@@ -232,7 +236,7 @@ function handlePlayerDisconnect(io, socket) {
       // Now handle as permanent disconnection
       handlePermanentDisconnection(io, gameCode, socket.id, playerName);
     }
-  }, 60 * 1000); // 60 second window
+  }, reconnectionWindow);
 }
 
 /**
@@ -276,7 +280,6 @@ function handlePermanentDisconnection(io, gameCode, socketId, playerName) {
     logger.info(`New host assigned in game ${gameCode}: ${newHostId}`);
     io.to(gameCode).emit('hostChanged', { hostId: newHostId });
   }
-
 }
 
 module.exports = {

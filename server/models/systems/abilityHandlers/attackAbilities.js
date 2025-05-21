@@ -2,45 +2,51 @@
  * @fileoverview Attack-related ability handlers
  * Contains damage-dealing class abilities
  */
+const config = require('@config');
+const {
+  registerAbilitiesByCategory,
+  registerAbilitiesByEffectAndTarget,
+  registerAbilitiesByCriteria
+} = require('./abilityRegistryUtils');
 
 /**
  * Register all attack ability handlers with the registry
  * @param {AbilityRegistry} registry - Ability registry to register with
  */
 function register(registry) {
-  // Generic attack handler
+  // Register ability handlers by category and effect
+  
+  // 1. Basic single-target attack handler
   registry.registerClassAbility('attack', handleAttack);
   
-  // Register all basic attack abilities
-  registry.registerClassAbilities([
-    'slash', 'fireball', 'lightningBolt', 'pistolShot', 'preciseShot', 
-    'clawSwipe', 'holyBolt', 'psychicBolt', 'backstab'
-  ], (actor, target, ability, log, systems) => {
+  // 2. Register all abilities with category "Attack" to use the basic attack handler
+  // This allows new attack abilities to work automatically
+  registerAbilitiesByCategory(registry, 'Attack', (actor, target, ability, log, systems) => {
     return registry.executeClassAbility('attack', actor, target, ability, log, systems);
   });
   
-  // Special attack types
+  // 3. Register specific ability types that need custom handlers
+  
+  // Poison-based abilities
   registry.registerClassAbility('poisonStrike', handlePoisonStrike);
+  registry.registerClassAbility('deathMark', handleDeathMark);
+  registry.registerClassAbility('poisonTrap', handlePoisonTrap);
   
   // AOE damage abilities
   registry.registerClassAbility('meteorShower', handleAoeDamage);
-  
-  // Register similar AOE abilities
-  registry.registerClassAbilities(
-    ['chainLightning', 'ricochetRound'],
-    (actor, target, ability, log, systems) => {
-      return registry.executeClassAbility('meteorShower', actor, target, ability, log, systems);
-    }
-  );
-  
-  // Poison + damage AOE
   registry.registerClassAbility('infernoBlast', handleInfernoBlast);
   
-  // Single-target poison
-  registry.registerClassAbility('deathMark', handleDeathMark);
-  
-  // Poison trap
-  registry.registerClassAbility('poisonTrap', handlePoisonTrap);
+  // Register all AoE damage abilities (with null effect and Multi target)
+  // Exclude already registered ones
+  registerAbilitiesByEffectAndTarget(
+    registry,
+    null,
+    'Multi',
+    (actor, target, ability, log, systems) => {
+      return registry.executeClassAbility('meteorShower', actor, target, ability, log, systems);
+    },
+    ['infernoBlast'] // Exclude abilities with specific handlers
+  );
 }
 
 /**
@@ -55,7 +61,10 @@ function register(registry) {
 function handleAttack(actor, target, ability, log, systems) {
   // If target is a player (not monster) and is invisible, attack should fail
   if (target !== '__monster__' && target.hasStatusEffect && target.hasStatusEffect('invisible')) {
-    log.push(`${actor.name} tries to attack ${target.name}, but they are invisible and cannot be seen!`);
+    const attackFailMessage = config.getMessage('events', 'attackInvisible') || 
+      `${actor.name} tries to attack ${target.name}, but they are invisible and cannot be seen!`;
+    
+    log.push(attackFailMessage.replace('{attackerName}', actor.name).replace('{targetName}', target.name));
     return false;
   }
   
@@ -77,7 +86,7 @@ function handleAttack(actor, target, ability, log, systems) {
 function handlePoisonStrike(actor, target, ability, log, systems) {
   // Check if target is invisible
   if (target !== '__monster__' && target.hasStatusEffect && target.hasStatusEffect('invisible')) {
-    log.push(`${actor.name} tries to use Poison Strike on ${target.name}, but they are invisible!`);
+    log.push(`${actor.name} tries to use ${ability.name} on ${target.name}, but they are invisible!`);
     return false;
   }
   
@@ -89,12 +98,23 @@ function handlePoisonStrike(actor, target, ability, log, systems) {
     const poisonData = ability.params.poison;
     const modifiedPoisonDamage = Math.floor(poisonData.damage * (actor.damageMod || 1.0));
     
+    // Get poison effect defaults from config
+    const poisonDefaults = config.getStatusEffectDefaults('poison') || { turns: 3 };
+    
     systems.statusEffectManager.applyEffect(target.id, 'poison', {
-      turns: poisonData.turns,
+      turns: poisonData.turns || poisonDefaults.turns,
       damage: modifiedPoisonDamage
     }, log);
     
-    log.push(`${target.name} is poisoned for ${modifiedPoisonDamage} damage over ${poisonData.turns} turns.`);
+    // Use config message if available
+    const poisonMessage = config.getMessage('events', 'playerPoisoned') || 
+      `{targetName} is poisoned for {damage} damage over {turns} turns.`;
+    
+    log.push(poisonMessage
+      .replace('{playerName}', target.name)
+      .replace('{targetName}', target.name)
+      .replace('{damage}', modifiedPoisonDamage)
+      .replace('{turns}', poisonData.turns || poisonDefaults.turns));
   }
   
   return attackResult;
@@ -134,8 +154,11 @@ function handleAoeDamage(actor, target, ability, log, systems) {
     );
     
     // Check for warlock conversion with reduced chance for AoE
+    // Get warlock conversion rate modifier from config if available
+    const conversionModifier = config.gameBalance?.warlock?.conversion?.aoeModifier || 0.5;
+    
     if (actor.isWarlock && potentialTarget.isAlive && !potentialTarget.isWarlock) {
-      systems.warlockSystem.attemptConversion(actor, potentialTarget, log, 0.5);
+      systems.warlockSystem.attemptConversion(actor, potentialTarget, log, conversionModifier);
     }
   }
   
@@ -167,6 +190,9 @@ function handleInfernoBlast(actor, target, ability, log, systems) {
   // Apply damage and poison to multiple targets
   log.push(`${actor.name} unleashes ${ability.name}!`);
   
+  // Get poison defaults from config if needed
+  const poisonDefaults = config.getStatusEffectDefaults('poison') || { turns: 3, damage: 5 };
+  
   for (const potentialTarget of targets) {
     // Apply direct damage
     systems.combatSystem.applyDamageToPlayer(
@@ -178,15 +204,23 @@ function handleInfernoBlast(actor, target, ability, log, systems) {
     
     // Apply poison if target is still alive
     if (potentialTarget.isAlive && ability.effect === 'poison') {
-      const poisonData = ability.params.poison;
-      const modifiedPoisonDamage = Math.floor(poisonData.damage * (actor.damageMod || 1.0));
+      const poisonData = ability.params.poison || {};
+      const modifiedPoisonDamage = Math.floor((poisonData.damage || poisonDefaults.damage) * (actor.damageMod || 1.0));
       
       systems.statusEffectManager.applyEffect(potentialTarget.id, 'poison', {
-        turns: poisonData.turns,
+        turns: poisonData.turns || poisonDefaults.turns,
         damage: modifiedPoisonDamage
       }, log);
       
-      log.push(`${potentialTarget.name} is poisoned for ${modifiedPoisonDamage} damage over ${poisonData.turns} turns.`);
+      // Use config message if available
+      const poisonMessage = config.getMessage('events', 'playerPoisoned') || 
+        `{targetName} is poisoned for {damage} damage over {turns} turns.`;
+      
+      log.push(poisonMessage
+        .replace('{playerName}', potentialTarget.name)
+        .replace('{targetName}', potentialTarget.name)
+        .replace('{damage}', modifiedPoisonDamage)
+        .replace('{turns}', poisonData.turns || poisonDefaults.turns));
     }
   }
   
@@ -208,15 +242,18 @@ function handleDeathMark(actor, target, ability, log, systems) {
     return false;
   }
   
-  const poisonData = ability.params.poison;
-  const modifiedPoisonDamage = Math.floor(poisonData.damage * (actor.damageMod || 1.0));
+  // Get poison defaults from config if needed
+  const poisonDefaults = config.getStatusEffectDefaults('poison') || { turns: 3, damage: 5 };
+  
+  const poisonData = ability.params.poison || {};
+  const modifiedPoisonDamage = Math.floor((poisonData.damage || poisonDefaults.damage) * (actor.damageMod || 1.0));
   
   systems.statusEffectManager.applyEffect(target.id, 'poison', {
-    turns: poisonData.turns,
+    turns: poisonData.turns || poisonDefaults.turns,
     damage: modifiedPoisonDamage
   }, log);
   
-  log.push(`${actor.name} uses ${ability.name} on ${target.name}, poisoning them for ${modifiedPoisonDamage} damage over ${poisonData.turns} turns.`);
+  log.push(`${actor.name} uses ${ability.name} on ${target.name}, poisoning them for ${modifiedPoisonDamage} damage over ${poisonData.turns || poisonDefaults.turns} turns.`);
   return true;
 }
 
@@ -239,25 +276,26 @@ function handlePoisonTrap(actor, target, ability, log, systems) {
     return false;
   }
   
-  const poisonData = ability.params.poison;
-  if (!poisonData) {
-    log.push(`${actor.name} tries to set a poison trap, but something is wrong with the poison.`);
-    return false;
-  }
+  // Get poison defaults from config if needed
+  const poisonDefaults = config.getStatusEffectDefaults('poison') || { turns: 3, damage: 5 };
   
-  const modifiedPoisonDamage = Math.floor((poisonData.damage || 0) * (actor.damageMod || 1.0));
+  const poisonData = ability.params.poison || {};
+  const modifiedPoisonDamage = Math.floor((poisonData.damage || poisonDefaults.damage) * (actor.damageMod || 1.0));
   
   // Apply poison to multiple targets
   log.push(`${actor.name} sets a ${ability.name}!`);
   let targetsHit = 0;
   
+  // Get trap hit chance from config or use default
+  const trapHitChance = config.gameBalance?.abilities?.poisonTrap?.hitChance || 0.7;
+  
   for (const potentialTarget of targets) {
-    if (Math.random() < 0.7) { // 70% chance to affect each target
+    if (Math.random() < trapHitChance) { // 70% chance by default to affect each target
       systems.statusEffectManager.applyEffect(potentialTarget.id, 'poison', {
-        turns: poisonData.turns || 2,
+        turns: poisonData.turns || poisonDefaults.turns,
         damage: modifiedPoisonDamage
       }, log);
-      log.push(`${potentialTarget.name} is caught in ${actor.name}'s ${ability.name}, taking ${modifiedPoisonDamage} poison damage over ${poisonData.turns || 2} turns.`);
+      log.push(`${potentialTarget.name} is caught in ${actor.name}'s ${ability.name}, taking ${modifiedPoisonDamage} poison damage over ${poisonData.turns || poisonDefaults.turns} turns.`);
       targetsHit++;
     }
   }
@@ -285,7 +323,9 @@ function handleMonsterAttack(actor, ability, log, systems) {
   
   // Warlocks generate "threat" attacking monster
   if (actor.isWarlock) {
-    systems.warlockSystem.attemptConversion(actor, null, log);
+    // Get warlock random conversion modifier from config if available
+    const randomConversionModifier = config.gameBalance?.warlock?.conversion?.randomModifier || 0.5;
+    systems.warlockSystem.attemptConversion(actor, null, log, randomConversionModifier);
   }
   
   return true;

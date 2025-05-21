@@ -1,7 +1,8 @@
 /**
  * @fileoverview Racial ability handlers
- * Contains all race-specific ability implementations
+ * Contains race-specific ability implementations
  */
+const config = require('@config');
 
 /**
  * Register all racial ability handlers with the registry
@@ -10,9 +11,6 @@
 function register(registry) {
   // Human racial ability - Adaptability
   registry.registerRacialAbility('adaptability', handleAdaptability);
-  
-  // Dwarf racial ability - Stone Armor
-  // Passive ability, no handler needed
   
   // Elf racial ability - Keen Senses
   registry.registerRacialAbility('keenSenses', handleKeenSenses);
@@ -24,8 +22,9 @@ function register(registry) {
   registry.registerRacialAbility('forestsGrace', handleForestsGrace);
   
   // Skeleton racial ability - Undying
-  console.log("Registering Undying racial ability");
   registry.registerRacialAbility('undying', handleUndying);
+  
+  // Dwarf racial ability - Stone Armor is passive and doesn't need a handler
 }
 
 /**
@@ -39,7 +38,11 @@ function register(registry) {
  */
 function handleAdaptability(actor, target, racialAbility, log, systems) {
   // This ability requires UI integration to let player choose
-  log.push(`${actor.name} uses Adaptability to replace one ability with another of the same level.`);
+  // Use config message if available
+  const adaptabilityMessage = config.getMessage('events', 'humanAdaptability') || 
+    `{playerName} uses Adaptability to replace one ability.`;
+  
+  log.push(adaptabilityMessage.replace('{playerName}', actor.name));
   
   // Log the available abilities for reference
   const allAbilities = actor.abilities;
@@ -89,7 +92,14 @@ function handleKeenSenses(actor, target, racialAbility, log, systems) {
   // Set up the effect for next attack
   actor.racialEffects.keenSensesActiveOnNextAttack = target.id;
   
-  log.push(`${actor.name} uses Keen Senses to study ${target.name} closely.`);
+  // Use config message if available
+  const keenSensesMessage = config.getMessage('events', 'elfKeenSenses') || 
+    `{playerName} uses Keen Senses to study {targetName} closely.`;
+  
+  log.push(keenSensesMessage
+    .replace('{playerName}', actor.name)
+    .replace('{targetName}', target.name));
+    
   log.push(`${actor.name}'s next attack on ${target.name} will reveal their true nature.`);
   
   return true;
@@ -118,7 +128,13 @@ function handleBloodRage(actor, target, racialAbility, log, systems) {
   actor.hp = Math.max(1, actor.hp - selfDamage); // Cannot reduce below 1 HP
   const actualDamage = oldHp - actor.hp;
   
-  log.push(`${actor.name} enters a Blood Rage, taking ${actualDamage} damage but doubling the power of their next attack!`);
+  // Use config message if available
+  const bloodRageMessage = config.getMessage('events', 'orcBloodRage') || 
+    `{playerName} enters a Blood Rage, taking {damage} damage but doubling their next attack!`;
+  
+  log.push(bloodRageMessage
+    .replace('{playerName}', actor.name)
+    .replace('{damage}', actualDamage));
   
   return true;
 }
@@ -143,7 +159,12 @@ function handleForestsGrace(actor, target, racialAbility, log, systems) {
     turns: racialAbility.params.turns || 3
   };
   
-  log.push(`${actor.name} calls upon Forest's Grace, gaining ${actor.racialEffects.healOverTime.amount} healing each turn for ${actor.racialEffects.healOverTime.turns} turns.`);
+  // Use config message if available
+  const forestsGraceMessage = config.getMessage('events', 'satyrForestsGrace') || 
+    `{playerName} calls upon Forest's Grace, gaining healing over time.`;
+  
+  log.push(forestsGraceMessage.replace('{playerName}', actor.name));
+  log.push(`${actor.name} will heal for ${actor.racialEffects.healOverTime.amount} HP each turn for ${actor.racialEffects.healOverTime.turns} turns.`);
   
   return true;
 }
@@ -162,13 +183,22 @@ function handleUndying(actor, target, racialAbility, log, systems) {
     actor.racialEffects = {};
   }
   
+  // Check if ability is already active
+  if (actor.racialEffects.resurrect) {
+    // Use config message if available
+    const undyingActiveMessage = config.getMessage('events', 'skeletonUndying') || 
+      `{playerName}'s Undying ability is already active.`;
+    
+    log.push(undyingActiveMessage.replace('{playerName}', actor.name));
+    return false;
+  }
+  
   // Set up the resurrection effect
   actor.racialEffects.resurrect = {
     resurrectedHp: racialAbility.params.resurrectedHp || 1
   };
   
-  log.push(`${actor.name}'s Undying ability is already active and will trigger automatically when needed.`);
-  
+  log.push(`${actor.name}'s Undying ability is now active and will trigger automatically when needed.`);
   return true;
 }
 

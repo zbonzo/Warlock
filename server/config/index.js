@@ -6,8 +6,7 @@ const path = require('path');
 const fs = require('fs');
 
 // Load game-specific configs
-const classAbilities = require('./classAbilities');
-const racialAbilities = require('./racialAbilities');
+const characterConfig = require('./character');  // Consolidated character module
 const gameBalance = require('./gameBalance');
 const statusEffects = require('./statusEffects');
 const messages = require('./messages');
@@ -101,16 +100,15 @@ const config = {
   // Server configuration (from environment)
   ...baseServerConfig,
   
+  // Character configuration 
+  ...characterConfig,
+  
   // Game mechanics configurations
-  classAbilities,
-  racialAbilities,
   gameBalance,
   statusEffects,
   messages,
   
-  // Convenience methods
-  getClassAbilities: (className) => classAbilities[className] || [],
-  getRacialAbility: (raceName) => racialAbilities[raceName] || null,
+  // Game mechanics convenience methods
   getStatusEffectDefaults: (effectName) => statusEffects[effectName]?.default || {},
   getMessage: (category, key) => messages[category]?.[key] || 'Unknown message',
   

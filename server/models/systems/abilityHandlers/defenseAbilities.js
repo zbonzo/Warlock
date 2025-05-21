@@ -1,44 +1,42 @@
 /**
- * @fileoverview Defense ability handlers
- * Contains all protection and defensive class abilities
+ * @fileoverview Defense-related ability handlers
+ * Contains protective and defensive class abilities
  */
+const config = require('@config');
+const {
+  registerAbilitiesByCategory,
+  registerAbilitiesByEffectAndTarget,
+  registerAbilitiesByCriteria
+} = require('./abilityRegistryUtils');
 
 /**
  * Register all defense ability handlers with the registry
  * @param {AbilityRegistry} registry - Ability registry to register with
  */
 function register(registry) {
-  // Protection abilities
+  // Base protection ability handlers
   registry.registerClassAbility('shieldWall', handleShieldWall);
-  
-  // Register all shield/protection abilities
-  registry.registerClassAbilities([
-    'flameWard', 'arcaneShield', 'divineGuard', 'foresight', 'spiritGuard', 
-    'totemShield', 'barkskin'
-  ], (actor, target, ability, log, systems) => {
-    return registry.executeClassAbility('shieldWall', actor, target, ability, log);
-  });
-  
-  // Invisibility abilities
   registry.registerClassAbility('shadowVeil', handleInvisibility);
   
-  // Register all invisibility abilities
-  registry.registerClassAbilities(
-    ['smokeBomb', 'smokeScreen', 'camouflage'],
+  // Register all 'Defense' category abilities to use appropriate handlers based on effect
+  registerAbilitiesByCriteria(registry, 
+    { category: 'Defense', effect: 'protected' }, 
     (actor, target, ability, log, systems) => {
-      return registry.executeClassAbility('shadowVeil', actor, target, ability, log);
+      return registry.executeClassAbility('shieldWall', actor, target, ability, log, systems);
     }
   );
   
-  // Special invisibility for Rogue
+  registerAbilitiesByCriteria(registry, 
+    { category: 'Defense', effect: 'invisible' }, 
+    (actor, target, ability, log, systems) => {
+      return registry.executeClassAbility('shadowVeil', actor, target, ability, log, systems);
+    }
+  );
+  
+  // Special abilities with their own handlers
   registry.registerClassAbility('shadowstep', handleShadowstep);
-  
-  // Multi-protection abilities
   registry.registerClassAbility('battleCry', handleMultiProtection);
-  
-  registry.registerClassAbility('divineShield', (actor, target, ability, log, systems) => {
-    return registry.executeClassAbility('battleCry', actor, target, ability, log);
-  });
+  registry.registerClassAbility('divineShield', handleMultiProtection);
 }
 
 /**
@@ -51,16 +49,22 @@ function register(registry) {
  * @returns {boolean} Whether the ability was successful
  */
 function handleShieldWall(actor, target, ability, log, systems) {
+  // Get protection defaults from config if needed
+  const protectionDefaults = config.getStatusEffectDefaults('protected') || { armor: 2, turns: 1 };
+  
   systems.statusEffectManager.applyEffect(target.id, 'protected', { 
-    armor: ability.params.armor,
-    turns: ability.params.duration 
+    armor: ability.params.armor || protectionDefaults.armor,
+    turns: ability.params.duration || protectionDefaults.turns
   }, log);
   
-  if (actor.id === target.id) {
-    log.push(`${actor.name} raises ${ability.name}, gaining ${ability.params.armor} armor for ${ability.params.duration} turn(s).`);
-  } else {
-    log.push(`${actor.name} protects ${target.name} with ${ability.name}, granting ${ability.params.armor} armor for ${ability.params.duration} turn(s).`);
-  }
+  // Use message from config if available
+  const protectionMessage = config.getMessage('events', 'playerProtected') || 
+    `{playerName} is protected with {armor} armor for {turns} turn(s).`;
+  
+  log.push(protectionMessage
+    .replace('{playerName}', target.name)
+    .replace('{armor}', ability.params.armor || protectionDefaults.armor)
+    .replace('{turns}', ability.params.duration || protectionDefaults.turns));
   
   return true;
 }
@@ -75,15 +79,20 @@ function handleShieldWall(actor, target, ability, log, systems) {
  * @returns {boolean} Whether the ability was successful
  */
 function handleInvisibility(actor, target, ability, log, systems) {
+  // Get invisibility defaults from config if needed
+  const invisibilityDefaults = config.getStatusEffectDefaults('invisible') || { turns: 1 };
+  
   systems.statusEffectManager.applyEffect(target.id, 'invisible', { 
-    turns: ability.params.duration 
+    turns: ability.params.duration || invisibilityDefaults.turns
   }, log);
   
-  if (actor.id === target.id) {
-    log.push(`${actor.name} vanishes from sight for ${ability.params.duration} turn(s).`);
-  } else {
-    log.push(`${actor.name} makes ${target.name} invisible for ${ability.params.duration} turn(s).`);
-  }
+  // Use message from config if available
+  const invisibilityMessage = config.getMessage('events', 'playerInvisible') || 
+    `{playerName} becomes invisible for {turns} turn(s).`;
+  
+  log.push(invisibilityMessage
+    .replace('{playerName}', target.name)
+    .replace('{turns}', ability.params.duration || invisibilityDefaults.turns));
   
   return true;
 }
@@ -103,11 +112,14 @@ function handleShadowstep(actor, target, ability, log, systems) {
     return false;
   }
   
+  // Get invisibility defaults from config if needed
+  const invisibilityDefaults = config.getStatusEffectDefaults('invisible') || { turns: 1 };
+  
   systems.statusEffectManager.applyEffect(target.id, 'invisible', { 
-    turns: ability.params.duration 
+    turns: ability.params.duration || invisibilityDefaults.turns
   }, log);
   
-  log.push(`${actor.name} uses ${ability.name} on ${target.name}, shrouding them in shadows for ${ability.params.duration} turn(s).`);
+  log.push(`${actor.name} uses ${ability.name} on ${target.name}, shrouding them in shadows for ${ability.params.duration || invisibilityDefaults.turns} turn(s).`);
   return true;
 }
 
@@ -123,17 +135,21 @@ function handleShadowstep(actor, target, ability, log, systems) {
 function handleMultiProtection(actor, target, ability, log, systems) {
   // Get all alive players
   const targets = Array.from(systems.players.values()).filter(p => p.isAlive);
+  
+  // Get protection defaults from config if needed
+  const protectionDefaults = config.getStatusEffectDefaults('protected') || { armor: 2, turns: 1 };
+  
   let protectedCount = 0;
   
   for (const potentialTarget of targets) {
     systems.statusEffectManager.applyEffect(potentialTarget.id, 'protected', { 
-      armor: ability.params.armor,
-      turns: ability.params.duration 
+      armor: ability.params.armor || protectionDefaults.armor,
+      turns: ability.params.duration || protectionDefaults.turns
     }, log);
     protectedCount++;
   }
   
-  log.push(`${actor.name} uses ${ability.name}, protecting ${protectedCount} allies with ${ability.params.armor} armor for ${ability.params.duration} turn(s).`);
+  log.push(`${actor.name} uses ${ability.name}, protecting ${protectedCount} allies with ${ability.params.armor || protectionDefaults.armor} armor for ${ability.params.duration || protectionDefaults.turns} turn(s).`);
   return true;
 }
 
