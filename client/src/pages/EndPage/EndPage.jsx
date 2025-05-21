@@ -13,7 +13,7 @@ import './EndPage.css';
 
 /**
  * EndPage component displays the game results after a game has ended
- * 
+ *
  * @param {Object} props - Component props
  * @param {string} props.winner - Which team won ('Good' or 'Evil')
  * @param {Array} props.players - List of all players with their final state
@@ -25,93 +25,109 @@ const EndPage = ({ winner, players, eventsLog = [], onPlayAgain }) => {
   const theme = useTheme();
   const [showConfetti, setShowConfetti] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
-  
-  // Show confetti effect when component mounts
+
   useEffect(() => {
+    // Scroll to the top of the page
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+
     setShowConfetti(true);
-    
+
     // Hide confetti after 5 seconds to reduce animation load
     const timer = setTimeout(() => {
       setShowConfetti(false);
     }, 5000);
-    
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Show confetti effect when component mounts
+  useEffect(() => {
+    setShowConfetti(true);
+
+    // Hide confetti after 5 seconds to reduce animation load
+    const timer = setTimeout(() => {
+      setShowConfetti(false);
+    }, 5000);
+
     return () => clearTimeout(timer);
   }, []);
 
   useEffect(() => {
     localStorage.removeItem('lastPlayerName');
   }, []);
-  
+
   // Separate players into teams
-  const goodPlayers = players.filter(p => !p.isWarlock);
-  const evilPlayers = players.filter(p => p.isWarlock);
-  
+  const goodPlayers = players.filter((p) => !p.isWarlock);
+  const evilPlayers = players.filter((p) => p.isWarlock);
+
   // Determine the winning team info
-  const winnerDisplay = winner === 'Good' 
-    ? {
-        text: 'Good Players Win!',
-        color: theme.colors.accent,
-        description: 'All warlocks have been eliminated.'
-      }
-    : {
-        text: 'Warlocks Win!',
-        color: theme.colors.danger,
-        description: 'The warlocks have corrupted or eliminated all good players.'
-      };
-  
+  const winnerDisplay =
+    winner === 'Good'
+      ? {
+          text: 'Good Players Win!',
+          color: theme.colors.accent,
+          description: 'All warlocks have been eliminated.',
+        }
+      : {
+          text: 'Warlocks Win!',
+          color: theme.colors.danger,
+          description:
+            'The warlocks have corrupted or eliminated all good players.',
+        };
+
   // Get survival statistics
-  const survivors = players.filter(p => p.isAlive).length;
-  const casualties = players.filter(p => !p.isAlive).length;
+  const survivors = players.filter((p) => p.isAlive).length;
+  const casualties = players.filter((p) => !p.isAlive).length;
   const totalPlayers = players.length;
-  
+
   // Get stats for StatsPanel component
   const stats = [
     { value: survivors, label: 'Survivors', color: theme.colors.primary },
     { value: casualties, label: 'Casualties', color: theme.colors.danger },
-    { value: totalPlayers, label: 'Total Players', color: theme.colors.primary }
+    {
+      value: totalPlayers,
+      label: 'Total Players',
+      color: theme.colors.primary,
+    },
   ];
-  
+
   return (
     <div className="end-page-container">
       {/* Confetti effect */}
       {showConfetti && <Confetti />}
-      
+
       <div className="results-card">
         <h1 className="winner-title" style={{ color: winnerDisplay.color }}>
           {winnerDisplay.text}
         </h1>
-        
-        <p className="winner-description">
-          {winnerDisplay.description}
-        </p>
-        
+
+        <p className="winner-description">{winnerDisplay.description}</p>
+
         <div className="team-groups">
           {/* Good players team */}
-          <PlayerGroup 
+          <PlayerGroup
             title={`Good Players (${goodPlayers.length})`}
-            players={goodPlayers} 
+            players={goodPlayers}
             color={theme.colors.accent}
           />
-          
+
           {/* Evil players team */}
-          <PlayerGroup 
+          <PlayerGroup
             title={`Warlocks (${evilPlayers.length})`}
-            players={evilPlayers} 
+            players={evilPlayers}
             color={theme.colors.danger}
           />
         </div>
-        
+
         <div className="stats-container">
-          <h3 className="stats-title">
-            Final Stats
-          </h3>
-          
+          <h3 className="stats-title">Final Stats</h3>
+
           <StatsPanel stats={stats} />
         </div>
 
         {/* Game History Toggle */}
         <div className="history-toggle-container">
-          <button 
+          <button
             className="history-toggle-button"
             onClick={() => setShowHistory(!showHistory)}
           >
@@ -131,11 +147,8 @@ const EndPage = ({ winner, players, eventsLog = [], onPlayAgain }) => {
             />
           </div>
         )}
-        
-        <button
-          className="play-again-button"
-          onClick={onPlayAgain}
-        >
+
+        <button className="play-again-button" onClick={onPlayAgain}>
           Play Again
         </button>
       </div>
@@ -152,16 +165,16 @@ EndPage.propTypes = {
       race: PropTypes.string,
       class: PropTypes.string,
       isWarlock: PropTypes.bool.isRequired,
-      isAlive: PropTypes.bool.isRequired
+      isAlive: PropTypes.bool.isRequired,
     })
   ).isRequired,
   eventsLog: PropTypes.arrayOf(
     PropTypes.shape({
       turn: PropTypes.number.isRequired,
-      events: PropTypes.array.isRequired
+      events: PropTypes.array.isRequired,
     })
   ),
-  onPlayAgain: PropTypes.func.isRequired
+  onPlayAgain: PropTypes.func.isRequired,
 };
 
 export default EndPage;

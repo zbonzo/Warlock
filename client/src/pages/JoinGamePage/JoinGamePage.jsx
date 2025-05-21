@@ -11,7 +11,7 @@ import './JoinGamePage.css';
 
 /**
  * JoinGamePage component serves as the entry point to the game
- * 
+ *
  * @param {Object} props - Component props
  * @param {Function} props.onCreateGame - Callback when creating a new game
  * @param {Function} props.onJoinGame - Callback when joining an existing game
@@ -20,11 +20,11 @@ import './JoinGamePage.css';
  */
 const JoinGamePage = ({ onCreateGame, onJoinGame, onReconnect }) => {
   const theme = useTheme();
-  
+
   // Form state
   const [name, setName] = useState('');
   const [joinCode, setJoinCode] = useState('');
-  
+
   // UI state
   const [showTutorial, setShowTutorial] = useState(false);
   const [showCodeHelp, setShowCodeHelp] = useState(false);
@@ -38,11 +38,11 @@ const JoinGamePage = ({ onCreateGame, onJoinGame, onReconnect }) => {
   useEffect(() => {
     const lastGameCode = localStorage.getItem('lastGameCode');
     const lastPlayerName = localStorage.getItem('lastPlayerName');
-    
+
     if (lastGameCode && lastPlayerName) {
       setLastGameInfo({ gameCode: lastGameCode, playerName: lastPlayerName });
       setShowReconnectPrompt(true);
-      
+
       // Pre-fill the form with the saved values
       setJoinCode(lastGameCode);
       setName(lastPlayerName);
@@ -55,7 +55,7 @@ const JoinGamePage = ({ onCreateGame, onJoinGame, onReconnect }) => {
   const generateRandomName = () => {
     // Show loading state for visual feedback
     setIsGeneratingName(true);
-    
+
     // Add slight delay to make the UI feedback visible
     setTimeout(() => {
       const randomIndex = Math.floor(Math.random() * RANDOM_NAMES.length);
@@ -69,7 +69,7 @@ const JoinGamePage = ({ onCreateGame, onJoinGame, onReconnect }) => {
    */
   const handleCreateGame = () => {
     if (!name) {
-      alert("Please enter your name to create a game.");
+      alert('Please enter your name to create a game.');
       return;
     }
     // If creating a new game, clear any previous session
@@ -83,7 +83,7 @@ const JoinGamePage = ({ onCreateGame, onJoinGame, onReconnect }) => {
    */
   const handleJoin = () => {
     if (!joinCode || !name) {
-      alert("Please enter a game code and your name to join.");
+      alert('Please enter a game code and your name to join.');
       return;
     }
     // Save info for potential reconnection
@@ -91,7 +91,7 @@ const JoinGamePage = ({ onCreateGame, onJoinGame, onReconnect }) => {
     localStorage.setItem('lastPlayerName', name);
     onJoinGame(joinCode.trim(), name);
   };
-  
+
   /**
    * Handle reconnecting to the previous game
    */
@@ -100,7 +100,7 @@ const JoinGamePage = ({ onCreateGame, onJoinGame, onReconnect }) => {
       onReconnect(lastGameInfo.gameCode, lastGameInfo.playerName);
     }
   };
-  
+
   /**
    * Decline reconnection and clear saved game
    */
@@ -112,7 +112,7 @@ const JoinGamePage = ({ onCreateGame, onJoinGame, onReconnect }) => {
 
   /**
    * Handle game code input changes
-   * 
+   *
    * @param {Object} e - Input change event
    */
   const handleCodeChange = (e) => {
@@ -124,34 +124,40 @@ const JoinGamePage = ({ onCreateGame, onJoinGame, onReconnect }) => {
   return (
     <div className="join-page-container">
       {/* Game tutorial modal */}
-      <GameTutorial 
-        isOpen={showTutorial} 
+      <GameTutorial
+        isOpen={showTutorial}
         onComplete={() => setShowTutorial(false)}
       />
-      
+
       {/* Reconnection prompt */}
       {showReconnectPrompt && (
         <div className="reconnect-prompt">
           <h3>Rejoin Previous Game?</h3>
-          <p>You were playing as <strong>{lastGameInfo?.playerName}</strong> in game <strong>{lastGameInfo?.gameCode}</strong>.</p>
+          <p>
+            You were playing as <strong>{lastGameInfo?.playerName}</strong> in
+            game <strong>{lastGameInfo?.gameCode}</strong>.
+          </p>
           <div className="reconnect-buttons">
             <button className="reconnect-button" onClick={handleReconnect}>
               Rejoin Game
             </button>
-            <button className="decline-reconnect-button" onClick={handleDeclineReconnect}>
+            <button
+              className="decline-reconnect-button"
+              onClick={handleDeclineReconnect}
+            >
               Start Fresh
             </button>
           </div>
         </div>
       )}
-      
+
       <div className="join-card">
         <h1 className="game-logo">Warlock</h1>
-        
+
         <p className="game-tagline">
           Battle monsters with friends, but beware the Warlocks among you!
         </p>
-        
+
         {/* Name input section */}
         <div className="input-section">
           <label className="input-label">Your Name</label>
@@ -173,7 +179,7 @@ const JoinGamePage = ({ onCreateGame, onJoinGame, onReconnect }) => {
             </button>
           </div>
         </div>
-        
+
         {/* Create game button (only shown when no join code entered) */}
         {!joinCode && (
           <div className="create-game-section">
@@ -186,12 +192,12 @@ const JoinGamePage = ({ onCreateGame, onJoinGame, onReconnect }) => {
             </button>
           </div>
         )}
-        
+
         {/* Join game section */}
         <div className="join-game-section">
           <div className="code-label-row">
             <label className="input-label">Game Code</label>
-            
+
             <button
               className="help-button"
               onClick={() => setShowCodeHelp(!showCodeHelp)}
@@ -199,14 +205,15 @@ const JoinGamePage = ({ onCreateGame, onJoinGame, onReconnect }) => {
               ?
             </button>
           </div>
-          
+
           {showCodeHelp && (
             <div className="code-help-text">
-              Enter a 4-digit code provided by the game host to join their game. 
-              If you don't have a code, leave this empty and create a new game instead.
+              Enter a 4-digit code provided by the game host to join their game.
+              If you don't have a code, leave this empty and create a new game
+              instead.
             </div>
           )}
-          
+
           <input
             type="text"
             className="code-input"
@@ -214,19 +221,28 @@ const JoinGamePage = ({ onCreateGame, onJoinGame, onReconnect }) => {
             value={joinCode}
             onChange={handleCodeChange}
           />
+          {joinCode && (
+            <button
+              className="clear-code-button"
+              onClick={() => setJoinCode('')}
+              aria-label="Clear game code"
+            >
+              ✕
+            </button>
+          )}
         </div>
-        
+
         {/* Join game button (only shown when join code entered) */}
         {joinCode && (
           <button
-            className={`join-button ${(!joinCode || !name) ? 'disabled' : ''}`}
+            className={`join-button ${!joinCode || !name ? 'disabled' : ''}`}
             onClick={handleJoin}
             disabled={!joinCode || !name}
           >
             Join Game
           </button>
         )}
-        
+
         {/* Tutorial button */}
         <div className="tutorial-link-container">
           <button
@@ -237,7 +253,7 @@ const JoinGamePage = ({ onCreateGame, onJoinGame, onReconnect }) => {
           </button>
         </div>
       </div>
-      
+
       {/* Footer */}
       <div className="join-page-footer">
         &copy; 2025 bonzo.dev • Play with 5+ friends for best experience
@@ -249,7 +265,7 @@ const JoinGamePage = ({ onCreateGame, onJoinGame, onReconnect }) => {
 JoinGamePage.propTypes = {
   onCreateGame: PropTypes.func.isRequired,
   onJoinGame: PropTypes.func.isRequired,
-  onReconnect: PropTypes.func
+  onReconnect: PropTypes.func,
 };
 
 export default JoinGamePage;
