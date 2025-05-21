@@ -19,7 +19,7 @@ const availableClasses = [
   'Shaman',
   'Gunslinger',
   'Tracker',
-  'Druid'
+  'Druid',
 ];
 
 /**
@@ -28,8 +28,16 @@ const availableClasses = [
  */
 const classCategories = {
   Melee: ['Warrior', 'Assassin', 'Rogue'],
-  Caster: ['Pyromancer', 'Wizard', 'Priest', 'Oracle', 'Seer', 'Shaman', 'Druid'],
-  Ranged: ['Gunslinger', 'Tracker']
+  Caster: [
+    'Pyromancer',
+    'Wizard',
+    'Priest',
+    'Oracle',
+    'Seer',
+    'Shaman',
+    'Druid',
+  ],
+  Ranged: ['Gunslinger', 'Tracker'],
 };
 
 /**
@@ -39,77 +47,79 @@ const classCategories = {
  */
 const classAttributes = {
   Warrior: {
-    hpModifier: 1.2,       // More HP
-    armorModifier: 1.5,    // More armor
-    damageModifier: 1.1,   // Slightly increased damage
-    description: 'Tank class with high health and armor, focused on protection.'
+    hpModifier: 1.2, // More HP
+    armorModifier: 1.5, // More armor
+    damageModifier: 1.1, // Slightly increased damage
+    description:
+      'Tank class with high health and armor, focused on protection.',
   },
   Pyromancer: {
-    hpModifier: 0.9,       // Less HP
-    armorModifier: 0.0,    // No armor bonus
-    damageModifier: 1.3,   // High damage
-    description: 'Fire-based caster with high damage output and area effects.'
+    hpModifier: 0.9, // Less HP
+    armorModifier: 0.0, // No armor bonus
+    damageModifier: 1.3, // High damage
+    description: 'Fire-based caster with high damage output and area effects.',
   },
   Wizard: {
-    hpModifier: 0.8,       // Low HP
-    armorModifier: 0.5,    // Some magical protection
-    damageModifier: 1.2,   // Higher damage
-    description: 'Versatile spellcaster with powerful arcane abilities.'
+    hpModifier: 0.8, // Low HP
+    armorModifier: 0.5, // Some magical protection
+    damageModifier: 1.2, // Higher damage
+    description: 'Versatile spellcaster with powerful arcane abilities.',
   },
   Assassin: {
-    hpModifier: 0.9,       // Less HP
-    armorModifier: 0.0,    // No armor bonus
-    damageModifier: 1.4,   // Very high damage
-    description: 'Stealth-focused class with high single-target damage.'
+    hpModifier: 0.9, // Less HP
+    armorModifier: 0.0, // No armor bonus
+    damageModifier: 1.4, // Very high damage
+    description: 'Stealth-focused class with high single-target damage.',
   },
   Rogue: {
-    hpModifier: 1.0,       // Standard HP
-    armorModifier: 0.0,    // No armor bonus
-    damageModifier: 1.2,   // Higher damage
-    description: 'Agile fighter with invisibility abilities and poison attacks.'
+    hpModifier: 1.0, // Standard HP
+    armorModifier: 0.0, // No armor bonus
+    damageModifier: 1.2, // Higher damage
+    description:
+      'Agile fighter with invisibility abilities and poison attacks.',
   },
   Priest: {
-    hpModifier: 1.0,       // Standard HP
-    armorModifier: 0.5,    // Some divine protection
-    damageModifier: 0.8,   // Low damage
-    description: 'Healing-focused class with support abilities.'
+    hpModifier: 1.0, // Standard HP
+    armorModifier: 0.5, // Some divine protection
+    damageModifier: 0.8, // Low damage
+    description: 'Healing-focused class with support abilities.',
   },
   Oracle: {
-    hpModifier: 0.9,       // Less HP
-    armorModifier: 0.5,    // Some divine protection
-    damageModifier: 0.9,   // Low damage
-    description: 'Divination-focused class that can reveal warlocks.'
+    hpModifier: 0.9, // Less HP
+    armorModifier: 0.5, // Some divine protection
+    damageModifier: 0.9, // Low damage
+    description: 'Divination-focused class that can reveal warlocks.',
   },
   Seer: {
-    hpModifier: 0.9,       // Less HP
-    armorModifier: 0.0,    // No armor bonus
-    damageModifier: 1.0,   // Standard damage
-    description: 'Psychic class with detection abilities.'
+    hpModifier: 0.9, // Less HP
+    armorModifier: 0.0, // No armor bonus
+    damageModifier: 1.0, // Standard damage
+    description: 'Psychic class with detection abilities.',
   },
   Shaman: {
-    hpModifier: 1.0,       // Standard HP
-    armorModifier: 0.5,    // Some spiritual protection
-    damageModifier: 1.0,   // Standard damage
-    description: 'Elemental caster with healing and lightning abilities.'
+    hpModifier: 1.0, // Standard HP
+    armorModifier: 0.5, // Some spiritual protection
+    damageModifier: 1.0, // Standard damage
+    description: 'Elemental caster with healing and lightning abilities.',
   },
   Gunslinger: {
-    hpModifier: 0.9,       // Less HP
-    armorModifier: 0.0,    // No armor bonus
-    damageModifier: 1.3,   // High damage
-    description: 'Ranged specialist with high damage and evasion abilities.'
+    hpModifier: 0.9, // Less HP
+    armorModifier: 0.0, // No armor bonus
+    damageModifier: 1.3, // High damage
+    description: 'Ranged specialist with high damage and evasion abilities.',
   },
   Tracker: {
-    hpModifier: 1.0,       // Standard HP
-    armorModifier: 0.0,    // No armor bonus
-    damageModifier: 1.1,   // Slightly increased damage
-    description: 'Skilled hunter with traps and precise attacks.'
+    hpModifier: 1.0, // Standard HP
+    armorModifier: 0.0, // No armor bonus
+    damageModifier: 1.1, // Slightly increased damage
+    description: 'Skilled hunter with traps and precise attacks.',
   },
   Druid: {
-    hpModifier: 1.1,       // More HP
-    armorModifier: 0.5,    // Some natural protection
-    damageModifier: 0.9,   // Slightly decreased damage
-    description: 'Nature-focused class with healing and crowd control.'
-  }
+    hpModifier: 1.1, // More HP
+    armorModifier: 0.5, // Some natural protection
+    damageModifier: 0.9, // Slightly decreased damage
+    description: 'Nature-focused class with healing and crowd control.',
+  },
 };
 
 /**
@@ -134,77 +144,638 @@ const classAttributes = {
  */
 const classAbilities = {
   Warrior: [
-    { type: 'attack',     name: 'Slash',        category: 'Attack',  effect: null,        target: 'Single', params: { damage: 33 }, unlockAt: 1, order: 1000, cooldown: 0 },
-    { type: 'shieldWall', name: 'Shield Wall',  category: 'Defense', effect: 'protected', target: 'Self',   params: { armor: 5, duration: 1 }, unlockAt: 2, order: 10, cooldown: 0 },
-    { type: 'bandage',    name: 'Bandage',      category: 'Heal',    effect: null,        target: 'Self',   params: { amount: 20 }, unlockAt: 3, order: 10000, cooldown: 2 },
-    { type: 'battleCry',  name: 'Battle Cry',   category: 'Special', effect: 'protected', target: 'Multi',  params: { armor: 3, duration: 1 }, unlockAt: 4, order: 50, cooldown: 3 }
+    {
+      type: 'attack',
+      name: 'Slash',
+      category: 'Attack',
+      effect: null,
+      target: 'Single',
+      params: { damage: 33 },
+      unlockAt: 1,
+      order: 1000,
+      cooldown: 0,
+      flavorText: 'A swift and decisive blow, honed by countless battles.',
+    },
+    {
+      type: 'shieldWall',
+      name: 'Shield Wall',
+      category: 'Defense',
+      effect: 'protected',
+      target: 'Self',
+      params: { armor: 5, duration: 1 },
+      unlockAt: 2,
+      order: 10,
+      cooldown: 0,
+      flavorText:
+        'Brace for impact, becoming an unmovable bastion for your allies.',
+    },
+    {
+      type: 'bandage',
+      name: 'Bandage',
+      category: 'Heal',
+      effect: null,
+      target: 'Self',
+      params: { amount: 20 },
+      unlockAt: 3,
+      order: 10000,
+      cooldown: 2,
+      flavorText: 'A moment of respite to tend to wounds and fight on.',
+    },
+    {
+      type: 'battleCry',
+      name: 'Battle Cry',
+      category: 'Special',
+      effect: 'protected',
+      target: 'Multi',
+      params: { armor: 3, duration: 1 },
+      unlockAt: 4,
+      order: 50,
+      cooldown: 3,
+      flavorText: 'A deafening roar that steels the resolve of your comrades.',
+    },
   ],
   Pyromancer: [
-    { type: 'fireball',     name: 'Fireball',          category: 'Attack',  effect: null,       target: 'Single', params: { damage: 35 }, unlockAt: 1, order: 1010, cooldown: 0 },
-    { type: 'flameWard',    name: 'Flame Ward',        category: 'Defense', effect: 'protected', target: 'Self',   params: { armor: 3, duration: 1 }, unlockAt: 2, order: 11, cooldown: 0 },
-    { type: 'emberRestore', name: 'Ember Restoration', category: 'Heal',    effect: null,       target: 'Self',   params: { amount: 15 }, unlockAt: 3, order: 10010, cooldown: 2 },
-    { type: 'infernoBlast', name: 'Inferno Blast',     category: 'Special', effect: 'poison',    target: 'Multi',  params: { damage: 15, poison: { damage: 5, turns: 2 } }, unlockAt: 4, order: 1530, cooldown: 3 }
+    {
+      type: 'fireball',
+      name: 'Fireball',
+      category: 'Attack',
+      effect: null,
+      target: 'Single',
+      params: { damage: 35 },
+      unlockAt: 1,
+      order: 1010,
+      cooldown: 0,
+      flavorText: 'Hurl a searing sphere of raw fire, hungry for combustion.',
+    },
+    {
+      type: 'flameWard',
+      name: 'Flame Ward',
+      category: 'Defense',
+      effect: 'protected',
+      target: 'Self',
+      params: { armor: 3, duration: 1 },
+      unlockAt: 2,
+      order: 11,
+      cooldown: 0,
+      flavorText:
+        'Envelop yourself in a shimmering shield of protective flames.',
+    },
+    {
+      type: 'emberRestore',
+      name: 'Ember Restoration',
+      category: 'Heal',
+      effect: null,
+      target: 'Self',
+      params: { amount: 15 },
+      unlockAt: 3,
+      order: 10010,
+      cooldown: 2,
+      flavorText:
+        'Draw upon the residual heat of your magic to mend your burns.',
+    },
+    {
+      type: 'infernoBlast',
+      name: 'Inferno Blast',
+      category: 'Special',
+      effect: 'poison',
+      target: 'Multi',
+      params: { damage: 15, poison: { damage: 5, turns: 2 } },
+      unlockAt: 4,
+      order: 1530,
+      cooldown: 3,
+      flavorText:
+        'Unleash a torrent of fire that clings and chars, leaving a toxic aftermath.',
+    },
   ],
   Wizard: [
-    { type: 'fireball',     name: 'Fireball',        category: 'Attack',  effect: null,       target: 'Single', params: { damage: 34 }, unlockAt: 1, order: 1011, cooldown: 0 },
-    { type: 'arcaneShield', name: 'Arcane Shield',   category: 'Defense', effect: 'protected', target: 'Self',   params: { armor: 4, duration: 1 }, unlockAt: 2, order: 12, cooldown: 0 },
-    { type: 'arcaneMend',   name: 'Arcane Mending',  category: 'Heal',    effect: null,       target: 'Self',   params: { amount: 20 }, unlockAt: 3, order: 10020, cooldown: 2 },
-    { type: 'meteorShower', name: 'Meteor Shower',   category: 'Special', effect: null,       target: 'Multi',  params: { damage: 20 }, unlockAt: 4, order: 1500, cooldown: 3 }
+    {
+      type: 'magicMissile',
+      name: 'Magic Missile',
+      category: 'Attack',
+      effect: null,
+      target: 'Single',
+      params: { damage: 34 },
+      unlockAt: 1,
+      order: 1011,
+      cooldown: 0,
+      flavorText:
+        'Conjure bolts of pure arcane energy that unerringly seek their target.',
+    },
+    {
+      type: 'arcaneShield',
+      name: 'Arcane Shield',
+      category: 'Defense',
+      effect: 'protected',
+      target: 'Self',
+      params: { armor: 4, duration: 1 },
+      unlockAt: 2,
+      order: 12,
+      cooldown: 0,
+      flavorText:
+        'Weave a barrier of shimmering magic to deflect incoming harm.',
+    },
+    {
+      type: 'arcaneMend',
+      name: 'Arcane Mending',
+      category: 'Heal',
+      effect: null,
+      target: 'Self',
+      params: { amount: 20 },
+      unlockAt: 3,
+      order: 10020,
+      cooldown: 2,
+      flavorText:
+        'Focus arcane energies inward to knit wounds and restore vitality.',
+    },
+    {
+      type: 'meteorShower',
+      name: 'Meteor Shower',
+      category: 'Special',
+      effect: null,
+      target: 'Multi',
+      params: { damage: 20 },
+      unlockAt: 4,
+      order: 1500,
+      cooldown: 3,
+      flavorText:
+        'Call down a devastating rain of celestial bodies upon your foes.',
+    },
   ],
   Assassin: [
-    { type: 'backstab',     name: 'Backstab',        category: 'Attack',  effect: null,       target: 'Single', params: { damage: 40 }, unlockAt: 1, order: 1020, cooldown: 0 },
-    { type: 'shadowVeil',   name: 'Shadow Veil',     category: 'Defense', effect: 'invisible', target: 'Self',   params: { duration: 1 }, unlockAt: 2, order: 13, cooldown: 4 },
-    { type: 'adrenalSurge', name: 'Adrenal Surge',   category: 'Heal',    effect: null,       target: 'Self',   params: { amount: 15 }, unlockAt: 3, order: 10030, cooldown: 2 },
-    { type: 'deathMark',    name: 'Death Mark',      category: 'Special', effect: 'poison',    target: 'Single', params: { poison: { damage: 10, turns: 2 } }, unlockAt: 4, order: 140, cooldown: 0 }
+    {
+      type: 'backstab',
+      name: 'Backstab',
+      category: 'Attack',
+      effect: null,
+      target: 'Single',
+      params: { damage: 40 },
+      unlockAt: 1,
+      order: 1020,
+      cooldown: 0,
+      flavorText:
+        'Exploit a momentary weakness with a precisely aimed, lethal strike.',
+    },
+    {
+      type: 'shadowVeil',
+      name: 'Shadow Veil',
+      category: 'Defense',
+      effect: 'invisible',
+      target: 'Self',
+      params: { duration: 1 },
+      unlockAt: 2,
+      order: 13,
+      cooldown: 4,
+      flavorText: 'Melt into the darkness, becoming an unseen predator.',
+    },
+    {
+      type: 'adrenalSurge',
+      name: 'Adrenal Surge',
+      category: 'Heal',
+      effect: null,
+      target: 'Self',
+      params: { amount: 15 },
+      unlockAt: 3,
+      order: 10030,
+      cooldown: 2,
+      flavorText:
+        'Push your body past its limits, a quick jolt to keep you in the fight.',
+    },
+    {
+      type: 'deathMark',
+      name: 'Death Mark',
+      category: 'Special',
+      effect: 'poison',
+      target: 'Single',
+      params: { poison: { damage: 10, turns: 2 } },
+      unlockAt: 4,
+      order: 140,
+      cooldown: 0,
+      flavorText:
+        'Brand your foe with a lingering curse, ensuring their demise is slow and painful.',
+    },
   ],
   Rogue: [
-    { type: 'poisonStrike', name: 'Poison Strike',   category: 'Attack',  effect: 'poison',   target: 'Single', params: { damage: 20, poison: { damage: 8, turns: 2 } }, unlockAt: 1, order: 1030, cooldown: 0 },
-    { type: 'smokeBomb',    name: 'Smoke Bomb',      category: 'Defense', effect: 'invisible', target: 'Self',   params: { duration: 1 }, unlockAt: 2, order: 14, cooldown: 4 },
-    { type: 'evasionRest',  name: 'Evasion Rest',    category: 'Heal',    effect: null,       target: 'Self',   params: { amount: 20 }, unlockAt: 3, order: 10040, cooldown: 2 },
-    { type: 'shadowstep',   name: 'Shadowstep',      category: 'Special', effect: 'invisible', target: 'Single', params: { duration: 1 }, unlockAt: 4, order: 110, cooldown: 3 }
+    {
+      type: 'poisonStrike',
+      name: 'Poison Strike',
+      category: 'Attack',
+      effect: 'poison',
+      target: 'Single',
+      params: { damage: 20, poison: { damage: 8, turns: 2 } },
+      unlockAt: 1,
+      order: 1030,
+      cooldown: 0,
+      flavorText:
+        'A quick jab with a venom-laced blade, the toxin doing its silent work.',
+    },
+    {
+      type: 'smokeBomb',
+      name: 'Smoke Bomb',
+      category: 'Defense',
+      effect: 'invisible',
+      target: 'Self',
+      params: { duration: 1 },
+      unlockAt: 2,
+      order: 14,
+      cooldown: 4,
+      flavorText:
+        'Disappear in a cloud of disorienting smoke, evading your pursuers.',
+    },
+    {
+      type: 'evasionRest',
+      name: 'Evasion Rest',
+      category: 'Heal',
+      effect: null,
+      target: 'Self',
+      params: { amount: 20 },
+      unlockAt: 3,
+      order: 10040,
+      cooldown: 2,
+      flavorText:
+        'Find a brief, quiet moment to catch your breath and prepare for the next move.',
+    },
+    {
+      type: 'shadowstep',
+      name: 'Shadowstep',
+      category: 'Special',
+      effect: 'invisible',
+      target: 'Single',
+      params: { duration: 1 },
+      unlockAt: 4,
+      order: 110,
+      cooldown: 3,
+      flavorText:
+        "Dart through the shadows to an ally's side, unseen and unheard.",
+    },
   ],
   Priest: [
-    { type: 'holyBolt',     name: 'Holy Bolt',       category: 'Attack',  effect: null,       target: 'Single', params: { damage: 25 }, unlockAt: 1, order: 1040, cooldown: 0 },
-    { type: 'divineGuard',  name: 'Divine Guard',    category: 'Defense', effect: 'protected', target: 'Self',   params: { armor: 4, duration: 1 }, unlockAt: 2, order: 15, cooldown: 0 },
-    { type: 'heal',         name: 'Heal',            category: 'Heal',    effect: null,       target: 'Single', params: { amount: 30 }, unlockAt: 3, order: 10050, cooldown: 2 },
-    { type: 'divineShield', name: 'Divine Shield',   category: 'Special', effect: 'protected', target: 'Multi',  params: { armor: 2, duration: 1 }, unlockAt: 4, order: 51, cooldown: 3 }
+    {
+      type: 'holyBolt',
+      name: 'Holy Bolt',
+      category: 'Attack',
+      effect: null,
+      target: 'Single',
+      params: { damage: 25 },
+      unlockAt: 1,
+      order: 1040,
+      cooldown: 0,
+      flavorText: 'Smite the wicked with a bolt of searing divine light.',
+    },
+    {
+      type: 'divineGuard',
+      name: 'Divine Guard',
+      category: 'Defense',
+      effect: 'protected',
+      target: 'Self',
+      params: { armor: 4, duration: 1 },
+      unlockAt: 2,
+      order: 15,
+      cooldown: 0,
+      flavorText: 'Invoke a blessing of protection, shielding you from harm.',
+    },
+    {
+      type: 'heal',
+      name: 'Heal',
+      category: 'Heal',
+      effect: null,
+      target: 'Single',
+      params: { amount: 30 },
+      unlockAt: 3,
+      order: 10050,
+      cooldown: 2,
+      flavorText:
+        'Channel sacred energy to mend grievous wounds and restore faith.',
+    },
+    {
+      type: 'divineShield',
+      name: 'Divine Shield',
+      category: 'Special',
+      effect: 'protected',
+      target: 'Multi',
+      params: { armor: 2, duration: 1 },
+      unlockAt: 4,
+      order: 51,
+      cooldown: 3,
+      flavorText:
+        'Extend a shield of holy power to all nearby allies, a beacon of hope.',
+    },
   ],
   Oracle: [
-    { type: 'holyBolt',     name: 'Holy Bolt',       category: 'Attack',  effect: null,       target: 'Single', params: { damage: 25 }, unlockAt: 1, order: 1041, cooldown: 0 },
-    { type: 'foresight',    name: 'Foresight Shield',category: 'Defense', effect: 'protected', target: 'Self',   params: { armor: 3, duration: 1 }, unlockAt: 4, order: 16, cooldown: 0 },
-    { type: 'divineBalm',   name: 'Divine Balm',     category: 'Heal',    effect: null,       target: 'Single', params: { amount: 25 }, unlockAt: 3, order: 10060, cooldown: 2 },
-    { type: 'fatesEye',     name: 'Eye of Fate',      category: 'Special', effect: 'detect',    target: 'Single', params: {}, unlockAt: 2, order: 100, cooldown: 0 }
+    {
+      type: 'holyBolt',
+      name: 'Holy Bolt',
+      category: 'Attack',
+      effect: null,
+      target: 'Single',
+      params: { damage: 25 },
+      unlockAt: 1,
+      order: 1041,
+      cooldown: 0,
+      flavorText:
+        'A focused strike of sacred energy, guided by prescient sight.',
+    },
+    {
+      type: 'foresight',
+      name: 'Foresight Shield',
+      category: 'Defense',
+      effect: 'protected',
+      target: 'Self',
+      params: { armor: 3, duration: 1 },
+      unlockAt: 4,
+      order: 16,
+      cooldown: 0,
+      flavorText:
+        "Anticipate the enemy's move, forming a barrier just in time.",
+    },
+    {
+      type: 'divineBalm',
+      name: 'Divine Balm',
+      category: 'Heal',
+      effect: null,
+      target: 'Single',
+      params: { amount: 25 },
+      unlockAt: 3,
+      order: 10060,
+      cooldown: 2,
+      flavorText:
+        'A soothing touch, infused with divine power to ease suffering.',
+    },
+    {
+      type: 'fatesEye',
+      name: 'Eye of Fate',
+      category: 'Special',
+      effect: 'detect',
+      target: 'Single',
+      params: {},
+      unlockAt: 2,
+      order: 100,
+      cooldown: 0,
+      flavorText:
+        'Peer through the veil of deception, revealing that which is hidden.',
+    },
   ],
   Seer: [
-    { type: 'psychicBolt',  name: 'Psychic Bolt',    category: 'Attack',  effect: null,       target: 'Single', params: { damage: 28 }, unlockAt: 1, order: 1050, cooldown: 0 },
-    { type: 'spiritGuard',  name: 'Spirit Guard',    category: 'Defense', effect: 'protected', target: 'Self',   params: { armor: 3, duration: 1 }, unlockAt: 3, order: 17, cooldown: 0 },
-    { type: 'spiritMend',   name: 'Spirit Mend',     category: 'Heal',    effect: null,       target: 'Self',   params: { amount: 20 }, unlockAt: 4, order: 10070, cooldown: 2 },
-    { type: 'revealSecret', name: 'Reveal Secret',   category: 'Special', effect: 'detect',    target: 'Single', params: {}, unlockAt: 2, order: 101, cooldown: 0 }
+    {
+      type: 'psychicBolt',
+      name: 'Psychic Bolt',
+      category: 'Attack',
+      effect: null,
+      target: 'Single',
+      params: { damage: 28 },
+      unlockAt: 1,
+      order: 1050,
+      cooldown: 0,
+      flavorText: 'Assault the mind with a focused blast of pure mental force.',
+    },
+    {
+      type: 'spiritGuard',
+      name: 'Spirit Guard',
+      category: 'Defense',
+      effect: 'protected',
+      target: 'Self',
+      params: { armor: 3, duration: 1 },
+      unlockAt: 3,
+      order: 17,
+      cooldown: 0,
+      flavorText: 'Summon protective spirits to ward off incoming attacks.',
+    },
+    {
+      type: 'spiritMend',
+      name: 'Spirit Mend',
+      category: 'Heal',
+      effect: null,
+      target: 'Self',
+      params: { amount: 20 },
+      unlockAt: 4,
+      order: 10070,
+      cooldown: 2,
+      flavorText: 'Channel soothing spiritual energy to repair your own form.',
+    },
+    {
+      type: 'revealSecret',
+      name: 'Reveal Secret',
+      category: 'Special',
+      effect: 'detect',
+      target: 'Single',
+      params: {},
+      unlockAt: 2,
+      order: 101,
+      cooldown: 0,
+      flavorText: "Uncover hidden truths and expose the enemy's deceptions.",
+    },
   ],
   Shaman: [
-    { type: 'lightningBolt', name: 'Lightning Bolt',  category: 'Attack',  effect: null,       target: 'Single', params: { damage: 30 }, unlockAt: 1, order: 1060, cooldown: 0 },
-    { type: 'totemShield',   name: 'Totemic Barrier', category: 'Defense', effect: 'protected', target: 'Self',   params: { armor: 3, duration: 1 }, unlockAt: 2, order: 18, cooldown: 0 },
-    { type: 'ancestralHeal', name: 'Ancestral Heal',  category: 'Heal',    effect: null,       target: 'Single', params: { amount: 20 }, unlockAt: 3, order: 10080, cooldown: 2 },
-    { type: 'chainLightning',name: 'Chain Lightning', category: 'Special', effect: null,       target: 'Multi',  params: { damage: 18 }, unlockAt: 4, order: 1510, cooldown: 2 }
+    {
+      type: 'lightningBolt',
+      name: 'Lightning Bolt',
+      category: 'Attack',
+      effect: null,
+      target: 'Single',
+      params: { damage: 30 },
+      unlockAt: 1,
+      order: 1060,
+      cooldown: 0,
+      flavorText:
+        'Call down the fury of the storm in a crackling bolt of lightning.',
+    },
+    {
+      type: 'totemShield',
+      name: 'Totemic Barrier',
+      category: 'Defense',
+      effect: 'protected',
+      target: 'Self',
+      params: { armor: 3, duration: 1 },
+      unlockAt: 2,
+      order: 18,
+      cooldown: 0,
+      flavorText:
+        'Erect a spiritual totem that shields you with ancestral power.',
+    },
+    {
+      type: 'ancestralHeal',
+      name: 'Ancestral Heal',
+      category: 'Heal',
+      effect: null,
+      target: 'Single',
+      params: { amount: 20 },
+      unlockAt: 3,
+      order: 10080,
+      cooldown: 2,
+      flavorText:
+        'Invoke the wisdom of the ancestors to restore a chosen ally.',
+    },
+    {
+      type: 'chainLightning',
+      name: 'Chain Lightning',
+      category: 'Special',
+      effect: null,
+      target: 'Multi',
+      params: { damage: 18 },
+      unlockAt: 4,
+      order: 1510,
+      cooldown: 2,
+      flavorText: 'Unleash a fork of lightning that leaps from foe to foe.',
+    },
   ],
   Gunslinger: [
-    { type: 'pistolShot',    name: 'Pistol Shot',     category: 'Attack',  effect: null,       target: 'Single', params: { damage: 32 }, unlockAt: 1, order: 1070, cooldown: 0 },
-    { type: 'smokeScreen',   name: 'Smoke Screen',    category: 'Defense', effect: 'invisible', target: 'Self',   params: { duration: 1 }, unlockAt: 2, order: 19, cooldown: 4 },
-    { type: 'bandolierPatch',name: 'Bandolier Patch', category: 'Heal',    effect: null,       target: 'Self',   params: { amount: 15 }, unlockAt: 3, order: 10090, cooldown: 2 },
-    { type: 'ricochetRound', name: 'Ricochet Round',  category: 'Special', effect: null,       target: 'Multi',  params: { damage: 16 }, unlockAt: 4, order: 1520, cooldown: 2 }
+    {
+      type: 'pistolShot',
+      name: 'Pistol Shot',
+      category: 'Attack',
+      effect: null,
+      target: 'Single',
+      params: { damage: 32 },
+      unlockAt: 1,
+      order: 1070,
+      cooldown: 0,
+      flavorText:
+        'A quick draw and a well-aimed shot from your trusty sidearm.',
+    },
+    {
+      type: 'smokeScreen',
+      name: 'Smoke Screen',
+      category: 'Defense',
+      effect: 'invisible',
+      target: 'Self',
+      params: { duration: 1 },
+      unlockAt: 2,
+      order: 19,
+      cooldown: 4,
+      flavorText:
+        'Create a thick cloud of smoke to obscure your position and make a quick escape.',
+    },
+    {
+      type: 'bandolierPatch',
+      name: 'Bandolier Patch',
+      category: 'Heal',
+      effect: null,
+      target: 'Self',
+      params: { amount: 15 },
+      unlockAt: 3,
+      order: 10090,
+      cooldown: 2,
+      flavorText:
+        'A quick patch-up job using supplies from your ever-ready bandolier.',
+    },
+    {
+      type: 'ricochetRound',
+      name: 'Ricochet Round',
+      category: 'Special',
+      effect: null,
+      target: 'Multi',
+      params: { damage: 16 },
+      unlockAt: 4,
+      order: 1520,
+      cooldown: 2,
+      flavorText:
+        'Fire a specially crafted bullet that bounces between multiple targets.',
+    },
   ],
   Tracker: [
-    { type: 'preciseShot',   name: 'Precise Shot',    category: 'Attack',  effect: null,       target: 'Single', params: { damage: 33 }, unlockAt: 1, order: 1080, cooldown: 0 },
-    { type: 'camouflage',    name: 'Camouflage',      category: 'Defense', effect: 'invisible', target: 'Self',   params: { duration: 1 }, unlockAt: 2, order: 20, cooldown: 4 },
-    { type: 'survivalInst',  name: 'Survival Inst.',  category: 'Heal',    effect: null,       target: 'Self',   params: { amount: 15 }, unlockAt: 3, order: 10100, cooldown: 2 },
-    { type: 'poisonTrap',    name: 'Poison Trap',     category: 'Special', effect: 'poison',    target: 'Multi',  params: { poison: { damage: 7, turns: 2 } }, unlockAt: 4, order: 120, cooldown: 3 }
+    {
+      type: 'preciseShot',
+      name: 'Precise Shot',
+      category: 'Attack',
+      effect: null,
+      target: 'Single',
+      params: { damage: 33 },
+      unlockAt: 1,
+      order: 1080,
+      cooldown: 0,
+      flavorText:
+        'Take a moment to aim, then release a shot that strikes a vital point.',
+    },
+    {
+      type: 'camouflage',
+      name: 'Camouflage',
+      category: 'Defense',
+      effect: 'invisible',
+      target: 'Self',
+      params: { duration: 1 },
+      unlockAt: 2,
+      order: 20,
+      cooldown: 4,
+      flavorText:
+        'Blend seamlessly into your surroundings, becoming nearly impossible to spot.',
+    },
+    {
+      type: 'survivalInst',
+      name: 'Survival Inst.',
+      category: 'Heal',
+      effect: null,
+      target: 'Self',
+      params: { amount: 15 },
+      unlockAt: 3,
+      order: 10100,
+      cooldown: 2,
+      flavorText:
+        'Rely on ingrained survival knowledge to quickly tend to your injuries.',
+    },
+    {
+      type: 'poisonTrap',
+      name: 'Poison Trap',
+      category: 'Special',
+      effect: 'poison',
+      target: 'Multi',
+      params: { poison: { damage: 7, turns: 2 } },
+      unlockAt: 4,
+      order: 120,
+      cooldown: 3,
+      flavorText: 'Lay a hidden trap that ensnares and envenoms unwary foes.',
+    },
   ],
   Druid: [
-    { type: 'clawSwipe',     name: 'Claw Swipe',      category: 'Attack',  effect: null,       target: 'Single', params: { damage: 30 }, unlockAt: 1, order: 5, cooldown: 0 },
-    { type: 'barkskin',      name: 'Barkskin',        category: 'Defense', effect: 'protected', target: 'Self',   params: { armor: 3, duration: 1 }, unlockAt: 2, order: 21, cooldown: 0 },
-    { type: 'rejuvenation',  name: 'Rejuvenation',    category: 'Heal',    effect: null,       target: 'Multi',  params: { amount: 12 }, unlockAt: 3, order: 10110, cooldown: 2 },
-    { type: 'entangle',      name: 'Entangling Roots',category: 'Special', effect: 'stunned',   target: 'Multi',  params: { chance: 0.5, duration: 1 }, unlockAt: 4, order: 130, cooldown: 3 }
-  ]
+    {
+      type: 'clawSwipe',
+      name: 'Claw Swipe',
+      category: 'Attack',
+      effect: null,
+      target: 'Single',
+      params: { damage: 30 },
+      unlockAt: 1,
+      order: 5,
+      cooldown: 0,
+      flavorText: 'Lash out with the ferocity of a wild beast, claws bared.',
+    },
+    {
+      type: 'barkskin',
+      name: 'Barkskin',
+      category: 'Defense',
+      effect: 'protected',
+      target: 'Self',
+      params: { armor: 3, duration: 1 },
+      unlockAt: 2,
+      order: 21,
+      cooldown: 0,
+      flavorText: 'Your skin toughens, becoming as resilient as ancient wood.',
+    },
+    {
+      type: 'rejuvenation',
+      name: 'Rejuvenation',
+      category: 'Heal',
+      effect: null,
+      target: 'Multi',
+      params: { amount: 12 },
+      unlockAt: 3,
+      order: 10110,
+      cooldown: 2,
+      flavorText:
+        'Infuse your allies with the restorative energies of nature itself.',
+    },
+    {
+      type: 'entangle',
+      name: 'Entangling Roots',
+      category: 'Special',
+      effect: 'stunned',
+      target: 'Multi',
+      params: { chance: 0.5, duration: 1 },
+      unlockAt: 4,
+      order: 130,
+      cooldown: 3,
+      flavorText:
+        'Summon grasping roots from the earth to bind and hinder your enemies.',
+    },
+  ],
 };
 
 /**
@@ -223,7 +794,9 @@ function getClassAbilities(className) {
  * @returns {Array} Array of abilities unlocked at the specified level
  */
 function getClassAbilitiesByLevel(className, level) {
-  return getClassAbilities(className).filter(ability => ability.unlockAt === level);
+  return getClassAbilities(className).filter(
+    (ability) => ability.unlockAt === level
+  );
 }
 
 module.exports = {
@@ -232,5 +805,5 @@ module.exports = {
   classAttributes,
   classAbilities,
   getClassAbilities,
-  getClassAbilitiesByLevel
+  getClassAbilitiesByLevel,
 };
