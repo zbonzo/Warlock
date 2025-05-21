@@ -250,24 +250,15 @@ function handleAoeDamage(actor, target, ability, log, systems) {
  * @returns {boolean} Whether the ability was successful
  */
 function handleVulnerabilityStrike(actor, target, ability, log, systems) {
-  console.log('=== EXECUTING VULNERABILITY STRIKE ===');
-
   // First deal normal damage
   const attackResult = handleAttack(actor, target, ability, log, systems);
-  console.log('Attack result:', attackResult);
 
   // If attack successful and target is a player, apply vulnerability
   if (attackResult && target !== '__monster__' && target.isAlive) {
-    console.log('Target is valid, applying vulnerability');
-
     // Get vulnerability parameters
     const vulnerableData = ability.params.vulnerable || {};
     const damageIncrease = vulnerableData.damageIncrease || 50; // Default 50%
     const turns = vulnerableData.turns || 1; // Default 1 turn
-
-    console.log(
-      `Vulnerability parameters: ${damageIncrease}% for ${turns} turns`
-    );
 
     // Apply vulnerability directly to the player
     target.applyVulnerability(damageIncrease, turns);
@@ -276,9 +267,7 @@ function handleVulnerabilityStrike(actor, target, ability, log, systems) {
     log.push(
       `${target.name} is VULNERABLE and will take ${damageIncrease}% more damage for ${turns} turn(s)!`
     );
-    console.log(`Applied vulnerability to ${target.name}`);
   } else {
-    console.log('Target invalid or attack failed, not applying vulnerability');
     if (target === '__monster__') {
       console.log('Cannot apply vulnerability to monster');
     }

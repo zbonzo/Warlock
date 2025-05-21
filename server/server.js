@@ -6,6 +6,7 @@ const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
 const cors = require('cors');
+const config = require('@config');
 const configRoutes = require('./routes/configRoutes');
 const logger = require('@utils/logger');
 const gameController = require('@controllers/GameController');
@@ -38,7 +39,7 @@ const server = http.createServer(app);
 // Initialize Socket.IO with CORS
 const io = new Server(server, {
   cors: {
-    origin: '*', // For local development - should be restricted in production
+    origin: config.corsOrigins,
     methods: ['GET', 'POST'],
     allowedHeaders: ['Content-Type'],
   },
@@ -60,7 +61,12 @@ const socketRateLimiter = {
    * @param {number} timeWindow - Time window in milliseconds
    * @returns {boolean} Whether the action is allowed
    */
-  check(socketId, action, limit = 5, timeWindow = 60000) {
+  check(
+    socketId,
+    action,
+    limit = config.gameBalance.socketRateLimiter.limit,
+    timeWindow = config.gameBalance.socketRateLimiter.timeWindow
+  ) {
     const now = Date.now();
 
     if (!this.limits.has(socketId)) {

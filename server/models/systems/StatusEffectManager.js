@@ -32,8 +32,6 @@ class StatusEffectManager {
     const player = this.players.get(playerId);
     if (!player || !player.isAlive) return false;
 
-    console.log(`Applying effect ${effectName} to ${player.name}:`, effectData);
-
     // Get the effect definition from config
     const effectDefinition = config.statusEffects[effectName];
     if (!effectDefinition) {
@@ -48,7 +46,6 @@ class StatusEffectManager {
 
     // Check if already has the effect
     const hasEffect = player.hasStatusEffect(effectName);
-    console.log(`Player already has ${effectName}?`, hasEffect);
 
     // Apply default values for any missing parameters
     const effectDefaults = config.statusEffects[effectName]?.default || {};
@@ -65,15 +62,11 @@ class StatusEffectManager {
       log.push(
         `${player.name} is VULNERABLE and will take ${finalData.damageIncrease}% more damage for ${finalData.turns} turn(s)!`
       );
-      console.log(
-        `Applied vulnerability to ${player.name}: ${finalData.damageIncrease}% for ${finalData.turns} turns`
-      );
       return true;
     }
 
     // For other effects, apply normally
     player.applyStatusEffect(effectName, finalData);
-    console.log(`Applied ${effectName} to ${player.name}`);
 
     // Add log message
     if (!hasEffect) {

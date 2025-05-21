@@ -9,7 +9,7 @@ import './HistoryColumn.css';
 
 /**
  * HistoryColumn component displays the personalized game history
- * 
+ *
  * @param {Object} props - Component props
  * @param {boolean} props.isVisible - Whether column is currently visible
  * @param {Array} props.eventsLog - Array of event log entries by round
@@ -18,9 +18,15 @@ import './HistoryColumn.css';
  * @param {boolean} props.showAllEvents - Whether to show all events (unredacted)
  * @returns {React.ReactElement|null} The rendered component or null if not visible
  */
-const HistoryColumn = ({ isVisible, eventsLog, currentPlayerId, players = [], showAllEvents = false }) => {
+const HistoryColumn = ({
+  isVisible,
+  eventsLog,
+  currentPlayerId,
+  players = [],
+  showAllEvents = false,
+}) => {
   const theme = useTheme();
-  
+
   // Don't render if not visible (mobile view handling)
   if (!isVisible) return null;
 
@@ -59,45 +65,60 @@ const HistoryColumn = ({ isVisible, eventsLog, currentPlayerId, players = [], sh
     if (showAllEvents) {
       return true;
     }
-    
-    let message = '';
-    
-    // Get the message text to check
-    if (typeof event === 'string') {
-      message = event;
-    } else {
-      // For new event objects, get the appropriate message for this player
-      message = getPersonalizedMessage(event);
+
+    // For new event objects, check if player is directly involved
+    if (typeof event !== 'string') {
+      // If player is directly the actor or target of the event
+      if (
+        event.attackerId === currentPlayerId ||
+        event.targetId === currentPlayerId
+      ) {
+        return true;
+      }
+
+      // If it's a public event that everyone should see
+      if (event.public) {
+        return true;
+      }
     }
-    
+
+    // Get the message text to check (for both string and object events)
+    let message =
+      typeof event === 'string' ? event : getPersonalizedMessage(event);
+
     // Universal messages that everyone should see
     const universalPhrases = [
       'The Monster attacks',
       'The Monster has been defeated',
       'Another hero has been corrupted',
       'activates', // For racial abilities like "Ghost activates Stone Resolve"
-      'level up'
+      'level up',
     ];
-    
+
     // Check if it's a universal message
-    if (universalPhrases.some(phrase => message.includes(phrase))) {
+    if (universalPhrases.some((phrase) => message.includes(phrase))) {
       return true;
     }
-    
+
     // Get player name from players list or use a fallback
-    const currentPlayer = players?.find(p => p.id === currentPlayerId);
+    const currentPlayer = players?.find((p) => p.id === currentPlayerId);
     const playerName = currentPlayer?.name || '';
-    
+
     // Show if the player's name appears in the message
     if (playerName && message.includes(playerName)) {
       return true;
     }
-    
+
     // Show if the message contains "You" (personalized messages)
-    if (message.includes('You ') || message.includes('Your ') || message.includes('you ') || message.includes('your ')) {
+    if (
+      message.includes('You ') ||
+      message.includes('Your ') ||
+      message.includes('you ') ||
+      message.includes('your ')
+    ) {
       return true;
     }
-    
+
     return false;
   };
 
@@ -135,42 +156,43 @@ const HistoryColumn = ({ isVisible, eventsLog, currentPlayerId, players = [], sh
 
     return classes.join(' ');
   };
-  
+
   return (
     <div className="history-column">
-      <h2 className="section-title">
-        Game History
-      </h2>
-      
+      <h2 className="section-title">Game History</h2>
+
       <div className="history-content">
         {eventsLog.length === 0 ? (
-          <p className="empty-history">No game events yet. Actions will appear here.</p>
+          <p className="empty-history">
+            No game events yet. Actions will appear here.
+          </p>
         ) : (
           [...eventsLog].reverse().map((logEntry, index) => (
             <div key={index} className="history-entry">
-              <h3 className="round-title">
-                Round {logEntry.turn}
-              </h3>
-              
-              <div className="event-list">
-                {logEntry.events
-                  .filter(shouldShowEvent)
-                  .map((event, eventIndex) => {
-                    const message = showAllEvents ? getUnredactedMessage(event) : getPersonalizedMessage(event);
-                    
-                    // Don't render empty messages
-                    if (!message) return null;
+              <h3 className="round-title">Round {logEntry.turn}</h3>
 
-                    return (
-                      <div 
-                        key={eventIndex} 
-                        className={`event-item ${getEventClasses(event)}`}
-                      >
-                        {message}
-                      </div>
-                    );
-                  })
-                  .filter(Boolean) // Remove null entries
+              <div className="event-list">
+                {
+                  logEntry.events
+                    .filter(shouldShowEvent)
+                    .map((event, eventIndex) => {
+                      const message = showAllEvents
+                        ? getUnredactedMessage(event)
+                        : getPersonalizedMessage(event);
+
+                      // Don't render empty messages
+                      if (!message) return null;
+
+                      return (
+                        <div
+                          key={eventIndex}
+                          className={`event-item ${getEventClasses(event)}`}
+                        >
+                          {message}
+                        </div>
+                      );
+                    })
+                    .filter(Boolean) // Remove null entries
                 }
               </div>
             </div>
@@ -192,7 +214,7 @@ const getUnredactedMessage = (event) => {
     return event;
   }
   // For new event objects, prefer public message, fall back to personalized
-  return event.message
+  return event.message;
 };
 
 /**
@@ -202,13 +224,23 @@ const getUnredactedMessage = (event) => {
  */
 function getEventClass(event) {
   if (event.includes('Warlock')) return 'warlock-event';
-  if (event.includes('attacked') || event.includes('damage')) return 'attack-event';
-  if (event.includes('healed') || event.includes('healing')) return 'heal-event';
-  if (event.includes('protected') || event.includes('shield')) return 'defense-event';
+  if (event.includes('attacked') || event.includes('damage'))
+    return 'attack-event';
+  if (event.includes('healed') || event.includes('healing'))
+    return 'heal-event';
+  if (event.includes('protected') || event.includes('shield'))
+    return 'defense-event';
   if (event.includes('Monster')) return 'monster-event';
-  if (event.includes('fallen') || event.includes('died') || event.includes('killed')) return 'death-event';
-  if (event.includes('corrupted') || event.includes('converted')) return 'corruption-event';
-  if (event.includes('Undying') || event.includes('resurrected')) return 'resurrect-event';
+  if (
+    event.includes('fallen') ||
+    event.includes('died') ||
+    event.includes('killed')
+  )
+    return 'death-event';
+  if (event.includes('corrupted') || event.includes('converted'))
+    return 'corruption-event';
+  if (event.includes('Undying') || event.includes('resurrected'))
+    return 'resurrect-event';
   if (event.includes('level up')) return 'level-event';
   return '';
 }
@@ -228,20 +260,20 @@ HistoryColumn.propTypes = {
             privateMessage: PropTypes.string,
             attackerMessage: PropTypes.string,
             targetId: PropTypes.string,
-            attackerId: PropTypes.string
-          })
+            attackerId: PropTypes.string,
+          }),
         ])
-      ).isRequired
+      ).isRequired,
     })
   ).isRequired,
   currentPlayerId: PropTypes.string.isRequired,
   players: PropTypes.arrayOf(
     PropTypes.shape({
       id: PropTypes.string.isRequired,
-      name: PropTypes.string.isRequired
+      name: PropTypes.string.isRequired,
     })
   ),
-  showAllEvents: PropTypes.bool
+  showAllEvents: PropTypes.bool,
 };
 
 export default HistoryColumn;

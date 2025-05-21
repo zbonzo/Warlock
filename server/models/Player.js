@@ -81,10 +81,6 @@ class Player {
       damageIncrease,
       turns,
     };
-
-    console.log(
-      `Applied vulnerability to ${this.name}: ${damageIncrease}% for ${turns} turns`
-    );
   }
 
   /**
@@ -370,15 +366,14 @@ class Player {
     if (abilityData.type === 'undying') {
       this.racialEffects = this.racialEffects || {};
       this.racialEffects.resurrect = {
-        resurrectedHp: abilityData.params.resurrectedHp || 1,
+        resurrectedHp: abilityData.params.resurrectedHp,
       };
     } else if (abilityData.type === 'stoneArmor') {
       // Initialize Stone Armor
       this.stoneArmorIntact = true;
       this.stoneArmorValue =
         abilityData.params.initialArmor ||
-        config.gameBalance.stoneArmor.initialValue ||
-        10;
+        config.gameBalance.stoneArmor.initialValue;
       logger.debug(
         `${this.name} gains Stone Armor with ${this.stoneArmorValue} armor`
       );
@@ -410,9 +405,6 @@ class Player {
     if (this.isVulnerable && this.vulnerabilityIncrease > 0) {
       const vulnerabilityMultiplier = 1 + this.vulnerabilityIncrease / 100;
       modifiedDamage = Math.floor(modifiedDamage * vulnerabilityMultiplier);
-      console.log(
-        `${this.name} is vulnerable! Damage increased: ${amount} → ${modifiedDamage}`
-      );
     }
 
     // Apply armor reduction
@@ -441,15 +433,10 @@ class Player {
     // Check for vulnerability by direct property examination
     if (this.statusEffects && this.statusEffects.vulnerable) {
       const vulnEffect = this.statusEffects.vulnerable;
-      const damageIncrease = vulnEffect.damageIncrease || 25; // Default 25%
+      const damageIncrease = vulnEffect.damageIncrease;
 
       // Apply vulnerability multiplier
       modifiedDamage = Math.floor(baseDamage * (1 + damageIncrease / 100));
-
-      // Add a console log to verify this is being called
-      console.log(
-        `[VULNERABILITY] Increasing damage to ${this.name} from ${baseDamage} to ${modifiedDamage}`
-      );
     }
 
     return modifiedDamage;

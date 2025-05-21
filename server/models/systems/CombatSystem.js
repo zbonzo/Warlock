@@ -447,7 +447,7 @@ class CombatSystem {
 
     // Get warlock conversion modifier from config
     const warlockConversionChance =
-      config.gameBalance.warlock.conversion.aoeModifier || 0.5;
+      config.gameBalance.warlock.conversion.aoeModifier;
 
     const affectedTargets = [];
 

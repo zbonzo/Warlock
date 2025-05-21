@@ -42,7 +42,7 @@ class WarlockSystem {
       logger.info(`Player ${warlock.name} assigned as initial warlock`);
       return warlock;
     }
-    
+
     return null;
   }
 
@@ -89,9 +89,9 @@ class WarlockSystem {
    * @returns {number} Number of alive warlocks
    */
   countAliveWarlocks() {
-    return this.gameStateUtils.getAlivePlayers()
-      .filter(player => player.isWarlock)
-      .length;
+    return this.gameStateUtils
+      .getAlivePlayers()
+      .filter((player) => player.isWarlock).length;
   }
 
   /**
@@ -101,8 +101,8 @@ class WarlockSystem {
    */
   getWarlocks(aliveOnly = false) {
     const playerArray = Array.from(this.players.values());
-    return playerArray.filter(player => 
-      player.isWarlock && (!aliveOnly || player.isAlive)
+    return playerArray.filter(
+      (player) => player.isWarlock && (!aliveOnly || player.isAlive)
     );
   }
 
@@ -117,35 +117,36 @@ class WarlockSystem {
   attemptConversion(actor, target, log, rateModifier = 1.0) {
     // Validate actor is a warlock
     if (!actor || !actor.isWarlock) return false;
-    
+
     // Handle null target (for abilities that generate "threat" without a specific target)
     if (!target) {
       // For "untargeted" actions, attempt to convert a random non-warlock
       return this.attemptRandomConversion(actor, log, rateModifier);
     }
-    
+
     // Skip if target is invalid, dead, or already a warlock
     if (!target.isAlive || target.isWarlock) return false;
-   
+
     // Get conversion settings from config
     const conversionSettings = config.gameBalance.warlock.conversion;
-    
+
     // Calculate conversion chance based on config
     const alivePlayersCount = this.gameStateUtils.getAlivePlayers().length;
     const baseChance = Math.min(
-      conversionSettings.maxChance || 0.5, 
-      (conversionSettings.baseChance || 0.2) + 
-      (this.numWarlocks / alivePlayersCount) * (conversionSettings.scalingFactor || 0.3)
+      conversionSettings.maxChance,
+      conversionSettings.baseChance +
+        (this.numWarlocks / alivePlayersCount) *
+          conversionSettings.scalingFactor
     );
-    
+
     // Apply rate modifier
     const finalChance = baseChance * rateModifier;
-    
+
     // Attempt conversion
     if (Math.random() < finalChance) {
       target.isWarlock = true;
       this.incrementWarlockCount();
-      
+
       // Enhanced log entry using messages from config
       const conversionLog = {
         type: 'corruption',
@@ -153,19 +154,22 @@ class WarlockSystem {
         message: config.messages.getEvent('playerCorrupted'),
         targetId: target.id,
         attackerId: actor.id,
-        privateMessage: config.messages.getMessage('private', 'youWereCorrupted'),
-        attackerMessage: config.messages.getMessage('private', 'youCorrupted', { 
-          targetName: target.name 
+        privateMessage: config.messages.getMessage(
+          'private',
+          'youWereCorrupted'
+        ),
+        attackerMessage: config.messages.getMessage('private', 'youCorrupted', {
+          targetName: target.name,
         }),
-        moveToEnd: true // Move to end of log for clarity
+        moveToEnd: true, // Move to end of log for clarity
       };
       log.push(conversionLog);
-      
+
       return true;
     }
     return false;
   }
-  
+
   /**
    * Attempt to convert a random non-warlock player
    * Used for untargeted warlock actions that generate "threat"
@@ -177,25 +181,27 @@ class WarlockSystem {
    */
   attemptRandomConversion(actor, log, rateModifier = 0.5) {
     // Get all eligible players (alive, not warlocks, not the actor)
-    const eligiblePlayers = this.gameStateUtils.getAlivePlayers()
-      .filter(p => !p.isWarlock && p.id !== actor.id);
-    
+    const eligiblePlayers = this.gameStateUtils
+      .getAlivePlayers()
+      .filter((p) => !p.isWarlock && p.id !== actor.id);
+
     if (eligiblePlayers.length === 0) return false;
-    
+
     // Choose a random eligible player
     const randomIdx = Math.floor(Math.random() * eligiblePlayers.length);
     const target = eligiblePlayers[randomIdx];
-    
+
     // Get untargeted conversion modifier from config
-    const randomModifier = config.gameBalance.warlock.conversion.randomModifier || 0.5;
-    
+    const randomModifier =
+      config.gameBalance.warlock.conversion.randomModifier || 0.5;
+
     // Apply combined modifier
     const totalModifier = rateModifier * randomModifier;
-    
+
     // Attempt conversion with modified chance
     return this.attemptConversion(actor, target, log, totalModifier);
   }
-  
+
   /**
    * Convert specified player to a warlock without chance calculation
    * Used for special events or admin actions
@@ -207,14 +213,16 @@ class WarlockSystem {
   forceConvertPlayer(playerId, log, reason = 'unknown') {
     const player = this.players.get(playerId);
     if (!player || !player.isAlive || player.isWarlock) return false;
-    
+
     player.isWarlock = true;
     this.incrementWarlockCount();
-    
-    log.push(`${player.name} has been turned into a Warlock! (Reason: ${reason})`);
+
+    log.push(
+      `${player.name} has been turned into a Warlock! (Reason: ${reason})`
+    );
     return true;
   }
-  
+
   /**
    * Check if warlocks are winning
    * @returns {boolean} Whether warlocks are currently winning
@@ -222,10 +230,11 @@ class WarlockSystem {
   areWarlocksWinning() {
     const aliveCount = this.gameStateUtils.getAlivePlayers().length;
     const aliveWarlockCount = this.countAliveWarlocks();
-    
+
     // Get majority threshold from config
-    const majorityThreshold = config.gameBalance.warlock.winConditions.majorityThreshold || 0.5;
-    
+    const majorityThreshold =
+      config.gameBalance.warlock.winConditions.majorityThreshold;
+
     // Warlocks are winning if they exceed the threshold
     return aliveWarlockCount > aliveCount * majorityThreshold;
   }

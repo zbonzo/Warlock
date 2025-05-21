@@ -4,7 +4,10 @@
  */
 const { GameRoom } = require('@models/GameRoom');
 const config = require('@config');
-const { throwGameStateError, throwValidationError } = require('@utils/errorHandler');
+const {
+  throwGameStateError,
+  throwValidationError,
+} = require('@utils/errorHandler');
 const logger = require('@utils/logger');
 const playerSessionManager = require('./PlayerSessionManager');
 
@@ -22,18 +25,20 @@ function createGameTimeout(io, gameCode) {
   if (gameTimers.has(gameCode)) {
     clearTimeout(gameTimers.get(gameCode));
   }
-  
+
   const timerId = setTimeout(() => {
     logger.info(`Game ${gameCode} timed out after inactivity`);
     // Notify any connected players before deleting
     if (games.has(gameCode)) {
-      io.to(gameCode).emit('gameTimeout', { message: 'Game ended due to inactivity' });
+      io.to(gameCode).emit('gameTimeout', {
+        message: 'Game ended due to inactivity',
+      });
     }
     // Clean up the game
     games.delete(gameCode);
     gameTimers.delete(gameCode);
   }, config.gameTimeout);
-  
+
   // Store the timer
   gameTimers.set(gameCode, timerId);
 }
@@ -56,11 +61,14 @@ function refreshGameTimeout(io, gameCode) {
  */
 function createGame(gameCode) {
   // Check if we already have too many games
-  if (games.size >= 1000) { // Prevent server overload
-    throwGameStateError('Server is too busy right now. Please try again later.');
+  if (games.size >= config.maxGames) {
+    // Prevent server overload
+    throwGameStateError(
+      'Server is too busy right now. Please try again later.'
+    );
     return null;
   }
-  
+
   const game = new GameRoom(gameCode);
   games.set(gameCode, game);
   return game;
@@ -75,7 +83,7 @@ function generateGameCode() {
   do {
     code = Math.floor(1000 + Math.random() * 9000).toString();
   } while (games.has(code));
-  
+
   return code;
 }
 
@@ -91,13 +99,13 @@ function canPlayerJoinGame(game, playerId) {
     throwGameStateError(`Game is full (${config.maxPlayers} players max).`);
     return false;
   }
-  
+
   // Check if player is already in this game
   if (game.players.has(playerId)) {
     throwValidationError('You are already in this game.');
     return false;
   }
-  
+
   return true;
 }
 
@@ -109,9 +117,9 @@ function canPlayerJoinGame(game, playerId) {
 function broadcastPlayerList(io, gameCode) {
   const game = games.get(gameCode);
   if (game) {
-    io.to(gameCode).emit('playerList', { 
+    io.to(gameCode).emit('playerList', {
       players: game.getPlayersInfo(),
-      host: game.hostId
+      host: game.hostId,
     });
   }
 }
@@ -125,19 +133,19 @@ function broadcastPlayerList(io, gameCode) {
 function processGameRound(io, gameCode) {
   const game = games.get(gameCode);
   if (!game) return null;
-  
+
   // Process the round
   const result = game.processRound();
-  
+
   // Broadcast the results
   io.to(gameCode).emit('roundResult', result);
-  
+
   // If there was a level-up, emit a specific event
   if (result.levelUp) {
     io.to(gameCode).emit('levelUp', {
       level: result.level,
       oldLevel: result.levelUp.oldLevel,
-      players: result.players
+      players: result.players,
     });
   }
 
@@ -149,11 +157,9 @@ function processGameRound(io, gameCode) {
     gameTimers.delete(gameCode);
     games.delete(gameCode);
   }
-  
+
   return result;
 }
-
-
 
 /**
  * Check win conditions (for disconnects)
@@ -165,23 +171,28 @@ function processGameRound(io, gameCode) {
 function checkGameWinConditions(io, gameCode, disconnectedPlayerName) {
   const game = games.get(gameCode);
   if (!game) return false;
-  
+
   // Check if all warlocks are gone
   if (game.systems.warlockSystem.getWarlockCount() <= 0) {
-    io.to(gameCode).emit('roundResult', { 
-      eventsLog: [`${disconnectedPlayerName} left the game. All Warlocks are gone.`], 
-      players: game.getPlayersInfo(), 
-      winner: 'Good'
+    io.to(gameCode).emit('roundResult', {
+      eventsLog: [
+        `${disconnectedPlayerName} left the game. All Warlocks are gone.`,
+      ],
+      players: game.getPlayersInfo(),
+      winner: 'Good',
     });
     games.delete(gameCode);
     return true;
-  } 
+  }
   // Check if only warlocks remain
-  else if (game.systems.warlockSystem.getWarlockCount() === game.getAlivePlayers().length) {
-    io.to(gameCode).emit('roundResult', { 
-      eventsLog: [`${disconnectedPlayerName} left the game.`], 
-      players: game.getPlayersInfo(), 
-      winner: 'Evil'
+  else if (
+    game.systems.warlockSystem.getWarlockCount() ===
+    game.getAlivePlayers().length
+  ) {
+    io.to(gameCode).emit('roundResult', {
+      eventsLog: [`${disconnectedPlayerName} left the game.`],
+      players: game.getPlayersInfo(),
+      winner: 'Evil',
     });
     games.delete(gameCode);
     return true;
@@ -203,32 +214,36 @@ function processReconnection(gameCode, playerName, newSocketId) {
     logger.warn(`Reconnection failed: Game ${gameCode} not found`);
     return false;
   }
-  
+
   // Check for existing session
   const sessionData = playerSessionManager.getSession(gameCode, playerName);
   if (!sessionData) {
-    logger.warn(`Reconnection failed: No active session for ${playerName} in game ${gameCode}`);
+    logger.warn(
+      `Reconnection failed: No active session for ${playerName} in game ${gameCode}`
+    );
     return false;
   }
-  
+
   // Get old socket ID
   const oldSocketId = sessionData.socketId;
-  
+
   // Update the session with the new socket ID
   playerSessionManager.updateSocketId(gameCode, playerName, newSocketId);
-  
+
   // Check if player is already in the game with old socket ID
   if (game.players.has(oldSocketId)) {
-    logger.info(`Reconnecting ${playerName} to game ${gameCode} (${oldSocketId} -> ${newSocketId})`);
-    
+    logger.info(
+      `Reconnecting ${playerName} to game ${gameCode} (${oldSocketId} -> ${newSocketId})`
+    );
+
     // Transfer player to the new socket ID using the GameRoom method
     const transferred = game.transferPlayerId(oldSocketId, newSocketId);
-    
+
     if (!transferred) {
       logger.error(`Failed to transfer player data for ${playerName}`);
       return false;
     }
-    
+
     // Return the reconnection data
     return {
       game,
@@ -238,10 +253,12 @@ function processReconnection(gameCode, playerName, newSocketId) {
       turn: game.round,
       level: game.level,
       started: game.started,
-      host: game.hostId
+      host: game.hostId,
     };
   } else {
-    logger.warn(`Player ${playerName} not found in game with old socket ID: ${oldSocketId}`);
+    logger.warn(
+      `Player ${playerName} not found in game with old socket ID: ${oldSocketId}`
+    );
     return false;
   }
 }
@@ -257,5 +274,5 @@ module.exports = {
   processGameRound,
   checkGameWinConditions,
   canPlayerJoinGame,
-  processReconnection
-  };
+  processReconnection,
+};

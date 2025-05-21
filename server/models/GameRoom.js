@@ -33,9 +33,9 @@ class GameRoom {
       hp: config.gameBalance.monster.baseHp,
       maxHp: config.gameBalance.monster.baseHp,
       baseDmg: config.gameBalance.monster.baseDamage,
-      age: config.gameBalance.monster.baseAge
+      age: config.gameBalance.monster.baseAge,
     };
-    
+
     // Initialize systems using SystemsFactory
     this.systems = SystemsFactory.createSystems(this.players, this.monster);
   }
@@ -48,11 +48,11 @@ class GameRoom {
    */
   addPlayer(id, name) {
     if (this.started || this.players.size >= config.maxPlayers) return false;
-    
+
     const p = new Player(id, name);
     this.players.set(id, p);
     this.aliveCount++;
-    
+
     if (!this.hostId) this.hostId = id;
     return true;
   }
@@ -64,7 +64,7 @@ class GameRoom {
   removePlayer(id) {
     const p = this.players.get(id);
     if (!p) return;
-    
+
     if (p.isAlive) this.aliveCount--;
     if (p.isWarlock) this.systems.warlockSystem.decrementWarlockCount();
     this.players.delete(id);
@@ -87,19 +87,19 @@ class GameRoom {
   setPlayerClass(id, race, cls) {
     const p = this.players.get(id);
     if (!p) return;
-    
+
     p.race = race;
     p.class = cls;
-    
+
     // Apply abilities list from class definition using config
-    p.abilities = (config.classAbilities[cls] || []).map(a => ({...a}));
-    p.unlocked = p.abilities.filter(a => a.unlockAt <= this.level);
-    
+    p.abilities = (config.classAbilities[cls] || []).map((a) => ({ ...a }));
+    p.unlocked = p.abilities.filter((a) => a.unlockAt <= this.level);
+
     // Apply racial and class stat modifications from gameBalance config
-    const stats = config.gameBalance.calculateStats ? 
-      config.gameBalance.calculateStats(race, cls) : 
-      null;
-      
+    const stats = config.gameBalance.calculateStats
+      ? config.gameBalance.calculateStats(race, cls)
+      : null;
+
     if (stats) {
       p.maxHp = stats.maxHp;
       p.armor = stats.armor;
@@ -109,11 +109,13 @@ class GameRoom {
       p.maxHp = 80;
       p.armor = 0;
       p.damageMod = 1.0;
-      logger.warn(`Invalid race/class combination: ${race}/${cls} for player ${p.name}`);
+      logger.warn(
+        `Invalid race/class combination: ${race}/${cls} for player ${p.name}`
+      );
     }
-    
+
     p.hp = p.maxHp; // Set current HP to max HP
-    
+
     // Assign racial ability from config
     const racialAbility = config.racialAbilities[race];
     if (racialAbility) {
@@ -121,20 +123,25 @@ class GameRoom {
 
       // Special setup for Stone Armor (Dwarf)
       if (race === 'Dwarf') {
-        logger.debug(`Dwarf ${p.name} starts with Stone Armor: ${p.stoneArmorValue} armor`);
+        logger.debug(
+          `Dwarf ${p.name} starts with Stone Armor: ${p.stoneArmorValue} armor`
+        );
         logger.debug(`Total effective armor: ${p.getEffectiveArmor()}`);
       }
-      
+
       // Double-check Undying for Skeletons - ensure it's properly set up
       if (race === 'Skeleton') {
-        logger.debug(`Skeleton racial ability set for ${p.name}:`, p.racialEffects);
-        
+        logger.debug(
+          `Skeleton racial ability set for ${p.name}:`,
+          p.racialEffects
+        );
+
         // If not set correctly, set it manually
         if (!p.racialEffects || !p.racialEffects.resurrect) {
           logger.debug(`Manually setting up Undying for ${p.name}`);
           p.racialEffects = p.racialEffects || {};
           p.racialEffects.resurrect = {
-            resurrectedHp: racialAbility.params.resurrectedHp || 1
+            resurrectedHp: racialAbility.params.resurrectedHp || 1,
           };
           logger.debug(`Undying now set:`, p.racialEffects);
         }
@@ -161,55 +168,62 @@ class GameRoom {
   addAction(actorId, actionType, targetId, options = {}) {
     if (!this.started) return false;
     const actor = this.players.get(actorId);
-    
+
     // Basic validation
-    if (!actor || !actor.isAlive || this.systems.statusEffectManager.isPlayerStunned(actorId)) return false;
-    if (this.pendingActions.some(a => a.actorId === actorId)) return false; // Already acted
-    
+    if (
+      !actor ||
+      !actor.isAlive ||
+      this.systems.statusEffectManager.isPlayerStunned(actorId)
+    )
+      return false;
+    if (this.pendingActions.some((a) => a.actorId === actorId)) return false; // Already acted
+
     // Find the ability being used
-    const ability = actor.unlocked.find(a => a.type === actionType);
+    const ability = actor.unlocked.find((a) => a.type === actionType);
     if (!ability) return false; // Ability not found or not unlocked
-    
+
     // Check if ability is on cooldown
     if (actor.isAbilityOnCooldown(actionType)) {
-      logger.debug(`Player ${actor.name} tried to use ${actionType} but it's on cooldown for ${actor.getAbilityCooldown(actionType)} more turns`);
+      logger.debug(
+        `Player ${actor.name} tried to use ${actionType} but it's on cooldown for ${actor.getAbilityCooldown(actionType)} more turns`
+      );
       return false; // Ability is on cooldown
     }
-    
+
     // Check if our registry knows this ability type
     if (!this.systems.abilityRegistry.hasClassAbility(actionType)) {
       logger.warn(`Unknown ability type: ${actionType}`);
       return false;
     }
-    
+
     // Handle invisibility redirection for player targets
     let finalTargetId = targetId;
     if (targetId !== '__monster__' && targetId !== actorId) {
       const targetPlayer = this.players.get(targetId);
       if (targetPlayer && targetPlayer.hasStatusEffect('invisible')) {
-        finalTargetId = this.systems.gameStateUtils.getRandomTarget(actorId, { 
-          excludeIds: [targetId], 
-          includeMonster: true, 
-          monsterRef: this.systems.monsterController.getState() 
+        finalTargetId = this.systems.gameStateUtils.getRandomTarget(actorId, {
+          excludeIds: [targetId],
+          includeMonster: true,
+          monsterRef: this.systems.monsterController.getState(),
         });
-        
+
         if (!finalTargetId) return false; // No valid redirect target
       }
     }
-    
+
     // Put ability on cooldown
     if (ability.cooldown > 0) {
       actor.putAbilityOnCooldown(actionType, ability.cooldown);
     }
-    
+
     // Add the action to pending actions
-    this.pendingActions.push({ 
-      actorId, 
-      actionType, 
-      targetId: finalTargetId, 
-      options 
+    this.pendingActions.push({
+      actorId,
+      actionType,
+      targetId: finalTargetId,
+      options,
     });
-    
+
     return true;
   }
 
@@ -221,36 +235,43 @@ class GameRoom {
    */
   addRacialAction(actorId, targetId) {
     if (!this.started) return false;
-    
+
     const actor = this.players.get(actorId);
     if (!actor || !actor.isAlive || !actor.canUseRacialAbility()) return false;
-    if (this.pendingRacialActions.some(a => a.actorId === actorId)) return false; // Already used racial this round
-    
+    if (this.pendingRacialActions.some((a) => a.actorId === actorId))
+      return false; // Already used racial this round
+
     // Check if our registry knows this racial ability type
-    if (!actor.racialAbility || !this.systems.abilityRegistry.hasRacialAbility(actor.racialAbility.type)) {
+    if (
+      !actor.racialAbility ||
+      !this.systems.abilityRegistry.hasRacialAbility(actor.racialAbility.type)
+    ) {
       logger.warn(`Unknown racial ability type: ${actor.racialAbility?.type}`);
       return false;
     }
-    
+
     let finalTargetId = targetId;
     if (targetId !== '__monster__' && targetId !== actorId) {
       const targetPlayer = this.players.get(targetId);
       if (!targetPlayer || !targetPlayer.isAlive) return false; // Invalid player target
-      if (targetPlayer.hasStatusEffect && targetPlayer.hasStatusEffect('invisible')) {
-        finalTargetId = this.systems.gameStateUtils.getRandomTarget(actorId, { 
-          excludeIds: [targetId], 
-          onlyPlayers: true 
+      if (
+        targetPlayer.hasStatusEffect &&
+        targetPlayer.hasStatusEffect('invisible')
+      ) {
+        finalTargetId = this.systems.gameStateUtils.getRandomTarget(actorId, {
+          excludeIds: [targetId],
+          onlyPlayers: true,
         });
         if (!finalTargetId) return false; // No valid redirect
       }
     }
-    
+
     this.pendingRacialActions.push({
       actorId,
       targetId: finalTargetId,
-      racialType: actor.racialAbility.type
+      racialType: actor.racialAbility.type,
     });
-    
+
     actor.useRacialAbility(); // Mark as used on the player object
     return true;
   }
@@ -262,13 +283,15 @@ class GameRoom {
   updateUnlockedAbilities() {
     for (const player of this.players.values()) {
       if (!player.abilities || !player.abilities.length) continue;
-      
+
       // Check all abilities to see if they should be unlocked at the current level
       const newlyUnlocked = [];
-      
+
       for (const ability of player.abilities) {
-        const alreadyUnlocked = player.unlocked.some(a => a.type === ability.type);
-        
+        const alreadyUnlocked = player.unlocked.some(
+          (a) => a.type === ability.type
+        );
+
         if (ability.unlockAt <= this.level && !alreadyUnlocked) {
           // Create a copy to avoid reference issues
           const abilityCopy = { ...ability };
@@ -276,9 +299,11 @@ class GameRoom {
           newlyUnlocked.push(ability.name);
         }
       }
-      
+
       if (newlyUnlocked.length > 0) {
-        logger.info(`Player ${player.name} unlocked abilities: ${newlyUnlocked.join(', ')}`);
+        logger.info(
+          `Player ${player.name} unlocked abilities: ${newlyUnlocked.join(', ')}`
+        );
       }
     }
   }
@@ -297,9 +322,9 @@ class GameRoom {
    */
   allActionsSubmitted() {
     // Only count players who aren't stunned
-    const activePlayerCount = this.getAlivePlayers()
-      .filter(p => !this.systems.statusEffectManager.isPlayerStunned(p.id))
-      .length;
+    const activePlayerCount = this.getAlivePlayers().filter(
+      (p) => !this.systems.statusEffectManager.isPlayerStunned(p.id)
+    ).length;
     return this.pendingActions.length >= activePlayerCount;
   }
 
@@ -309,7 +334,7 @@ class GameRoom {
    */
   processRound() {
     const log = [];
-    
+
     // Reset per-round racial ability uses and process cooldowns for all players
     for (let player of this.players.values()) {
       player.resetRacialPerRoundUses();
@@ -331,15 +356,15 @@ class GameRoom {
 
     // Status effects tick-down
     this.systems.statusEffectManager.processTimedEffects(log);
-    
+
     // Re-check for pending deaths after poison/timed effects
     for (const player of this.players.values()) {
       if (player.isAlive && player.hp <= 0) {
         player.pendingDeath = true;
-        player.deathAttacker = "Effects";
+        player.deathAttacker = 'Effects';
       }
     }
-    
+
     // Process racial effects
     this.systems.racialAbilitySystem.processEndOfRoundEffects(log);
 
@@ -348,23 +373,27 @@ class GameRoom {
 
     // Monster death & level-up
     const oldLevel = this.level;
-    const monsterDeathResult = this.systems.monsterController.handleDeathAndRespawn(this.level, log);
+    const monsterDeathResult =
+      this.systems.monsterController.handleDeathAndRespawn(this.level, log);
     this.level = monsterDeathResult.newLevel;
-    
+
     // Handle level-up
     if (this.level > oldLevel) {
       logger.info(`Game level up: ${oldLevel} -> ${this.level}`);
-      
+
       // Use config for level up message
       const levelUpLog = {
         type: 'level_up',
         public: true,
         message: config.messages.getEvent('levelUp', { level: this.level }),
-        privateMessage: config.messages.success.newAbilitiesUnlocked.replace('{level}', this.level),
-        attackerMessage: null
+        privateMessage: config.messages.success.newAbilitiesUnlocked.replace(
+          '{level}',
+          this.level
+        ),
+        attackerMessage: null,
       };
       log.push(levelUpLog);
-      
+
       this.updateUnlockedAbilities();
 
       // Apply level up bonuses to all living players
@@ -373,15 +402,17 @@ class GameRoom {
           // Full heal
           const oldHp = player.hp;
           player.hp = player.maxHp;
-          
+
           // Apply HP increase from config
-          const hpIncrease = Math.floor(player.maxHp * config.gameBalance.player.levelUp.hpIncrease);
+          const hpIncrease = Math.floor(
+            player.maxHp * config.gameBalance.player.levelUp.hpIncrease
+          );
           player.maxHp += hpIncrease;
           player.hp = player.maxHp; // Set to new max after increase
-          
+
           // Apply damage increase from config
           player.damageMod *= config.gameBalance.player.levelUp.damageIncrease;
-          
+
           // Log individual improvements
           const improvementLog = {
             type: 'level_up_bonus',
@@ -390,14 +421,14 @@ class GameRoom {
             message: '',
             privateMessage: config.messages.getSuccess('bonusesApplied', {
               level: this.level,
-              hpIncrease: hpIncrease
+              hpIncrease: hpIncrease,
             }),
-            attackerMessage: null
+            attackerMessage: null,
           };
           log.push(improvementLog);
         }
       }
-        
+
       // Add individual ability unlock messages
       for (const player of this.players.values()) {
         if (player.isAlive) {
@@ -406,8 +437,12 @@ class GameRoom {
             public: false,
             targetId: player.id,
             message: '',
-            privateMessage: config.messages.success.newAbilitiesUnlocked.replace('{level}', this.level),
-            attackerMessage: null
+            privateMessage:
+              config.messages.success.newAbilitiesUnlocked.replace(
+                '{level}',
+                this.level
+              ),
+            attackerMessage: null,
           };
           log.push(abilityUnlockLog);
         }
@@ -430,7 +465,9 @@ class GameRoom {
     // LOG THE EVENTS FOR FRONTEND TEAM
     logger.debug('=== EVENTS LOG FOR FRONTEND ===');
     logger.debug(`Game: ${this.code}, Round: ${this.round}`);
-    logger.debug(JSON.stringify(processedLog.slice(0, 5), null, 2) + '... and more');
+    logger.debug(
+      JSON.stringify(processedLog.slice(0, 5), null, 2) + '... and more'
+    );
     logger.debug('=== END EVENTS LOG ===');
 
     return {
@@ -439,8 +476,9 @@ class GameRoom {
       monster: this.systems.monsterController.getState(),
       turn: this.round++,
       level: this.level,
-      levelUp: this.level > oldLevel ? { oldLevel, newLevel: this.level } : null,
-      winner
+      levelUp:
+        this.level > oldLevel ? { oldLevel, newLevel: this.level } : null,
+      winner,
     };
   }
 
@@ -453,15 +491,15 @@ class GameRoom {
   sortLogEntries(log) {
     const regularEntries = [];
     const endEntries = [];
-    
-    log.forEach(entry => {
+
+    log.forEach((entry) => {
       if (entry.moveToEnd || entry.type === 'corruption') {
         endEntries.push(entry);
       } else {
         regularEntries.push(entry);
       }
     });
-    
+
     return [...regularEntries, ...endEntries];
   }
 
@@ -472,7 +510,7 @@ class GameRoom {
    * @private
    */
   processLogForClients(log) {
-    return log.map(entry => {
+    return log.map((entry) => {
       // If it's already a string, keep it as is (legacy support)
       if (typeof entry === 'string') {
         return {
@@ -480,10 +518,10 @@ class GameRoom {
           public: true,
           message: entry,
           privateMessage: entry,
-          attackerMessage: entry
+          attackerMessage: entry,
         };
       }
-      
+
       // If it's an enhanced log object, ensure it has all required properties
       return {
         type: entry.type || 'basic',
@@ -494,7 +532,7 @@ class GameRoom {
         privateMessage: entry.privateMessage || entry.message || '',
         attackerMessage: entry.attackerMessage || entry.message || '',
         // Include any additional metadata
-        ...entry
+        ...entry,
       };
     });
   }
@@ -509,15 +547,20 @@ class GameRoom {
       if (!actor || !actor.isAlive) {
         continue;
       }
-      
-      const target = action.targetId === '__monster__' ? 
-        null : this.players.get(action.targetId);
-      
+
+      const target =
+        action.targetId === '__monster__'
+          ? null
+          : this.players.get(action.targetId);
+
       if (action.targetId !== '__monster__' && !target) {
         continue;
       }
-      
-      if (actor.racialAbility && actor.racialAbility.type === action.racialType) {
+
+      if (
+        actor.racialAbility &&
+        actor.racialAbility.type === action.racialType
+      ) {
         try {
           this.systems.abilityRegistry.executeRacialAbility(
             action.racialType,
@@ -527,11 +570,14 @@ class GameRoom {
             log
           );
         } catch (error) {
-          logger.error(`Error executing racial ability ${action.racialType}:`, error);
+          logger.error(
+            `Error executing racial ability ${action.racialType}:`,
+            error
+          );
         }
       }
     }
-    
+
     this.pendingRacialActions = [];
   }
 
@@ -544,57 +590,75 @@ class GameRoom {
     this.pendingActions.sort((a, b) => {
       const actor1 = this.players.get(a.actorId);
       const actor2 = this.players.get(b.actorId);
-      
+
       if (!actor1 || !actor2) return 0;
-      
-      const ability1 = actor1.unlocked.find(ability => ability.type === a.actionType);
-      const ability2 = actor2.unlocked.find(ability => ability.type === b.actionType);
-      
+
+      const ability1 = actor1.unlocked.find(
+        (ability) => ability.type === a.actionType
+      );
+      const ability2 = actor2.unlocked.find(
+        (ability) => ability.type === b.actionType
+      );
+
       if (!ability1 || !ability2) return 0;
-      
+
       // Use default order from config if order is undefined
       const defaultOrder = config.gameBalance.combat.defaultOrders.special;
-      const order1 = typeof ability1.order === 'number' ? ability1.order : defaultOrder;
-      const order2 = typeof ability2.order === 'number' ? ability2.order : defaultOrder;
-      
+      const order1 =
+        typeof ability1.order === 'number' ? ability1.order : defaultOrder;
+      const order2 =
+        typeof ability2.order === 'number' ? ability2.order : defaultOrder;
+
       return order1 - order2;
     });
-    
+
     // Process actions in the sorted order
     for (const action of this.pendingActions) {
       const actor = this.players.get(action.actorId);
-      if (!actor || !actor.isAlive || this.systems.statusEffectManager.isPlayerStunned(action.actorId)) {
-        if (actor && this.systems.statusEffectManager.isPlayerStunned(action.actorId)) {
+      if (
+        !actor ||
+        !actor.isAlive ||
+        this.systems.statusEffectManager.isPlayerStunned(action.actorId)
+      ) {
+        if (
+          actor &&
+          this.systems.statusEffectManager.isPlayerStunned(action.actorId)
+        ) {
           const stunnedLog = {
             type: 'stunned',
             public: false,
             targetId: actor.id,
             message: '',
             privateMessage: config.messages.private.youAreStunned,
-            attackerMessage: ''
+            attackerMessage: '',
           };
           log.push(stunnedLog);
         }
         continue;
       }
-      
-      const ability = actor.unlocked.find(a => a.type === action.actionType);
+
+      const ability = actor.unlocked.find((a) => a.type === action.actionType);
       if (!ability) continue;
-      
-      const target = action.targetId === '__monster__' ?
-        '__monster__' : this.players.get(action.targetId);
-      
+
+      const target =
+        action.targetId === '__monster__'
+          ? '__monster__'
+          : this.players.get(action.targetId);
+
       if (target !== '__monster__' && !target) {
-        logger.warn(`Invalid target ${action.targetId} for action by ${actor.name}`);
+        logger.warn(
+          `Invalid target ${action.targetId} for action by ${actor.name}`
+        );
         continue;
       }
-      
+
       // Check for invisibility right before executing the ability
-      if (target !== '__monster__' && 
-          ability.category === 'Attack' && 
-          target.hasStatusEffect && 
-          target.hasStatusEffect('invisible')) {
-        
+      if (
+        target !== '__monster__' &&
+        ability.category === 'Attack' &&
+        target.hasStatusEffect &&
+        target.hasStatusEffect('invisible')
+      ) {
         const invisibleLog = {
           type: 'attack_invisible',
           public: false,
@@ -603,13 +667,13 @@ class GameRoom {
           message: '',
           privateMessage: '',
           attackerMessage: config.messages.getEvent('attackInvisible', {
-            targetName: target.name
-          })
+            targetName: target.name,
+          }),
         };
         log.push(invisibleLog);
         continue;
       }
-      
+
       // Create action announcement log - this shows who used what on whom
       const actionLog = {
         type: 'action_announcement',
@@ -621,14 +685,14 @@ class GameRoom {
         message: config.messages.getEvent('playerAttacks', {
           playerName: actor.name,
           abilityName: ability.name,
-          targetName: target === '__monster__' ? 'the Monster' : target.name
+          targetName: target === '__monster__' ? 'the Monster' : target.name,
         }),
         // Private messages are empty since this is just an announcement
         privateMessage: '',
-        attackerMessage: ''
+        attackerMessage: '',
       };
       log.push(actionLog);
-      
+
       // Execute the ability (this will generate additional logs for damage, healing, etc.)
       this.systems.abilityRegistry.executeClassAbility(
         action.actionType,
@@ -638,7 +702,7 @@ class GameRoom {
         log
       );
     }
-    
+
     // Clear the pending actions queue
     this.pendingActions = [];
   }
@@ -648,7 +712,7 @@ class GameRoom {
    * @returns {Array} Array of player info objects
    */
   getPlayersInfo() {
-    return Array.from(this.players.values()).map(p => ({
+    return Array.from(this.players.values()).map((p) => ({
       id: p.id,
       name: p.name,
       race: p.race,
@@ -667,11 +731,13 @@ class GameRoom {
       level: this.level,
       statusEffects: p.statusEffects,
       abilityCooldowns: p.abilityCooldowns || {},
-      stoneArmor: p.stoneArmorIntact ? {
-        active: true,
-        value: p.stoneArmorValue,
-        effectiveArmor: p.getEffectiveArmor()
-      } : null
+      stoneArmor: p.stoneArmorIntact
+        ? {
+            active: true,
+            value: p.stoneArmorValue,
+            effectiveArmor: p.getEffectiveArmor(),
+          }
+        : null,
     }));
   }
 
@@ -686,26 +752,26 @@ class GameRoom {
     if (!this.players.has(oldId)) {
       return false;
     }
-    
+
     // Get the player
     const player = this.players.get(oldId);
-    
+
     // Remove from old ID
     this.players.delete(oldId);
-    
+
     // Update player's ID
     player.id = newId;
-    
+
     // Add to new ID
     this.players.set(newId, player);
-    
+
     // Update host if needed
     if (this.hostId === oldId) {
       this.hostId = newId;
     }
-    
+
     // Also check and update pending actions
-    this.pendingActions = this.pendingActions.map(action => {
+    this.pendingActions = this.pendingActions.map((action) => {
       if (action.actorId === oldId) {
         action.actorId = newId;
       }
@@ -714,9 +780,9 @@ class GameRoom {
       }
       return action;
     });
-    
+
     // Update pending racial actions
-    this.pendingRacialActions = this.pendingRacialActions.map(action => {
+    this.pendingRacialActions = this.pendingRacialActions.map((action) => {
       if (action.actorId === oldId) {
         action.actorId = newId;
       }
@@ -725,13 +791,13 @@ class GameRoom {
       }
       return action;
     });
-    
+
     // Update ready players set
     if (this.nextReady.has(oldId)) {
       this.nextReady.delete(oldId);
       this.nextReady.add(newId);
     }
-    
+
     return true;
   }
 }
