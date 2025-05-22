@@ -103,11 +103,12 @@ export const ICONS = {
     Rogue: '🗡️',
     Priest: '✨',
     Oracle: '🔮',
-    Seer: '👁️',
+    Barbarian: '🪓', // Added Barbarian with axe icon
     Shaman: '🌀',
     Gunslinger: '🔫',
     Tracker: '🏹',
     Druid: '🌿',
+    // Seer: '👁️', // Removed Seer
   },
 
   ABILITIES: {

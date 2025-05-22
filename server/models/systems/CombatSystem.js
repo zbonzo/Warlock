@@ -190,6 +190,7 @@ class CombatSystem {
     };
 
     log.push(logEvent);
+
     // Add Stone Armor degradation message if applicable
     if (armorDegradationInfo && armorDegradationInfo.degraded) {
       const armorLogEvent = {
@@ -221,6 +222,12 @@ class CombatSystem {
       log.push(armorLogEvent);
     }
 
+    // === NEW: Handle counter-attacks from Oracle abilities ===
+    if (attacker.id && finalDamage > 0) {
+      // Only for player attackers who dealt damage
+      this.handleCounterAttacks(target, attacker, log);
+    }
+
     // Handle Keen Senses racial ability for Elves
     if (isKeenSensesAttack) {
       this.handleKeenSensesAttack(target, attacker, log);
@@ -237,7 +244,124 @@ class CombatSystem {
 
     return true;
   }
+  /**
+   * Handle counter-attacks from Oracle abilities
+   * @param {Object} target - The player who was attacked
+   * @param {Object} attacker - The player who attacked
+   * @param {Array} log - Event log to append messages to
+   * @private
+   */
+  handleCounterAttacks(target, attacker, log) {
+    // Handle Spirit Guard counter-attack
+    if (
+      target.classEffects &&
+      target.classEffects.spiritGuard &&
+      target.classEffects.spiritGuard.turnsLeft > 0
+    ) {
+      const counterDamage = target.classEffects.spiritGuard.counterDamage || 15;
 
+      // Apply counter-damage to attacker
+      const oldAttackerHp = attacker.hp;
+      attacker.hp = Math.max(1, attacker.hp - counterDamage);
+      const actualCounterDamage = oldAttackerHp - attacker.hp;
+
+      if (actualCounterDamage > 0) {
+        log.push(
+          `${target.name}'s vengeful spirits strike back at ${attacker.name} for ${actualCounterDamage} damage!`
+        );
+
+        // Private message to attacker
+        const counterLog = {
+          type: 'spirit_counter',
+          public: false,
+          targetId: attacker.id,
+          message: '',
+          privateMessage: `${target.name}'s Spirit Guard strikes you for ${actualCounterDamage} damage!`,
+          attackerMessage: '',
+        };
+        log.push(counterLog);
+      }
+
+      // Reveal if attacker is a warlock
+      if (
+        target.classEffects.spiritGuard.revealsWarlocks &&
+        attacker.isWarlock
+      ) {
+        log.push(`The spirits reveal that ${attacker.name} IS a Warlock!`);
+
+        // Private message to Oracle
+        const revelationLog = {
+          type: 'spirit_revelation',
+          public: false,
+          targetId: target.id,
+          message: '',
+          privateMessage: `Your spirits reveal that ${attacker.name} is a Warlock!`,
+          attackerMessage: '',
+        };
+        log.push(revelationLog);
+      }
+    }
+
+    // Handle Sanctuary of Truth counter-attack
+    if (
+      target.classEffects &&
+      target.classEffects.sanctuaryOfTruth &&
+      target.classEffects.sanctuaryOfTruth.turnsLeft > 0
+    ) {
+      const counterDamage =
+        target.classEffects.sanctuaryOfTruth.counterDamage || 10;
+
+      // Auto-detect if attacker is a warlock
+      if (target.classEffects.sanctuaryOfTruth.autoDetect) {
+        if (attacker.isWarlock) {
+          // Apply counter-damage to warlock attacker
+          const oldAttackerHp = attacker.hp;
+          attacker.hp = Math.max(1, attacker.hp - counterDamage);
+          const actualCounterDamage = oldAttackerHp - attacker.hp;
+
+          log.push(
+            `${target.name}'s Sanctuary reveals and punishes the Warlock ${attacker.name} for ${actualCounterDamage} damage!`
+          );
+
+          // Private messages
+          const sanctuaryCounterLog = {
+            type: 'sanctuary_counter',
+            public: false,
+            targetId: attacker.id,
+            message: '',
+            privateMessage: `${target.name}'s Sanctuary detects your corruption and punishes you for ${actualCounterDamage} damage!`,
+            attackerMessage: '',
+          };
+          log.push(sanctuaryCounterLog);
+
+          const sanctuaryRevelationLog = {
+            type: 'sanctuary_revelation',
+            public: false,
+            targetId: target.id,
+            message: '',
+            privateMessage: `Your Sanctuary detects that ${attacker.name} is a Warlock and punishes them!`,
+            attackerMessage: '',
+          };
+          log.push(sanctuaryRevelationLog);
+        } else {
+          log.push(
+            `${target.name}'s Sanctuary detects that ${attacker.name} is NOT a Warlock.`
+          );
+
+          // Private message to Oracle
+          const sanctuaryNoWarlockLog = {
+            type: 'sanctuary_no_warlock',
+            public: false,
+            targetId: target.id,
+            message: '',
+            privateMessage: `Your Sanctuary confirms that ${attacker.name} is not a Warlock.`,
+            attackerMessage: '',
+          };
+          log.push(sanctuaryNoWarlockLog);
+        }
+      }
+    }
+  }
   /**
    * Check for immunity effects that prevent damage
    * @param {Object} target - Target player

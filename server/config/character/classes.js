@@ -15,11 +15,12 @@ const availableClasses = [
   'Rogue',
   'Priest',
   'Oracle',
-  'Seer',
+  'Barbarian', // New class added
   'Shaman',
   'Gunslinger',
   'Tracker',
   'Druid',
+  // 'Seer', // Removed from active classes but kept in abilities for reference
 ];
 
 /**
@@ -27,16 +28,8 @@ const availableClasses = [
  * @type {Object}
  */
 const classCategories = {
-  Melee: ['Warrior', 'Assassin', 'Rogue'],
-  Caster: [
-    'Pyromancer',
-    'Wizard',
-    'Priest',
-    'Oracle',
-    'Seer',
-    'Shaman',
-    'Druid',
-  ],
+  Melee: ['Warrior', 'Assassin', 'Rogue', 'Barbarian'], // Added Barbarian to Melee
+  Caster: ['Pyromancer', 'Wizard', 'Priest', 'Oracle', 'Shaman', 'Druid'], // Removed Seer
   Ranged: ['Gunslinger', 'Tracker'],
 };
 
@@ -88,14 +81,21 @@ const classAttributes = {
     hpModifier: 0.9, // Less HP
     armorModifier: 0.5, // Some divine protection
     damageModifier: 0.9, // Low damage
-    description: 'Divination-focused class that can reveal warlocks.',
+    description:
+      'Divination-focused class that can reveal warlocks and manipulate fate.',
   },
-  Seer: {
-    hpModifier: 0.9, // Less HP
+  Barbarian: {
+    hpModifier: 1.3, // High HP
     armorModifier: 0.0, // No armor bonus
-    damageModifier: 1.0, // Standard damage
-    description: 'Psychic class with detection abilities.',
+    damageModifier: 1.3, // High damage
+    description: 'Savage warrior who trades safety for overwhelming offense.',
   },
+  // Seer: { // Kept for reference
+  //   hpModifier: 0.9, // Less HP
+  //   armorModifier: 0.0, // No armor bonus
+  //   damageModifier: 1.0, // Standard damage
+  //   description: 'Psychic class with detection abilities.',
+  // },
   Shaman: {
     hpModifier: 1.0, // Standard HP
     armorModifier: 0.5, // Some spiritual protection
@@ -462,60 +462,6 @@ const classAbilities = {
   ],
   Oracle: [
     {
-      type: 'holyBolt',
-      name: 'Holy Bolt',
-      category: 'Attack',
-      effect: null,
-      target: 'Single',
-      params: { damage: 25 },
-      unlockAt: 1,
-      order: 1041,
-      cooldown: 0,
-      flavorText:
-        'A focused strike of sacred energy, guided by prescient sight.',
-    },
-    {
-      type: 'foresight',
-      name: 'Foresight Shield',
-      category: 'Defense',
-      effect: 'protected',
-      target: 'Self',
-      params: { armor: 3, duration: 1 },
-      unlockAt: 4,
-      order: 16,
-      cooldown: 0,
-      flavorText:
-        "Anticipate the enemy's move, forming a barrier just in time.",
-    },
-    {
-      type: 'divineBalm',
-      name: 'Divine Balm',
-      category: 'Heal',
-      effect: null,
-      target: 'Single',
-      params: { amount: 25 },
-      unlockAt: 3,
-      order: 10060,
-      cooldown: 2,
-      flavorText:
-        'A soothing touch, infused with divine power to ease suffering.',
-    },
-    {
-      type: 'fatesEye',
-      name: 'Eye of Fate',
-      category: 'Special',
-      effect: 'detect',
-      target: 'Single',
-      params: {},
-      unlockAt: 2,
-      order: 100,
-      cooldown: 4,
-      flavorText:
-        'Peer through the veil of deception, revealing that which is hidden.',
-    },
-  ],
-  Seer: [
-    {
       type: 'psychicBolt',
       name: 'Psychic Bolt',
       category: 'Attack',
@@ -528,42 +474,153 @@ const classAbilities = {
       flavorText: 'Assault the mind with a focused blast of pure mental force.',
     },
     {
+      type: 'fatesEye',
+      name: 'Eye of Fate',
+      category: 'Special',
+      effect: 'detect',
+      target: 'Single',
+      params: { selfDamageOnFailure: 10 },
+      unlockAt: 2,
+      order: 100,
+      cooldown: 3,
+      flavorText:
+        'Peer through the veil of deception, but the truth comes at a cost.',
+    },
+    {
       type: 'spiritGuard',
       name: 'Spirit Guard',
       category: 'Defense',
       effect: 'protected',
       target: 'Self',
-      params: { armor: 3, duration: 1 },
+      params: { armor: 2, counterDamage: 15, duration: 1 },
       unlockAt: 3,
       order: 17,
-      cooldown: 0,
-      flavorText: 'Summon protective spirits to ward off incoming attacks.',
+      cooldown: 3,
+      flavorText:
+        'Summon vengeful spirits that punish those who dare attack you.',
     },
     {
-      type: 'spiritMend',
-      name: 'Spirit Mend',
+      type: 'sanctuaryOfTruth',
+      name: 'Sanctuary of Truth',
       category: 'Heal',
-      effect: null,
+      effect: 'detect',
       target: 'Self',
-      params: { amount: 20 },
+      params: { amount: 20, counterDamage: 10, autoDetect: true },
       unlockAt: 4,
       order: 10070,
-      cooldown: 2,
-      flavorText: 'Channel soothing spiritual energy to repair your own form.',
-    },
-    {
-      type: 'revealSecret',
-      name: 'Reveal Secret',
-      category: 'Special',
-      effect: 'detect',
-      target: 'Single',
-      params: {},
-      unlockAt: 2,
-      order: 101,
-      cooldown: 4,
-      flavorText: "Uncover hidden truths and expose the enemy's deceptions.",
+      cooldown: 3,
+      flavorText:
+        'Create a sacred space that heals you and exposes attackers as warlocks.',
     },
   ],
+  Barbarian: [
+    {
+      type: 'recklessStrike',
+      name: 'Reckless Strike',
+      category: 'Attack',
+      effect: null,
+      target: 'Single',
+      params: { damage: 40, selfDamage: 5 },
+      unlockAt: 1,
+      order: 1000,
+      cooldown: 0,
+      flavorText:
+        'Strike with reckless abandon, trading safety for overwhelming power.',
+    },
+    {
+      type: 'primalRoar',
+      name: 'Primal Roar',
+      category: 'Special',
+      effect: 'weakened',
+      target: 'Single',
+      params: { damageReduction: 0.25, duration: 1 },
+      unlockAt: 2,
+      order: 120,
+      cooldown: 0,
+      flavorText:
+        "Let out a terrifying roar that weakens your enemy's resolve.",
+    },
+    {
+      type: 'bloodFrenzy',
+      name: 'Blood Frenzy',
+      category: 'Special',
+      effect: 'passive',
+      target: 'Self',
+      params: { damageIncreasePerHpMissing: 0.01 },
+      unlockAt: 3,
+      order: 5,
+      cooldown: 0,
+      flavorText: 'The closer to death you get, the more dangerous you become.',
+    },
+    {
+      type: 'unstoppableRage',
+      name: 'Unstoppable Rage',
+      category: 'Special',
+      effect: 'enraged',
+      target: 'Self',
+      params: {
+        damageBoost: 1.5,
+        damageResistance: 0.3,
+        duration: 2,
+        effectEnds: { selfDamagePercent: 0.25 },
+      },
+      unlockAt: 4,
+      order: 8,
+      cooldown: 4,
+      flavorText:
+        'Enter an unstoppable rage that makes you incredibly dangerous, but at a terrible cost.',
+    },
+  ],
+  // Seer: [ // Kept for reference - can be uncommented to re-add to the game
+  //   {
+  //     type: 'psychicBolt',
+  //     name: 'Psychic Bolt',
+  //     category: 'Attack',
+  //     effect: null,
+  //     target: 'Single',
+  //     params: { damage: 28 },
+  //     unlockAt: 1,
+  //     order: 1050,
+  //     cooldown: 0,
+  //     flavorText: 'Assault the mind with a focused blast of pure mental force.',
+  //   },
+  //   {
+  //     type: 'spiritGuard',
+  //     name: 'Spirit Guard',
+  //     category: 'Defense',
+  //     effect: 'protected',
+  //     target: 'Self',
+  //     params: { armor: 3, duration: 1 },
+  //     unlockAt: 3,
+  //     order: 17,
+  //     cooldown: 0,
+  //     flavorText: 'Summon protective spirits to ward off incoming attacks.',
+  //   },
+  //   {
+  //     type: 'spiritMend',
+  //     name: 'Spirit Mend',
+  //     category: 'Heal',
+  //     effect: null,
+  //     target: 'Self',
+  //     params: { amount: 20 },
+  //     unlockAt: 4,
+  //     order: 10070,
+  //     cooldown: 2,
+  //     flavorText: 'Channel soothing spiritual energy to repair your own form.',
+  //   },
+  //   {
+  //     type: 'revealSecret',
+  //     name: 'Reveal Secret',
+  //     category: 'Special',
+  //     effect: 'detect',
+  //     target: 'Single',
+  //     params: {},
+  //     unlockAt: 2,
+  //     order: 101,
+  //     cooldown: 4,
+  //     flavorText: "Uncover hidden truths and expose the enemy's deceptions.",
+  //   },
+  // ],
   Shaman: [
     {
       type: 'lightningBolt',

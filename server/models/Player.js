@@ -67,23 +67,6 @@ class Player {
   }
 
   /**
-   * Apply vulnerability status
-   * @param {number} damageIncrease - Percentage to increase damage by
-   * @param {number} turns - Duration in turns
-   */
-  applyVulnerability(damageIncrease, turns) {
-    // Set direct vulnerability state
-    this.isVulnerable = true;
-    this.vulnerabilityIncrease = damageIncrease;
-
-    // Also store in status effects for consistent API
-    this.statusEffects.vulnerable = {
-      damageIncrease,
-      turns,
-    };
-  }
-
-  /**
    * Process vulnerability at end of turn
    * @returns {boolean} Whether vulnerability expired
    */
@@ -106,6 +89,24 @@ class Player {
     }
 
     return expired;
+  }
+
+  /**
+   * Apply vulnerability status
+   * @param {number} damageIncrease - Percentage to increase damage by
+   * @param {number} turns - Duration in turns
+   */
+  applyVulnerability(damageIncrease, turns) {
+    // Set direct vulnerability state
+    this.isVulnerable = true;
+    this.vulnerabilityIncrease = damageIncrease;
+
+    // Also store in status effects for consistent API
+    // Note: turns already has +1 added by applyEffect, so use as-is
+    this.statusEffects.vulnerable = {
+      damageIncrease,
+      turns,
+    };
   }
 
   /**
@@ -140,13 +141,14 @@ class Player {
   }
 
   /**
-   * Put an ability on cooldown
+   * Put an ability on cooldown - FIXED timing
    * @param {string} abilityType - Type of ability
    * @param {number} cooldownTurns - Number of turns for cooldown
    */
   putAbilityOnCooldown(abilityType, cooldownTurns) {
     if (cooldownTurns > 0) {
-      this.abilityCooldowns[abilityType] = cooldownTurns;
+      // Add 1 to the cooldown to account for the immediate countdown at end of turn
+      this.abilityCooldowns[abilityType] = cooldownTurns + 1;
     }
   }
 
@@ -277,6 +279,44 @@ class Player {
       delete this.racialEffects.bloodRage;
     }
 
+    // Apply Blood Frenzy passive effect (Barbarian class ability)
+    if (
+      this.classEffects &&
+      this.classEffects.bloodFrenzy &&
+      this.classEffects.bloodFrenzy.active
+    ) {
+      const hpPercent = this.hp / this.maxHp;
+      const missingHpPercent = 1 - hpPercent;
+      const damageIncreaseRate =
+        this.classEffects.bloodFrenzy.damageIncreasePerHpMissing || 0.01;
+      const damageIncrease = missingHpPercent * damageIncreaseRate;
+      modifiedDamage = Math.floor(modifiedDamage * (1 + damageIncrease));
+
+      // Debug log for testing
+      if (missingHpPercent > 0) {
+        console.log(
+          `Blood Frenzy: ${this.name} missing ${Math.round(missingHpPercent * 100)}% HP, damage increased by ${Math.round(damageIncrease * 100)}%`
+        );
+      }
+    }
+
+    // Apply Unstoppable Rage effect if active (Barbarian class ability)
+    if (
+      this.classEffects &&
+      this.classEffects.unstoppableRage &&
+      this.classEffects.unstoppableRage.turnsLeft > 0
+    ) {
+      const damageBoost = this.classEffects.unstoppableRage.damageBoost || 1.5;
+      modifiedDamage = Math.floor(modifiedDamage * damageBoost);
+    }
+
+    // Apply weakened effect if active (reduces outgoing damage)
+    if (this.statusEffects && this.statusEffects.weakened) {
+      const damageReduction =
+        this.statusEffects.weakened.damageReduction || 0.25;
+      modifiedDamage = Math.floor(modifiedDamage * (1 - damageReduction));
+    }
+
     return modifiedDamage;
   }
 
@@ -311,16 +351,16 @@ class Player {
     // Decrement uses left
     this.racialUsesLeft--;
 
-    // Apply cooldown if present
+    // Apply cooldown if present - ADD 1 to account for immediate countdown
     if (this.racialAbility.cooldown > 0) {
-      this.racialCooldown = this.racialAbility.cooldown;
+      this.racialCooldown = this.racialAbility.cooldown + 1;
     }
 
     return true;
   }
 
   /**
-   * Process racial ability cooldowns at end of round
+   * Process racial ability cooldowns at end of round - FIXED timing
    * @returns {Object|null} Effect results if any
    */
   processRacialCooldowns() {
@@ -343,7 +383,6 @@ class Player {
 
     return null;
   }
-
   /**
    * Set racial ability for player
    * @param {Object} abilityData - Racial ability definition
@@ -360,7 +399,7 @@ class Player {
       this.racialUsesLeft = 0; // Passive abilities don't have uses
     }
 
-    this.racialCooldown = 0;
+    this.racialCooldown = 0; // Start with no cooldown
 
     // Special handling for different racial abilities
     if (abilityData.type === 'undying') {
@@ -392,10 +431,8 @@ class Player {
   }
 
   /**
-   * Take damage, applying vulnerability and armor
-   * @param {number} amount - Amount of damage
-   * @param {Object} source - Source of the damage
-   * @returns {number} Actual damage taken
+   * Updated takeDamage method to handle Unstoppable Rage damage resistance
+   * Add this to replace the existing takeDamage method in Player.js
    */
   takeDamage(amount, source) {
     // Start with the original damage
@@ -405,6 +442,17 @@ class Player {
     if (this.isVulnerable && this.vulnerabilityIncrease > 0) {
       const vulnerabilityMultiplier = 1 + this.vulnerabilityIncrease / 100;
       modifiedDamage = Math.floor(modifiedDamage * vulnerabilityMultiplier);
+    }
+
+    // Apply Unstoppable Rage damage resistance if active
+    if (
+      this.classEffects &&
+      this.classEffects.unstoppableRage &&
+      this.classEffects.unstoppableRage.turnsLeft > 0
+    ) {
+      const damageResistance =
+        this.classEffects.unstoppableRage.damageResistance || 0.3;
+      modifiedDamage = Math.floor(modifiedDamage * (1 - damageResistance));
     }
 
     // Apply armor reduction
@@ -451,6 +499,66 @@ class Player {
     const beforeHp = this.hp;
     this.hp = Math.min(this.maxHp, this.hp + amount);
     return this.hp - beforeHp;
+  }
+
+  /**
+   * Process class effects at end of round
+   * Add this new method to Player.js
+   */
+  processClassEffects() {
+    if (!this.classEffects) return;
+
+    // Process Unstoppable Rage
+    if (this.classEffects.unstoppableRage) {
+      this.classEffects.unstoppableRage.turnsLeft--;
+
+      if (this.classEffects.unstoppableRage.turnsLeft <= 0) {
+        // Rage is ending, apply self-damage
+        const selfDamagePercent =
+          this.classEffects.unstoppableRage.selfDamagePercent || 0.25;
+        const selfDamage = Math.floor(this.maxHp * selfDamagePercent);
+        const oldHp = this.hp;
+        this.hp = Math.max(1, this.hp - selfDamage);
+        const actualDamage = oldHp - this.hp;
+
+        // Clear the effect
+        delete this.classEffects.unstoppableRage;
+
+        return {
+          type: 'rage_ended',
+          damage: actualDamage,
+          message: `${this.name}'s Unstoppable Rage ends, causing ${actualDamage} exhaustion damage!`,
+        };
+      }
+    }
+
+    // Process Spirit Guard
+    if (this.classEffects.spiritGuard) {
+      this.classEffects.spiritGuard.turnsLeft--;
+
+      if (this.classEffects.spiritGuard.turnsLeft <= 0) {
+        delete this.classEffects.spiritGuard;
+        return {
+          type: 'spirit_guard_ended',
+          message: `${this.name}'s Spirit Guard fades away.`,
+        };
+      }
+    }
+
+    // Process Sanctuary of Truth
+    if (this.classEffects.sanctuaryOfTruth) {
+      this.classEffects.sanctuaryOfTruth.turnsLeft--;
+
+      if (this.classEffects.sanctuaryOfTruth.turnsLeft <= 0) {
+        delete this.classEffects.sanctuaryOfTruth;
+        return {
+          type: 'sanctuary_ended',
+          message: `${this.name}'s Sanctuary of Truth fades away.`,
+        };
+      }
+    }
+
+    return null;
   }
 }
 

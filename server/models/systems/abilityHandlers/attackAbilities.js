@@ -74,6 +74,7 @@ function register(registry) {
   );
   // Add explicit handler for Arcane Barrage
   registry.registerClassAbility('arcaneBarrage', handleMultiHitAttack);
+  registry.registerClassAbility('recklessStrike', handleRecklessStrike);
 
   // Register all vulnerable effect abilities
   registerAbilitiesByEffectAndTarget(
@@ -459,6 +460,78 @@ function handlePoisonTrap(actor, target, ability, log, systems) {
 
   if (targetsHit === 0) {
     log.push(`${actor.name}'s ${ability.name} doesn't catch anyone!`);
+  }
+
+  return true;
+}
+
+/**
+ * Handler for Reckless Strike ability (Barbarian) - FIXED
+ * @param {Object} actor - Actor using the ability
+ * @param {Object|string} target - Target of the ability
+ * @param {Object} ability - Ability configuration
+ * @param {Array} log - Event log to append messages to
+ * @param {Object} systems - Game systems
+ * @returns {boolean} Whether the ability was successful
+ */
+function handleRecklessStrike(actor, target, ability, log, systems) {
+  // Check if target is invisible first
+  if (
+    target !== '__monster__' &&
+    target.hasStatusEffect &&
+    target.hasStatusEffect('invisible')
+  ) {
+    const attackFailMessage = `${actor.name} tries to attack ${target.name}, but they are invisible and cannot be seen!`;
+    log.push(attackFailMessage);
+    return false;
+  }
+
+  // Apply self-damage BEFORE the attack (to show the commitment)
+  const selfDamage = ability.params.selfDamage || 5;
+  const oldHp = actor.hp;
+  actor.hp = Math.max(1, actor.hp - selfDamage); // Cannot reduce below 1 HP
+  const actualSelfDamage = oldHp - actor.hp;
+
+  if (actualSelfDamage > 0) {
+    log.push(
+      `${actor.name} commits to a reckless strike, taking ${actualSelfDamage} damage!`
+    );
+  }
+
+  // Now perform the attack
+  if (target === '__monster__') {
+    const rawDamage = Number(ability.params.damage) || 0;
+    const modifiedDamage = actor.modifyDamage(rawDamage);
+    systems.monsterController.takeDamage(modifiedDamage, actor, log);
+
+    // Warlocks generate "threat" attacking monster
+    if (actor.isWarlock) {
+      const randomConversionModifier = 0.5;
+      systems.warlockSystem.attemptConversion(
+        actor,
+        null,
+        log,
+        randomConversionModifier
+      );
+    }
+  } else {
+    // Player target
+    if (!target || !target.isAlive) return false;
+
+    const rawDamage = Number(ability.params.damage) || 0;
+    const modifiedDamage = actor.modifyDamage(rawDamage);
+
+    systems.combatSystem.applyDamageToPlayer(
+      target,
+      modifiedDamage,
+      actor,
+      log
+    );
+
+    // Warlocks may attempt to convert on attack
+    if (actor.isWarlock) {
+      systems.warlockSystem.attemptConversion(actor, target, log);
+    }
   }
 
   return true;

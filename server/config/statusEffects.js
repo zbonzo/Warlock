@@ -143,6 +143,62 @@ const vulnerable = {
 };
 
 /**
+ * Weakened effect configuration (new for Barbarian's Primal Roar)
+ */
+const weakened = {
+  // Default values
+  default: {
+    damageReduction: 0.25, // Percentage to reduce damage dealt (25% = deals 75% damage)
+    turns: 1, // Duration in turns
+  },
+
+  // Effect behavior
+  stackable: false, // Multiple weakened effects don't stack
+  refreshable: true, // Can be refreshed to extend duration
+
+  // Mechanics
+  affectsDamageCalculation: true, // Reduces damage dealt
+
+  // Display settings
+  messages: {
+    applied:
+      '{playerName} is weakened and will deal {damageReduction}% less damage for {turns} turn(s).',
+    refreshed: "{playerName}'s weakness is renewed for {turns} turn(s).",
+    expired: '{playerName} is no longer weakened.',
+  },
+};
+
+/**
+ * Enraged effect configuration (new for Barbarian's Unstoppable Rage)
+ */
+const enraged = {
+  // Default values
+  default: {
+    damageBoost: 1.5, // Damage multiplier (1.5 = 150% damage)
+    damageResistance: 0.3, // Damage reduction when taking damage (30% reduction)
+    turns: 2, // Duration in turns
+  },
+
+  // Effect behavior
+  stackable: false, // Multiple rage effects don't stack
+  refreshable: false, // Cannot be refreshed (too powerful)
+
+  // Mechanics
+  affectsDamageCalculation: true, // Affects both damage dealt and taken
+  preventsHealing: true, // Cannot be healed while enraged
+  hasEndEffect: true, // Has negative effect when it expires
+
+  // Display settings
+  messages: {
+    applied:
+      '{playerName} enters an unstoppable rage! Damage increased by {damageBoost}% and damage resistance increased by {damageResistance}% for {turns} turn(s).',
+    expired:
+      "{playerName}'s rage subsides, leaving them exhausted and vulnerable.",
+    cannotBeHealed: '{playerName} is too enraged to accept healing.',
+  },
+};
+
+/**
  * Effect processing order
  * Lower numbers are processed first each round
  */
@@ -150,8 +206,10 @@ const processingOrder = {
   poison: 1, // Process poison damage first
   protected: 2, // Then update protection
   vulnerable: 3, // Handle vulnerability effects
-  invisible: 4, // Then handle invisibility
-  stunned: 5, // Finally process stun effects
+  weakened: 4, // Handle weakened effects
+  enraged: 5, // Handle enraged effects
+  invisible: 6, // Then handle invisibility
+  stunned: 7, // Finally process stun effects
 };
 
 /**
@@ -180,7 +238,15 @@ const global = {
  * @returns {Object|null} Default parameters or null if not found
  */
 function getEffectDefaults(effectName) {
-  const effects = { poison, protected, invisible, stunned, vulnerable };
+  const effects = {
+    poison,
+    protected,
+    invisible,
+    stunned,
+    vulnerable,
+    weakened,
+    enraged,
+  };
   return effects[effectName]?.default || null;
 }
 
@@ -190,7 +256,15 @@ function getEffectDefaults(effectName) {
  * @returns {boolean} Whether the effect can stack
  */
 function isEffectStackable(effectName) {
-  const effects = { poison, protected, invisible, stunned, vulnerable };
+  const effects = {
+    poison,
+    protected,
+    invisible,
+    stunned,
+    vulnerable,
+    weakened,
+    enraged,
+  };
   return effects[effectName]?.stackable || false;
 }
 
@@ -200,7 +274,15 @@ function isEffectStackable(effectName) {
  * @returns {boolean} Whether the effect can be refreshed
  */
 function isEffectRefreshable(effectName) {
-  const effects = { poison, protected, invisible, stunned, vulnerable };
+  const effects = {
+    poison,
+    protected,
+    invisible,
+    stunned,
+    vulnerable,
+    weakened,
+    enraged,
+  };
   return effects[effectName]?.refreshable || false;
 }
 
@@ -213,7 +295,15 @@ function isEffectRefreshable(effectName) {
  */
 function getEffectMessage(effectName, messageType, data = {}) {
   // Use local variables instead of referring to config
-  const effects = { poison, protected, invisible, stunned, vulnerable };
+  const effects = {
+    poison,
+    protected,
+    invisible,
+    stunned,
+    vulnerable,
+    weakened,
+    enraged,
+  };
   const template = effects[effectName]?.messages?.[messageType];
 
   if (!template) {
@@ -251,6 +341,8 @@ module.exports = {
   vulnerable,
   invisible,
   stunned,
+  weakened, // New effect
+  enraged, // New effect
   processingOrder,
   global,
 

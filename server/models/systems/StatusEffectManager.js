@@ -54,13 +54,18 @@ class StatusEffectManager {
       ...effectData,
     };
 
+    // FIX: Add +1 to turns for all timed effects to account for immediate countdown
+    if (finalData.turns && finalData.turns > 0) {
+      finalData.turns = finalData.turns + 1;
+    }
+
     // Special handling for vulnerability
     if (effectName === 'vulnerable') {
       player.applyVulnerability(finalData.damageIncrease, finalData.turns);
 
       // Special log for vulnerability
       log.push(
-        `${player.name} is VULNERABLE and will take ${finalData.damageIncrease}% more damage for ${finalData.turns} turn(s)!`
+        `${player.name} is VULNERABLE and will take ${finalData.damageIncrease}% more damage for ${finalData.turns - 1} turn(s)!`
       );
       return true;
     }
@@ -68,7 +73,10 @@ class StatusEffectManager {
     // For other effects, apply normally
     player.applyStatusEffect(effectName, finalData);
 
-    // Add log message
+    // Add log message (subtract 1 from turns for display since we added 1 internally)
+    const displayTurns = (finalData.turns || 1) - 1;
+    const logData = { ...finalData, turns: displayTurns };
+
     if (!hasEffect) {
       // Use config messages module directly
       const template = config.statusEffects.getEffectMessage
@@ -78,7 +86,7 @@ class StatusEffectManager {
       log.push(
         config.messages.formatMessage(template, {
           playerName: player.name,
-          ...finalData,
+          ...logData,
         })
       );
     } else {
@@ -90,7 +98,7 @@ class StatusEffectManager {
       log.push(
         config.messages.formatMessage(template, {
           playerName: player.name,
-          ...finalData,
+          ...logData,
         })
       );
     }
@@ -180,8 +188,8 @@ class StatusEffectManager {
   }
 
   /**
-   * Process all timed status effects for all players
-   * Updates durations, applies effects, and removes expired effects
+   * Process all timed status effects for all players - NO CHANGES NEEDED
+   * The existing method is fine, the fix is in applyEffect above
    * @param {Array} log - Event log to append messages to
    */
   processTimedEffects(log = []) {
@@ -196,7 +204,7 @@ class StatusEffectManager {
           log.push(`${player.name} is no longer vulnerable.`);
         } else {
           const increase = player.vulnerabilityIncrease;
-          const turns = player.statusEffects.vulnerable?.turns || 0;
+          const turns = (player.statusEffects.vulnerable?.turns || 1) - 1; // Subtract 1 for display
           log.push(
             `${player.name} remains VULNERABLE (${increase}% more damage) for ${turns} more turn(s).`
           );
@@ -210,6 +218,8 @@ class StatusEffectManager {
       protected: 2,
       invisible: 4,
       stunned: 5,
+      weakened: 6, // Add new effects
+      enraged: 7,
     };
 
     // Sort effect types by processing order
@@ -233,7 +243,34 @@ class StatusEffectManager {
   }
 
   /**
-   * Process poison effect for a player
+   * Process a generic timed effect for a player - NO CHANGES NEEDED
+   * The existing method is fine with the applyEffect fix above
+   * @param {Object} player - Player object
+   * @param {string} effectName - Name of the effect to process
+   * @param {Array} log - Event log to append messages to
+   * @private
+   */
+  processTimedEffect(player, effectName, log) {
+    if (!player.hasStatusEffect(effectName)) return;
+
+    const effect = player.statusEffects[effectName];
+
+    // Decrement turns (this is correct with the +1 fix in applyEffect)
+    effect.turns--;
+
+    // Remove if expired
+    if (effect.turns <= 0) {
+      player.removeStatusEffect(effectName);
+      log.push(
+        config.statusEffects.getEffectMessage(effectName, 'expired', {
+          playerName: player.name,
+        })
+      );
+    }
+  }
+
+  /**
+   * Process poison effect for a player - MINIMAL CHANGE for display
    * @param {Object} player - Player object
    * @param {Array} log - Event log to append messages to
    * @private
@@ -287,7 +324,7 @@ class StatusEffectManager {
       player.deathAttacker = 'Poison';
     }
 
-    // Decrement turns
+    // Decrement turns (this is correct with the +1 fix in applyEffect)
     poison.turns--;
 
     // Remove if expired
@@ -295,32 +332,6 @@ class StatusEffectManager {
       player.removeStatusEffect('poison');
       log.push(
         config.statusEffects.getEffectMessage('poison', 'expired', {
-          playerName: player.name,
-        })
-      );
-    }
-  }
-
-  /**
-   * Process a generic timed effect for a player
-   * @param {Object} player - Player object
-   * @param {string} effectName - Name of the effect to process
-   * @param {Array} log - Event log to append messages to
-   * @private
-   */
-  processTimedEffect(player, effectName, log) {
-    if (!player.hasStatusEffect(effectName)) return;
-
-    const effect = player.statusEffects[effectName];
-
-    // Decrement turns
-    effect.turns--;
-
-    // Remove if expired
-    if (effect.turns <= 0) {
-      player.removeStatusEffect(effectName);
-      log.push(
-        config.statusEffects.getEffectMessage(effectName, 'expired', {
           playerName: player.name,
         })
       );

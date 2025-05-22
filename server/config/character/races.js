@@ -26,6 +26,7 @@ const raceAttributes = {
       'Rogue',
       'Priest',
       'Gunslinger',
+      'Barbarian', // Added Barbarian
     ],
     description:
       'Adaptable and versatile, humans can learn abilities from other classes.',
@@ -41,6 +42,7 @@ const raceAttributes = {
       'Oracle',
       'Shaman',
       'Gunslinger',
+      'Barbarian', // Added Barbarian
     ],
     description:
       'Hardy and resilient, dwarves have stone armor that degrades with damage taken.',
@@ -53,9 +55,9 @@ const raceAttributes = {
       'Wizard',
       'Assassin',
       'Rogue',
-      'Seer',
       'Tracker',
       'Druid',
+      // Removed Seer
     ],
     description:
       'Quick and perceptive, elves can reveal if a target is a warlock.',
@@ -67,10 +69,11 @@ const raceAttributes = {
     compatibleClasses: [
       'Pyromancer',
       'Oracle',
-      'Seer',
       'Shaman',
       'Tracker',
       'Druid',
+      'Barbarian', // Added Barbarian
+      // Removed Seer
     ],
     description:
       'Fierce and mighty, orcs can boost their attack power at the cost of health.',
@@ -82,10 +85,10 @@ const raceAttributes = {
     compatibleClasses: [
       'Rogue',
       'Oracle',
-      'Seer',
       'Shaman',
       'Tracker',
       'Druid',
+      // Removed Seer
     ],
     description: 'Connected to nature, satyrs can regenerate health over time.',
   },
@@ -100,6 +103,7 @@ const raceAttributes = {
       'Assassin',
       'Priest',
       'Gunslinger',
+      'Barbarian', // Added Barbarian
     ],
     description:
       'Undead and resilient, skeletons can return to life once after being defeated.',

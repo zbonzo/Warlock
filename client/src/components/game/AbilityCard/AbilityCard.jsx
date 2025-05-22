@@ -203,7 +203,7 @@ function getAbilityIcon(ability, isRacial) {
     switch (ability.type) {
       case 'adaptability':
         return '🔄';
-      case 'stoneResolve':
+      case 'stoneArmor':
         return '🛡️';
       case 'keenSenses':
         return '👁️';
@@ -218,8 +218,56 @@ function getAbilityIcon(ability, isRacial) {
     }
   }
 
-  // Regular ability icons
-  const { category, effect, type } = ability;
+  // Handle specific ability types
+  const { type, category, effect } = ability;
+
+  switch (type) {
+    case 'recklessStrike':
+    case 'bloodFrenzy':
+    case 'unstoppableRage':
+      return '🪓'; // Barbarian abilities
+    case 'primalRoar':
+      return '🦁';
+    case 'psychicBolt':
+    case 'fatesEye':
+    case 'eyeOfFate':
+      return '🔮'; // Oracle abilities
+    case 'spiritGuard':
+      return '👻';
+    case 'sanctuaryOfTruth':
+      return '⛩️';
+    case 'arcaneBarrage':
+    case 'twinStrike':
+      return '⚡'; // Multi-hit attacks
+    case 'poisonStrike':
+    case 'poisonTrap':
+    case 'deathMark':
+    case 'barbedArrow':
+      return '☠️'; // Poison abilities
+    case 'shiv':
+      return '🗡️';
+    case 'meteorShower':
+      return '☄️';
+    case 'infernoBlast':
+    case 'combustion':
+      return '🔥';
+    case 'chainLightning':
+      return '⚡';
+    case 'entangle':
+      return '🌿';
+    case 'aimedShot':
+      return '🎯';
+    case 'ricochetRound':
+      return '🔫';
+    case 'battleCry':
+      return '📢';
+    case 'rejuvenation':
+      return '🌱';
+    case 'shadowstep':
+      return '🌫️';
+  }
+
+  // Fallback to category-based icons
   if (category === 'Attack') return '⚔️';
   if (category === 'Heal') return '💚';
 
@@ -233,7 +281,7 @@ function getAbilityIcon(ability, isRacial) {
     if (effect === 'poison') return '☠️';
     if (effect === 'stunned') return '⚡';
     if (effect === 'detect') return '👁️';
-    if (type === 'entangle') return '🌿';
+    if (effect === 'weakened') return '💔';
     return '✨';
   }
 
@@ -256,40 +304,154 @@ function getEffectDescription(ability, isRacial) {
 
   let description = '';
 
+  // Handle specific ability types first
+  // eslint-disable-next-line default-case
+  switch (type) {
+    case 'recklessStrike':
+      return `Deals ${params.damage || 0} damage but you take ${params.selfDamage || 0} recoil damage`;
+
+    case 'arcaneBarrage':
+      return `Fires ${params.hits || 0} bolts dealing ${params.damagePerHit || 0} damage each (${params.hitChance ? Math.round(params.hitChance * 100) + '% hit chance' : 'guaranteed hit'})`;
+
+    case 'twinStrike':
+      return `Strikes twice for ${params.damage || 0} damage each hit`;
+
+    case 'bloodFrenzy':
+      return `Passive: Gain ${Math.round((params.damageIncreasePerHpMissing || 0.01) * 100)}% more damage for every 1% HP missing`;
+
+    case 'primalRoar':
+      return `Weakens target, reducing their damage by ${Math.round((params.damageReduction || 0.25) * 100)}% for ${params.duration || 1} turn${params.duration !== 1 ? 's' : ''}`;
+
+    case 'unstoppableRage':
+      const damageBoost = Math.round(((params.damageBoost || 1.5) - 1) * 100);
+      const resistance = Math.round((params.damageResistance || 0.3) * 100);
+      const endDamage = Math.round(
+        (params.effectEnds?.selfDamagePercent || 0.25) * 100
+      );
+      return `Gain ${damageBoost}% damage and ${resistance}% damage resistance for ${params.duration || 2} turns. Take ${endDamage}% max HP damage when it ends`;
+
+    case 'fatesEye':
+    case 'eyeOfFate':
+      return `Detect if target is a Warlock. Take ${params.selfDamageOnFailure || 10} damage if they are not`;
+
+    case 'spiritGuard':
+      return `Gain ${params.armor || 2} armor. Attackers take ${params.counterDamage || 15} damage and are revealed if they are Warlocks`;
+
+    case 'sanctuaryOfTruth':
+      return `Heal for ${params.amount || 20} HP. Warlock attackers take ${params.counterDamage || 10} damage and are automatically revealed`;
+
+    case 'shiv':
+      return `Deals ${params.damage || 0} damage and makes target vulnerable (+${params.vulnerable?.damageIncrease || 25}% damage taken for ${params.vulnerable?.turns || 3} turns)`;
+
+    case 'barbedArrow':
+      return `Deals ${params.damage || 0} damage and causes bleeding for ${params.poison?.damage || 0} damage over ${params.poison?.turns || 0} turns`;
+
+    case 'combustion':
+      return `Deals ${params.damage || 0} damage and burns for ${params.poison?.damage || 0} damage over ${params.poison?.turns || 0} turns`;
+
+    case 'infernoBlast':
+      return `Deals ${params.damage || 0} damage to all enemies and burns them for ${params.poison?.damage || 0} damage over ${params.poison?.turns || 0} turns`;
+
+    case 'deathMark':
+      return `Curse target with poison dealing ${params.poison?.damage || 0} damage over ${params.poison?.turns || 0} turns`;
+
+    case 'poisonTrap':
+      return `Lay a trap that poisons multiple enemies for ${params.poison?.damage || 0} damage over ${params.poison?.turns || 0} turns`;
+
+    case 'entangle':
+      return `${Math.round((params.chance || 0.5) * 100)}% chance to stun multiple targets for ${params.duration || 1} turn${params.duration !== 1 ? 's' : ''}`;
+
+    case 'aimedShot':
+      return `Carefully aimed shot dealing ${params.damage || 0} damage (takes longer to execute)`;
+
+    case 'meteorShower':
+    case 'ricochetRound':
+    case 'chainLightning':
+      return `Deals ${params.damage || 0} damage to multiple targets`;
+
+    case 'battleCry':
+    case 'divineShield':
+      return `Grants ${params.armor || 0} armor to all allies for ${params.duration || 1} turn${params.duration !== 1 ? 's' : ''}`;
+
+    case 'rejuvenation':
+      return `Heals all allies for ${params.amount || 0} HP`;
+
+    case 'shadowstep':
+      return `Makes target ally invisible for ${params.duration || 1} turn${params.duration !== 1 ? 's' : ''}`;
+  }
+
+  // Fallback to category-based descriptions
   if (category === 'Attack') {
-    description = `Deals ${params.damage || 0} damage`;
-    if (effect === 'poison') {
-      description += ` and poisons for ${params.poison.damage} damage over ${params.poison.turns} turns`;
+    if (params.hits && params.damagePerHit) {
+      // Multi-hit attacks
+      description = `${params.hits} hits of ${params.damagePerHit} damage each`;
+      if (params.hitChance && params.hitChance < 1) {
+        description += ` (${Math.round(params.hitChance * 100)}% hit chance)`;
+      }
+    } else {
+      // Single hit attacks
+      description = `Deals ${params.damage || 0} damage`;
+    }
+
+    if (effect === 'poison' && params.poison) {
+      description += ` and poisons for ${params.poison.damage || 0} damage over ${params.poison.turns || 0} turns`;
+    }
+
+    if (effect === 'vulnerable' && params.vulnerable) {
+      description += ` and makes target vulnerable (+${params.vulnerable.damageIncrease || 0}% damage for ${params.vulnerable.turns || 0} turns)`;
+    }
+
+    if (target === 'Multi') {
+      description += ' to multiple targets';
     }
   } else if (category === 'Heal') {
     description = `Restores ${params.amount || 0} HP`;
     if (target === 'Multi') {
-      description += ' to multiple targets';
+      description += ' to multiple allies';
+    } else if (target === 'Self') {
+      description += ' to yourself';
     }
   } else if (category === 'Defense') {
     if (effect === 'protected') {
-      description = `Adds ${params.armor || 0} armor for ${params.duration || 1} turn${params.duration !== 1 ? 's' : ''}`;
+      description = `Adds ${params.armor || 0} armor`;
+      if (params.counterDamage) {
+        description += ` and ${params.counterDamage} counter-damage`;
+      }
+      description += ` for ${params.duration || 1} turn${params.duration !== 1 ? 's' : ''}`;
     } else if (effect === 'invisible') {
-      description = `Makes target invisible for ${params.duration || 1} turn${params.duration !== 1 ? 's' : ''}`;
+      description = `Makes ${target === 'Self' ? 'you' : 'target'} invisible for ${params.duration || 1} turn${params.duration !== 1 ? 's' : ''}`;
     }
   } else if (category === 'Special') {
-    if (effect === 'poison') {
-      description = `Poisons for ${params.poison?.damage || 0} damage over ${params.poison?.turns || 0} turns`;
-    } else if (effect === 'stunned' || type === 'entangle') {
-      description = 'Has a 50% chance to stun targets for 1 turn';
+    if (effect === 'poison' && params.poison) {
+      description = `Poisons for ${params.poison.damage || 0} damage over ${params.poison.turns || 0} turns`;
+    } else if (effect === 'stunned') {
+      const chance = params.chance ? Math.round(params.chance * 100) : 50;
+      description = `${chance}% chance to stun targets for ${params.duration || 1} turn${params.duration !== 1 ? 's' : ''}`;
     } else if (effect === 'detect') {
-      description = 'Reveals hidden information';
+      description = 'Reveals if target is a Warlock';
+      if (params.selfDamageOnFailure) {
+        description += ` (${params.selfDamageOnFailure} damage if wrong)`;
+      }
+    } else if (effect === 'weakened') {
+      const reduction = Math.round((params.damageReduction || 0.25) * 100);
+      description = `Reduces target damage by ${reduction}% for ${params.duration || 1} turn${params.duration !== 1 ? 's' : ''}`;
     } else if (params.damage) {
       description = `Deals ${params.damage} damage`;
       if (target === 'Multi') {
         description += ' to multiple targets';
       }
+    } else {
+      description = 'Special ability with unique effects';
     }
   }
 
-  return description;
-}
+  // Add cooldown info if present
+  if (ability.cooldown > 0) {
+    description += ` (${ability.cooldown} turn cooldown)`;
+  }
 
+  return description || 'No description available';
+}
 /**
  * Get status message for racial abilities
  *

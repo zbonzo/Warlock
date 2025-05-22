@@ -41,19 +41,22 @@ class RacialAbilitySystem {
   validateAndQueueRacialAction(actorId, targetId, pendingRacialActions) {
     // Get the actor player
     const actor = this.players.get(actorId);
-    
+
     // Validate player exists, is alive, and can use racial ability
     if (!actor || !actor.isAlive || !actor.canUseRacialAbility()) {
       return false;
     }
-    
+
     // Check if player already has a racial action queued
-    if (pendingRacialActions.some(a => a.actorId === actorId)) {
+    if (pendingRacialActions.some((a) => a.actorId === actorId)) {
       return false;
     }
-    
+
     // Validate racial ability exists and is registered
-    if (!actor.racialAbility || !this.abilityRegistry?.hasRacialAbility(actor.racialAbility.type)) {
+    if (
+      !actor.racialAbility ||
+      !this.abilityRegistry?.hasRacialAbility(actor.racialAbility.type)
+    ) {
       logger.warn(`Unknown racial ability type: ${actor.racialAbility?.type}`);
       return false;
     }
@@ -62,20 +65,23 @@ class RacialAbilitySystem {
     let finalTargetId = targetId;
     if (targetId !== '__monster__' && targetId !== actorId) {
       const targetPlayer = this.players.get(targetId);
-      
+
       // Validate target player exists and is alive
       if (!targetPlayer || !targetPlayer.isAlive) {
         return false;
       }
-      
+
       // Handle invisible target redirection
-      if (targetPlayer.hasStatusEffect && targetPlayer.hasStatusEffect('invisible')) {
+      if (
+        targetPlayer.hasStatusEffect &&
+        targetPlayer.hasStatusEffect('invisible')
+      ) {
         finalTargetId = this.gameStateUtils.getRandomTarget({
-          actorId, 
-          excludeIds: [targetId], 
-          onlyPlayers: true 
+          actorId,
+          excludeIds: [targetId],
+          onlyPlayers: true,
         });
-        
+
         // If no valid redirect target, fail
         if (!finalTargetId) {
           return false;
@@ -87,12 +93,12 @@ class RacialAbilitySystem {
     pendingRacialActions.push({
       actorId,
       targetId: finalTargetId,
-      racialType: actor.racialAbility.type
+      racialType: actor.racialAbility.type,
     });
-    
+
     // Mark as used on the player object
     actor.useRacialAbility();
-    
+
     return true;
   }
 
@@ -103,10 +109,10 @@ class RacialAbilitySystem {
   processEndOfRoundEffects(log) {
     for (const player of this.players.values()) {
       if (!player.isAlive) continue;
-      
+
       // Process cooldown timers
       this.processCooldowns(player, log);
-      
+
       // Process healing over time effect (Satyr racial)
       this.processHealOverTime(player, log);
     }
@@ -123,15 +129,18 @@ class RacialAbilitySystem {
       player.racialCooldown--;
       if (player.racialCooldown === 0) {
         // Use private message from config
-        const racialReadyMessage = config.messages.getMessage('private', 'racialAbilityReady');
-        
+        const racialReadyMessage = config.messages.getMessage(
+          'private',
+          'racialAbilityReady'
+        );
+
         const cooldownLog = {
           type: 'racial_cooldown',
           public: false,
           targetId: player.id,
           message: '',
           privateMessage: racialReadyMessage,
-          attackerMessage: ''
+          attackerMessage: '',
         };
         log.push(cooldownLog);
       }
@@ -148,27 +157,29 @@ class RacialAbilitySystem {
     if (!player.racialEffects || !player.racialEffects.healOverTime) {
       return;
     }
-    
+
     const effect = player.racialEffects.healOverTime;
     const healAmount = effect.amount || 0;
-    
+
     // Apply healing
     if (healAmount > 0) {
       const oldHp = player.hp;
       player.hp = Math.min(player.maxHp, player.hp + healAmount);
       const actualHeal = player.hp - oldHp;
-      
+
       if (actualHeal > 0) {
-        log.push(config.messages.getEvent('playerHealed', {
-          playerName: player.name,
-          amount: actualHeal
-        }));
+        log.push(
+          config.messages.getEvent('playerHealed', {
+            playerName: player.name,
+            amount: actualHeal,
+          })
+        );
       }
     }
-    
+
     // Decrement duration
     effect.turns--;
-    
+
     // Remove if expired
     if (effect.turns <= 0) {
       delete player.racialEffects.healOverTime;

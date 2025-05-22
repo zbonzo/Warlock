@@ -211,7 +211,7 @@ class GameRoom {
       }
     }
 
-    // Put ability on cooldown
+    // Put ability on cooldown BEFORE adding to pending actions
     if (ability.cooldown > 0) {
       actor.putAbilityOnCooldown(actionType, ability.cooldown);
     }
@@ -356,6 +356,15 @@ class GameRoom {
 
     // Status effects tick-down
     this.systems.statusEffectManager.processTimedEffects(log);
+
+    for (const player of this.players.values()) {
+      if (player.isAlive) {
+        const classEffectResult = player.processClassEffects();
+        if (classEffectResult) {
+          log.push(classEffectResult.message);
+        }
+      }
+    }
 
     // Re-check for pending deaths after poison/timed effects
     for (const player of this.players.values()) {
