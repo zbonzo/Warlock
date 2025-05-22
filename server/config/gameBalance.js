@@ -236,47 +236,6 @@ function calculateStats(race, className) {
     armor: baseArmor + armorModifier,
     damageMod: damageModifier,
   };
-
-  /**
-   * Calculate player stats based on race and class combination
-   * @param {string} race - Player's race
-   * @param {string} className - Player's class
-   * @returns {Object|null} Calculated stats or null if invalid combination
-   */
-  function calculateStats(race, className) {
-    // Import the character config (you might need to adjust the path)
-    const characterConfig = require('./character');
-
-    // Check if the combination is valid
-    if (!characterConfig.isValidCombination(race, className)) {
-      return null;
-    }
-
-    // Get base stats from config
-    const baseHp = characterConfig.player?.baseHp || 100;
-    const baseArmor = characterConfig.player?.baseArmor || 0;
-    const baseDamageMod = characterConfig.player?.baseDamageMod || 1.0;
-
-    // Get race and class modifiers
-    const raceAttributes = characterConfig.raceAttributes[race] || {};
-    const classAttributes = characterConfig.classAttributes[className] || {};
-
-    // Calculate final stats
-    const hpModifier =
-      (raceAttributes.hpModifier || 1.0) * (classAttributes.hpModifier || 1.0);
-    const armorModifier =
-      (raceAttributes.armorModifier || 0.0) +
-      (classAttributes.armorModifier || 0.0);
-    const damageModifier =
-      (raceAttributes.damageModifier || 1.0) *
-      (classAttributes.damageModifier || 1.0);
-
-    return {
-      maxHp: Math.floor(baseHp * hpModifier),
-      armor: baseArmor + armorModifier,
-      damageMod: damageModifier,
-    };
-  }
 }
 
 module.exports = {
@@ -287,6 +246,10 @@ module.exports = {
   combat,
   gameCode,
   rateLimiting,
+  armor: player.armor,
+  armorReduction: player.armor.reductionRate,
+  maxArmorReduction: player.armor.maxReduction,
+  minArmorReduction: player.armor.minReduction,
 
   // Helper functions
   calculateStats,

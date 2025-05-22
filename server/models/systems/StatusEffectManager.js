@@ -21,7 +21,7 @@ class StatusEffectManager {
 
     this.effectDefinitions = {
       poison: { default: { damage: 5, turns: 3 } },
-      protected: { default: { armor: 2, turns: 1 } },
+      shielded: { default: { armor: 2, turns: 1 } },
       invisible: { default: { turns: 1 } },
       stunned: { default: { turns: 1 } },
       vulnerable: { default: { damageIncrease: 25, turns: 2 } },
@@ -35,8 +35,8 @@ class StatusEffectManager {
     switch (effectName) {
       case 'poison':
         return `${playerName} is poisoned for ${data.damage} damage over ${data.turns} turns.`;
-      case 'protected':
-        return `${playerName} is protected with ${data.armor} armor for ${data.turns} turn(s).`;
+      case 'shielded':
+        return `${playerName} is shielded with ${data.armor} armor for ${data.turns} turn(s).`;
       case 'invisible':
         return `${playerName} becomes invisible for ${data.turns} turn(s).`;
       case 'stunned':
@@ -50,7 +50,7 @@ class StatusEffectManager {
     switch (effectName) {
       case 'poison':
         return `${playerName}'s poison is refreshed for ${data.damage} damage over ${data.turns} turns.`;
-      case 'protected':
+      case 'shielded':
         return `${playerName}'s protection is refreshed for ${data.turns} turn(s).`;
       case 'invisible':
         return `${playerName}'s invisibility is extended for ${data.turns} turn(s).`;
@@ -65,8 +65,8 @@ class StatusEffectManager {
     switch (effectName) {
       case 'poison':
         return `The poison affecting ${playerName} has worn off.`;
-      case 'protected':
-        return `${playerName} is no longer protected.`;
+      case 'shielded':
+        return `${playerName} is no longer shielded.`;
       case 'invisible':
         return `${playerName} is no longer invisible.`;
       case 'stunned':

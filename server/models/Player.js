@@ -246,26 +246,10 @@ class Player {
     };
   }
 
-  /**
-   * Calculate damage reduction from armor
-   * @param {number} damage - Incoming damage (after vulnerability)
-   * @returns {number} Reduced damage after armor
-   */
   calculateDamageReduction(damage) {
     const totalArmor = this.getEffectiveArmor();
-
-    // Use gameBalance config for calculations
-    return config.gameBalance.calculateDamageReduction
-      ? Math.floor(
-          damage * (1 - config.gameBalance.calculateDamageReduction(totalArmor))
-        )
-      : damage; // Fallback if config function not available
-  }
-
-  calculateDamageReduction(damage) {
-    const totalArmor = this.getEffectiveArmor();
-    const reductionRate = config.gameBalance.calculateDamageReduction;
-    const maxReduction = config.gameBalance.maxDamageReduction;
+    const reductionRate = config.gameBalance.armor.reductionRate;
+    const maxReduction = config.gameBalance.armor.maxReduction;
 
     let reductionPercent;
     if (totalArmor <= 0) {
