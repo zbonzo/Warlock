@@ -27,7 +27,7 @@ class Player {
     this.isWarlock = false;
     this.isAlive = true;
     this.isReady = false;
-    this.statusEffects = {}; // { poison: {...}, protected: {...}, invisible: {...}, stunned: {...} }
+    this.statusEffects = {}; // { poison: {...}, shielded: {...}, invisible: {...}, stunned: {...} }
     this.abilities = []; // full list of class abilities
     this.unlocked = []; // slice of abilities by level
 
@@ -206,8 +206,8 @@ class Player {
     }
 
     // Add protection effect armor
-    if (this.hasStatusEffect('protected')) {
-      totalArmor += this.statusEffects.protected.armor || 0;
+    if (this.hasStatusEffect('shielded')) {
+      totalArmor += this.statusEffects.shielded.armor || 0;
     }
 
     return totalArmor;
@@ -260,6 +260,21 @@ class Player {
           damage * (1 - config.gameBalance.calculateDamageReduction(totalArmor))
         )
       : damage; // Fallback if config function not available
+  }
+
+  calculateDamageReduction(damage) {
+    const totalArmor = this.getEffectiveArmor();
+    const reductionRate = config.gameBalance.calculateDamageReduction;
+    const maxReduction = config.gameBalance.maxDamageReduction;
+
+    let reductionPercent;
+    if (totalArmor <= 0) {
+      reductionPercent = Math.max(-2.0, totalArmor * reductionRate);
+    } else {
+      reductionPercent = Math.min(maxReduction, totalArmor * reductionRate);
+    }
+
+    return Math.floor(damage * (1 - reductionPercent));
   }
 
   /**
@@ -351,9 +366,9 @@ class Player {
     // Decrement uses left
     this.racialUsesLeft--;
 
-    // Apply cooldown if present - ADD 1 to account for immediate countdown
+    // Apply cooldown if present
     if (this.racialAbility.cooldown > 0) {
-      this.racialCooldown = this.racialAbility.cooldown + 1;
+      this.racialCooldown = this.racialAbility.cooldown;
     }
 
     return true;

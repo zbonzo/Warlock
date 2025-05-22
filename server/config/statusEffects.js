@@ -34,7 +34,7 @@ const poison = {
 /**
  * Protection effect configuration
  */
-const protected = {
+const shielded = {
   // Default values
   default: {
     armor: 2, // Additional armor provided
@@ -50,10 +50,9 @@ const protected = {
 
   // Display settings
   messages: {
-    applied:
-      '{playerName} is protected with {armor} armor for {turns} turn(s).',
+    applied: '{playerName} is shielded with {armor} armor for {turns} turn(s).',
     refreshed: "{playerName}'s protection is refreshed for {turns} turn(s).",
-    expired: '{playerName} is no longer protected.',
+    expired: '{playerName} is no longer shielded.',
   },
 };
 
@@ -204,7 +203,7 @@ const enraged = {
  */
 const processingOrder = {
   poison: 1, // Process poison damage first
-  protected: 2, // Then update protection
+  shielded: 2, // Then update protection
   vulnerable: 3, // Handle vulnerability effects
   weakened: 4, // Handle weakened effects
   enraged: 5, // Handle enraged effects
@@ -240,7 +239,7 @@ const global = {
 function getEffectDefaults(effectName) {
   const effects = {
     poison,
-    protected,
+    shielded,
     invisible,
     stunned,
     vulnerable,
@@ -258,7 +257,7 @@ function getEffectDefaults(effectName) {
 function isEffectStackable(effectName) {
   const effects = {
     poison,
-    protected,
+    shielded,
     invisible,
     stunned,
     vulnerable,
@@ -276,7 +275,7 @@ function isEffectStackable(effectName) {
 function isEffectRefreshable(effectName) {
   const effects = {
     poison,
-    protected,
+    shielded,
     invisible,
     stunned,
     vulnerable,
@@ -297,7 +296,7 @@ function getEffectMessage(effectName, messageType, data = {}) {
   // Use local variables instead of referring to config
   const effects = {
     poison,
-    protected,
+    shielded,
     invisible,
     stunned,
     vulnerable,
@@ -337,7 +336,7 @@ function formatEffectMessage(template, data = {}) {
 
 module.exports = {
   poison,
-  protected,
+  shielded,
   vulnerable,
   invisible,
   stunned,

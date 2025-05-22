@@ -7,20 +7,20 @@ A component to display player information including name, race, class, health, a
 ```jsx
 import PlayerCard from '@components/game/PlayerCard';
 
-<PlayerCard 
+<PlayerCard
   player={playerData}
   isCurrentPlayer={isCurrentUser}
   canSeeWarlock={userIsWarlock}
-/>
+/>;
 ```
 
 ## Props
 
-| Prop | Type | Required | Default | Description |
-|------|------|----------|---------|-------------|
-| `player` | Object | Yes | - | Player data object |
-| `isCurrentPlayer` | boolean | Yes | - | Whether this card represents the current user |
-| `canSeeWarlock` | boolean | No | `false` | Whether warlock status should be visible |
+| Prop              | Type    | Required | Default | Description                                   |
+| ----------------- | ------- | -------- | ------- | --------------------------------------------- |
+| `player`          | Object  | Yes      | -       | Player data object                            |
+| `isCurrentPlayer` | boolean | Yes      | -       | Whether this card represents the current user |
+| `canSeeWarlock`   | boolean | No       | `false` | Whether warlock status should be visible      |
 
 ## Player Object Structure
 
@@ -39,7 +39,7 @@ import PlayerCard from '@components/game/PlayerCard';
       damage: 5,                 // Effect-specific data
       turns: 2
     },
-    protected: {
+    shielded: {
       armor: 3,
       turns: 1
     }
@@ -65,45 +65,42 @@ import PlayerCard from '@components/game/PlayerCard';
 
 The component handles several types of status effects:
 
-| Effect | Icon | Color | Display |
-|--------|------|-------|---------|
-| Poison | ☠️ | Red | Shows damage and turns remaining |
-| Protected | 🛡️ | Blue | Shows added armor and turns remaining |
-| Invisible | 👻 | Orange | Shows turns remaining |
-| Stunned | ⚡ | Purple | Shows turns remaining |
+| Effect    | Icon | Color  | Display                               |
+| --------- | ---- | ------ | ------------------------------------- |
+| Poison    | ☠️   | Red    | Shows damage and turns remaining      |
+| Shielded  | 🛡️   | Blue   | Shows added armor and turns remaining |
+| Invisible | 👻   | Orange | Shows turns remaining                 |
+| Stunned   | ⚡   | Purple | Shows turns remaining                 |
 
 ## Example
 
 ```jsx
 const playerData = {
-  name: "Gandalf",
-  race: "Human",
-  class: "Wizard",
+  name: 'Gandalf',
+  race: 'Human',
+  class: 'Wizard',
   hp: 65,
   maxHp: 80,
   armor: 1,
   isAlive: true,
   isWarlock: false,
   statusEffects: {
-    protected: {
+    shielded: {
       armor: 2,
-      turns: 1
-    }
-  }
+      turns: 1,
+    },
+  },
 };
 
-<PlayerCard 
-  player={playerData}
-  isCurrentPlayer={false}
-  canSeeWarlock={true}
-/>
+<PlayerCard player={playerData} isCurrentPlayer={false} canSeeWarlock={true} />;
 ```
 
 ## Customization
 
 The component uses CSS variables from the theme for styling. Key variables used:
+
 - `--color-accent`: High health color
 - `--color-secondary`: Medium health color
 - `--color-danger`: Low health color
-- `--color-primary`: Used for armor and protected status
+- `--color-primary`: Used for armor and shielded status
 - `--color-warlock`: Used for warlock indicator

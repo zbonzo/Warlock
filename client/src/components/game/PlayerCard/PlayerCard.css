@@ -153,7 +153,7 @@
   color: var(--color-danger);
 }
 
-.status-protected {
+.status-shielded {
   background-color: rgba(var(--color-primary-rgb), 0.1);
   border-color: var(--color-primary);
   color: var(--color-primary);

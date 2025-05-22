@@ -272,7 +272,7 @@ function getAbilityIcon(ability, isRacial) {
   if (category === 'Heal') return '💚';
 
   if (category === 'Defense') {
-    if (effect === 'protected') return '🛡️';
+    if (effect === 'shielded') return '🛡️';
     if (effect === 'invisible') return '👻';
     return '🛡️';
   }
@@ -412,7 +412,7 @@ function getEffectDescription(ability, isRacial) {
       description += ' to yourself';
     }
   } else if (category === 'Defense') {
-    if (effect === 'protected') {
+    if (effect === 'shielded') {
       description = `Adds ${params.armor || 0} armor`;
       if (params.counterDamage) {
         description += ` and ${params.counterDamage} counter-damage`;

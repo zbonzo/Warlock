@@ -84,7 +84,7 @@ const EventsLog = ({ events, currentPlayerId, players = [] }) => {
     // Make sure defensive abilities are always shown to the player
     if (
       event.type === 'defense' ||
-      (event.message && event.message.includes('protected')) ||
+      (event.message && event.message.includes('shielded')) ||
       (event.message && event.message.includes('invisible'))
     ) {
       console.log('Showing defensive event');
@@ -213,7 +213,7 @@ function getEventClass(event) {
     return 'attack-event';
   if (event.includes('healed') || event.includes('healing'))
     return 'heal-event';
-  if (event.includes('protected') || event.includes('shield'))
+  if (event.includes('shielded') || event.includes('shield'))
     return 'defense-event';
   if (event.includes('Monster')) return 'monster-event';
   if (

@@ -5,6 +5,7 @@ A model representing a player in the game, managing their state, abilities, stat
 ## Overview
 
 The `Player` class represents a single player and encapsulates:
+
 - Basic attributes (HP, armor, etc.)
 - Status effects (poison, protection, etc.)
 - Racial ability state and effects
@@ -22,7 +23,7 @@ player.setRacialAbility({
   type: 'adaptability',
   name: 'Adaptability',
   usageLimit: 'perGame',
-  maxUses: 1
+  maxUses: 1,
 });
 
 // Apply status effects
@@ -46,6 +47,7 @@ player.processRacialCooldowns();
 ## Key Components
 
 ### Properties
+
 - `id`, `name` - Player identification
 - `race`, `class` - Character selection
 - `hp`, `maxHp`, `armor` - Combat stats
@@ -56,6 +58,7 @@ player.processRacialCooldowns();
 - `racialAbility`, `racialUsesLeft`, `racialCooldown` - Racial ability state
 
 ### Methods
+
 - `hasStatusEffect()`, `applyStatusEffect()`, `removeStatusEffect()` - Status effect management
 - `getEffectiveArmor()`, `calculateDamageReduction()` - Armor calculations
 - `modifyDamage()`, `getHealingModifier()` - Damage and healing modifiers
@@ -66,14 +69,16 @@ player.processRacialCooldowns();
 ## Status Effects
 
 The following status effects are supported:
+
 - `poison` - Deals damage over time
-- `protected` - Provides additional armor
+- `shielded` - Provides additional armor
 - `invisible` - Prevents being targeted
 - `stunned` - Prevents action
 
 ## Racial Abilities
 
 Racial abilities can have two usage limits:
+
 - `perGame` - Can only be used once per game
 - `perRound` - Recharges every round
 

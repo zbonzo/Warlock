@@ -18,8 +18,63 @@ class StatusEffectManager {
   constructor(players, gameStateUtils) {
     this.players = players;
     this.gameStateUtils = gameStateUtils;
+
+    this.effectDefinitions = {
+      poison: { default: { damage: 5, turns: 3 } },
+      protected: { default: { armor: 2, turns: 1 } },
+      invisible: { default: { turns: 1 } },
+      stunned: { default: { turns: 1 } },
+      vulnerable: { default: { damageIncrease: 25, turns: 2 } },
+      weakened: { default: { damageReduction: 0.25, turns: 1 } },
+      enraged: {
+        default: { damageBoost: 1.5, damageResistance: 0.3, turns: 2 },
+      },
+    };
+  }
+  getEffectApplicationMessage(playerName, effectName, data) {
+    switch (effectName) {
+      case 'poison':
+        return `${playerName} is poisoned for ${data.damage} damage over ${data.turns} turns.`;
+      case 'protected':
+        return `${playerName} is protected with ${data.armor} armor for ${data.turns} turn(s).`;
+      case 'invisible':
+        return `${playerName} becomes invisible for ${data.turns} turn(s).`;
+      case 'stunned':
+        return `${playerName} is stunned for ${data.turns} turn(s).`;
+      default:
+        return `${playerName} is affected by ${effectName}.`;
+    }
   }
 
+  getEffectRefreshMessage(playerName, effectName, data) {
+    switch (effectName) {
+      case 'poison':
+        return `${playerName}'s poison is refreshed for ${data.damage} damage over ${data.turns} turns.`;
+      case 'protected':
+        return `${playerName}'s protection is refreshed for ${data.turns} turn(s).`;
+      case 'invisible':
+        return `${playerName}'s invisibility is extended for ${data.turns} turn(s).`;
+      case 'stunned':
+        return `${playerName} remains stunned for ${data.turns} more turn(s).`;
+      default:
+        return `${playerName}'s ${effectName} effect is refreshed.`;
+    }
+  }
+
+  getEffectExpirationMessage(playerName, effectName) {
+    switch (effectName) {
+      case 'poison':
+        return `The poison affecting ${playerName} has worn off.`;
+      case 'protected':
+        return `${playerName} is no longer protected.`;
+      case 'invisible':
+        return `${playerName} is no longer invisible.`;
+      case 'stunned':
+        return `${playerName} is no longer stunned.`;
+      default:
+        return `The ${effectName} effect on ${playerName} has worn off.`;
+    }
+  }
   /**
    * Apply a status effect to a player
    * @param {string} playerId - Target player's ID
@@ -215,7 +270,7 @@ class StatusEffectManager {
     // Process effects in order defined in config
     const processingOrder = config.statusEffects.processingOrder || {
       poison: 1,
-      protected: 2,
+      shielded: 2,
       invisible: 4,
       stunned: 5,
       weakened: 6, // Add new effects

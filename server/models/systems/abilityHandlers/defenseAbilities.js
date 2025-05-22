@@ -21,7 +21,7 @@ function register(registry) {
   // Register all 'Defense' category abilities to use appropriate handlers based on effect
   registerAbilitiesByCriteria(
     registry,
-    { category: 'Defense', effect: 'protected' },
+    { category: 'Defense', effect: 'shielded' },
     (actor, target, ability, log, systems) => {
       return registry.executeClassAbility(
         'shieldWall',
@@ -66,14 +66,14 @@ function register(registry) {
  */
 function handleShieldWall(actor, target, ability, log, systems) {
   // Get protection defaults from config if needed
-  const protectionDefaults = config.getStatusEffectDefaults('protected') || {
+  const protectionDefaults = config.getStatusEffectDefaults('shielded') || {
     armor: 2,
     turns: 1,
   };
 
   systems.statusEffectManager.applyEffect(
     target.id,
-    'protected',
+    'shielded',
     {
       armor: ability.params.armor || protectionDefaults.armor,
       turns: ability.params.duration || protectionDefaults.turns,
@@ -83,8 +83,8 @@ function handleShieldWall(actor, target, ability, log, systems) {
 
   // Use message from config if available
   const protectionMessage =
-    config.getMessage('events', 'playerProtected') ||
-    `{playerName} is protected with {armor} armor for {turns} turn(s).`;
+    config.getMessage('events', 'playerShielded') ||
+    `{playerName} is shielded with {armor} armor for {turns} turn(s).`;
 
   log.push(
     protectionMessage
@@ -185,28 +185,28 @@ function handleMultiProtection(actor, target, ability, log, systems) {
   const targets = Array.from(systems.players.values()).filter((p) => p.isAlive);
 
   // Get protection defaults from config if needed
-  const protectionDefaults = config.getStatusEffectDefaults('protected') || {
+  const protectionDefaults = config.getStatusEffectDefaults('shielded') || {
     armor: 2,
     turns: 1,
   };
 
-  let protectedCount = 0;
+  let shieldedCount = 0;
 
   for (const potentialTarget of targets) {
     systems.statusEffectManager.applyEffect(
       potentialTarget.id,
-      'protected',
+      'shielded',
       {
         armor: ability.params.armor || protectionDefaults.armor,
         turns: ability.params.duration || protectionDefaults.turns,
       },
       log
     );
-    protectedCount++;
+    shieldedCount++;
   }
 
   log.push(
-    `${actor.name} uses ${ability.name}, protecting ${protectedCount} allies with ${ability.params.armor || protectionDefaults.armor} armor for ${ability.params.duration || protectionDefaults.turns} turn(s).`
+    `${actor.name} uses ${ability.name}, protecting ${shieldedCount} allies with ${ability.params.armor || protectionDefaults.armor} armor for ${ability.params.duration || protectionDefaults.turns} turn(s).`
   );
   return true;
 }

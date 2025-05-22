@@ -372,10 +372,10 @@ function handleSpiritGuard(actor, target, ability, log, systems) {
   const counterDamage = ability.params.counterDamage || 15;
   const duration = ability.params.duration || 1;
 
-  // Apply protected status with special counter-damage property
+  // Apply shielded status with special counter-damage property
   systems.statusEffectManager.applyEffect(
     actor.id,
-    'protected',
+    'shielded',
     {
       armor: armor,
       turns: duration + 1, // Add 1 to account for immediate countdown

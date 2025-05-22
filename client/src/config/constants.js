@@ -46,7 +46,7 @@ export const ACTION_PHASES = {
 // Status effect types
 export const STATUS_EFFECTS = {
   POISON: 'poison',
-  PROTECTED: 'protected',
+  SHIELDED: 'shielded',
   INVISIBLE: 'invisible',
   STUNNED: 'stunned',
 };
@@ -120,7 +120,7 @@ export const ICONS = {
 
   STATUS: {
     poison: '☠️',
-    protected: '🛡️',
+    shielded: '🛡️',
     invisible: '👻',
     stunned: '⚡',
   },
