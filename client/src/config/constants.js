@@ -100,12 +100,12 @@ export const ICONS = {
     Pyromancer: '🔥',
     Wizard: '🧙',
     Assassin: '🥷',
-    Rogue: '🗡️',
+    Alchemist: '🧪',
     Priest: '✨',
     Oracle: '🔮',
     Barbarian: '🪓', // Added Barbarian with axe icon
     Shaman: '🌀',
-    Gunslinger: '🔫',
+    Gunslinger: '💥',
     Tracker: '🏹',
     Druid: '🌿',
     // Seer: '👁️', // Removed Seer

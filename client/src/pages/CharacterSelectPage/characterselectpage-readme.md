@@ -7,7 +7,7 @@ A component that allows players to select their character's race and class, with
 ```jsx
 import CharacterSelectPage from '@pages/CharacterSelectPage';
 
-<CharacterSelectPage 
+<CharacterSelectPage
   playerName="Player1"
   gameCode="1234"
   selectedRace={currentRace}
@@ -15,20 +15,20 @@ import CharacterSelectPage from '@pages/CharacterSelectPage';
   onSelectRace={handleRaceSelect}
   onSelectClass={handleClassSelect}
   onConfirm={handleConfirm}
-/>
+/>;
 ```
 
 ## Props
 
-| Prop | Type | Required | Default | Description |
-|------|------|----------|---------|-------------|
-| `playerName` | string | Yes | - | Player's name to display in welcome message |
-| `gameCode` | string | Yes | - | Game code to display |
-| `selectedRace` | string | No | `null` | Currently selected race ID |
-| `selectedClass` | string | No | `null` | Currently selected class ID |
-| `onSelectRace` | function | Yes | - | Callback when race is selected `(raceId) => void` |
-| `onSelectClass` | function | Yes | - | Callback when class is selected `(classId) => void` |
-| `onConfirm` | function | Yes | - | Callback when selection is confirmed `(race, class) => void` |
+| Prop            | Type     | Required | Default | Description                                                  |
+| --------------- | -------- | -------- | ------- | ------------------------------------------------------------ |
+| `playerName`    | string   | Yes      | -       | Player's name to display in welcome message                  |
+| `gameCode`      | string   | Yes      | -       | Game code to display                                         |
+| `selectedRace`  | string   | No       | `null`  | Currently selected race ID                                   |
+| `selectedClass` | string   | No       | `null`  | Currently selected class ID                                  |
+| `onSelectRace`  | function | Yes      | -       | Callback when race is selected `(raceId) => void`            |
+| `onSelectClass` | function | Yes      | -       | Callback when class is selected `(classId) => void`          |
+| `onConfirm`     | function | Yes      | -       | Callback when selection is confirmed `(race, class) => void` |
 
 ## Features
 
@@ -46,6 +46,7 @@ import CharacterSelectPage from '@pages/CharacterSelectPage';
 ### Available Races
 
 The component provides 6 races to choose from, each with a visual icon:
+
 - Human 👤
 - Dwarf 🧔‍♂️
 - Elf 🧝
@@ -56,22 +57,24 @@ The component provides 6 races to choose from, each with a visual icon:
 ### Available Classes
 
 The component provides 12 classes to choose from, each with a unique icon and color:
-- Warrior ⚔️
-- Pyromancer 🔥
-- Wizard 🧙
-- Assassin 🗡️
-- Rogue 👥
-- Priest ✝️
-- Oracle 🔮
-- Seer 👁️
-- Shaman 🌪️
-- Gunslinger 🔫
-- Tracker 🏹
-- Druid 🌿
+
+Warrior: '⚔️'
+Pyromancer: '🔥'
+Wizard: '🧙'
+Assassin: '🥷'
+Alchemist: '🧪'
+Priest: '✨'
+Oracle: '🔮'
+Barbarian: '🪓'
+Shaman: '🌀'
+Gunslinger: '💥'
+Tracker: '🏹'
+Druid: '🌿'
 
 ## Compatibility Logic
 
 Not all race/class combinations are valid. The component handles the compatibility with these features:
+
 - Automatic filtering of incompatible options
 - Visual disabling of incompatible options
 - Resetting incompatible selections when needed
@@ -97,13 +100,13 @@ import CharacterSelectPage from '@pages/CharacterSelectPage';
 function GameSetup({ gameCode, playerName, onCharacterConfirm }) {
   const [selectedRace, setSelectedRace] = useState(null);
   const [selectedClass, setSelectedClass] = useState(null);
-  
+
   const handleConfirm = (race, cls) => {
     onCharacterConfirm({ race, class: cls });
   };
-  
+
   return (
-    <CharacterSelectPage 
+    <CharacterSelectPage
       playerName={playerName}
       gameCode={gameCode}
       selectedRace={selectedRace}
@@ -121,10 +124,15 @@ function GameSetup({ gameCode, playerName, onCharacterConfirm }) {
 The component also exports constants that can be used in other components:
 
 ```jsx
-import { RACES, CLASSES, CLASS_TO_RACES, getCompatibleClasses } from '@pages/CharacterSelectPage';
+import {
+  RACES,
+  CLASSES,
+  CLASS_TO_RACES,
+  getCompatibleClasses,
+} from '@pages/CharacterSelectPage';
 
 // Use the race data elsewhere
-const raceNames = RACES.map(race => race.label);
+const raceNames = RACES.map((race) => race.label);
 ```
 
 ## Accessibility

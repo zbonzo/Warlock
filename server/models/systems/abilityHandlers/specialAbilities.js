@@ -21,6 +21,7 @@ function register(registry) {
   registry.registerClassAbility('unstoppableRage', handleUnstoppableRage);
   registry.registerClassAbility('spiritGuard', handleSpiritGuard);
   registry.registerClassAbility('sanctuaryOfTruth', handleSanctuaryOfTruth);
+  registry.registerClassAbility('controlMonster', handleControlMonster);
 
   // Register all abilities with 'detect' effect
   registerAbilitiesByEffectAndTarget(
@@ -524,4 +525,65 @@ function handleMultiStun(actor, ability, log, systems) {
   return true;
 }
 
+function handleControlMonster(actor, target, ability, log, systems) {
+  // Check if monster is alive
+  if (systems.monsterController.isDead()) {
+    log.push(
+      `${actor.name} tries to use ${ability.name}, but the Monster is already defeated.`
+    );
+    return false;
+  }
+
+  // Validate target
+  let finalTarget = null;
+  if (target === '__monster__') {
+    log.push(
+      `${actor.name} tries to use ${ability.name}, but cannot force the Monster to attack itself.`
+    );
+    return false;
+  } else if (target && target.isAlive) {
+    finalTarget = target;
+  } else {
+    // If target is invalid, pick a random target
+    const alivePlayers = systems.gameStateUtils.getAlivePlayers();
+    if (alivePlayers.length === 0) {
+      log.push(
+        `${actor.name} uses ${ability.name}, but there are no valid targets for the Monster to attack.`
+      );
+      return false;
+    }
+
+    // Pick random target (excluding the actor if possible)
+    const validTargets = alivePlayers.filter((p) => p.id !== actor.id);
+    finalTarget =
+      validTargets.length > 0
+        ? validTargets[Math.floor(Math.random() * validTargets.length)]
+        : alivePlayers[0];
+  }
+
+  // Calculate enhanced damage
+  const baseDamage = systems.monsterController.calculateNextAttackDamage();
+  const damageBoost = ability.params.damageBoost || 1.5;
+  const enhancedDamage = Math.floor(baseDamage * damageBoost);
+
+  // Log the control attempt
+  log.push(
+    `${actor.name} uses ${ability.name}! The Monster's eyes glow with unnatural fury as it focuses on ${finalTarget.name}!`
+  );
+
+  // Apply the enhanced damage immediately
+  systems.combatSystem.applyDamageToPlayer(
+    finalTarget,
+    enhancedDamage,
+    { name: 'The Controlled Monster' },
+    log
+  );
+
+  // Add additional context log
+  log.push(
+    `The Monster deals ${enhancedDamage} damage (${Math.round((damageBoost - 1) * 100)}% more than normal) under ${actor.name}'s command!`
+  );
+
+  return true;
+}
 module.exports = { register };

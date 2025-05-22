@@ -23,7 +23,7 @@ const raceAttributes = {
       'Warrior',
       'Wizard',
       'Assassin',
-      'Rogue',
+      'Alchemist',
       'Priest',
       'Gunslinger',
       'Barbarian', // Added Barbarian
@@ -54,7 +54,7 @@ const raceAttributes = {
     compatibleClasses: [
       'Wizard',
       'Assassin',
-      'Rogue',
+      'Alchemist',
       'Tracker',
       'Druid',
       // Removed Seer
@@ -83,7 +83,7 @@ const raceAttributes = {
     armorModifier: 1.0, // No armor bonus
     damageModifier: 1.0, // Standard damage
     compatibleClasses: [
-      'Rogue',
+      'Alchemist',
       'Oracle',
       'Shaman',
       'Tracker',

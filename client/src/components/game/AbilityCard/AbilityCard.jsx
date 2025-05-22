@@ -258,7 +258,7 @@ function getAbilityIcon(ability, isRacial) {
     case 'aimedShot':
       return '🎯';
     case 'ricochetRound':
-      return '🔫';
+      return '💥';
     case 'battleCry':
       return '📢';
     case 'rejuvenation':

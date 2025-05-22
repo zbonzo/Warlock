@@ -18,20 +18,29 @@ class MonsterController {
    * @param {RacialAbilitySystem} racialAbilitySystem - Racial ability system
    * @param {GameStateUtils} gameStateUtils - Game state utilities
    */
-  constructor(monster, players, statusEffectManager, racialAbilitySystem, gameStateUtils) {
+  constructor(
+    monster,
+    players,
+    statusEffectManager,
+    racialAbilitySystem,
+    gameStateUtils
+  ) {
     this.monster = monster;
     this.players = players;
     this.statusEffectManager = statusEffectManager;
     this.racialAbilitySystem = racialAbilitySystem;
     this.gameStateUtils = gameStateUtils;
-    
+
     // Initialize monster state if not set
     if (!this.monster.hp) this.monster.hp = config.gameBalance.monster.baseHp;
-    if (!this.monster.maxHp) this.monster.maxHp = config.gameBalance.monster.baseHp;
-    if (!this.monster.baseDmg) this.monster.baseDmg = config.gameBalance.monster.baseDamage;
-    if (!this.monster.age) this.monster.age = config.gameBalance.monster.baseAge;
+    if (!this.monster.maxHp)
+      this.monster.maxHp = config.gameBalance.monster.baseHp;
+    if (!this.monster.baseDmg)
+      this.monster.baseDmg = config.gameBalance.monster.baseDamage;
+    if (!this.monster.age)
+      this.monster.age = config.gameBalance.monster.baseAge;
   }
-  
+
   /**
    * Get current monster state
    * @returns {Object} Monster state object
@@ -41,10 +50,10 @@ class MonsterController {
       hp: this.monster.hp,
       maxHp: this.monster.maxHp,
       nextDamage: this.calculateNextAttackDamage(),
-      age: this.monster.age
+      age: this.monster.age,
     };
   }
-  
+
   /**
    * Calculate damage for next monster attack
    * @returns {number} Damage amount
@@ -52,18 +61,20 @@ class MonsterController {
    */
   calculateNextAttackDamage() {
     // Use the damage calculation from config
-    return config.gameBalance.calculateMonsterDamage ? 
-      config.gameBalance.calculateMonsterDamage(this.monster.age) :
-      this.monster.baseDmg * (this.monster.age + config.gameBalance.monster.damageScaling.ageMultiplier);
+    return config.gameBalance.calculateMonsterDamage
+      ? config.gameBalance.calculateMonsterDamage(this.monster.age)
+      : this.monster.baseDmg *
+          (this.monster.age +
+            config.gameBalance.monster.damageScaling.ageMultiplier);
   }
-  
+
   /**
    * Age the monster, increasing its aggression
    */
   ageMonster() {
     this.monster.age += 1;
   }
-  
+
   /**
    * Apply damage to the monster
    * @param {number} amount - Amount of damage
@@ -73,33 +84,39 @@ class MonsterController {
    */
   takeDamage(amount, attacker, log = []) {
     if (this.monster.hp <= 0) {
-      log.push(config.messages.getEvent('monsterAlreadyDefeated', { 
-        playerName: attacker.name 
-      }));
+      log.push(
+        config.messages.getEvent('monsterAlreadyDefeated', {
+          playerName: attacker.name,
+        })
+      );
       return false;
     }
-    
+
     // Apply damage
     this.monster.hp = Math.max(0, this.monster.hp - amount);
-    
+
     // Log attack using config messages
-    log.push(config.messages.getEvent('playerAttacksMonster', { 
-      playerName: attacker.name,
-      damage: amount
-    }));
-    
+    log.push(
+      config.messages.getEvent('playerAttacksMonster', {
+        playerName: attacker.name,
+        damage: amount,
+      })
+    );
+
     if (this.monster.hp > 0) {
-      log.push(config.messages.getEvent('monsterHpRemaining', { 
-        hp: this.monster.hp,
-        maxHp: this.monster.maxHp
-      }));
+      log.push(
+        config.messages.getEvent('monsterHpRemaining', {
+          hp: this.monster.hp,
+          maxHp: this.monster.maxHp,
+        })
+      );
     } else {
       log.push(config.messages.getEvent('monsterDefeated'));
     }
-    
+
     return true;
   }
-  
+
   /**
    * Monster attacks a random player
    * @param {Array} log - Event log to append messages to
@@ -109,7 +126,7 @@ class MonsterController {
   attack(log, combatSystem) {
     // Don't attack if defeated
     if (this.monster.hp <= 0) return null;
-    
+
     // Find the target
     const target = this.selectTarget();
     if (!target) {
@@ -119,12 +136,12 @@ class MonsterController {
         public: true,
         message: config.messages.events.monsterNoTarget,
         privateMessage: config.messages.events.monsterNoTarget,
-        attackerMessage: config.messages.events.monsterNoTarget
+        attackerMessage: config.messages.events.monsterNoTarget,
       };
       log.push(logEvent);
       return null;
     }
-    
+
     // Check again for invisibility right before attacking
     if (target.hasStatusEffect && target.hasStatusEffect('invisible')) {
       const logEvent = {
@@ -132,31 +149,36 @@ class MonsterController {
         public: true,
         message: config.messages.events.monsterSwipesAtShadows,
         privateMessage: config.messages.events.monsterSwipesAtShadows,
-        attackerMessage: config.messages.events.monsterSwipesAtShadows
+        attackerMessage: config.messages.events.monsterSwipesAtShadows,
       };
       log.push(logEvent);
       return null;
     }
-    
+
     // Calculate damage
     const damage = this.calculateNextAttackDamage();
-    
+
     // Create a general "Monster attacks" message
     const attackAnnouncement = {
       type: 'monster_attack_announcement',
       public: true,
       message: config.messages.events.monsterAttacks,
       privateMessage: config.messages.events.monsterAttacks,
-      attackerMessage: config.messages.events.monsterAttacks
+      attackerMessage: config.messages.events.monsterAttacks,
     };
     log.push(attackAnnouncement);
-    
+
     // Apply damage (this will create the personalized damage log)
-    combatSystem.applyDamageToPlayer(target, damage, { name: 'The Monster' }, log);
-    
+    combatSystem.applyDamageToPlayer(
+      target,
+      damage,
+      { name: 'The Monster' },
+      log
+    );
+
     return target;
   }
-  
+
   /**
    * Select a target for monster attack
    * @returns {Object|null} Selected player or null if no valid target
@@ -165,19 +187,27 @@ class MonsterController {
   selectTarget() {
     // Use monster targeting preferences from config
     const preferLowestHp = config.gameBalance.monster.targeting.preferLowestHp;
-    const canAttackInvisible = config.gameBalance.monster.targeting.canAttackInvisible;
-    const fallbackToHighestHp = config.gameBalance.monster.targeting.fallbackToHighestHp;
-    
+    const canAttackInvisible =
+      config.gameBalance.monster.targeting.canAttackInvisible;
+    const fallbackToHighestHp =
+      config.gameBalance.monster.targeting.fallbackToHighestHp;
+
     // Get all visible players
-    const visiblePlayers = Array.from(this.players.values()).filter(p => 
-      p.isAlive && (!p.hasStatusEffect || !p.hasStatusEffect('invisible') || canAttackInvisible)
+    const visiblePlayers = Array.from(this.players.values()).filter(
+      (p) =>
+        p.isAlive &&
+        (!p.hasStatusEffect ||
+          !p.hasStatusEffect('invisible') ||
+          canAttackInvisible)
     );
-    
+
     // If no visible targets, return null
     if (visiblePlayers.length === 0) {
-      return fallbackToHighestHp ? this.gameStateUtils.getHighestHpPlayer(canAttackInvisible) : null;
+      return fallbackToHighestHp
+        ? this.gameStateUtils.getHighestHpPlayer(canAttackInvisible)
+        : null;
     }
-    
+
     if (preferLowestHp) {
       // Find the player with lowest HP
       return this.gameStateUtils.getLowestHpPlayer(canAttackInvisible);
@@ -187,7 +217,7 @@ class MonsterController {
       return visiblePlayers[randomIndex];
     }
   }
-  
+
   /**
    * Handle monster death and respawn for new level
    * @param {number} currentLevel - Current game level
@@ -199,29 +229,30 @@ class MonsterController {
     if (this.monster.hp > 0) {
       return { newLevel: currentLevel, monsterState: this.getState() };
     }
-    
+
     // Calculate new level
     const newLevel = currentLevel + 1;
-    
+
     // Respawn monster with increased health based on config
-    const newMonsterHp = config.gameBalance.calculateMonsterHp ? 
-      config.gameBalance.calculateMonsterHp(newLevel) :
-      config.gameBalance.monster.baseHp + (newLevel - 1) * config.gameBalance.monster.hpPerLevel;
-      
+    const newMonsterHp = config.gameBalance.calculateMonsterHp
+      ? config.gameBalance.calculateMonsterHp(newLevel)
+      : config.gameBalance.monster.baseHp +
+        (newLevel - 1) * config.gameBalance.monster.hpPerLevel;
+
     this.monster.hp = newMonsterHp;
     this.monster.maxHp = newMonsterHp;
     this.monster.age = config.gameBalance.monster.baseAge;
-    
+
     // Log respawn using config messages
     log.push(config.messages.getEvent('levelUp', { level: newLevel }));
     log.push(config.messages.getEvent('monsterRespawns', { hp: newMonsterHp }));
-    
+
     return {
       newLevel,
-      monsterState: this.getState()
+      monsterState: this.getState(),
     };
   }
-  
+
   /**
    * Check if monster is dead
    * @returns {boolean} Whether the monster is dead

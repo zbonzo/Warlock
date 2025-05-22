@@ -12,7 +12,7 @@ const availableClasses = [
   'Pyromancer',
   'Wizard',
   'Assassin',
-  'Rogue',
+  'Alchemist',
   'Priest',
   'Oracle',
   'Barbarian', // New class added
@@ -28,7 +28,7 @@ const availableClasses = [
  * @type {Object}
  */
 const classCategories = {
-  Melee: ['Warrior', 'Assassin', 'Rogue', 'Barbarian'], // Added Barbarian to Melee
+  Melee: ['Warrior', 'Assassin', 'Alchemist', 'Barbarian'], // Added Barbarian to Melee
   Caster: ['Pyromancer', 'Wizard', 'Priest', 'Oracle', 'Shaman', 'Druid'], // Removed Seer
   Ranged: ['Gunslinger', 'Tracker'],
 };
@@ -64,7 +64,7 @@ const classAttributes = {
     damageModifier: 1.4, // Very high damage
     description: 'Stealth-focused class with high single-target damage.',
   },
-  Rogue: {
+  Alchemist: {
     hpModifier: 1.0, // Standard HP
     armorModifier: 0.0, // No armor bonus
     damageModifier: 1.2, // Higher damage
@@ -343,17 +343,20 @@ const classAbilities = {
       type: 'deathMark',
       name: 'Death Mark',
       category: 'Special',
-      effect: 'poison',
+      effect: 'poisonAndInvisible', // New combined effect
       target: 'Single',
-      params: { poison: { damage: 10, turns: 2 } },
+      params: {
+        poison: { damage: 15, turns: 3 }, // Higher damage, longer duration
+        selfInvisible: { duration: 1 }, // Make caster invisible
+      },
       unlockAt: 4,
       order: 140,
-      cooldown: 0,
+      cooldown: 2, // Add cooldown since it's now more powerful
       flavorText:
-        'Brand your foe with a lingering curse, ensuring their demise is slow and painful.',
+        'Mark your target for death with a lethal curse, then vanish into the shadows to watch them suffer.',
     },
   ],
-  Rogue: [
+  Alchemist: [
     {
       type: 'poisonStrike',
       name: 'Poison Strike',
@@ -394,17 +397,21 @@ const classAbilities = {
         'A sharp, unexpected thrust that can leave an opponent exposed.',
     },
     {
-      type: 'shadowstep',
-      name: 'Shadowstep',
+      type: 'poisonTrap',
+      name: 'Poison Trap',
       category: 'Special',
-      effect: 'invisible',
-      target: 'Single',
-      params: { duration: 1 },
+      effect: 'poisonAndVulnerable', // New combined effect
+      target: 'Multi',
+      params: {
+        poison: { damage: 8, turns: 2 },
+        vulnerable: { damageIncrease: 30, turns: 2 },
+        hitChance: 0.75, // 75% chance to affect each target
+      },
       unlockAt: 4,
-      order: 110,
+      order: 120,
       cooldown: 3,
       flavorText:
-        "Dart through the shadows to an ally's side, unseen and unheard.",
+        'Lay multiple hidden traps that poison and weaken your enemies, making them vulnerable to further attacks.',
     },
   ],
   Priest: [
@@ -768,16 +775,20 @@ const classAbilities = {
         'Fire an arrow that tears flesh and causes a persistent bleed.',
     },
     {
-      type: 'poisonTrap',
-      name: 'Poison Trap',
+      type: 'controlMonster',
+      name: 'Control Monster',
       category: 'Special',
-      effect: 'poison',
-      target: 'Multi',
-      params: { poison: { damage: 7, turns: 2 } },
+      effect: 'monsterControl',
+      target: 'Single', // Target who the monster will attack
+      params: {
+        damageBoost: 1.5, // 50% more damage
+        forcedAttack: true,
+      },
       unlockAt: 4,
-      order: 120,
-      cooldown: 3,
-      flavorText: 'Lay a hidden trap that ensnares and envenoms unwary foes.',
+      order: 100, // High priority to execute before monster normally acts
+      cooldown: 4,
+      flavorText:
+        'Use your knowledge of beast behavior to command the monster, forcing it to attack your chosen target with enhanced ferocity.',
     },
   ],
   Druid: [

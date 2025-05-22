@@ -8,7 +8,7 @@ import './ClassCard.css';
 
 /**
  * Get icon for a class
- * 
+ *
  * @param {string} className - Class name
  * @returns {string} Icon for the class
  */
@@ -17,23 +17,23 @@ const getClassIcon = (className) => {
     Warrior: '⚔️',
     Pyromancer: '🔥',
     Wizard: '🧙',
-    Assassin: '🗡️',
-    Rogue: '👥',
-    Priest: '✝️',
+    Assassin: '🥷',
+    Alchemist: '🧪',
+    Priest: '✨',
     Oracle: '🔮',
-    Seer: '👁️',
-    Shaman: '🌪️',
-    Gunslinger: '🔫',
+    Barbarian: '🪓', // Added Barbarian with axe icon
+    Shaman: '🌀',
+    Gunslinger: '💥',
     Tracker: '🏹',
-    Druid: '🌿'
+    Druid: '🌿',
   };
-  
+
   return icons[className] || '📚';
 };
 
 /**
  * ClassCard component displays a selectable class card
- * 
+ *
  * @param {Object} props - Component props
  * @param {string} props.className - The class name to display
  * @param {Function} props.onSelect - Callback when class is selected
@@ -42,7 +42,7 @@ const getClassIcon = (className) => {
 const ClassCard = ({ className, onSelect }) => {
   const theme = useTheme();
   const icon = getClassIcon(className);
-  
+
   return (
     <div className="class-card" onClick={onSelect}>
       <div className="class-icon">{icon}</div>
@@ -53,7 +53,7 @@ const ClassCard = ({ className, onSelect }) => {
 
 ClassCard.propTypes = {
   className: PropTypes.string.isRequired,
-  onSelect: PropTypes.func.isRequired
+  onSelect: PropTypes.func.isRequired,
 };
 
 export default ClassCard;

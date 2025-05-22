@@ -377,6 +377,7 @@ function handleDeathMark(actor, target, ability, log, systems) {
     damage: 5,
   };
 
+  // Apply high-damage poison to target
   const poisonData = ability.params.poison || {};
   const modifiedPoisonDamage = Math.floor(
     (poisonData.damage || poisonDefaults.damage) * (actor.damageMod || 1.0)
@@ -392,9 +393,21 @@ function handleDeathMark(actor, target, ability, log, systems) {
     log
   );
 
-  log.push(
-    `${actor.name} uses ${ability.name} on ${target.name}, poisoning them for ${modifiedPoisonDamage} damage over ${poisonData.turns || poisonDefaults.turns} turns.`
+  // Apply invisibility to the caster (actor)
+  const invisibleData = ability.params.selfInvisible || { duration: 1 };
+  systems.statusEffectManager.applyEffect(
+    actor.id,
+    'invisible',
+    {
+      turns: invisibleData.duration,
+    },
+    log
   );
+
+  log.push(
+    `${actor.name} uses ${ability.name} on ${target.name}, marking them for death with ${modifiedPoisonDamage} poison damage over ${poisonData.turns || poisonDefaults.turns} turns, then vanishes into the shadows!`
+  );
+
   return true;
 }
 
@@ -422,26 +435,26 @@ function handlePoisonTrap(actor, target, ability, log, systems) {
 
   // Get poison defaults from config if needed
   const poisonDefaults = config.getStatusEffectDefaults('poison') || {
-    turns: 3,
+    turns: 2,
     damage: 5,
   };
 
   const poisonData = ability.params.poison || {};
+  const vulnerableData = ability.params.vulnerable || {};
   const modifiedPoisonDamage = Math.floor(
     (poisonData.damage || poisonDefaults.damage) * (actor.damageMod || 1.0)
   );
 
-  // Apply poison to multiple targets
-  log.push(`${actor.name} sets a ${ability.name}!`);
+  // Apply poison and vulnerability to multiple targets
+  log.push(`${actor.name} sets multiple ${ability.name}s!`);
   let targetsHit = 0;
 
-  // Get trap hit chance from config or use default
-  const trapHitChance =
-    config.gameBalance?.abilities?.poisonTrap?.hitChance || 0.7;
+  // Get trap hit chance from ability params or use default
+  const trapHitChance = ability.params.hitChance || 0.75;
 
   for (const potentialTarget of targets) {
     if (Math.random() < trapHitChance) {
-      // 70% chance by default to affect each target
+      // Apply poison
       systems.statusEffectManager.applyEffect(
         potentialTarget.id,
         'poison',
@@ -451,15 +464,24 @@ function handlePoisonTrap(actor, target, ability, log, systems) {
         },
         log
       );
+
+      // Apply vulnerability
+      potentialTarget.applyVulnerability(
+        vulnerableData.damageIncrease || 30,
+        vulnerableData.turns || 2
+      );
+
       log.push(
-        `${potentialTarget.name} is caught in ${actor.name}'s ${ability.name}, taking ${modifiedPoisonDamage} poison damage over ${poisonData.turns || poisonDefaults.turns} turns.`
+        `${potentialTarget.name} is caught in ${actor.name}'s ${ability.name}, taking ${modifiedPoisonDamage} poison damage over ${poisonData.turns || poisonDefaults.turns} turns and becoming vulnerable (+${vulnerableData.damageIncrease || 30}% damage) for ${vulnerableData.turns || 2} turns!`
       );
       targetsHit++;
     }
   }
 
   if (targetsHit === 0) {
-    log.push(`${actor.name}'s ${ability.name} doesn't catch anyone!`);
+    log.push(`${actor.name}'s ${ability.name}s don't catch anyone!`);
+  } else {
+    log.push(`${targetsHit} enemies were caught in the traps!`);
   }
 
   return true;
