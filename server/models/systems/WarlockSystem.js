@@ -81,6 +81,9 @@ class WarlockSystem {
    */
   isPlayerWarlock(playerId) {
     const player = this.players.get(playerId);
+    if (!player) {
+      return false; // Explicitly return false
+    }
     return player && player.isWarlock;
   }
 
