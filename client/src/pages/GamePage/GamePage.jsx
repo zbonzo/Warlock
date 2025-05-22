@@ -731,6 +731,9 @@ const GamePage = ({
         <HistoryColumn
           isVisible={!isMobile || activeTab === 'history'}
           eventsLog={eventsLog}
+          currentPlayerId={me?.id || ''}
+          players={players} // Add this line
+          showAllEvents={false} // Add this line
         />
       </div>
     </div>

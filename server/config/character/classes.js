@@ -338,7 +338,7 @@ const classAbilities = {
       order: 1035,
       cooldown: 1,
       flavorText: 'Two swift, debilitating strikes aimed at vulnerable points.',
-    }, // `hits` param is new
+    },
     {
       type: 'deathMark',
       name: 'Death Mark',

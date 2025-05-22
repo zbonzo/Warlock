@@ -87,11 +87,11 @@ export const UI = {
 // Class and race icons (these are UI-specific and don't need to be fetched)
 export const ICONS = {
   RACES: {
-    Human: '👤',
+    Human: '👩‍🌾',
     Dwarf: '🧔‍♂️',
     Elf: '🧝',
-    Orc: '👹',
-    Satyr: '👺',
+    Orc: '🧌',
+    Satyr: '🐐',
     Skeleton: '💀',
   },
 
@@ -99,12 +99,12 @@ export const ICONS = {
     Warrior: '⚔️',
     Pyromancer: '🔥',
     Wizard: '🧙',
-    Assassin: '🗡️',
-    Rogue: '👥',
-    Priest: '✝️',
+    Assassin: '🥷',
+    Rogue: '🗡️',
+    Priest: '✨',
     Oracle: '🔮',
     Seer: '👁️',
-    Shaman: '🌪️',
+    Shaman: '🌀',
     Gunslinger: '🔫',
     Tracker: '🏹',
     Druid: '🌿',
