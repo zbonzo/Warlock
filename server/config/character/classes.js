@@ -41,52 +41,52 @@ const classCategories = {
 const classAttributes = {
   Warrior: {
     hpModifier: 1.2, // More HP
-    armorModifier: 1.5, // More armor
+    armorModifier: 2.5, // More armor
     damageModifier: 1.1, // Slightly increased damage
     description:
       'Tank class with high health and armor, focused on protection.',
   },
   Pyromancer: {
     hpModifier: 0.9, // Less HP
-    armorModifier: 0.0, // No armor bonus
+    armorModifier: 1.0, // No armor bonus
     damageModifier: 1.3, // High damage
     description: 'Fire-based caster with high damage output and area effects.',
   },
   Wizard: {
     hpModifier: 0.8, // Low HP
-    armorModifier: 0.5, // Some magical protection
+    armorModifier: 1.5, // Some magical protection
     damageModifier: 1.2, // Higher damage
     description: 'Versatile spellcaster with powerful arcane abilities.',
   },
   Assassin: {
     hpModifier: 0.9, // Less HP
-    armorModifier: 0.0, // No armor bonus
+    armorModifier: 1.0, // No armor bonus
     damageModifier: 1.4, // Very high damage
     description: 'Stealth-focused class with high single-target damage.',
   },
   Alchemist: {
     hpModifier: 1.0, // Standard HP
-    armorModifier: 0.0, // No armor bonus
+    armorModifier: 1.0, // No armor bonus
     damageModifier: 1.2, // Higher damage
     description:
       'Agile fighter with invisibility abilities and poison attacks.',
   },
   Priest: {
     hpModifier: 1.0, // Standard HP
-    armorModifier: 0.5, // Some divine protection
+    armorModifier: 1.5, // Some divine protection
     damageModifier: 0.8, // Low damage
     description: 'Healing-focused class with support abilities.',
   },
   Oracle: {
     hpModifier: 0.9, // Less HP
-    armorModifier: 0.5, // Some divine protection
+    armorModifier: 1.5, // Some divine protection
     damageModifier: 0.9, // Low damage
     description:
       'Divination-focused class that can reveal warlocks and manipulate fate.',
   },
   Barbarian: {
     hpModifier: 1.3, // High HP
-    armorModifier: 0.0, // No armor bonus
+    armorModifier: 1.0, // No armor bonus
     damageModifier: 1.3, // High damage
     description: 'Savage warrior who trades safety for overwhelming offense.',
   },
@@ -98,25 +98,25 @@ const classAttributes = {
   // },
   Shaman: {
     hpModifier: 1.0, // Standard HP
-    armorModifier: 0.5, // Some spiritual protection
+    armorModifier: 1.5, // Some spiritual protection
     damageModifier: 1.0, // Standard damage
     description: 'Elemental caster with healing and lightning abilities.',
   },
   Gunslinger: {
     hpModifier: 0.9, // Less HP
-    armorModifier: 0.0, // No armor bonus
+    armorModifier: 1.0, // No armor bonus
     damageModifier: 1.3, // High damage
     description: 'Ranged specialist with high damage and evasion abilities.',
   },
   Tracker: {
     hpModifier: 1.0, // Standard HP
-    armorModifier: 0.0, // No armor bonus
+    armorModifier: 1.0, // No armor bonus
     damageModifier: 1.1, // Slightly increased damage
     description: 'Skilled hunter with traps and precise attacks.',
   },
   Druid: {
     hpModifier: 1.1, // More HP
-    armorModifier: 0.5, // Some natural protection
+    armorModifier: 1.5, // Some natural protection
     damageModifier: 0.9, // Slightly decreased damage
     description: 'Nature-focused class with healing and crowd control.',
   },

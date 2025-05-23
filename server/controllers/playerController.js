@@ -54,6 +54,44 @@ function handlePlayerJoin(io, socket, gameCode, playerName) {
 }
 
 /**
+ * Determine the current game phase for reconnection
+ * @param {Object} game - Game object
+ * @returns {string} Current game phase
+ * @private
+ */
+function determineGamePhase(game) {
+  if (!game.started) {
+    // Check if any players haven't selected characters yet
+    const playersWithoutCharacters = Array.from(game.players.values()).filter(
+      (p) => !p.race || !p.class
+    );
+
+    if (playersWithoutCharacters.length > 0) {
+      return 'characterSelect';
+    } else {
+      return 'lobby'; // All characters selected, waiting for host to start
+    }
+  }
+
+  // Game has started
+  if (game.pendingActions && game.pendingActions.length > 0) {
+    return 'roundResults'; // Actions are being processed
+  }
+
+  // Check if we're waiting for actions
+  const alivePlayers = game.getAlivePlayers();
+  const actionsNeeded = alivePlayers.filter(
+    (p) => !game.systems.statusEffectManager.isPlayerStunned(p.id)
+  ).length;
+
+  if (game.pendingActions.length < actionsNeeded) {
+    return 'chooseAction'; // Waiting for more actions
+  }
+
+  return 'chooseAction'; // Default to choose action if unclear
+}
+
+/**
  * Handle player reconnection attempt
  * @param {Object} io - Socket.IO instance
  * @param {Object} socket - Client socket
@@ -82,7 +120,42 @@ function handlePlayerReconnection(io, socket, gameCode, playerName) {
       // Join socket to game room
       socket.join(gameCode);
 
-      // Send game state to reconnecting player
+      // Determine current game phase
+      const gamePhase = determineGamePhase(game);
+
+      // Get the reconnecting player's data
+      const player = game.players.get(socket.id);
+      const playerData = player
+        ? {
+            id: player.id,
+            name: player.name,
+            race: player.race,
+            class: player.class,
+            hp: player.hp,
+            maxHp: player.maxHp,
+            armor: player.armor,
+            damageMod: player.damageMod,
+            isWarlock: player.isWarlock,
+            isAlive: player.isAlive,
+            isReady: player.isReady,
+            unlocked: player.unlocked,
+            racialAbility: player.racialAbility,
+            racialUsesLeft: player.racialUsesLeft,
+            racialCooldown: player.racialCooldown,
+            level: level,
+            statusEffects: player.statusEffects,
+            abilityCooldowns: player.abilityCooldowns || {},
+            stoneArmor: player.stoneArmorIntact
+              ? {
+                  active: true,
+                  value: player.stoneArmorValue,
+                  effectiveArmor: player.getEffectiveArmor(),
+                }
+              : null,
+          }
+        : null;
+
+      // Send comprehensive game state to reconnecting player
       socket.emit('gameReconnected', {
         players,
         monster,
@@ -90,19 +163,25 @@ function handlePlayerReconnection(io, socket, gameCode, playerName) {
         level,
         started,
         host,
+        gamePhase, // Add current game phase
+        playerData, // Add specific player data
+        // Add additional context
+        gameCode,
+        isHost: socket.id === host,
       });
 
       // Inform other players of the reconnection
       socket.to(gameCode).emit('playerReconnected', {
         playerId: socket.id,
         playerName,
+        message: `${playerName} has reconnected to the game.`,
       });
 
       // Refresh game timeout
       gameService.refreshGameTimeout(io, gameCode);
 
       logger.info(
-        `Player ${playerName} successfully reconnected to game ${gameCode}`
+        `Player ${playerName} successfully reconnected to game ${gameCode} (phase: ${gamePhase})`
       );
       return true;
     }
@@ -257,13 +336,40 @@ function handlePlayerDisconnect(io, socket) {
   const game = gameService.games.get(gameCode);
   if (!game) return;
 
+  // Check if this was the host who disconnected
+  const wasHost = socket.id === game.hostId;
+
   // IMPORTANT: Don't remove the player from the game right away!
   // Notify other players of temporary disconnection
   io.to(gameCode).emit('playerTemporaryDisconnect', {
     playerId: socket.id,
     playerName,
-    isHost: socket.id === game.hostId,
+    isHost: wasHost,
   });
+
+  // If the host disconnected, immediately reassign host to prevent game deadlock
+  if (wasHost && game.players.size > 1) {
+    const playerIds = Array.from(game.players.keys()).filter(
+      (id) => id !== socket.id
+    );
+    if (playerIds.length > 0) {
+      const newHostId = playerIds[0];
+      game.hostId = newHostId;
+
+      logger.info(
+        `Host ${playerName} disconnected, reassigning to ${newHostId} in game ${gameCode}`
+      );
+
+      // Notify all players of the host change immediately
+      io.to(gameCode).emit('hostChanged', {
+        hostId: newHostId,
+        message: `${playerName} disconnected. Host transferred to another player.`,
+      });
+
+      // Update the player list to reflect the new host
+      gameService.broadcastPlayerList(io, gameCode);
+    }
+  }
 
   // Get reconnection window from config or use default
   const reconnectionWindow = config.player?.reconnectionWindow || 60 * 1000; // Default: 60 seconds
@@ -313,6 +419,13 @@ function handlePermanentDisconnection(io, gameCode, socketId, playerName) {
   // Clean up session
   playerSessionManager.removeSession(gameCode, playerName);
 
+  // Notify other players of permanent disconnection
+  io.to(gameCode).emit('playerDisconnected', {
+    playerId: socketId,
+    playerName,
+    message: `${playerName} has left the game.`,
+  });
+
   // If game is in progress, check win conditions
   if (game.started) {
     if (gameService.checkGameWinConditions(io, gameCode, playerName)) {
@@ -324,12 +437,15 @@ function handlePermanentDisconnection(io, gameCode, socketId, playerName) {
   // Broadcast updated player list
   gameService.broadcastPlayerList(io, gameCode);
 
-  // Reassign host if needed
+  // Reassign host if needed (this shouldn't be necessary if we did it on temporary disconnect)
   if (wasHost && game.players.size > 0) {
     const newHostId = Array.from(game.players.keys())[0];
     game.hostId = newHostId;
-    logger.info(`New host assigned in game ${gameCode}: ${newHostId}`);
-    io.to(gameCode).emit('hostChanged', { hostId: newHostId });
+    logger.info(`Final host reassignment in game ${gameCode}: ${newHostId}`);
+    io.to(gameCode).emit('hostChanged', {
+      hostId: newHostId,
+      message: `Host privileges transferred due to disconnection.`,
+    });
   }
 }
 

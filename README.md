@@ -21,6 +21,26 @@ A real-time multiplayer browser game where players collaborate to defeat monster
 - **Scaling difficulty** as the game progresses
 - **Reconnection support** for dropped connections
 
+- **Responsive Design**
+
+- **Desktop Layout** Three-column grid with players, actions, and history
+- **Mobile Layout** Tabbed interface for optimal mobile experience
+- **Automatic Detection** Seamlessly adapts to screen size changes
+
+#### Theme System
+
+- **Light Theme** Default bright theme for standard usage
+- **Dark Theme** Eye-friendly dark mode with proper contrast
+- **Colorblind Theme** Accessibility-focused theme with colorblind-friendly colors
+- **System Integration** Automatically detects and follows system theme preferences
+
+#### Enhanced UI Components
+
+- **Rich Ability Cards** Detailed ability information with cooldown tracking
+- **Interactive Player Cards** Real-time health, status effects, and warlock detection
+- **Personalized Event Log** Shows different information based on player perspective
+- **Visual Feedback** Smooth animations and transitions throughout the interface
+
 ## 🚀 Quick Start
 
 ### Prerequisites

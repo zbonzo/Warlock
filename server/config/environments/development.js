@@ -32,11 +32,7 @@ module.exports = {
   },
 
   // CORS settings for development
-  corsOrigins: [
-    'http://localhost:3000',
-    'http://localhost:3001',
-    'http://zacomen:3000',
-  ],
+  corsOrigins: '*',
 
   // Development debugging features
   debug: {

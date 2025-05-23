@@ -61,7 +61,8 @@ function refreshGameTimeout(io, gameCode) {
  */
 function createGame(gameCode) {
   // Check if we already have too many games
-  if (games.size >= config.maxGames) {
+  const maxGames = config.maxGames || 100; // Default max games
+  if (games.size >= maxGames) {
     // Prevent server overload
     throwGameStateError(
       'Server is too busy right now. Please try again later.'
@@ -181,6 +182,10 @@ function checkGameWinConditions(io, gameCode, disconnectedPlayerName) {
       players: game.getPlayersInfo(),
       winner: 'Good',
     });
+
+    // Clean up the game
+    clearTimeout(gameTimers.get(gameCode));
+    gameTimers.delete(gameCode);
     games.delete(gameCode);
     return true;
   }
@@ -194,10 +199,49 @@ function checkGameWinConditions(io, gameCode, disconnectedPlayerName) {
       players: game.getPlayersInfo(),
       winner: 'Evil',
     });
+
+    // Clean up the game
+    clearTimeout(gameTimers.get(gameCode));
+    gameTimers.delete(gameCode);
     games.delete(gameCode);
     return true;
   }
   return false;
+}
+
+/**
+ * Determine if players are waiting for actions
+ * @param {GameRoom} game - Game room
+ * @returns {boolean} Whether the game is waiting for player actions
+ */
+function isWaitingForActions(game) {
+  if (!game.started) return false;
+
+  const alivePlayers = game.getAlivePlayers();
+  const unstunnedPlayers = alivePlayers.filter(
+    (p) => !game.systems.statusEffectManager.isPlayerStunned(p.id)
+  );
+
+  return game.pendingActions.length < unstunnedPlayers.length;
+}
+
+/**
+ * Determine if the game is currently showing round results
+ * @param {GameRoom} game - Game room
+ * @returns {boolean} Whether the game is in round results phase
+ */
+function isInRoundResults(game) {
+  if (!game.started) return false;
+
+  // This is tricky to determine without additional state
+  // For now, we'll assume if actions are submitted but not processed, we're in results
+  const alivePlayers = game.getAlivePlayers();
+  const unstunnedPlayers = alivePlayers.filter(
+    (p) => !game.systems.statusEffectManager.isPlayerStunned(p.id)
+  );
+
+  // If we have all actions, we might be processing or showing results
+  return game.pendingActions.length >= unstunnedPlayers.length;
 }
 
 /**
@@ -244,8 +288,9 @@ function processReconnection(gameCode, playerName, newSocketId) {
       return false;
     }
 
-    // Return the reconnection data
-    return {
+    // Get additional game state information
+    const gameState = {
+      // Basic game info
       game,
       oldSocketId,
       players: game.getPlayersInfo(),
@@ -254,13 +299,65 @@ function processReconnection(gameCode, playerName, newSocketId) {
       level: game.level,
       started: game.started,
       host: game.hostId,
+
+      // Additional context for proper screen routing
+      waitingForActions: isWaitingForActions(game),
+      inRoundResults: isInRoundResults(game),
+
+      // Ready state info for lobby
+      nextReady: Array.from(game.nextReady || []),
+
+      // Action state
+      pendingActionsCount: game.pendingActions ? game.pendingActions.length : 0,
+
+      // Game timing info
+      lastActivity: Date.now(),
     };
+
+    // Return the comprehensive reconnection data
+    return gameState;
   } else {
     logger.warn(
       `Player ${playerName} not found in game with old socket ID: ${oldSocketId}`
     );
     return false;
   }
+}
+
+/**
+ * Get game statistics for debugging
+ * @returns {Object} Game statistics
+ */
+function getGameStats() {
+  return {
+    totalGames: games.size,
+    activeTimers: gameTimers.size,
+    gameList: Array.from(games.keys()),
+  };
+}
+
+/**
+ * Force cleanup a game (for testing/debugging)
+ * @param {string} gameCode - Game code to cleanup
+ * @returns {boolean} Whether cleanup was successful
+ */
+function forceCleanupGame(gameCode) {
+  const hasGame = games.has(gameCode);
+  const hasTimer = gameTimers.has(gameCode);
+
+  if (hasTimer) {
+    clearTimeout(gameTimers.get(gameCode));
+    gameTimers.delete(gameCode);
+  }
+
+  if (hasGame) {
+    games.delete(gameCode);
+  }
+
+  logger.info(
+    `Force cleaned up game ${gameCode} (had game: ${hasGame}, had timer: ${hasTimer})`
+  );
+  return hasGame || hasTimer;
 }
 
 module.exports = {
@@ -275,4 +372,10 @@ module.exports = {
   checkGameWinConditions,
   canPlayerJoinGame,
   processReconnection,
+  isWaitingForActions,
+  isInRoundResults,
+
+  // Debug/utility functions
+  getGameStats,
+  forceCleanupGame,
 };
