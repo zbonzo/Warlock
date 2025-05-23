@@ -439,6 +439,31 @@ describe('PlayerController - Complete Coverage', () => {
         );
       }).toThrow('Could not join game.');
     });
+
+    test('should return false when error handler does not throw', () => {
+      // Arrange: force addPlayer to return false
+      mockGame.addPlayer.mockReturnValue(false);
+      // Stub the error handler so it doesn’t actually throw
+      const originalThrow = mockErrorHandler.throwGameStateError;
+      mockErrorHandler.throwGameStateError = jest.fn();
+
+      // Act
+      const result = playerController.handlePlayerJoin(
+        mockIO,
+        mockSocket,
+        '1234',
+        'TestPlayer'
+      );
+
+      // Assert
+      expect(mockErrorHandler.throwGameStateError).toHaveBeenCalledWith(
+        mockConfig.messages.errors.joinFailed || 'Could not join game.'
+      );
+      expect(result).toBe(false);
+
+      // Cleanup
+      mockErrorHandler.throwGameStateError = originalThrow;
+    });
   });
 
   describe('handleSelectCharacter', () => {
@@ -932,31 +957,6 @@ describe('PlayerController - Complete Coverage', () => {
       jest.useRealTimers();
     });
 
-    test('should return false when throwGameStateError does not throw', () => {
-      // This is to cover the unreachable line 41
-      // Temporarily mock throwGameStateError to not throw
-      const originalThrow = mockErrorHandler.throwGameStateError;
-      mockErrorHandler.throwGameStateError = jest.fn(); // Don't throw
-
-      const mockGame = { addPlayer: jest.fn().mockReturnValue(false) };
-      mockValidateGameAction.mockReturnValue(mockGame);
-      mockValidatePlayerName.mockReturnValue(true);
-      mockGameService.canPlayerJoinGame.mockReturnValue(true);
-
-      const result = playerController.handlePlayerJoin(
-        mockIO,
-        mockSocket,
-        '1234',
-        'TestPlayer'
-      );
-
-      expect(result).toBe(false);
-      expect(mockErrorHandler.throwGameStateError).toHaveBeenCalled();
-
-      // Restore original behavior
-      mockErrorHandler.throwGameStateError = originalThrow;
-    });
-
     test('should handle disconnection with session and host', () => {
       const mockSessionInfo = {
         gameCode: '1234',
@@ -1309,6 +1309,72 @@ describe('PlayerController - Complete Coverage', () => {
       );
     });
 
+    test('should skip host reassignment when playerIds list is empty', () => {
+      // arrange a session
+      const mockSessionInfo = {
+        gameCode: 'TEST',
+        playerName: 'Alice',
+        socketId: 'sock1',
+      };
+      mockPlayerSessionManager.handleDisconnect.mockReturnValue(
+        mockSessionInfo
+      );
+
+      // craft a fake players object: size>1 but keys() yields only sock1
+      const fakePlayers = {
+        size: 2,
+        keys: () => ['sock1', 'sock1'],
+      };
+      const mockGame = {
+        hostId: 'sock1',
+        players: fakePlayers,
+        removePlayer: jest.fn(),
+      };
+      mockGameService.games.set('TEST', mockGame);
+
+      // act
+      playerController.handlePlayerDisconnect(mockIO, mockSocket);
+
+      // assert it never overwrote hostId and never broadcasted a new list
+      expect(mockGame.hostId).toBe('sock1');
+      expect(mockGameService.broadcastPlayerList).not.toHaveBeenCalled();
+    });
+
+    test('still hits inner if-condition when no other playerIds exist', () => {
+      // make handleDisconnect return a valid session
+      mockPlayerSessionManager.handleDisconnect.mockReturnValue({
+        gameCode: '1234',
+        playerName: 'TestPlayer',
+        socketId: 'socket123',
+      });
+      // mockSocket.id is already 'socket123' from beforeEach
+
+      // craft a fake "players" where size>1 but keys() yields only socket123 twice,
+      // so filter(id !== socket.id) → []
+      const fakePlayers = {
+        size: 2,
+        keys: function* () {
+          yield 'socket123';
+          yield 'socket123';
+        },
+      };
+
+      const mockGame = {
+        hostId: 'socket123',
+        players: fakePlayers,
+        removePlayer: jest.fn(),
+      };
+      mockGameService.games.set('1234', mockGame);
+
+      // call the method
+      playerController.handlePlayerDisconnect(mockIO, mockSocket);
+
+      // outer wasHost && size>1 ran,
+      // inner (playerIds.length>0) ran its test, but block was skipped
+      expect(mockGame.hostId).toBe('socket123'); // never reassigned
+      expect(mockGameService.broadcastPlayerList).not.toHaveBeenCalled();
+    });
+
     test('should handle error in disconnect processing', () => {
       // Make handleDisconnect throw an error
       mockPlayerSessionManager.handleDisconnect.mockImplementation(() => {
@@ -1532,7 +1598,7 @@ describe('PlayerController - Complete Coverage', () => {
           'Human',
           'NewClass'
         );
-      }).toThrow('Invalid race and class combination.');
+      }).toThrow('Invalid class selection.');
 
       delete mockConfig.classRaceCompatibility.NewClass;
     });

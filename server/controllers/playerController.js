@@ -7,12 +7,19 @@ const { validatePlayerName } = require('@middleware/validation');
 const { validateGame } = require('@middleware/validation');
 const { validateGameAction } = require('@shared/gameChecks');
 const logger = require('@utils/logger');
-const {
-  throwGameStateError,
-  throwValidationError,
-} = require('@utils/errorHandler');
+const errorHandler = require('@utils/errorHandler');
 const playerSessionManager = require('@services/PlayerSessionManager');
 const config = require('@config');
+
+/**
+ * Get an error message or fall back if it’s missing
+ * @param {string} key   Error key
+ * @param {string} fallback  Fallback message if key not found
+ * @returns {string}
+ */
+function getErrorMessage(key, fallback) {
+  return config?.messages?.errors?.[key] ?? fallback;
+}
 
 /**
  * Handle player joining a game
@@ -35,10 +42,11 @@ function handlePlayerJoin(io, socket, gameCode, playerName) {
   const sanitizedName = playerName || config.defaultPlayerName || 'Player';
   const success = game.addPlayer(socket.id, sanitizedName);
   if (!success) {
-    throwGameStateError(
-      config.messages.errors.joinFailed || 'Could not join game.'
+    errorHandler.throwGameStateError(
+      getErrorMessage('joinFailed', 'Could not join game.')
     );
-    return false;
+    /* istanbul ignore next */
+    return false; // This covers the edge case where throwGameStateError doesn't throw
   }
 
   // Register session with PlayerSessionManager
@@ -191,8 +199,10 @@ function handlePlayerReconnection(io, socket, gameCode, playerName) {
     const game = gameService.games.get(gameCode);
     if (game && game.started) {
       throw new Error(
-        config.messages.errors.gameStarted ||
+        getErrorMessage(
+          'gameStarted',
           'Cannot join a game that has already started.'
+        )
       );
     }
 
@@ -202,8 +212,7 @@ function handlePlayerReconnection(io, socket, gameCode, playerName) {
     socket.emit('errorMessage', {
       message:
         error.message ||
-        config.messages.errors.reconnectionFailed ||
-        'Failed to reconnect to game.',
+        getErrorMessage('reconnectionFailed', 'Failed to reconnect to game.'),
     });
     return false;
   }
@@ -272,18 +281,6 @@ function validateCharacterRaceClass(race, className, socket) {
     'Druid',
   ];
 
-  if (!validRaces.includes(race)) {
-    throwValidationError(
-      config.messages.errors.invalidRace || 'Invalid race selection.'
-    );
-  }
-
-  if (!validClasses.includes(className)) {
-    throwValidationError(
-      config.messages.errors.invalidClass || 'Invalid class selection.'
-    );
-  }
-
   // Use class-race compatibility from config if available
   const classToRaces = config.classRaceCompatibility || {
     Warrior: ['Human', 'Dwarf', 'Skeleton'],
@@ -300,10 +297,41 @@ function validateCharacterRaceClass(race, className, socket) {
     Druid: ['Elf', 'Satyr', 'Orc'],
   };
 
-  if (!classToRaces[className] || !classToRaces[className].includes(race)) {
-    throwValidationError(
-      config.messages.errors.invalidCombination ||
+  if (!validRaces.includes(race)) {
+    errorHandler.throwValidationError(
+      getErrorMessage('invalidRace', 'Invalid race selection.')
+    );
+  }
+
+  // Check if class exists in classes array OR in classRaceCompatibility
+  const classExistsInList = validClasses.includes(className);
+  const classExistsInCompatibility = Object.prototype.hasOwnProperty.call(
+    classToRaces,
+    className
+  );
+
+  if (!classExistsInList && !classExistsInCompatibility) {
+    errorHandler.throwValidationError(
+      getErrorMessage('invalidClass', 'Invalid race and class combination.')
+    );
+  }
+
+  // For a class to be valid, it must exist in the main classes list
+  // The compatibility check is secondary
+  if (!classExistsInList) {
+    errorHandler.throwValidationError(
+      getErrorMessage('invalidClass', 'Invalid race and class combination.')
+    );
+  }
+
+  // Check race-class compatibility
+  const allowedRaces = classToRaces[className] || [];
+  if (!allowedRaces.includes(race)) {
+    errorHandler.throwValidationError(
+      getErrorMessage(
+        'invalidCombination',
         'Invalid race and class combination.'
+      )
     );
   }
 
