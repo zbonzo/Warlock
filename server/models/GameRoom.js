@@ -638,7 +638,7 @@ class GameRoom {
             public: false,
             targetId: actor.id,
             message: '',
-            privateMessage: config.messages.private.youAreStunned,
+            privateMessage: config.messages.privateMessages.youAreStunned,
             attackerMessage: '',
           };
           log.push(stunnedLog);
