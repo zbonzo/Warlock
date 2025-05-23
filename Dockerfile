@@ -1,5 +1,5 @@
 # Stage 1: Build the React frontend
-FROM node:18-alpine AS builder_frontend
+FROM node:24-alpine AS builder_frontend
 WORKDIR /app_frontend
 
 # Copy client's package.json and lock file
@@ -9,11 +9,15 @@ RUN npm install
 # Copy the rest of the client application's source code
 COPY client/ ./
 
+# Set production environment variables for React build
+ENV NODE_ENV=production
+ENV REACT_APP_API_URL=/api
+
 # Build the client application for production
 RUN npm run build
 
 # Stage 2: Prepare the Node.js backend
-FROM node:18-alpine AS builder_backend
+FROM node:24-alpine AS builder_backend
 WORKDIR /app_backend
 
 # Copy backend's package.json and lock file (if they exist)
@@ -25,7 +29,7 @@ RUN if [ -f package.json ]; then npm install --only=production; fi
 COPY server/ ./
 
 # Stage 3: Final image to run both frontend (via Nginx) and backend
-FROM node:18-alpine
+FROM node:24-alpine
 LABEL maintainer="Zachery Bonzo (Zachery@bonzo.dev)"
 LABEL game="Warlock"
 
@@ -55,4 +59,3 @@ EXPOSE 80
 EXPOSE 3001
 
 CMD ["/usr/bin/supervisord", "-c", "/etc/supervisord.conf"]
-

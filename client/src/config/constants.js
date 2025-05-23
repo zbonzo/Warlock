@@ -24,9 +24,21 @@ export const SOCKET_URL = (() => {
   return window.location.origin;
 })();
 
-// API base URL
-export const API_URL =
-  process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
+// API base URL - FIXED FOR PRODUCTION
+export const API_URL = (() => {
+  // If explicitly set via environment variable, use that
+  if (process.env.REACT_APP_API_URL) {
+    return process.env.REACT_APP_API_URL;
+  }
+
+  // In development, use localhost:3001
+  if (process.env.NODE_ENV === 'development') {
+    return 'http://localhost:3001/api';
+  }
+
+  // In production, use relative URL (same origin via nginx proxy)
+  return '/api';
+})();
 
 // Game phases - defines the different screens in the application
 export const GAME_PHASES = {
