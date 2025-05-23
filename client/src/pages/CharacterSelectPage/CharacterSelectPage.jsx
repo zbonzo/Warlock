@@ -195,6 +195,12 @@ const CharacterSelectPage = ({
         <h3 className="section-title">
           <span>Select Your Race</span>
         </h3>
+        {/* Show racial description if available */}
+        {selectedRace && (
+          <div className="racial-descriptions">
+            <p>{config.raceAttributes[selectedRace]?.description || 'None'}</p>
+          </div>
+        )}
 
         <div className="cards-grid">
           {races.map((race) => {
@@ -219,6 +225,14 @@ const CharacterSelectPage = ({
         <h3 className="section-title">
           <span>Select Your Class</span>
         </h3>
+        {/* Show class description if available */}
+        {selectedClass && (
+          <div className="class-descriptions">
+            <p>
+              {config.classAttributes[selectedClass]?.description || 'None'}
+            </p>
+          </div>
+        )}
 
         <div className="cards-grid">
           {classes.map((cls) => {

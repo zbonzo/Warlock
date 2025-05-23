@@ -82,6 +82,26 @@
   background-color: var(--color-secondary);
 }
 
+.racial-descriptions {
+  margin: 10px 0;
+  padding: 10px;
+  justify-content: center;
+  display: flex;
+  background-color: var(--color-surface);
+  border-radius: 8px;
+  box-shadow: var(--shadow-card);
+}
+
+.class-descriptions {
+  margin: 10px 0;
+  padding: 10px;
+  justify-content: center;
+  display: flex;
+  background-color: var(--color-surface);
+  border-radius: 8px;
+  box-shadow: var(--shadow-card);
+}
+
 .cards-grid {
   display: flex;
   flex-wrap: wrap;
