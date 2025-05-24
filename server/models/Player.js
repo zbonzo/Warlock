@@ -1,13 +1,13 @@
 /**
- * @fileoverview Player model with ability cooldown support
- * Manages player state, abilities, status effects, and cooldowns
+ * @fileoverview Player model with enhanced action submission and cooldown support
+ * Manages player state, abilities, status effects, cooldowns, and action validation
  */
 const config = require('@config');
 const logger = require('@utils/logger');
 
 /**
  * Player class representing a single player in the game
- * Handles player state, abilities, effects, and cooldowns
+ * Handles player state, abilities, effects, cooldowns, and action submissions
  */
 class Player {
   /**
@@ -40,12 +40,210 @@ class Player {
     // Ability cooldown tracking
     this.abilityCooldowns = {}; // { abilityType: turnsRemaining }
 
+    // Enhanced action submission tracking
+    this.hasSubmittedAction = false;
+    this.submittedAction = null;
+    this.actionSubmissionTime = null;
+    this.lastValidAction = null;
+    this.actionValidationState = 'none'; // 'none', 'valid', 'invalid'
+
     this.isVulnerable = false; // Direct flag for vulnerability
     this.vulnerabilityIncrease = 0; // Amount of damage increase
 
     // Stone Armor tracking
     this.stoneArmorIntact = false; // Whether the dwarf has stone armor
     this.stoneArmorValue = 0; // Current stone armor value
+  }
+
+  /**
+   * Submit an action for this player with comprehensive validation
+   * @param {string} actionType - Type of action being submitted
+   * @param {string} targetId - Target of the action
+   * @param {Object} additionalData - Additional action data
+   * @returns {Object} Submission result with success status and details
+   */
+  submitAction(actionType, targetId, additionalData = {}) {
+    const result = {
+      success: false,
+      reason: null,
+      action: null,
+    };
+
+    // Check if player is alive
+    if (!this.isAlive) {
+      result.reason = 'Dead players cannot perform actions';
+      logger.debug(`Player ${this.name} tried to submit action while dead`);
+      return result;
+    }
+
+    // Check if already submitted an action this round
+    if (this.hasSubmittedAction) {
+      result.reason = 'Action already submitted this round';
+      logger.debug(`Player ${this.name} tried to submit multiple actions`);
+      return result;
+    }
+
+    // Validate action type exists in unlocked abilities
+    const selectedAbility = this.unlocked.find(
+      (ability) => ability.type === actionType
+    );
+    if (!selectedAbility) {
+      result.reason = `Ability '${actionType}' is not available`;
+      logger.debug(
+        `Player ${this.name} tried to use unavailable ability: ${actionType}`
+      );
+      return result;
+    }
+
+    // Check if ability is on cooldown
+    const cooldown = this.getAbilityCooldown(actionType);
+    if (cooldown > 0) {
+      result.reason = `Ability '${selectedAbility.name}' is on cooldown for ${cooldown} more turns`;
+      logger.debug(
+        `Player ${this.name} tried to use ${actionType} but it's on cooldown (${cooldown} turns)`
+      );
+      return result;
+    }
+
+    // Validate target (basic validation - more detailed validation happens during processing)
+    if (!targetId) {
+      result.reason = 'No target specified';
+      return result;
+    }
+
+    // Store the submitted action
+    const action = {
+      actionType,
+      targetId,
+      ...additionalData,
+      isValid: true,
+      submissionTime: Date.now(),
+    };
+
+    this.submittedAction = action;
+    this.hasSubmittedAction = true;
+    this.actionSubmissionTime = Date.now();
+    this.lastValidAction = { ...action };
+    this.actionValidationState = 'valid';
+
+    result.success = true;
+    result.action = action;
+
+    logger.info(
+      `Player ${this.name} successfully submitted action: ${actionType} -> ${targetId}`
+    );
+    return result;
+  }
+
+  /**
+   * Validate current submitted action against current game state
+   * @param {Array} alivePlayers - List of currently alive players
+   * @param {Object} monster - Monster object
+   * @returns {Object} Validation result with success status and reason
+   */
+  validateSubmittedAction(alivePlayers, monster) {
+    const result = {
+      isValid: false,
+      reason: null,
+    };
+
+    if (!this.hasSubmittedAction || !this.submittedAction) {
+      result.reason = 'No action submitted';
+      this.actionValidationState = 'none';
+      return result;
+    }
+
+    const { actionType, targetId } = this.submittedAction;
+
+    // Re-check ability availability (in case abilities changed)
+    const selectedAbility = this.unlocked.find(
+      (ability) => ability.type === actionType
+    );
+    if (!selectedAbility) {
+      result.reason = `Ability '${actionType}' is no longer available`;
+      this.invalidateAction(result.reason);
+      return result;
+    }
+
+    // Re-check cooldown status
+    const cooldown = this.getAbilityCooldown(actionType);
+    if (cooldown > 0) {
+      result.reason = `Ability '${selectedAbility.name}' is now on cooldown (${cooldown} turns)`;
+      this.invalidateAction(result.reason);
+      return result;
+    }
+
+    // Validate target still exists and is valid
+    if (targetId === '__monster__') {
+      if (!monster || monster.hp <= 0) {
+        result.reason = 'Monster is no longer a valid target';
+        this.invalidateAction(result.reason);
+        return result;
+      }
+    } else {
+      const targetPlayer = alivePlayers.find((p) => p.id === targetId);
+      if (!targetPlayer || !targetPlayer.isAlive) {
+        result.reason = 'Player target is no longer alive or valid';
+        this.invalidateAction(result.reason);
+        return result;
+      }
+    }
+
+    result.isValid = true;
+    this.actionValidationState = 'valid';
+    return result;
+  }
+
+  /**
+   * Invalidate the current action submission
+   * @param {string} reason - Reason for invalidation
+   */
+  invalidateAction(reason) {
+    logger.debug(`Invalidating action for ${this.name}: ${reason}`);
+
+    if (this.submittedAction) {
+      this.submittedAction.isValid = false;
+      this.submittedAction.invalidationReason = reason;
+      this.submittedAction.invalidationTime = Date.now();
+    }
+
+    this.hasSubmittedAction = false;
+    this.actionValidationState = 'invalid';
+    // Keep submittedAction for debugging/history but mark as invalid
+  }
+
+  /**
+   * Clear action submission (typically at start of new round)
+   */
+  clearActionSubmission() {
+    this.hasSubmittedAction = false;
+    this.submittedAction = null;
+    this.actionSubmissionTime = null;
+    this.actionValidationState = 'none';
+    this.isReady = false;
+
+    logger.debug(`Cleared action submission for ${this.name}`);
+  }
+
+  /**
+   * Get submission status for client transmission
+   * @returns {Object} Submission status object
+   */
+  getSubmissionStatus() {
+    return {
+      hasSubmitted: this.hasSubmittedAction,
+      isValid: this.hasSubmittedAction && this.submittedAction?.isValid,
+      validationState: this.actionValidationState,
+      submissionTime: this.actionSubmissionTime,
+      action: this.hasSubmittedAction
+        ? {
+            type: this.submittedAction.actionType,
+            target: this.submittedAction.targetId,
+            isValid: this.submittedAction.isValid,
+            invalidationReason: this.submittedAction.invalidationReason,
+          }
+        : null,
+    };
   }
 
   /**
@@ -102,7 +300,6 @@ class Player {
     this.vulnerabilityIncrease = damageIncrease;
 
     // Also store in status effects for consistent API
-    // Note: turns already has +1 added by applyEffect, so use as-is
     this.statusEffects.vulnerable = {
       damageIncrease,
       turns,
@@ -149,6 +346,10 @@ class Player {
     if (cooldownTurns > 0) {
       // Add 1 to the cooldown to account for the immediate countdown at end of turn
       this.abilityCooldowns[abilityType] = cooldownTurns + 1;
+
+      logger.debug(
+        `${this.name}: ${abilityType} on cooldown for ${this.abilityCooldowns[abilityType]} turns`
+      );
     }
   }
 
@@ -173,15 +374,24 @@ class Player {
    * Decrements all active cooldowns by 1
    */
   processAbilityCooldowns() {
+    const expiredCooldowns = [];
+
     for (const abilityType in this.abilityCooldowns) {
       if (this.abilityCooldowns[abilityType] > 0) {
         this.abilityCooldowns[abilityType]--;
 
         // Remove cooldown if it reaches 0
         if (this.abilityCooldowns[abilityType] <= 0) {
+          expiredCooldowns.push(abilityType);
           delete this.abilityCooldowns[abilityType];
         }
       }
+    }
+
+    if (expiredCooldowns.length > 0) {
+      logger.debug(
+        `${this.name}: Cooldowns expired for ${expiredCooldowns.join(', ')}`
+      );
     }
   }
 
@@ -293,7 +503,7 @@ class Player {
 
       // Debug log for testing
       if (missingHpPercent > 0) {
-        console.log(
+        logger.debug(
           `Blood Frenzy: ${this.name} missing ${Math.round(missingHpPercent * 100)}% HP, damage increased by ${Math.round(damageIncrease * 100)}%`
         );
       }
@@ -382,6 +592,7 @@ class Player {
 
     return null;
   }
+
   /**
    * Set racial ability for player
    * @param {Object} abilityData - Racial ability definition
@@ -431,7 +642,9 @@ class Player {
 
   /**
    * Updated takeDamage method to handle Unstoppable Rage damage resistance
-   * Add this to replace the existing takeDamage method in Player.js
+   * @param {number} amount - Base damage amount
+   * @param {string} source - Source of damage
+   * @returns {number} Actual damage taken
    */
   takeDamage(amount, source) {
     // Start with the original damage
@@ -502,7 +715,7 @@ class Player {
 
   /**
    * Process class effects at end of round
-   * Add this new method to Player.js
+   * @returns {Object|null} Effect results if any
    */
   processClassEffects() {
     if (!this.classEffects) return;
@@ -558,6 +771,42 @@ class Player {
     }
 
     return null;
+  }
+
+  /**
+   * Prepare player data for client transmission
+   * @param {boolean} includePrivate - Whether to include private/sensitive data
+   * @param {string} requestingPlayerId - ID of player requesting the data
+   * @returns {Object} Player data object for client
+   */
+  toClientData(includePrivate = false, requestingPlayerId = null) {
+    const data = {
+      id: this.id,
+      name: this.name,
+      race: this.race,
+      class: this.class,
+      hp: this.hp,
+      maxHp: this.maxHp,
+      armor: this.armor,
+      isAlive: this.isAlive,
+      isReady: this.isReady,
+      hasSubmittedAction: this.hasSubmittedAction,
+      statusEffects: this.statusEffects,
+    };
+
+    // Include private data for the player themselves or when specifically requested
+    if (includePrivate || requestingPlayerId === this.id) {
+      data.isWarlock = this.isWarlock;
+      data.unlocked = this.unlocked;
+      data.abilityCooldowns = this.abilityCooldowns;
+      data.racialAbility = this.racialAbility;
+      data.racialUsesLeft = this.racialUsesLeft;
+      data.racialCooldown = this.racialCooldown;
+      data.submissionStatus = this.getSubmissionStatus();
+      data.damageMod = this.damageMod;
+    }
+
+    return data;
   }
 }
 

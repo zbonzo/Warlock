@@ -98,7 +98,7 @@ function handleStartGame(io, socket, gameCode) {
 }
 
 /**
- * Handle player action submission
+ * Handle player action submission with proper cooldown validation and enhanced tracking
  * @param {Object} io - Socket.io instance
  * @param {Object} socket - Client socket
  * @param {string} gameCode - Game code
@@ -115,29 +115,168 @@ function handlePerformAction(
   targetId,
   options = {}
 ) {
-  // Use the combined validation
-  const game = validateGameAction(socket, gameCode, true, false);
-
-  // Refresh game timeout
-  gameService.refreshGameTimeout(io, gameCode);
-
-  // Record the action with sanitized options
-  const success = game.addAction(socket.id, actionType, targetId, options);
-
-  if (success) {
-    logger.info(
-      `Player ${socket.id} performed ${actionType} on ${targetId} in game ${gameCode}`
-    );
-
-    // Check if all actions submitted
-    if (game.allActionsSubmitted()) {
-      gameService.processGameRound(io, gameCode);
+  try {
+    // Use the combined validation
+    const game = validateGameAction(socket, gameCode, true, false);
+    if (!game) {
+      socket.emit('errorMessage', {
+        message: 'Game not found or invalid state',
+      });
+      return false;
     }
+
+    // Get the player
+    const player = game.getPlayerBySocketId(socket.id);
+    if (!player) {
+      socket.emit('errorMessage', { message: 'Player not found in game' });
+      return false;
+    }
+
+    // Validate player is alive
+    if (!player.isAlive) {
+      socket.emit('errorMessage', {
+        message: 'Dead players cannot perform actions',
+      });
+      return false;
+    }
+
+    // Validate game is in correct state for actions
+    if (!game.started) {
+      socket.emit('errorMessage', { message: 'Game has not started yet' });
+      return false;
+    }
+
+    // Allow actions if game is in action phase OR if it's started but phase isn't explicitly set to results
+    if (game.phase === 'results') {
+      socket.emit('errorMessage', {
+        message: 'Cannot perform actions while viewing results',
+      });
+      return false;
+    }
+
+    // COOLDOWN VALIDATION - Check if ability is on cooldown
+    if (player.isAbilityOnCooldown(actionType)) {
+      const remainingCooldown = player.getAbilityCooldown(actionType);
+      socket.emit('errorMessage', {
+        message: `Ability "${actionType}" is on cooldown for ${remainingCooldown} more turn${remainingCooldown !== 1 ? 's' : ''}`,
+        type: 'cooldown_error',
+        abilityType: actionType,
+        remainingTurns: remainingCooldown,
+      });
+      return false;
+    }
+
+    // ABILITY VALIDATION - Check if player can use this ability
+    if (!player.canUseAbility(actionType)) {
+      const hasAbility = player.unlocked.some((a) => a.type === actionType);
+      if (!hasAbility) {
+        socket.emit('errorMessage', {
+          message: `You don't have the ability "${actionType}"`,
+          type: 'ability_not_found',
+        });
+      } else {
+        socket.emit('errorMessage', {
+          message: `Cannot use ability "${actionType}" right now`,
+          type: 'ability_unavailable',
+        });
+      }
+      return false;
+    }
+
+    // TARGET VALIDATION - Check if target is valid
+    if (targetId !== '__monster__') {
+      const targetPlayer = game.getPlayerById(targetId);
+      if (!targetPlayer || !targetPlayer.isAlive) {
+        socket.emit('errorMessage', {
+          message: 'Selected target is no longer alive or valid',
+          type: 'invalid_target',
+        });
+        return false;
+      }
+    } else {
+      // Validate monster is alive (if applicable)
+      if (game.monster && game.monster.hp <= 0) {
+        socket.emit('errorMessage', {
+          message: 'Monster is no longer a valid target',
+          type: 'invalid_target',
+        });
+        return false;
+      }
+    }
+
+    // Check if player has already submitted an action
+    if (player.hasSubmittedAction) {
+      socket.emit('errorMessage', {
+        message: 'You have already submitted an action for this round',
+        type: 'already_submitted',
+      });
+      return false;
+    }
+
+    // Refresh game timeout
+    gameService.refreshGameTimeout(io, gameCode);
+
+    // Record the action with sanitized options (DON'T put ability on cooldown yet)
+    const success = game.addAction(socket.id, actionType, targetId, options);
+
+    if (success) {
+      // Mark player as having submitted an action (this is now handled in Player.submitAction)
+      player.actionSubmissionTime = Date.now();
+
+      logger.info(
+        `Player ${player.name} (${socket.id}) performed ${actionType} on ${targetId} in game ${gameCode}`
+      );
+
+      // Broadcast updated player list with submission status
+      io.to(gameCode).emit('playerList', { players: game.getPlayersInfo() });
+
+      // Check if all alive players have submitted actions
+      const alivePlayers = game.getAlivePlayers();
+      const submittedPlayers = alivePlayers.filter(
+        (p) => p.hasSubmittedAction && p.actionValidationState === 'valid'
+      );
+
+      logger.info(
+        `Action submission progress: ${submittedPlayers.length}/${alivePlayers.length} players submitted in game ${gameCode}`
+      );
+
+      // If all actions submitted, process the round
+      if (game.allActionsSubmitted()) {
+        logger.info(
+          `All actions submitted, processing round for game ${gameCode}`
+        );
+
+        // Process the round immediately but don't auto-advance
+        gameService.processGameRound(io, gameCode);
+      }
+
+      // Send success confirmation to the submitting player
+      socket.emit('actionSubmitted', {
+        actionType,
+        targetId,
+        message: 'Action submitted successfully',
+        submissionProgress: {
+          submitted: submittedPlayers.length,
+          total: alivePlayers.length,
+        },
+      });
+    } else {
+      socket.emit('errorMessage', {
+        message: 'Failed to submit action. Please try again.',
+        type: 'submission_failed',
+      });
+    }
+
+    return success;
+  } catch (error) {
+    logger.error(`Error in handlePerformAction for game ${gameCode}:`, error);
+    socket.emit('errorMessage', {
+      message: 'An error occurred while processing your action',
+      type: 'server_error',
+    });
+    return false;
   }
-
-  return success;
 }
-
 /**
  * Handle racial ability use
  * @param {Object} io - Socket.io instance
@@ -409,7 +548,7 @@ function handleGetClassAbilities(io, socket, gameCode, className, level) {
 }
 
 /**
- * Handle player readiness for next round
+ * Handle player readiness for next round with proper phase management
  * @param {Object} io - Socket.io instance
  * @param {Object} socket - Client socket
  * @param {string} gameCode - Game code
@@ -453,12 +592,31 @@ function handlePlayerNextReady(io, socket, gameCode) {
       total: alivePlayers.length,
     });
 
+    logger.info(
+      `Ready progress: ${readyPlayers.length}/${alivePlayers.length} players ready in game ${gameCode}`
+    );
+
     // Check if majority are ready
     if (readyPlayers.length > alivePlayers.length / 2) {
+      logger.info(
+        `Game ${gameCode}: Majority ready (${readyPlayers.length}/${alivePlayers.length}), advancing to next round`
+      );
+
+      // Set phase back to action for next round
+      game.phase = 'action';
+
+      // Clear ready status for next round
+      game.nextReady.clear();
+
       // Resume game
       io.to(gameCode).emit('resumeGame');
-      game.nextReady.clear();
-      logger.info(`Game ${gameCode}: Resuming next round by majority vote`);
+
+      // Send updated game state with new phase
+      io.to(gameCode).emit('gameStateUpdate', {
+        phase: game.phase,
+        round: game.round,
+        players: game.getPlayersInfo(),
+      });
     }
 
     return true;

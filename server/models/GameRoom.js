@@ -1,6 +1,6 @@
 /**
- * @fileoverview Game room model with cooldown support
- * Manages game state, players, and coordinates systems with ability cooldowns
+ * @fileoverview Game room model with enhanced action submission and validation
+ * Manages game state, players, and coordinates systems with proper cooldown timing
  */
 const Player = require('./Player');
 const config = require('@config');
@@ -8,7 +8,7 @@ const SystemsFactory = require('./systems/SystemsFactory');
 const logger = require('@utils/logger');
 
 /**
- * GameRoom class represents a single game instance with cooldown support
+ * GameRoom class represents a single game instance with enhanced action validation
  * Manages game state, players, and coordinating game systems
  */
 class GameRoom {
@@ -23,6 +23,7 @@ class GameRoom {
     this.started = false;
     this.round = 0;
     this.level = 1;
+    this.phase = 'lobby'; // 'lobby', 'action', 'results'
     this.aliveCount = 0;
     this.pendingActions = [];
     this.pendingRacialActions = [];
@@ -155,10 +156,12 @@ class GameRoom {
    */
   assignInitialWarlock(pref = null) {
     this.systems.warlockSystem.assignInitialWarlock(pref);
+    // Set phase to action when game starts
+    this.phase = 'action';
   }
 
   /**
-   * Add a player action to the pending actions queue (with cooldown validation)
+   * Add a player action to the pending actions queue (IMPROVED - no immediate cooldowns)
    * @param {string} actorId - Player performing the action
    * @param {string} actionType - Type of action
    * @param {string} targetId - Target of the action
@@ -176,7 +179,9 @@ class GameRoom {
       this.systems.statusEffectManager.isPlayerStunned(actorId)
     )
       return false;
-    if (this.pendingActions.some((a) => a.actorId === actorId)) return false; // Already acted
+
+    // Check if player already has an action submitted
+    if (actor.hasSubmittedAction) return false;
 
     // Find the ability being used
     const ability = actor.unlocked.find((a) => a.type === actionType);
@@ -211,12 +216,21 @@ class GameRoom {
       }
     }
 
-    // Put ability on cooldown BEFORE adding to pending actions
-    if (ability.cooldown > 0) {
-      actor.putAbilityOnCooldown(actionType, ability.cooldown);
+    // Use Player's submission method instead of directly manipulating state
+    const submissionResult = actor.submitAction(
+      actionType,
+      finalTargetId,
+      options
+    );
+
+    if (!submissionResult.success) {
+      logger.debug(
+        `Action submission failed for ${actor.name}: ${submissionResult.reason}`
+      );
+      return false;
     }
 
-    // Add the action to pending actions
+    // Add the action to pending actions (but don't put ability on cooldown yet)
     this.pendingActions.push({
       actorId,
       actionType,
@@ -224,6 +238,9 @@ class GameRoom {
       options,
     });
 
+    logger.info(
+      `Player ${actor.name} submitted action: ${actionType} -> ${finalTargetId}`
+    );
     return true;
   }
 
@@ -277,6 +294,45 @@ class GameRoom {
   }
 
   /**
+   * Validate all submitted actions against current game state
+   * @returns {Object} Validation results
+   */
+  validateAllSubmittedActions() {
+    const results = {
+      validActions: [],
+      invalidActions: [],
+      playersToReset: [],
+    };
+
+    const alivePlayers = this.getAlivePlayers();
+
+    for (const player of this.players.values()) {
+      if (!player.hasSubmittedAction) continue;
+
+      const validation = player.validateSubmittedAction(
+        alivePlayers,
+        this.monster
+      );
+
+      if (validation.isValid) {
+        results.validActions.push({
+          playerId: player.id,
+          action: player.submittedAction,
+        });
+      } else {
+        results.invalidActions.push({
+          playerId: player.id,
+          reason: validation.reason,
+          action: player.submittedAction,
+        });
+        results.playersToReset.push(player.id);
+      }
+    }
+
+    return results;
+  }
+
+  /**
    * Update player unlocked abilities based on current level
    * Called after level up
    */
@@ -325,20 +381,31 @@ class GameRoom {
     const activePlayerCount = this.getAlivePlayers().filter(
       (p) => !this.systems.statusEffectManager.isPlayerStunned(p.id)
     ).length;
-    return this.pendingActions.length >= activePlayerCount;
+
+    // Count valid submitted actions
+    const submittedActionCount = Array.from(this.players.values()).filter(
+      (p) =>
+        p.isAlive &&
+        p.hasSubmittedAction &&
+        p.actionValidationState === 'valid' &&
+        !this.systems.statusEffectManager.isPlayerStunned(p.id)
+    ).length;
+
+    return submittedActionCount >= activePlayerCount;
   }
 
   /**
-   * Process a game round (updated to handle cooldowns)
+   * Process a game round (IMPROVED with proper cooldown timing)
    * @returns {Object} Round result with events and state updates
    */
   processRound() {
     const log = [];
+    this.phase = 'results';
 
     // Reset per-round racial ability uses and process cooldowns for all players
     for (let player of this.players.values()) {
       player.resetRacialPerRoundUses();
-      // Process ability cooldowns
+      // Process ability cooldowns BEFORE checking actions
       player.processAbilityCooldowns();
     }
 
@@ -348,7 +415,7 @@ class GameRoom {
     // Monster ages and prepares to strike
     this.systems.monsterController.ageMonster();
 
-    // Process player actions
+    // Process player actions and apply cooldowns AFTER successful execution
     this.processPlayerActions(log);
 
     // Monster attacks
@@ -458,6 +525,11 @@ class GameRoom {
       }
     }
 
+    // Clear all action submissions for the new round
+    for (const player of this.players.values()) {
+      player.clearActionSubmission();
+    }
+
     // Sort log entries - move corruption messages to the end
     const sortedLog = this.sortLogEntries(log);
 
@@ -470,6 +542,9 @@ class GameRoom {
 
     // Process log for clients
     const processedLog = this.processLogForClients(sortedLog);
+
+    // DON'T reset phase to action automatically - wait for majority vote
+    // this.phase = 'action';  // Commented out - let the vote handler manage this
 
     // LOG THE EVENTS FOR FRONTEND TEAM
     logger.debug('=== EVENTS LOG FOR FRONTEND ===');
@@ -591,7 +666,7 @@ class GameRoom {
   }
 
   /**
-   * Process all pending player actions
+   * Process all pending player actions (IMPROVED with proper cooldown timing)
    * @param {Array} log - Event log to append messages to
    */
   processPlayerActions(log) {
@@ -648,6 +723,11 @@ class GameRoom {
 
       const ability = actor.unlocked.find((a) => a.type === action.actionType);
       if (!ability) continue;
+
+      // IMPORTANT: Put ability on cooldown BEFORE execution to prevent double-use
+      if (ability.cooldown > 0) {
+        actor.putAbilityOnCooldown(action.actionType, ability.cooldown);
+      }
 
       const target =
         action.targetId === '__monster__'
@@ -717,7 +797,7 @@ class GameRoom {
   }
 
   /**
-   * Get info about all players for client updates (including cooldowns)
+   * Get info about all players for client updates (including enhanced submission status)
    * @returns {Array} Array of player info objects
    */
   getPlayersInfo() {
@@ -740,6 +820,8 @@ class GameRoom {
       level: this.level,
       statusEffects: p.statusEffects,
       abilityCooldowns: p.abilityCooldowns || {},
+      hasSubmittedAction: p.hasSubmittedAction || false,
+      submissionStatus: p.getSubmissionStatus(),
       stoneArmor: p.stoneArmorIntact
         ? {
             active: true,
@@ -808,6 +890,24 @@ class GameRoom {
     }
 
     return true;
+  }
+
+  /**
+   * Get the player by socket ID
+   * @param {string} socketId - Socket ID
+   * @returns {Object|null} Player object or null if not found
+   */
+  getPlayerBySocketId(socketId) {
+    return this.players.get(socketId) || null;
+  }
+
+  /**
+   * Get player by player ID
+   * @param {string} playerId - Player ID
+   * @returns {Object|null} Player object or null if not found
+   */
+  getPlayerById(playerId) {
+    return this.players.get(playerId) || null;
   }
 }
 

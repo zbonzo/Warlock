@@ -68,6 +68,91 @@ const ActionColumn = ({
   // Don't render if not visible
   if (!isVisible) return null;
 
+  // Helper function to check if current selection is valid
+  const isCurrentSelectionValid = () => {
+    if (!actionType || !selectedTarget) return false;
+
+    // Check if selected ability is on cooldown
+    const selectedAbility = unlocked.find(
+      (ability) => ability.type === actionType
+    );
+    if (selectedAbility) {
+      const cooldown = me.abilityCooldowns?.[selectedAbility.type] || 0;
+      if (cooldown > 0) return false;
+    }
+
+    // Check if target is still valid
+    if (selectedTarget === '__monster__') {
+      return monster && monster.hp > 0;
+    } else {
+      const targetPlayer = alivePlayers.find((p) => p.id === selectedTarget);
+      return targetPlayer && targetPlayer.isAlive;
+    }
+  };
+
+  // Enhanced submit action handler with validation
+  const handleSubmitAction = () => {
+    if (!isCurrentSelectionValid()) {
+      const issues = [];
+      if (!actionType) issues.push('Select an ability');
+      if (!selectedTarget) issues.push('Select a target');
+
+      const selectedAbility = unlocked.find((a) => a.type === actionType);
+      if (selectedAbility && me?.abilityCooldowns?.[selectedAbility.type] > 0) {
+        issues.push(
+          `${selectedAbility.name} is on cooldown (${me.abilityCooldowns[selectedAbility.type]} turns)`
+        );
+      }
+
+      if (selectedTarget === '__monster__' && (!monster || monster.hp <= 0)) {
+        issues.push('Monster is no longer a valid target');
+      } else if (selectedTarget !== '__monster__') {
+        const targetPlayer = alivePlayers.find((p) => p.id === selectedTarget);
+        if (!targetPlayer || !targetPlayer.isAlive) {
+          issues.push('Selected player is no longer alive or valid');
+        }
+      }
+
+      alert(`Cannot submit action:\n• ${issues.join('\n• ')}`);
+      return;
+    }
+
+    onSubmitAction();
+  };
+
+  // Get submission status for all players with enhanced tracking
+  const getSubmissionStatus = () => {
+    const submittedPlayers = validPlayers.filter(
+      (player) => player.hasSubmittedAction && player.isAlive
+    );
+    const totalAlivePlayers = validPlayers.filter(
+      (player) => player.isAlive
+    ).length;
+
+    // Count valid submissions
+    const validSubmissions = submittedPlayers.filter(
+      (player) => player.submissionStatus?.isValid !== false
+    );
+
+    return {
+      submitted: submittedPlayers,
+      validSubmitted: validSubmissions,
+      total: totalAlivePlayers,
+      percentage:
+        totalAlivePlayers > 0
+          ? (validSubmissions.length / totalAlivePlayers) * 100
+          : 0,
+    };
+  };
+
+  // Check if player's action needs to be revalidated
+  const needsRevalidation = () => {
+    return (
+      me?.submissionStatus?.validationState === 'invalid' ||
+      (me?.hasSubmittedAction && !me?.submissionStatus?.isValid)
+    );
+  };
+
   // Render based on the current phase
   return (
     <div className="action-column">
@@ -88,17 +173,51 @@ const ActionColumn = ({
             </div>
           )}
 
-          {/* Waiting for others view */}
-          {me.isAlive && submitted && (
+          {/* Enhanced waiting for others view with detailed submission tracking */}
+          {me.isAlive && submitted && !needsRevalidation() && (
             <div className="submit-message card">
               <h3 className="section-title">Action submitted</h3>
-              <p>Waiting for other players to take their actions...</p>
+
+              {/* Show current submission status */}
+              <div className="submission-status">
+                <p>Waiting for other players to take their actions...</p>
+                <ActionSubmissionTracker players={validPlayers} />
+              </div>
+
               <div className="waiting-spinner"></div>
             </div>
           )}
 
+          {/* Invalid action warning and reset option */}
+          {me.isAlive && submitted && needsRevalidation() && (
+            <div className="invalid-action-warning card">
+              <h3 className="section-title danger">Action needs updating</h3>
+
+              <div className="validation-warning">
+                <p
+                  style={{ color: 'var(--color-danger)', marginBottom: '10px' }}
+                >
+                  ⚠️ Your submitted action is no longer valid.
+                  {me?.submissionStatus?.action?.invalidationReason && (
+                    <span>
+                      {' '}
+                      Reason: {me.submissionStatus.action.invalidationReason}
+                    </span>
+                  )}
+                </p>
+                <p style={{ marginBottom: '15px' }}>
+                  Please select a new action and target.
+                </p>
+              </div>
+
+              <div className="submission-status">
+                <ActionSubmissionTracker players={validPlayers} />
+              </div>
+            </div>
+          )}
+
           {/* Action selection view */}
-          {me.isAlive && !submitted && (
+          {me.isAlive && (!submitted || needsRevalidation()) && (
             <div className="action-selection">
               {/* Racial ability */}
               {me.racialAbility && (
@@ -114,20 +233,51 @@ const ActionColumn = ({
                 </div>
               )}
 
-              {/* Class abilities */}
+              {/* Class abilities with enhanced cooldown display */}
               <h3 className="section-title secondary">Your Abilities</h3>
 
               <div className="ability-list">
-                {unlocked.map((ability) => (
-                  <AbilityCard
-                    key={ability.type}
-                    ability={ability}
-                    selected={actionType === ability.type}
-                    onSelect={onSetActionType}
-                    abilityCooldown={me.abilityCooldowns?.[ability.type] || 0}
-                  />
-                ))}
+                {unlocked.map((ability) => {
+                  const cooldown = me.abilityCooldowns?.[ability.type] || 0;
+                  return (
+                    <AbilityCard
+                      key={ability.type}
+                      ability={ability}
+                      selected={actionType === ability.type}
+                      onSelect={onSetActionType}
+                      abilityCooldown={cooldown}
+                    />
+                  );
+                })}
               </div>
+
+              {/* Enhanced validation message */}
+              {actionType && selectedTarget && (
+                <div className="selection-validation">
+                  {isCurrentSelectionValid() ? (
+                    <div className="validation-success">
+                      ✓ Ready to submit action
+                    </div>
+                  ) : (
+                    <div className="validation-error">
+                      {!actionType ? '• Select an ability' : ''}
+                      {!selectedTarget ? '• Select a target' : ''}
+                      {actionType && me.abilityCooldowns?.[actionType] > 0
+                        ? `• Ability on cooldown (${me.abilityCooldowns[actionType]} turns)`
+                        : ''}
+                      {selectedTarget === '__monster__' &&
+                      (!monster || monster.hp <= 0)
+                        ? '• Monster is no longer a valid target'
+                        : ''}
+                      {selectedTarget !== '__monster__' &&
+                      selectedTarget &&
+                      !alivePlayers.find((p) => p.id === selectedTarget)
+                        ? '• Selected player is no longer alive'
+                        : ''}
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* Racial enhancement indicators */}
               {(bloodRageActive || keenSensesActive) && (
@@ -164,13 +314,18 @@ const ActionColumn = ({
                 disableMonster={keenSensesActive}
               />
 
-              {/* Submit button */}
+              {/* Enhanced submit button with better validation */}
               <button
                 className="button action-button"
-                onClick={onSubmitAction}
-                disabled={!actionType || !selectedTarget}
+                onClick={handleSubmitAction}
+                disabled={!isCurrentSelectionValid()}
+                title={
+                  !isCurrentSelectionValid()
+                    ? 'Please select a valid ability (not on cooldown) and target'
+                    : 'Submit your action'
+                }
               >
-                Submit Action
+                {needsRevalidation() ? 'Update Action' : 'Submit Action'}
               </button>
             </div>
           )}
@@ -235,6 +390,77 @@ const ActionColumn = ({
   );
 };
 
+/**
+ * Enhanced component to track and display action submission status
+ */
+const ActionSubmissionTracker = ({ players }) => {
+  const alivePlayers = players.filter((p) => p.isAlive);
+
+  // Count different types of submissions
+  const submittedPlayers = alivePlayers.filter((p) => p.hasSubmittedAction);
+  const validSubmissions = submittedPlayers.filter(
+    (p) => p.submissionStatus?.isValid !== false
+  );
+  const invalidSubmissions = submittedPlayers.filter(
+    (p) => p.submissionStatus?.isValid === false
+  );
+
+  const percentage =
+    alivePlayers.length > 0
+      ? (validSubmissions.length / alivePlayers.length) * 100
+      : 0;
+
+  return (
+    <div className="submission-tracker">
+      <div className="submission-progress">
+        <div className="progress-bar-container">
+          <div
+            className="progress-bar-fill"
+            style={{ width: `${percentage}%` }}
+          />
+        </div>
+        <div className="progress-text">
+          {validSubmissions.length} of {alivePlayers.length} players submitted
+          valid actions
+          {invalidSubmissions.length > 0 && (
+            <span className="invalid-count">
+              ({invalidSubmissions.length} need to resubmit)
+            </span>
+          )}
+        </div>
+      </div>
+
+      <div className="submitted-players">
+        {/* Show valid submissions */}
+        {validSubmissions.map((player) => (
+          <div key={player.id} className="submitted-player-badge valid">
+            <span className="player-initial">{player.name.charAt(0)}</span>
+            <span className="checkmark">✓</span>
+          </div>
+        ))}
+
+        {/* Show invalid submissions */}
+        {invalidSubmissions.map((player) => (
+          <div key={player.id} className="submitted-player-badge invalid">
+            <span className="player-initial">{player.name.charAt(0)}</span>
+            <span className="warning">⚠</span>
+          </div>
+        ))}
+
+        {/* Show pending players */}
+        {alivePlayers
+          .filter((p) => !p.hasSubmittedAction)
+          .map((player) => (
+            <div key={player.id} className="submitted-player-badge pending">
+              <span className="player-initial">{player.name.charAt(0)}</span>
+              <span className="pending">⋯</span>
+            </div>
+          ))}
+      </div>
+    </div>
+  );
+};
+
 ActionColumn.propTypes = {
   isVisible: PropTypes.bool.isRequired,
   phase: PropTypes.oneOf(['action', 'results']).isRequired,
@@ -249,6 +475,8 @@ ActionColumn.propTypes = {
     PropTypes.shape({
       id: PropTypes.string.isRequired,
       name: PropTypes.string.isRequired,
+      hasSubmittedAction: PropTypes.bool,
+      submissionStatus: PropTypes.object,
     })
   ).isRequired,
   unlocked: PropTypes.array.isRequired,

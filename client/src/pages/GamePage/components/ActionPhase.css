@@ -1,12 +1,43 @@
-/* ActionPhase Component Styles */
+/* Enhanced ActionColumn CSS with submission tracking and validation styles */
 
-.action-phase {
-  animation: fadeIn 0.3s ease;
-  width: 100%;
+.action-column {
+  padding: 15px;
+  height: 100%;
 }
 
+.action-phase,
+.results-phase {
+  animation: fadeIn 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+/* Section title styling */
+.section-title {
+  color: var(--color-primary);
+  font-family: var(--font-heading);
+  margin-bottom: 16px;
+  font-size: 1.3rem;
+}
+
+.section-title.secondary {
+  font-size: 1.1rem;
+  color: var(--color-secondary);
+  margin-top: 20px;
+  margin-bottom: 12px;
+}
+
+.section-title.danger {
+  color: var(--color-danger);
+}
+
+/* Action selection container */
 .action-selection {
   margin-bottom: 20px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
 }
 
 .ability-list {
@@ -14,87 +45,123 @@
   flex-direction: column;
   gap: 8px;
   margin-bottom: 16px;
+  overflow-y: auto;
+  max-height: 300px;
+  padding-right: 4px;
 }
 
-/* Submit message styling */
-.submit-message {
-  text-align: center;
-  padding: 20px;
-  background-color: var(--color-surface);
-  border-radius: 8px;
-  box-shadow: var(--shadow-card);
-  border: 1px solid var(--color-border);
+/* Enhanced validation styling */
+.selection-validation {
+  margin: 12px 0;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
 }
 
-.waiting-spinner {
-  margin: 20px auto;
-  width: 40px;
-  height: 40px;
-  border: 4px solid rgba(var(--color-primary-rgb), 0.1);
-  border-radius: 50%;
-  border-top-color: var(--color-primary);
-  animation: spin 1s linear infinite;
+.validation-success {
+  background-color: rgba(var(--color-accent-rgb), 0.1);
+  color: var(--color-accent);
+  border: 1px solid rgba(var(--color-accent-rgb), 0.3);
 }
 
-/* Dead player message */
-.dead-player {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  min-height: 400px;
-}
-
-.dead-message {
-  text-align: center;
-  padding: 30px;
-  max-width: 400px;
-  margin: 0 auto;
-  background-color: var(--color-neutral);
-  border: 1px solid var(--color-border);
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-}
-
-.section-title.danger {
+.validation-error {
+  background-color: rgba(var(--color-danger-rgb), 0.1);
   color: var(--color-danger);
+  border: 1px solid rgba(var(--color-danger-rgb), 0.3);
+  white-space: pre-line;
 }
 
-.skull-icon {
-  font-size: 48px;
-  margin: 20px 0;
-  opacity: 0.7;
+.validation-warning {
+  background-color: rgba(255, 193, 7, 0.1);
+  border: 1px solid rgba(255, 193, 7, 0.3);
+  border-radius: 6px;
+  padding: 12px;
+  margin-bottom: 16px;
 }
 
-/* Submit action button */
-.action-button {
-  margin-top: 20px;
-  position: relative;
-  overflow: hidden;
+/* Submission tracking styles */
+.submission-tracker {
+  margin: 16px 0;
+  padding: 12px;
+  background-color: var(--color-neutral);
+  border-radius: 8px;
+  border: 1px solid var(--color-border);
 }
 
-.action-button:after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
+.submission-progress {
+  margin-bottom: 12px;
+}
+
+.progress-bar-container {
   width: 100%;
+  height: 8px;
+  background-color: #e0e0e0;
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+
+.progress-bar-fill {
   height: 100%;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    rgba(255, 255, 255, 0.2),
-    transparent
-  );
-  transition: all 0.5s;
+  background-color: var(--color-accent);
+  transition: width 0.5s ease;
+  border-radius: 4px;
 }
 
-.action-button:hover:after {
-  left: 100%;
+.progress-text {
+  font-size: 12px;
+  color: var(--color-text-muted);
+  text-align: center;
 }
 
-.action-button:disabled {
-  background-color: var(--color-text-muted);
-  cursor: not-allowed;
+.submitted-players {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+}
+
+.submitted-player-badge {
+  display: flex;
+  align-items: center;
+  background-color: rgba(var(--color-accent-rgb), 0.1);
+  border: 1px solid rgba(var(--color-accent-rgb), 0.3);
+  border-radius: 16px;
+  padding: 4px 8px;
+  font-size: 12px;
+  gap: 4px;
+  animation: badgeSlideIn 0.3s ease;
+}
+
+.player-initial {
+  width: 20px;
+  height: 20px;
+  background-color: var(--color-accent);
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 10px;
+}
+
+.checkmark {
+  color: var(--color-accent);
+  font-weight: bold;
+  font-size: 12px;
+}
+
+@keyframes badgeSlideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
 }
 
 /* Racial enhancement styling */
@@ -147,13 +214,155 @@
   font-size: 16px;
 }
 
-/* Animation keyframes */
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
+/* Message displays */
+.submit-message,
+.dead-message {
+  text-align: center;
+  padding: 30px;
+  background-color: var(--color-surface);
+  border-radius: 8px;
+  box-shadow: var(--shadow-card);
+  margin: 20px 0;
+  animation: fadeIn 0.5s ease;
 }
 
+.skull-icon {
+  font-size: 48px;
+  margin: 20px 0;
+  opacity: 0.7;
+}
+
+.waiting-spinner {
+  margin: 20px auto;
+  width: 40px;
+  height: 40px;
+  border: 4px solid rgba(var(--color-primary-rgb), 0.1);
+  border-radius: 50%;
+  border-top-color: var(--color-primary);
+  animation: spin 1s linear infinite;
+}
+
+/* Button styles */
+.action-button {
+  margin-top: 20px;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.2s ease;
+}
+
+.action-button:after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.2),
+    transparent
+  );
+  transition: all 0.5s;
+}
+
+.action-button:hover:not(:disabled):after {
+  left: 100%;
+}
+
+.action-button:disabled {
+  background-color: var(--color-text-muted);
+  cursor: not-allowed;
+  opacity: 0.6;
+  transform: none;
+  box-shadow: none;
+}
+
+.action-button:disabled:hover {
+  transform: none;
+  box-shadow: none;
+}
+
+.ready-button {
+  margin: 20px auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  position: relative;
+}
+
+.ready-button.clicked {
+  background-color: #999;
+}
+
+.ready-spinner {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  border-top-color: white;
+  animation: spin 1s linear infinite;
+}
+
+/* Ready players section */
+.ready-players {
+  margin-top: 20px;
+  background-color: var(--color-neutral);
+  border-radius: 8px;
+  padding: 16px;
+  border: 1px solid var(--color-border);
+}
+
+.ready-info {
+  margin-bottom: 12px;
+  font-weight: bold;
+  color: var(--color-dark);
+}
+
+.ready-indicators {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.ready-player {
+  display: flex;
+  align-items: center;
+  background-color: rgba(var(--color-accent-rgb), 0.1);
+  border-radius: 20px;
+  padding: 4px 8px 4px 4px;
+  font-size: 14px;
+}
+
+.ready-player-icon {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background-color: var(--color-accent);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 6px;
+  font-weight: bold;
+}
+
+.ready-player-name {
+  max-width: 100px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.no-ready-players {
+  color: var(--color-text-muted);
+  font-style: italic;
+  padding: 10px;
+}
+
+/* Animations */
 @keyframes pulse {
   0% {
     transform: scale(1);
@@ -166,14 +375,73 @@
   }
 }
 
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Scrollbar styling */
+.ability-list::-webkit-scrollbar {
+  width: 8px;
+}
+
+.ability-list::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+.ability-list::-webkit-scrollbar-thumb {
+  background: var(--color-primary);
+  border-radius: 4px;
+}
+
 /* Responsive adjustments */
 @media (max-width: 768px) {
+  .action-column {
+    padding: 10px;
+  }
+
+  .submit-message,
   .dead-message {
     padding: 20px;
+  }
+
+  .skull-icon {
+    font-size: 36px;
+    margin: 15px 0;
   }
 
   .enhancement-badge {
     padding: 4px 10px;
     font-size: 12px;
+  }
+
+  .ability-list {
+    max-height: 250px;
+  }
+
+  .submitted-player-badge {
+    padding: 3px 6px;
+    font-size: 11px;
+  }
+
+  .player-initial {
+    width: 16px;
+    height: 16px;
+    font-size: 9px;
+  }
+
+  .progress-text {
+    font-size: 11px;
   }
 }

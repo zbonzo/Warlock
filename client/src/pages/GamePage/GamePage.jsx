@@ -1,8 +1,13 @@
 /**
- * @fileoverview Main game interface component that orchestrates game phases,
- * manages shared state, and handles responsive layout.
+ * @fileoverview Enhanced GamePage component with improved action validation and state management
  */
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, {
+  useState,
+  useEffect,
+  useRef,
+  useMemo,
+  useCallback,
+} from 'react';
 import PropTypes from 'prop-types';
 import { useTheme } from '@contexts/ThemeContext';
 import GameDashboard from '@components/game/GameDashboard';
@@ -16,16 +21,7 @@ import './GamePage.css';
 
 /**
  * GamePage component handles the main game UI and orchestrates game flow
- *
- * @param {Object} props - Component props
- * @param {Object} props.socket - Socket.io connection
- * @param {string} props.gameCode - Game room code
- * @param {Array} props.players - List of all players
- * @param {Object} props.me - Current player data
- * @param {Object} props.monster - Monster data
- * @param {Array} props.eventsLog - Game event history
- * @param {Function} props.onSubmitAction - Callback for submitting actions
- * @returns {React.ReactElement} The rendered component
+ * Enhanced with better action validation and submission tracking
  */
 const GamePage = ({
   socket,
@@ -39,7 +35,7 @@ const GamePage = ({
   const theme = useTheme();
 
   // Game state
-  const [phase, setPhase] = useState('action'); // 'action' or 'results'
+  const [phase, setPhase] = useState('action');
   const [readyClicked, setReadyClicked] = useState(false);
 
   // Action selection state
@@ -61,6 +57,8 @@ const GamePage = ({
 
   // Refs
   const prevLogLen = useRef(eventsLog.length);
+  const lastValidActionRef = useRef(null);
+  const submissionCheckInterval = useRef(null);
 
   // Media query for responsive layout
   const isMobile = useMediaQuery('(max-width: 768px)');
@@ -77,12 +75,120 @@ const GamePage = ({
   );
 
   /**
+   * Enhanced validation function to check if current selection is valid
+   */
+  const isCurrentSelectionValid = useCallback(() => {
+    if (!actionType || !selectedTarget) return false;
+
+    // Check if selected ability exists and is unlocked
+    const selectedAbility = unlocked.find(
+      (ability) => ability.type === actionType
+    );
+    if (!selectedAbility) return false;
+
+    // Check if ability is on cooldown
+    const cooldown = me?.abilityCooldowns?.[selectedAbility.type] || 0;
+    if (cooldown > 0) return false;
+
+    // Check if target is valid (alive player or monster)
+    if (selectedTarget === '__monster__') {
+      return monster && monster.hp > 0; // Monster must be alive
+    }
+
+    const targetPlayer = alivePlayers.find((p) => p.id === selectedTarget);
+    return !!targetPlayer;
+  }, [
+    actionType,
+    selectedTarget,
+    unlocked,
+    me?.abilityCooldowns,
+    alivePlayers,
+    monster,
+  ]);
+
+  /**
+   * Store valid action when it's confirmed
+   */
+  useEffect(() => {
+    if (isCurrentSelectionValid()) {
+      lastValidActionRef.current = {
+        actionType,
+        selectedTarget,
+        timestamp: Date.now(),
+      };
+    }
+  }, [actionType, selectedTarget, isCurrentSelectionValid]);
+
+  /**
+   * Enhanced submission state management with validation checking
+   */
+  useEffect(() => {
+    // Update submitted state based on player's actual submission status
+    if (me?.submissionStatus) {
+      const { hasSubmitted, isValid, validationState } = me.submissionStatus;
+
+      // If player has submitted and it's valid, show submitted state
+      if (hasSubmitted && isValid && validationState === 'valid') {
+        setSubmitted(true);
+      }
+      // If player submitted but it's now invalid, reset to selection
+      else if (hasSubmitted && (!isValid || validationState === 'invalid')) {
+        console.log('Action became invalid, resetting to selection...');
+        setSubmitted(false);
+        setPhase('action');
+
+        // Try to restore last valid action if recent
+        if (lastValidActionRef.current) {
+          const timeSinceValid =
+            Date.now() - lastValidActionRef.current.timestamp;
+          if (timeSinceValid < 30000) {
+            // 30 seconds
+            setActionType(lastValidActionRef.current.actionType);
+            setSelectedTarget(lastValidActionRef.current.selectedTarget);
+          } else {
+            // Clear selections if too old
+            setActionType('');
+            setSelectedTarget('');
+          }
+        }
+      }
+      // If player hasn't submitted, ensure we're in selection mode
+      else if (!hasSubmitted) {
+        setSubmitted(false);
+        if (phase === 'results') {
+          setPhase('action');
+        }
+      }
+    }
+  }, [me?.submissionStatus, phase]);
+
+  /**
+   * Periodic validation check for submitted actions
+   */
+  useEffect(() => {
+    if (submitted && me?.submissionStatus?.hasSubmitted) {
+      // Start checking submission status periodically
+      submissionCheckInterval.current = setInterval(() => {
+        if (me?.submissionStatus?.validationState === 'invalid') {
+          console.log('Detected invalid action, resetting...');
+          setSubmitted(false);
+          setPhase('action');
+        }
+      }, 1000); // Check every second
+
+      return () => {
+        if (submissionCheckInterval.current) {
+          clearInterval(submissionCheckInterval.current);
+          submissionCheckInterval.current = null;
+        }
+      };
+    }
+  }, [submitted, me?.submissionStatus]);
+
+  /**
    * Convert text to Zalgo text (corrupted appearance)
-   * @param {string} text - Text to corrupt
-   * @returns {string} Zalgo text
    */
   const toZalgo = (text) => {
-    // Zalgo combining characters (above, middle, below)
     const zalgoAbove = [
       '\u030d',
       '\u030e',
@@ -117,48 +223,6 @@ const GamePage = ({
       '\u0314',
       '\u033d',
       '\u0309',
-      '\u0363',
-      '\u0364',
-      '\u0365',
-      '\u0366',
-      '\u0367',
-      '\u0368',
-      '\u0369',
-      '\u036a',
-      '\u036b',
-      '\u036c',
-      '\u036d',
-      '\u036e',
-      '\u036f',
-      '\u033e',
-      '\u035b',
-      '\u0346',
-      '\u031a',
-    ];
-    const zalgoMiddle = [
-      '\u0315',
-      '\u031b',
-      '\u0340',
-      '\u0341',
-      '\u0358',
-      '\u0321',
-      '\u0322',
-      '\u0327',
-      '\u0328',
-      '\u0334',
-      '\u0335',
-      '\u0336',
-      '\u034f',
-      '\u035c',
-      '\u035d',
-      '\u035e',
-      '\u035f',
-      '\u0360',
-      '\u0362',
-      '\u0338',
-      '\u0337',
-      '\u0361',
-      '\u0489',
     ];
     const zalgoBelow = [
       '\u0316',
@@ -188,32 +252,15 @@ const GamePage = ({
       '\u033a',
       '\u033b',
       '\u033c',
-      '\u0345',
-      '\u0347',
-      '\u0348',
-      '\u0349',
-      '\u034d',
-      '\u034e',
-      '\u0353',
-      '\u0354',
-      '\u0355',
-      '\u0356',
-      '\u0359',
-      '\u035a',
-      '\u0323',
     ];
 
     let result = '';
     for (let i = 0; i < text.length; i++) {
       result += text[i];
-
-      // Add random zalgo characters
-      for (let j = 0; j < Math.floor(Math.random() * 3) + 1; j++) {
-        const charType = Math.floor(Math.random() * 3);
+      for (let j = 0; j < Math.floor(Math.random() * 2) + 1; j++) {
+        const charType = Math.floor(Math.random() * 2);
         if (charType === 0 && zalgoAbove.length > 0) {
           result += zalgoAbove[Math.floor(Math.random() * zalgoAbove.length)];
-        } else if (charType === 1 && zalgoMiddle.length > 0) {
-          result += zalgoMiddle[Math.floor(Math.random() * zalgoMiddle.length)];
         } else if (zalgoBelow.length > 0) {
           result += zalgoBelow[Math.floor(Math.random() * zalgoBelow.length)];
         }
@@ -225,15 +272,8 @@ const GamePage = ({
   // Generate the character title
   const getCharacterTitle = () => {
     if (!me) return 'Loading...';
-
     const characterString = `${me.name} - ${me.race || 'Unknown'} ${me.class || 'Unknown'}`;
-
-    // Return corrupted text if player is a warlock
-    if (me.isWarlock) {
-      return toZalgo(characterString);
-    }
-
-    return characterString;
+    return me.isWarlock ? toZalgo(characterString) : characterString;
   };
 
   // Set default ability when unlocked changes
@@ -258,7 +298,11 @@ const GamePage = ({
       setPhase('results');
       setReadyClicked(false);
 
-      // Scroll to the results section
+      // Reset submission state for new round
+      setSubmitted(false);
+      setSelectedTarget('');
+
+      // Scroll to results
       setTimeout(() => {
         const resultsElement = document.querySelector(
           '.results-phase .section-title'
@@ -275,13 +319,32 @@ const GamePage = ({
     if (!socket) return;
 
     const handleResume = () => {
+      console.log('Game resumed, switching to action phase');
       setPhase('action');
       setSubmitted(false);
       setSelectedTarget('');
+      setReadyClicked(false);
+    };
+
+    const handleGameStateUpdate = (data) => {
+      console.log('Game state update received:', data);
+      if (data.phase) {
+        setPhase(data.phase);
+      }
+      if (data.phase === 'action') {
+        setSubmitted(false);
+        setSelectedTarget('');
+        setReadyClicked(false);
+      }
     };
 
     socket.on('resumeGame', handleResume);
-    return () => socket.off('resumeGame', handleResume);
+    socket.on('gameStateUpdate', handleGameStateUpdate);
+
+    return () => {
+      socket.off('resumeGame', handleResume);
+      socket.off('gameStateUpdate', handleGameStateUpdate);
+    };
   }, [socket]);
 
   // Handle adaptability modal events
@@ -294,215 +357,97 @@ const GamePage = ({
         data
       );
 
-      // Process abilities data regardless of format
-      if (data) {
-        if (data.abilities) {
-          // Could be an array or an object with level keys
-          if (Array.isArray(data.abilities)) {
-            // Already an array, use directly
-            setInitialModalAbilities(data.abilities);
-          } else if (typeof data.abilities === 'object') {
-            // It's an object, might be keyed by level
-            try {
-              // Check if it has numeric keys (levels)
-              const numericKeys = Object.keys(data.abilities).filter(
-                (key) => !isNaN(parseInt(key))
-              );
-
-              if (numericKeys.length > 0) {
-                // Extract abilities from each level and flatten
-                const allAbilities = [];
-                numericKeys.forEach((level) => {
-                  const levelAbilities = data.abilities[level];
-                  if (
-                    Array.isArray(levelAbilities) &&
-                    levelAbilities.length > 0
-                  ) {
-                    allAbilities.push(...levelAbilities);
-                  }
-                });
-
-                if (allAbilities.length > 0) {
-                  setInitialModalAbilities(allAbilities);
-                } else {
-                  // No abilities found in level keys, use fallback
-                  console.warn('No abilities found in levels, using fallback');
-                  setInitialModalAbilities([
-                    {
-                      type: 'attack',
-                      name: 'Slash',
-                      category: 'Attack',
-                      unlockAt: 1,
-                    },
-                    {
-                      type: 'shieldWall',
-                      name: 'Shield Wall',
-                      category: 'Defense',
-                      unlockAt: 2,
-                    },
-                    {
-                      type: 'bandage',
-                      name: 'Bandage',
-                      category: 'Heal',
-                      unlockAt: 3,
-                    },
-                    {
-                      type: 'battleCry',
-                      name: 'Battle Cry',
-                      category: 'Special',
-                      unlockAt: 4,
-                    },
-                  ]);
-                }
-              } else {
-                // No level keys, pass the object as is
-                console.warn('No level keys found, using raw abilities object');
-                setInitialModalAbilities([data.abilities]);
+      if (data?.abilities) {
+        if (Array.isArray(data.abilities)) {
+          setInitialModalAbilities(data.abilities);
+        } else if (typeof data.abilities === 'object') {
+          // Handle object format
+          const numericKeys = Object.keys(data.abilities).filter(
+            (key) => !isNaN(parseInt(key))
+          );
+          if (numericKeys.length > 0) {
+            const allAbilities = [];
+            numericKeys.forEach((level) => {
+              const levelAbilities = data.abilities[level];
+              if (Array.isArray(levelAbilities)) {
+                allAbilities.push(...levelAbilities);
               }
-            } catch (err) {
-              console.error('Error processing abilities object:', err);
-              // Fallback to default abilities
-              setInitialModalAbilities([
-                {
-                  type: 'attack',
-                  name: 'Slash',
-                  category: 'Attack',
-                  unlockAt: 1,
-                },
-                {
-                  type: 'shieldWall',
-                  name: 'Shield Wall',
-                  category: 'Defense',
-                  unlockAt: 2,
-                },
-                {
-                  type: 'bandage',
-                  name: 'Bandage',
-                  category: 'Heal',
-                  unlockAt: 3,
-                },
-                {
-                  type: 'battleCry',
-                  name: 'Battle Cry',
-                  category: 'Special',
-                  unlockAt: 4,
-                },
-              ]);
-            }
-          } else {
-            console.error(
-              'Abilities is neither an array nor an object:',
-              data.abilities
+            });
+            setInitialModalAbilities(
+              allAbilities.length > 0 ? allAbilities : getFallbackAbilities()
             );
-            // Fallback to default abilities
-            setInitialModalAbilities([
-              {
-                type: 'attack',
-                name: 'Slash',
-                category: 'Attack',
-                unlockAt: 1,
-              },
-              {
-                type: 'shieldWall',
-                name: 'Shield Wall',
-                category: 'Defense',
-                unlockAt: 2,
-              },
-              {
-                type: 'bandage',
-                name: 'Bandage',
-                category: 'Heal',
-                unlockAt: 3,
-              },
-              {
-                type: 'battleCry',
-                name: 'Battle Cry',
-                category: 'Special',
-                unlockAt: 4,
-              },
-            ]);
+          } else {
+            setInitialModalAbilities([data.abilities]);
           }
-        } else {
-          console.error('Data does not contain abilities property:', data);
-          // Fallback to default abilities
-          setInitialModalAbilities([
-            { type: 'attack', name: 'Slash', category: 'Attack', unlockAt: 1 },
-            {
-              type: 'shieldWall',
-              name: 'Shield Wall',
-              category: 'Defense',
-              unlockAt: 2,
-            },
-            { type: 'bandage', name: 'Bandage', category: 'Heal', unlockAt: 3 },
-            {
-              type: 'battleCry',
-              name: 'Battle Cry',
-              category: 'Special',
-              unlockAt: 4,
-            },
-          ]);
         }
       } else {
-        console.error('Received null or undefined data');
-        // Fallback to default abilities
-        setInitialModalAbilities([
-          { type: 'attack', name: 'Slash', category: 'Attack', unlockAt: 1 },
-          {
-            type: 'shieldWall',
-            name: 'Shield Wall',
-            category: 'Defense',
-            unlockAt: 2,
-          },
-          { type: 'bandage', name: 'Bandage', category: 'Heal', unlockAt: 3 },
-          {
-            type: 'battleCry',
-            name: 'Battle Cry',
-            category: 'Special',
-            unlockAt: 4,
-          },
-        ]);
+        setInitialModalAbilities(getFallbackAbilities());
       }
 
       setShowAdaptabilityModal(true);
     };
 
-    socket.on('adaptabilityChooseAbility', handleAdaptabilityChoose);
+    const getFallbackAbilities = () => [
+      { type: 'attack', name: 'Slash', category: 'Attack', unlockAt: 1 },
+      {
+        type: 'shieldWall',
+        name: 'Shield Wall',
+        category: 'Defense',
+        unlockAt: 2,
+      },
+      { type: 'bandage', name: 'Bandage', category: 'Heal', unlockAt: 3 },
+      {
+        type: 'battleCry',
+        name: 'Battle Cry',
+        category: 'Special',
+        unlockAt: 4,
+      },
+    ];
 
-    return () => {
+    socket.on('adaptabilityChooseAbility', handleAdaptabilityChoose);
+    return () =>
       socket.off('adaptabilityChooseAbility', handleAdaptabilityChoose);
-    };
-  }, [socket, setInitialModalAbilities, setShowAdaptabilityModal]);
-  // Handle server unresponsiveness during results phase
+  }, [socket]);
+
+  // Enhanced server unresponsiveness handling
   useEffect(() => {
-    // Skip if conditions aren't met
     if (phase !== 'results' || !socket || !me || !readyClicked) return;
 
     const totalPlayers = alivePlayers.length;
     const readyPlayers = alivePlayers.filter((p) => p.isReady).length;
 
-    // If majority is ready, force next round after delay
     if (readyPlayers > totalPlayers / 2) {
       const timer = setTimeout(() => {
         if (phase === 'results') {
-          // Try server action first
           socket.emit('playerNextReady', { gameCode });
-
-          // Then fall back to local state change
           setPhase('action');
           setSubmitted(false);
           setSelectedTarget('');
         }
       }, 3000);
-
       return () => clearTimeout(timer);
     }
   }, [readyClicked, phase, alivePlayers, socket, gameCode, me]);
 
   /**
-   * Handle submitting an action
+   * Enhanced submit action handler with validation
    */
   const handleSubmitAction = () => {
-    if (!actionType || !selectedTarget) return;
+    if (!isCurrentSelectionValid()) {
+      const issues = [];
+      if (!actionType) issues.push('Select an ability');
+      if (!selectedTarget) issues.push('Select a target');
+
+      const selectedAbility = unlocked.find((a) => a.type === actionType);
+      if (selectedAbility && me?.abilityCooldowns?.[selectedAbility.type] > 0) {
+        issues.push(
+          `${selectedAbility.name} is on cooldown (${me.abilityCooldowns[selectedAbility.type]} turns)`
+        );
+      }
+
+      alert(`Cannot submit action:\n• ${issues.join('\n• ')}`);
+      return;
+    }
 
     // Check for racial ability modifications
     const ability = unlocked.find((a) => a.type === actionType);
@@ -512,7 +457,6 @@ const GamePage = ({
       keenSensesActive && ability?.category === 'Attack';
 
     if (isBloodRageApplied || isKeenSensesApplied) {
-      // Send action with racial flags
       socket.emit('performAction', {
         gameCode,
         actionType,
@@ -521,7 +465,6 @@ const GamePage = ({
         keenSensesActive: isKeenSensesApplied,
       });
 
-      // Mark appropriate racial ability as used
       if (isBloodRageApplied) {
         socket.emit('useRacialAbility', {
           gameCode,
@@ -542,11 +485,11 @@ const GamePage = ({
 
       setRacialSelected(false);
     } else {
-      // Normal action without racial modification
       onSubmitAction(actionType, selectedTarget);
     }
 
-    setSubmitted(true);
+    // Don't set submitted here - wait for server confirmation
+    // setSubmitted(true);
   };
 
   /**
@@ -555,37 +498,26 @@ const GamePage = ({
   const handleRacialAbilityUse = (abilityType) => {
     setRacialSelected(true);
 
-    // Handle Human adaptability
     if (abilityType === 'adaptability' && me?.race === 'Human') {
-      console.log('Human adaptability ability used');
       socket.emit('useRacialAbility', {
         gameCode,
         targetId: me.id,
         abilityType: 'adaptability',
       });
-
-      // No need to immediately show the modal here.
-      // The server will respond with 'adaptabilityChooseAbility' event
-      // which will trigger the modal through the useEffect handler above
       return;
     }
 
-    // Handle Orc blood rage
     if (abilityType === 'bloodRage') {
       setBloodRageActive(true);
       return;
     }
 
-    // Handle Elf keen senses
     if (abilityType === 'keenSenses') {
       setKeenSensesActive(true);
       return;
     }
 
-    // For other abilities
-    let targetId = me.id; // Default to self
-
-    // For abilities that need to target others
+    let targetId = me.id;
     if (['keenSenses'].includes(abilityType)) {
       if (!selectedTarget) {
         alert('Select a target first.');
@@ -595,7 +527,6 @@ const GamePage = ({
       targetId = selectedTarget;
     }
 
-    // Send the racial ability action to the server
     socket.emit('useRacialAbility', {
       gameCode,
       targetId,
@@ -620,15 +551,6 @@ const GamePage = ({
       return;
     }
 
-    console.log(
-      'Replacing ability:',
-      oldAbilityType,
-      'with',
-      newAbilityType,
-      'at level',
-      level
-    );
-
     socket.emit('adaptabilityReplaceAbility', {
       gameCode,
       oldAbilityType,
@@ -640,13 +562,14 @@ const GamePage = ({
   };
 
   // Loading state
-  if (!me)
+  if (!me) {
     return (
       <div className="game-loading">
         <div className="loading-spinner"></div>
         <p>Loading game data...</p>
       </div>
     );
+  }
 
   const characterTitle = getCharacterTitle();
   const healthPercent = (me.hp / me.maxHp) * 100;
@@ -658,15 +581,20 @@ const GamePage = ({
           {characterTitle}
         </h1>
 
-        {/* HP Bar underneath the character title */}
         <div className="title-health-container">
           <div className="title-health-text">
             HP: {me.hp}/{me.maxHp}
           </div>
           <div className="title-health-bar">
             <div
-              className={`title-health-fill health-${healthPercent < 30 ? 'low' : healthPercent < 70 ? 'medium' : 'high'}`}
-              style={{ width: `${(me.hp / me.maxHp) * 100}%` }}
+              className={`title-health-fill health-${
+                healthPercent < 30
+                  ? 'low'
+                  : healthPercent < 70
+                    ? 'medium'
+                    : 'high'
+              }`}
+              style={{ width: `${healthPercent}%` }}
             />
           </div>
         </div>
@@ -684,12 +612,12 @@ const GamePage = ({
           isOpen={showAdaptabilityModal}
           onClose={() => {
             setShowAdaptabilityModal(false);
-            setInitialModalAbilities(null); // Clear data when modal closes
+            setInitialModalAbilities(null);
           }}
           socket={socket}
           gameCode={gameCode}
           className={me?.class || ''}
-          initialAbilities={initialModalAbilities} // Pass the abilities data as a prop
+          initialAbilities={initialModalAbilities}
         />
       )}
 
@@ -720,7 +648,7 @@ const GamePage = ({
           racialSelected={racialSelected}
           bloodRageActive={bloodRageActive}
           keenSensesActive={keenSensesActive}
-          // Action handlers
+          players={players}
           onSetActionType={setActionType}
           onSelectTarget={setSelectedTarget}
           onRacialAbilityUse={handleRacialAbilityUse}
@@ -732,8 +660,8 @@ const GamePage = ({
           isVisible={!isMobile || activeTab === 'history'}
           eventsLog={eventsLog}
           currentPlayerId={me?.id || ''}
-          players={players} // Add this line
-          showAllEvents={false} // Add this line
+          players={players}
+          showAllEvents={false}
         />
       </div>
     </div>
