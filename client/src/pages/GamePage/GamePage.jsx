@@ -301,6 +301,7 @@ const GamePage = ({
       // Reset submission state for new round
       setSubmitted(false);
       setSelectedTarget('');
+      setActionType(''); // Also reset action type
 
       // Scroll to results
       setTimeout(() => {

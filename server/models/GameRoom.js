@@ -543,8 +543,8 @@ class GameRoom {
     // Process log for clients
     const processedLog = this.processLogForClients(sortedLog);
 
-    // DON'T reset phase to action automatically - wait for majority vote
-    // this.phase = 'action';  // Commented out - let the vote handler manage this
+    // Reset phase to action for next round BEFORE returning results
+    this.phase = 'action';
 
     // LOG THE EVENTS FOR FRONTEND TEAM
     logger.debug('=== EVENTS LOG FOR FRONTEND ===');

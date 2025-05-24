@@ -246,8 +246,10 @@ function handlePerformAction(
           `All actions submitted, processing round for game ${gameCode}`
         );
 
-        // Process the round immediately but don't auto-advance
-        gameService.processGameRound(io, gameCode);
+        // Small delay to ensure UI updates
+        setTimeout(() => {
+          gameService.processGameRound(io, gameCode);
+        }, 500);
       }
 
       // Send success confirmation to the submitting player
@@ -277,6 +279,7 @@ function handlePerformAction(
     return false;
   }
 }
+
 /**
  * Handle racial ability use
  * @param {Object} io - Socket.io instance
@@ -548,7 +551,7 @@ function handleGetClassAbilities(io, socket, gameCode, className, level) {
 }
 
 /**
- * Handle player readiness for next round with proper phase management
+ * Handle player readiness for next round
  * @param {Object} io - Socket.io instance
  * @param {Object} socket - Client socket
  * @param {string} gameCode - Game code
@@ -592,31 +595,12 @@ function handlePlayerNextReady(io, socket, gameCode) {
       total: alivePlayers.length,
     });
 
-    logger.info(
-      `Ready progress: ${readyPlayers.length}/${alivePlayers.length} players ready in game ${gameCode}`
-    );
-
     // Check if majority are ready
     if (readyPlayers.length > alivePlayers.length / 2) {
-      logger.info(
-        `Game ${gameCode}: Majority ready (${readyPlayers.length}/${alivePlayers.length}), advancing to next round`
-      );
-
-      // Set phase back to action for next round
-      game.phase = 'action';
-
-      // Clear ready status for next round
-      game.nextReady.clear();
-
       // Resume game
       io.to(gameCode).emit('resumeGame');
-
-      // Send updated game state with new phase
-      io.to(gameCode).emit('gameStateUpdate', {
-        phase: game.phase,
-        round: game.round,
-        players: game.getPlayersInfo(),
-      });
+      game.nextReady.clear();
+      logger.info(`Game ${gameCode}: Resuming next round by majority vote`);
     }
 
     return true;

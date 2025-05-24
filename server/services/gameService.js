@@ -126,7 +126,7 @@ function broadcastPlayerList(io, gameCode) {
 }
 
 /**
- * Process game round
+ * Process game round with proper phase management
  * @param {Object} io - Socket.IO instance
  * @param {string} gameCode - Game code
  * @returns {Object|null} Round result or null if game not found
@@ -135,11 +135,23 @@ function processGameRound(io, gameCode) {
   const game = games.get(gameCode);
   if (!game) return null;
 
+  // Set phase to results before processing
+  game.phase = 'results';
+
   // Process the round
   const result = game.processRound();
 
-  // Broadcast the results
-  io.to(gameCode).emit('roundResult', result);
+  // Broadcast the results with phase information
+  io.to(gameCode).emit('roundResult', {
+    ...result,
+    phase: game.phase, // Include current phase
+  });
+
+  // Broadcast phase update specifically
+  io.to(gameCode).emit('gamePhaseUpdate', {
+    phase: game.phase,
+    round: result.turn,
+  });
 
   // If there was a level-up, emit a specific event
   if (result.levelUp) {
@@ -147,6 +159,7 @@ function processGameRound(io, gameCode) {
       level: result.level,
       oldLevel: result.levelUp.oldLevel,
       players: result.players,
+      phase: game.phase,
     });
   }
 
@@ -161,6 +174,8 @@ function processGameRound(io, gameCode) {
 
   return result;
 }
+
+module.exports = { processGameRound };
 
 /**
  * Check win conditions (for disconnects)
