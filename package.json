@@ -1,8 +1,52 @@
 {
+  "name": "warlock-game",
+  "version": "1.0.0",
+  "description": "Warlock multiplayer game with client and server",
+  "private": true,
+  "workspaces": [
+    "client",
+    "server"
+  ],
+  "scripts": {
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "test:client": "jest --selectProjects client",
+    "test:server": "jest --selectProjects server",
+    "test:integration": "jest --selectProjects integration",
+    "test:e2e": "jest --selectProjects e2e",
+    "test:unit": "jest --testPathPattern='(client|server)/.*\\.test\\.(js|jsx)$' --testPathIgnorePatterns='/tests/(integration|e2e)/'",
+    "test:ci": "jest --coverage --watchAll=false --passWithNoTests",
+    "lint": "eslint client/src server --ext .js,.jsx",
+    "lint:fix": "eslint client/src server --ext .js,.jsx --fix",
+    "dev": "concurrently \"npm run dev:server\" \"npm run dev:client\"",
+    "dev:server": "cd server && npm run dev",
+    "dev:client": "cd client && npm start",
+    "build": "cd client && npm run build",
+    "start": "cd server && npm start",
+    "postinstall": "npm run install:client && npm run install:server",
+    "install:client": "cd client && npm install",
+    "install:server": "cd server && npm install"
+  },
   "devDependencies": {
+    "@babel/core": "^7.23.0",
+    "@babel/preset-env": "^7.23.0",
+    "@babel/preset-react": "^7.22.0",
+    "@testing-library/jest-dom": "^6.6.3",
+    "@testing-library/react": "^16.3.0",
+    "@testing-library/user-event": "^13.5.0",
+    "babel-jest": "^29.7.0",
+    "concurrently": "^8.2.0",
     "eslint": "^9.27.0",
     "eslint-config-prettier": "^10.1.5",
     "eslint-plugin-prettier": "^5.4.0",
-    "prettier": "^3.5.3"
+    "eslint-plugin-react": "^7.33.0",
+    "eslint-plugin-react-hooks": "^4.6.0",
+    "jest": "^29.7.0",
+    "jest-environment-jsdom": "^29.7.0",
+    "jest-environment-node": "^29.7.0",
+    "prettier": "^3.5.3",
+    "socket.io-client": "^4.8.0",
+    "supertest": "^6.3.0"
   }
 }
