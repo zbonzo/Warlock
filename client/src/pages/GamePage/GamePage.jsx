@@ -16,6 +16,7 @@ import ActionColumn from './components/ActionColumn';
 import HistoryColumn from './components/HistoryColumn';
 import MobileNavigation from './components/MobileNavigation';
 import AdaptabilityModal from '@components/modals/AdaptabilityModal';
+import BattleResultsModal from '@components/modals/BattleResultsModal';
 import useMediaQuery from '@hooks/useMediaQuery';
 import './GamePage.css';
 
@@ -51,6 +52,8 @@ const GamePage = ({
   // Modal state
   const [showAdaptabilityModal, setShowAdaptabilityModal] = useState(false);
   const [initialModalAbilities, setInitialModalAbilities] = useState(null);
+  const [showBattleResults, setShowBattleResults] = useState(false);
+  const [battleResultsData, setBattleResultsData] = useState(null);
 
   // Mobile navigation state
   const [activeTab, setActiveTab] = useState('action');
@@ -291,29 +294,39 @@ const GamePage = ({
     }
   }, [actionType, alivePlayers, selectedTarget]);
 
-  // Switch to results phase when new event log arrives
   useEffect(() => {
-    if (eventsLog.length > prevLogLen.current) {
-      prevLogLen.current = eventsLog.length;
-      setPhase('results');
-      setReadyClicked(false);
+    if (!socket) return;
 
-      // Reset submission state for new round
-      setSubmitted(false);
-      setSelectedTarget('');
-      setActionType(''); // Also reset action type
+    const handleRoundResult = (data) => {
+      console.log('Received round results:', data);
 
-      // Scroll to results
-      setTimeout(() => {
-        const resultsElement = document.querySelector(
-          '.results-phase .section-title'
-        );
-        if (resultsElement) {
-          resultsElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
-      }, 100);
-    }
-  }, [eventsLog]);
+      // Store the battle results data
+      setBattleResultsData({
+        events: data.eventsLog || [],
+        round: data.turn || 1,
+        levelUp: data.levelUp || null,
+        winner: data.winner || null,
+        players: data.players || [],
+      });
+
+      // Show the battle results modal
+      setShowBattleResults(true);
+
+      // Reset submission state for new round (if no winner)
+      if (!data.winner) {
+        setSubmitted(false);
+        setSelectedTarget('');
+        setActionType('');
+        setReadyClicked(false);
+      }
+    };
+
+    socket.on('roundResult', handleRoundResult);
+
+    return () => {
+      socket.off('roundResult', handleRoundResult);
+    };
+  }, [socket]);
 
   // Resume game on host signal
   useEffect(() => {
@@ -543,6 +556,17 @@ const GamePage = ({
     setReadyClicked(true);
   };
 
+  const handleCloseBattleResults = () => {
+    setShowBattleResults(false);
+    setBattleResultsData(null);
+
+    // If there was a winner, you might want to redirect or show a different screen
+    if (battleResultsData?.winner) {
+      // Handle game end - maybe redirect to lobby or show final results
+      console.log('Game ended, winner:', battleResultsData.winner);
+    }
+  };
+
   /**
    * Handle replacing an ability with adaptability
    */
@@ -656,6 +680,18 @@ const GamePage = ({
           onSubmitAction={handleSubmitAction}
           onReadyClick={handleReadyClick}
         />
+        {showBattleResults && battleResultsData && (
+          <BattleResultsModal
+            isOpen={showBattleResults}
+            onClose={handleCloseBattleResults}
+            events={battleResultsData.events}
+            round={battleResultsData.round}
+            currentPlayerId={me?.id || ''}
+            players={battleResultsData.players}
+            levelUp={battleResultsData.levelUp}
+            winner={battleResultsData.winner}
+          />
+        )}
 
         <HistoryColumn
           isVisible={!isMobile || activeTab === 'history'}
