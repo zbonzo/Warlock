@@ -5,10 +5,10 @@
   "main": "index.js",
   "scripts": {
     "start": "babel-node index.js",
-    "dev": "nodemon --exec babel-node index.js"
+    "dev": "nodemon --exec babel-node index.js",
+    "dev-regular": "nodemon index.js"
   },
   "dependencies": {
-    "babel-node": "^0.0.1-security",
     "cors": "^2.8.5",
     "express": "^5.1.0",
     "module-alias": "^2.2.3",
