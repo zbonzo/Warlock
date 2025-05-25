@@ -197,6 +197,31 @@ const enraged = {
   },
 };
 
+const healingOverTime = {
+  // Default values
+  default: {
+    amount: 5, // Healing per turn
+    turns: 3, // Duration in turns
+  },
+
+  // Effect behavior
+  stackable: false, // Multiple healing effects don't stack
+  refreshable: true, // Can be refreshed to extend duration
+
+  // Mechanics
+  healsPerTurn: true, // Applies healing each turn
+  canOverheal: false, // Cannot heal above max HP
+
+  // Display settings
+  messages: {
+    applied:
+      '{playerName} is blessed with healing over time for {amount} HP per turn for {turns} turns.',
+    refreshed: "{playerName}'s healing blessing is renewed for {turns} turns.",
+    expired: 'The healing blessing on {playerName} has faded.',
+    heal: '{playerName} regenerates {amount} health from their blessing.',
+  },
+};
+
 /**
  * Effect processing order
  * Lower numbers are processed first each round
@@ -209,6 +234,7 @@ const processingOrder = {
   enraged: 5, // Handle enraged effects
   invisible: 6, // Then handle invisibility
   stunned: 7, // Finally process stun effects
+  healingOverTime: 8, // Process healing effects last
 };
 
 /**
@@ -245,6 +271,7 @@ function getEffectDefaults(effectName) {
     vulnerable,
     weakened,
     enraged,
+    healingOverTime,
   };
   return effects[effectName]?.default || null;
 }
@@ -263,6 +290,7 @@ function isEffectStackable(effectName) {
     vulnerable,
     weakened,
     enraged,
+    healingOverTime,
   };
   return effects[effectName]?.stackable || false;
 }
@@ -281,6 +309,7 @@ function isEffectRefreshable(effectName) {
     vulnerable,
     weakened,
     enraged,
+    healingOverTime,
   };
   return effects[effectName]?.refreshable || false;
 }
@@ -302,6 +331,7 @@ function getEffectMessage(effectName, messageType, data = {}) {
     vulnerable,
     weakened,
     enraged,
+    healingOverTime,
   };
   const template = effects[effectName]?.messages?.[messageType];
 
@@ -340,8 +370,9 @@ module.exports = {
   vulnerable,
   invisible,
   stunned,
-  weakened, // New effect
-  enraged, // New effect
+  weakened,
+  enraged,
+  healingOverTime,
   processingOrder,
   global,
 

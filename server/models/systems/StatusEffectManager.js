@@ -1,12 +1,12 @@
 /**
- * @fileoverview System for managing player status effects and their durations
- * Handles application, removal, and round-based processing of effects
+ * @fileoverview Updated StatusEffectManager with healing over time support
+ * Handles application, removal, and round-based processing of effects including healing
  */
 const config = require('@config');
 const logger = require('@utils/logger');
 
 /**
- * Manages all status effects across players
+ * Manages all status effects across players including healing over time
  * Centralizes effect processing logic for game consistency
  */
 class StatusEffectManager {
@@ -29,8 +29,10 @@ class StatusEffectManager {
       enraged: {
         default: { damageBoost: 1.5, damageResistance: 0.3, turns: 2 },
       },
+      healingOverTime: { default: { amount: 5, turns: 3 } }, // New effect
     };
   }
+
   getEffectApplicationMessage(playerName, effectName, data) {
     switch (effectName) {
       case 'poison':
@@ -41,6 +43,8 @@ class StatusEffectManager {
         return `${playerName} becomes invisible for ${data.turns} turn(s).`;
       case 'stunned':
         return `${playerName} is stunned for ${data.turns} turn(s).`;
+      case 'healingOverTime':
+        return `${playerName} is blessed with healing over time for ${data.amount} HP per turn for ${data.turns} turns.`;
       default:
         return `${playerName} is affected by ${effectName}.`;
     }
@@ -56,6 +60,8 @@ class StatusEffectManager {
         return `${playerName}'s invisibility is extended for ${data.turns} turn(s).`;
       case 'stunned':
         return `${playerName} remains stunned for ${data.turns} more turn(s).`;
+      case 'healingOverTime':
+        return `${playerName}'s healing blessing is renewed for ${data.turns} turns.`;
       default:
         return `${playerName}'s ${effectName} effect is refreshed.`;
     }
@@ -71,10 +77,13 @@ class StatusEffectManager {
         return `${playerName} is no longer invisible.`;
       case 'stunned':
         return `${playerName} is no longer stunned.`;
+      case 'healingOverTime':
+        return `The healing blessing on ${playerName} has faded.`;
       default:
         return `The ${effectName} effect on ${playerName} has worn off.`;
     }
   }
+
   /**
    * Apply a status effect to a player
    * @param {string} playerId - Target player's ID
@@ -243,8 +252,7 @@ class StatusEffectManager {
   }
 
   /**
-   * Process all timed status effects for all players - NO CHANGES NEEDED
-   * The existing method is fine, the fix is in applyEffect above
+   * UPDATED: Process all timed status effects for all players including healing over time
    * @param {Array} log - Event log to append messages to
    */
   processTimedEffects(log = []) {
@@ -273,8 +281,9 @@ class StatusEffectManager {
       shielded: 2,
       invisible: 4,
       stunned: 5,
-      weakened: 6, // Add new effects
+      weakened: 6,
       enraged: 7,
+      healingOverTime: 8,
     };
 
     // Sort effect types by processing order
@@ -290,6 +299,8 @@ class StatusEffectManager {
       for (const player of alivePlayers) {
         if (effectType === 'poison') {
           this.processPoisonEffect(player, log);
+        } else if (effectType === 'healingOverTime') {
+          this.processHealingOverTime(player, log);
         } else {
           this.processTimedEffect(player, effectType, log);
         }
@@ -298,8 +309,66 @@ class StatusEffectManager {
   }
 
   /**
-   * Process a generic timed effect for a player - NO CHANGES NEEDED
-   * The existing method is fine with the applyEffect fix above
+   * NEW: Process healing over time effect for a player
+   * @param {Object} player - Player object
+   * @param {Array} log - Event log to append messages to
+   * @private
+   */
+  processHealingOverTime(player, log) {
+    if (!player.hasStatusEffect('healingOverTime')) return;
+
+    const healing = player.statusEffects.healingOverTime;
+    const healAmount = healing.amount || 0;
+
+    // Apply healing
+    if (healAmount > 0) {
+      const oldHp = player.hp;
+      player.hp = Math.min(player.maxHp, player.hp + healAmount);
+      const actualHeal = player.hp - oldHp;
+
+      if (actualHeal > 0) {
+        // Use config message if available
+        const healMessage =
+          config.statusEffects.getEffectMessage('healingOverTime', 'heal', {
+            playerName: player.name,
+            amount: actualHeal,
+          }) ||
+          `${player.name} regenerates ${actualHeal} health from their blessing.`;
+
+        log.push(healMessage);
+
+        // Add private message to the player
+        const privateHealLog = {
+          type: 'healing_over_time',
+          public: false,
+          targetId: player.id,
+          message: '',
+          privateMessage: `You regenerate ${actualHeal} HP from healing over time.`,
+          attackerMessage: '',
+        };
+        log.push(privateHealLog);
+      }
+    }
+
+    // Decrement turns
+    healing.turns--;
+
+    // Remove if expired
+    if (healing.turns <= 0) {
+      player.removeStatusEffect('healingOverTime');
+
+      // Use config message if available
+      const expiredMessage =
+        config.statusEffects.getEffectMessage('healingOverTime', 'expired', {
+          playerName: player.name,
+        }) || `The healing blessing on ${player.name} has faded.`;
+
+      log.push(expiredMessage);
+    }
+  }
+
+  /**
+   * Process a generic timed effect for a player
    * @param {Object} player - Player object
    * @param {string} effectName - Name of the effect to process
    * @param {Array} log - Event log to append messages to
@@ -325,7 +394,7 @@ class StatusEffectManager {
   }
 
   /**
-   * Process poison effect for a player - MINIMAL CHANGE for display
+   * Process poison effect for a player
    * @param {Object} player - Player object
    * @param {Array} log - Event log to append messages to
    * @private

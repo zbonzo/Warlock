@@ -1,12 +1,12 @@
 /**
- * @fileoverview System for managing combat, damage calculation, and death processing
- * Centralizes combat logic for consistent damage calculation
+ * @fileoverview Fixed Combat System with proper armor damage reduction
+ * Ensures armor is correctly applied in all damage calculations
  */
 const config = require('@config');
 const logger = require('@utils/logger');
 
 /**
- * CombatSystem handles all combat-related operations
+ * CombatSystem handles all combat-related operations with FIXED armor calculation
  * Ensures consistent damage calculation and death processing
  */
 class CombatSystem {
@@ -36,79 +36,7 @@ class CombatSystem {
   }
 
   /**
-   * Validate and queue a player action
-   * @param {string} actorId - ID of player performing the action
-   * @param {string} actionType - Type of action to perform
-   * @param {string} targetId - Target of the action
-   * @param {Object} options - Additional options for the action
-   * @param {Array} pendingActions - List of pending actions to add to
-   * @returns {boolean} Whether the action was successfully queued
-   */
-  validateAndQueueAction(
-    actorId,
-    actionType,
-    targetId,
-    options,
-    pendingActions
-  ) {
-    const actor = this.players.get(actorId);
-
-    // Basic validation
-    if (!actor || !actor.isAlive) return false;
-    if (this.statusEffectManager.isPlayerStunned(actorId)) return false;
-    if (pendingActions.some((a) => a.actorId === actorId)) return false; // Already acted
-
-    // Find the ability being used
-    const ability = actor.unlocked.find((a) => a.type === actionType);
-    if (!ability) return false; // Ability not found or not unlocked
-
-    // Basic target validation
-    if (targetId !== '__monster__' && targetId !== actorId) {
-      const targetPlayer = this.players.get(targetId);
-      if (!targetPlayer || !targetPlayer.isAlive) return false; // Invalid player target
-
-      // Handle invisible targets (redirect if needed)
-      if (
-        targetPlayer.hasStatusEffect &&
-        targetPlayer.hasStatusEffect('invisible')
-      ) {
-        const redirectTarget = this.gameStateUtils.getRandomTarget({
-          actorId,
-          excludeIds: [targetId],
-          includeMonster: true,
-          monsterRef: this.monsterController.getState(),
-        });
-
-        if (!redirectTarget) return false; // No valid target to redirect to
-        targetId = redirectTarget; // Update target to the redirected one
-      }
-    }
-
-    // Sanitize options objectapplyDamageToPlayer
-    const safeOptions = {};
-    if (options && typeof options === 'object') {
-      // Only allow specific properties
-      if (typeof options.bloodRageActive === 'boolean') {
-        safeOptions.bloodRageActive = options.bloodRageActive;
-      }
-      if (typeof options.keenSensesActive === 'boolean') {
-        safeOptions.keenSensesActive = options.keenSensesActive;
-      }
-    }
-
-    // Add the action to pending actions
-    pendingActions.push({
-      actorId,
-      actionType,
-      targetId,
-      options: safeOptions,
-    });
-
-    return true;
-  }
-
-  /**
-   * Apply damage to a player, considering armor and effects
+   * FIXED: Apply damage to a player with proper armor calculation
    * @param {Object} target - Target player
    * @param {number} damageAmount - Amount of damage
    * @param {Object} attacker - Attacker (player or monster)
@@ -138,23 +66,59 @@ class CombatSystem {
       armorDegradationInfo = target.processStoneArmorDegradation(damageAmount);
     }
 
-    // Add vulnerability status logging
-    if (target.isVulnerable) {
-      // Log vulnerability effect before applying damage
+    // STEP 1: Apply vulnerability BEFORE armor calculation
+    let modifiedDamage = damageAmount;
+    if (target.isVulnerable && target.vulnerabilityIncrease > 0) {
+      const vulnerabilityMultiplier = 1 + target.vulnerabilityIncrease / 100;
+      modifiedDamage = Math.floor(modifiedDamage * vulnerabilityMultiplier);
+
+      // Log vulnerability effect
       log.push(
-        `${target.name} is VULNERABLE and takes ${target.vulnerabilityIncrease}% more damage!`
+        `${target.name} is VULNERABLE and takes ${target.vulnerabilityIncrease}% more damage! (${damageAmount} → ${modifiedDamage})`
       );
     }
 
-    // Apply damage with built-in vulnerability handling
-    const finalDamage = target.takeDamage(damageAmount, attacker);
+    // STEP 2: Apply Unstoppable Rage damage resistance if active
+    if (
+      target.classEffects &&
+      target.classEffects.unstoppableRage &&
+      target.classEffects.unstoppableRage.turnsLeft > 0
+    ) {
+      const damageResistance =
+        target.classEffects.unstoppableRage.damageResistance || 0.3;
+      const beforeRage = modifiedDamage;
+      modifiedDamage = Math.floor(modifiedDamage * (1 - damageResistance));
 
-    // Calculate reduction percentage for logs (based on original damage)
-    const reductionPercent = Math.round(
-      ((damageAmount - finalDamage) / damageAmount) * 100
+      log.push(
+        `${target.name}'s Unstoppable Rage reduces damage by ${Math.round(damageResistance * 100)}%! (${beforeRage} → ${modifiedDamage})`
+      );
+    }
+
+    // STEP 3: Apply armor reduction using FIXED calculation
+    const totalArmor = target.getEffectiveArmor();
+    const beforeArmor = modifiedDamage;
+    const finalDamage = this.calculateArmorReduction(
+      modifiedDamage,
+      totalArmor
     );
 
-    // Create enhanced log entry
+    // Calculate reduction percentage for logs
+    const reductionPercent =
+      totalArmor > 0
+        ? Math.round(((beforeArmor - finalDamage) / beforeArmor) * 100)
+        : 0;
+
+    // STEP 4: Apply the final damage to HP
+    const oldHp = target.hp;
+    target.hp = Math.max(0, target.hp - finalDamage);
+    const actualDamage = oldHp - target.hp;
+
+    // Check if died
+    if (target.hp <= 0) {
+      target.isAlive = false;
+    }
+
+    // Create enhanced log entry with armor information
     const isMonsterAttacker = !attacker.id;
 
     const logEvent = {
@@ -166,27 +130,25 @@ class CombatSystem {
       attackerName: attacker.name || 'The Monster',
       damage: {
         initial: damageAmount,
-        final: finalDamage,
+        afterVulnerability: modifiedDamage,
+        final: actualDamage,
         reduction: reductionPercent,
+        armor: totalArmor,
         isVulnerable: target.isVulnerable,
       },
-      message: config.messages.getEvent('playerTakesDamage', {
-        playerName: target.name,
-        damage: finalDamage,
-      }),
-      privateMessage: config.messages.getMessage('private', 'youWereAttacked', {
-        attackerName: attacker.name || 'The Monster',
-        damage: finalDamage,
-        reduction: reductionPercent,
-      }),
+      message:
+        totalArmor > 0
+          ? `${target.name} was attacked for ${actualDamage} damage (${damageAmount} reduced by ${reductionPercent}% armor).`
+          : `${target.name} was attacked and lost ${actualDamage} health.`,
+      privateMessage:
+        totalArmor > 0
+          ? `${attacker.name || 'The Monster'} attacked you for ${actualDamage} damage (${damageAmount} base, reduced by ${reductionPercent}% from your ${totalArmor} armor).`
+          : `${attacker.name || 'The Monster'} attacked you for ${actualDamage} damage.`,
       attackerMessage: isMonsterAttacker
         ? ''
-        : config.messages.getMessage('private', 'youAttacked', {
-            targetName: target.name,
-            damage: finalDamage,
-            initialDamage: damageAmount,
-            reduction: reductionPercent,
-          }),
+        : totalArmor > 0
+          ? `You attacked ${target.name} for ${actualDamage} damage (${damageAmount} base, reduced by ${reductionPercent}% from their ${totalArmor} armor).`
+          : `You attacked ${target.name} for ${actualDamage} damage.`,
     };
 
     log.push(logEvent);
@@ -222,8 +184,8 @@ class CombatSystem {
       log.push(armorLogEvent);
     }
 
-    // === NEW: Handle counter-attacks from Oracle abilities ===
-    if (attacker.id && finalDamage > 0) {
+    // === Handle counter-attacks from Oracle abilities ===
+    if (attacker.id && actualDamage > 0) {
       // Only for player attackers who dealt damage
       this.handleCounterAttacks(target, attacker, log);
     }
@@ -244,6 +206,32 @@ class CombatSystem {
 
     return true;
   }
+
+  /**
+   * FIXED: Calculate armor damage reduction
+   * @param {number} damage - Raw damage amount
+   * @param {number} totalArmor - Total armor value
+   * @returns {number} Final damage after armor reduction
+   * @private
+   */
+  calculateArmorReduction(damage, totalArmor) {
+    const reductionRate = config.gameBalance.armor.reductionRate || 0.1;
+    const maxReduction = config.gameBalance.armor.maxReduction || 0.9;
+
+    let reductionPercent;
+    if (totalArmor <= 0) {
+      // Negative armor increases damage taken
+      reductionPercent = Math.max(-2.0, totalArmor * reductionRate);
+    } else {
+      // Positive armor reduces damage
+      reductionPercent = Math.min(maxReduction, totalArmor * reductionRate);
+    }
+
+    // Apply the reduction and return final damage
+    const finalDamage = Math.floor(damage * (1 - reductionPercent));
+    return Math.max(1, finalDamage); // Always deal at least 1 damage
+  }
+
   /**
    * Handle counter-attacks from Oracle abilities
    * @param {Object} target - The player who was attacked
@@ -362,6 +350,7 @@ class CombatSystem {
       }
     }
   }
+
   /**
    * Check for immunity effects that prevent damage
    * @param {Object} target - Target player

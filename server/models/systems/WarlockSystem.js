@@ -1,13 +1,13 @@
 /**
- * @fileoverview System for managing warlock players, conversion, and related game mechanics
- * Centralizes warlock-specific logic for consistent behavior
+ * @fileoverview Enhanced Warlock system with corruption control mechanics
+ * Centralizes warlock-specific logic with improved balance controls
  */
 const config = require('@config');
 const logger = require('@utils/logger');
 
 /**
- * WarlockSystem manages all warlock-related operations
- * Handles warlock assignments, conversions, and tracking
+ * WarlockSystem manages all warlock-related operations with enhanced corruption controls
+ * Handles warlock assignments, conversions, tracking, and corruption limits
  */
 class WarlockSystem {
   /**
@@ -19,6 +19,113 @@ class WarlockSystem {
     this.players = players;
     this.gameStateUtils = gameStateUtils;
     this.numWarlocks = 0;
+
+    // Enhanced corruption tracking
+    this.roundCorruptions = 0; // Track corruptions this round
+    this.playerCorruptions = new Map(); // Track per-player corruptions this round
+    this.corruptionCooldowns = new Map(); // Track corruption cooldowns by player
+    this.totalCorruptionsThisGame = 0; // Track total corruptions for analytics
+  }
+
+  /**
+   * Reset corruption tracking at start of each round
+   */
+  resetRoundTracking() {
+    this.roundCorruptions = 0;
+    this.playerCorruptions.clear();
+    logger.debug(`Reset corruption tracking for new round`);
+  }
+
+  /**
+   * Process corruption cooldowns at end of round
+   */
+  processCorruptionCooldowns() {
+    const expiredCooldowns = [];
+
+    for (const [playerId, cooldown] of this.corruptionCooldowns.entries()) {
+      if (cooldown > 0) {
+        this.corruptionCooldowns.set(playerId, cooldown - 1);
+      } else {
+        this.corruptionCooldowns.delete(playerId);
+        expiredCooldowns.push(playerId);
+      }
+    }
+
+    if (expiredCooldowns.length > 0) {
+      logger.debug(
+        `Corruption cooldowns expired for ${expiredCooldowns.length} players`
+      );
+    }
+  }
+
+  /**
+   * Check if corruption is allowed based on current limits
+   * @param {string} actorId - ID of the player attempting corruption
+   * @returns {Object} Corruption check result
+   */
+  checkCorruptionLimits(actorId) {
+    const conversionConfig = config.gameBalance.warlock.conversion;
+
+    const result = {
+      allowed: true,
+      reason: null,
+      roundLimitReached: false,
+      playerLimitReached: false,
+      playerOnCooldown: false,
+    };
+
+    // Check round limit
+    const maxPerRound = conversionConfig.maxCorruptionsPerRound || 999;
+    if (this.roundCorruptions >= maxPerRound) {
+      result.allowed = false;
+      result.reason = `Round corruption limit reached (${maxPerRound})`;
+      result.roundLimitReached = true;
+      return result;
+    }
+
+    // Check player limit for this round
+    const maxPerPlayer = conversionConfig.maxCorruptionsPerPlayer || 999;
+    const playerCorruptions = this.playerCorruptions.get(actorId) || 0;
+    if (playerCorruptions >= maxPerPlayer) {
+      result.allowed = false;
+      result.reason = `Player corruption limit reached (${maxPerPlayer})`;
+      result.playerLimitReached = true;
+      return result;
+    }
+
+    // Check cooldown
+    if (this.corruptionCooldowns.has(actorId)) {
+      const remainingCooldown = this.corruptionCooldowns.get(actorId);
+      result.allowed = false;
+      result.reason = `Player on corruption cooldown (${remainingCooldown} rounds remaining)`;
+      result.playerOnCooldown = true;
+      return result;
+    }
+
+    return result;
+  }
+
+  /**
+   * Record a successful corruption
+   * @param {string} actorId - ID of the player who caused the corruption
+   */
+  recordCorruption(actorId) {
+    // Increment round counters
+    this.roundCorruptions++;
+    const playerCorruptions = this.playerCorruptions.get(actorId) || 0;
+    this.playerCorruptions.set(actorId, playerCorruptions + 1);
+
+    // Increment total game counter
+    this.totalCorruptionsThisGame++;
+
+    // Apply cooldown
+    const cooldown =
+      config.gameBalance.warlock.conversion.corruptionCooldown || 2;
+    this.corruptionCooldowns.set(actorId, cooldown);
+
+    logger.debug(
+      `Recorded corruption by ${actorId}. Round: ${this.roundCorruptions}, Player: ${playerCorruptions + 1}, Cooldown: ${cooldown}`
+    );
   }
 
   /**
@@ -110,7 +217,7 @@ class WarlockSystem {
   }
 
   /**
-   * Attempt to convert a target to a Warlock
+   * Enhanced conversion attempt with corruption controls
    * @param {Object} actor - The Warlock attempting the conversion
    * @param {Object} target - The potential convert (can be null for random targeting)
    * @param {Array} log - The log array to append messages to
@@ -120,6 +227,15 @@ class WarlockSystem {
   attemptConversion(actor, target, log, rateModifier = 1.0) {
     // Validate actor is a warlock
     if (!actor || !actor.isWarlock) return false;
+
+    // Check corruption limits
+    const limitCheck = this.checkCorruptionLimits(actor.id);
+    if (!limitCheck.allowed) {
+      logger.debug(
+        `Corruption blocked for ${actor.name}: ${limitCheck.reason}`
+      );
+      return false;
+    }
 
     // Handle null target (for abilities that generate "threat" without a specific target)
     if (!target) {
@@ -145,10 +261,17 @@ class WarlockSystem {
     // Apply rate modifier
     const finalChance = baseChance * rateModifier;
 
+    // Check for level-up corruption prevention
+    if (conversionSettings.preventLevelUpCorruption && rateModifier === 0) {
+      logger.debug(`Level-up corruption prevented by configuration`);
+      return false;
+    }
+
     // Attempt conversion
     if (Math.random() < finalChance) {
       target.isWarlock = true;
       this.incrementWarlockCount();
+      this.recordCorruption(actor.id);
 
       // Enhanced log entry using messages from config
       const conversionLog = {
@@ -168,8 +291,15 @@ class WarlockSystem {
       };
       log.push(conversionLog);
 
+      logger.info(
+        `${actor.name} successfully corrupted ${target.name} (chance: ${Math.round(finalChance * 100)}%)`
+      );
       return true;
     }
+
+    logger.debug(
+      `Corruption attempt failed: ${actor.name} -> ${target.name} (chance: ${Math.round(finalChance * 100)}%)`
+    );
     return false;
   }
 
@@ -219,6 +349,7 @@ class WarlockSystem {
 
     player.isWarlock = true;
     this.incrementWarlockCount();
+    this.totalCorruptionsThisGame++;
 
     log.push(
       `${player.name} has been turned into a Warlock! (Reason: ${reason})`
@@ -240,6 +371,21 @@ class WarlockSystem {
 
     // Warlocks are winning if they exceed the threshold
     return aliveWarlockCount > aliveCount * majorityThreshold;
+  }
+
+  /**
+   * Get corruption statistics for debugging/analytics
+   * @returns {Object} Corruption statistics
+   */
+  getCorruptionStats() {
+    return {
+      totalGameCorruptions: this.totalCorruptionsThisGame,
+      roundCorruptions: this.roundCorruptions,
+      playerCorruptions: Object.fromEntries(this.playerCorruptions),
+      activeCooldowns: Object.fromEntries(this.corruptionCooldowns),
+      currentWarlocks: this.numWarlocks,
+      aliveWarlocks: this.countAliveWarlocks(),
+    };
   }
 }
 

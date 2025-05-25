@@ -820,14 +820,17 @@ const classAbilities = {
       type: 'rejuvenation',
       name: 'Rejuvenation',
       category: 'Heal',
-      effect: null,
+      effect: 'healingOverTime', // Changed from null to healingOverTime
       target: 'Multi',
-      params: { amount: 12 },
+      params: {
+        amount: 100, // Total healing over time (will be divided by turns)
+        turns: 3, // Duration in turns
+      },
       unlockAt: 3,
       order: 10110,
       cooldown: 2,
       flavorText:
-        'Infuse your allies with the restorative energies of nature itself.',
+        'Infuse your allies with the restorative energies of nature itself, healing them over time.',
     },
     {
       type: 'entangle',

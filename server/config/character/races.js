@@ -178,7 +178,7 @@ const racialAbilities = {
     cooldown: 4,
     effect: 'healOverTime',
     target: 'Self',
-    params: { amount: 5, turns: 3 },
+    params: { amount: 100, turns: 3 },
   },
 
   Skeleton: {

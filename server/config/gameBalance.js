@@ -1,5 +1,5 @@
 /**
- * @fileoverview Game balance configuration
+ * @fileoverview Updated game balance configuration with monster scaling fixes
  * Centralized balance settings for monster, player, and warlock mechanics
  */
 
@@ -12,8 +12,10 @@ const monster = {
   baseDamage: 10,
   baseAge: 0,
 
-  // Scaling formulas
-  hpPerLevel: 50, // Monster HP = baseHp + (level - 1) * hpPerLevel
+  // Enhanced scaling formulas
+  hpPerLevel: 75, // Increased from 50
+  useExponentialScaling: true, // New option for exponential scaling
+  hpScalingMultiplier: 1.5, // 150% scaling rate vs players
 
   // Damage scaling with age
   damageScaling: {
@@ -62,19 +64,25 @@ const player = {
 };
 
 /**
- * Warlock conversion mechanics
+ * Enhanced warlock conversion mechanics with corruption control
  */
 const warlock = {
   // Conversion chance calculation
   conversion: {
-    baseChance: 0.2, // 20% base conversion chance
-    maxChance: 0.5, // 50% maximum chance
-    scalingFactor: 0.3, // How much warlock ratio affects chance
+    baseChance: 0.15, // Reduced from 0.2
+    maxChance: 0.4, // Reduced from 0.5
+    scalingFactor: 0.25, // Reduced from 0.3
+
+    // New corruption control options
+    preventLevelUpCorruption: false, // Option to disable corruption on level-ups
+    maxCorruptionsPerRound: 2, // Maximum corruptions allowed per round
+    maxCorruptionsPerPlayer: 1, // Maximum times a single player can corrupt others per round
+    corruptionCooldown: 2, // Rounds before a player can corrupt again
 
     // Modifiers for different scenarios
-    aoeModifier: 0.5, // 50% of normal chance for AoE attacks
-    randomModifier: 0.5, // 50% of normal chance for random conversions
-    untargetedModifier: 0.5, // 50% of normal chance for untargeted actions
+    aoeModifier: 0.3, // Reduced from 0.5
+    randomModifier: 0.3, // Reduced from 0.5
+    untargetedModifier: 0.3, // Reduced from 0.5
   },
 
   // Win conditions
@@ -143,11 +151,18 @@ const rateLimiting = {
 };
 
 /**
- * Helper function to calculate monster HP for a given level
+ * Enhanced helper function to calculate monster HP for a given level
  * @param {number} level - Game level
  * @returns {number} Monster HP
  */
 function calculateMonsterHp(level) {
+  if (monster.useExponentialScaling) {
+    // Exponential formula: baseHp * (level^1.3) + (level-1) * hpPerLevel
+    return Math.floor(
+      monster.baseHp * Math.pow(level, 1.3) + (level - 1) * monster.hpPerLevel
+    );
+  }
+  // Fallback to linear scaling
   return monster.baseHp + (level - 1) * monster.hpPerLevel;
 }
 
@@ -161,13 +176,28 @@ function calculateMonsterDamage(age) {
 }
 
 /**
- * Helper function to calculate warlock conversion chance
+ * Helper function to calculate warlock conversion chance with limits
  * @param {number} warlockCount - Number of warlocks
  * @param {number} totalPlayers - Total alive players
  * @param {number} modifier - Conversion modifier (default 1.0)
+ * @param {Object} limitChecks - Object with corruption limit information
  * @returns {number} Conversion chance (0.0 to 1.0)
  */
-function calculateConversionChance(warlockCount, totalPlayers, modifier = 1.0) {
+function calculateConversionChance(
+  warlockCount,
+  totalPlayers,
+  modifier = 1.0,
+  limitChecks = {}
+) {
+  // Check corruption limits first
+  if (
+    limitChecks.roundLimitReached ||
+    limitChecks.playerLimitReached ||
+    limitChecks.playerOnCooldown
+  ) {
+    return 0.0; // No conversion possible
+  }
+
   const baseChance = warlock.conversion.baseChance;
   const scalingFactor = warlock.conversion.scalingFactor;
   const maxChance = warlock.conversion.maxChance;
@@ -180,7 +210,7 @@ function calculateConversionChance(warlockCount, totalPlayers, modifier = 1.0) {
 }
 
 /**
- * Helper function to calculate damage reduction from armor
+ * Helper function to calculate damage reduction from armor (FIXED)
  * @param {number} armor - Total armor value
  * @returns {number} Damage reduction percentage (0.0 to 1.0)
  */

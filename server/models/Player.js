@@ -1,5 +1,5 @@
 /**
- * @fileoverview Player model with enhanced action submission and cooldown support
+ * @fileoverview Updated Player model with fixed armor calculation and damage display
  * Manages player state, abilities, status effects, cooldowns, and action validation
  */
 const config = require('@config');
@@ -456,19 +456,28 @@ class Player {
     };
   }
 
+  /**
+   * FIXED: Calculate damage reduction from armor
+   * @param {number} damage - Raw damage amount
+   * @returns {number} Final damage after armor reduction
+   */
   calculateDamageReduction(damage) {
     const totalArmor = this.getEffectiveArmor();
-    const reductionRate = config.gameBalance.armor.reductionRate;
-    const maxReduction = config.gameBalance.armor.maxReduction;
+    const reductionRate = config.gameBalance.armor.reductionRate || 0.1;
+    const maxReduction = config.gameBalance.armor.maxReduction || 0.9;
 
     let reductionPercent;
     if (totalArmor <= 0) {
+      // Negative armor increases damage taken
       reductionPercent = Math.max(-2.0, totalArmor * reductionRate);
     } else {
+      // Positive armor reduces damage
       reductionPercent = Math.min(maxReduction, totalArmor * reductionRate);
     }
 
-    return Math.floor(damage * (1 - reductionPercent));
+    // Apply the reduction and return final damage
+    const finalDamage = Math.floor(damage * (1 - reductionPercent));
+    return Math.max(1, finalDamage); // Always deal at least 1 damage
   }
 
   /**
@@ -530,6 +539,29 @@ class Player {
   }
 
   /**
+   * Get ability damage display for UI
+   * @param {Object} ability - Ability object
+   * @returns {Object} Damage display information
+   */
+  getAbilityDamageDisplay(ability) {
+    if (!ability.params?.damage) return null;
+
+    const baseDamage = ability.params.damage;
+    const modifiedDamage = this.modifyDamage(baseDamage);
+
+    return {
+      base: baseDamage,
+      modified: modifiedDamage,
+      modifier: this.damageMod,
+      showModified: baseDamage !== modifiedDamage,
+      displayText:
+        baseDamage === modifiedDamage
+          ? `${baseDamage} damage`
+          : `${modifiedDamage} damage (${baseDamage} base × ${this.damageMod?.toFixed(1) || 1.0})`,
+    };
+  }
+
+  /**
    * Calculate healing modifier (inverse of damage modifier)
    * @returns {number} Healing modifier value
    */
@@ -577,18 +609,9 @@ class Player {
       this.racialCooldown--;
     }
 
-    // Process healing over time effect (Satyr racial)
-    if (this.racialEffects && this.racialEffects.healOverTime) {
-      const effect = this.racialEffects.healOverTime;
-      this.hp = Math.min(this.maxHp, this.hp + effect.amount);
-      effect.turns--;
-
-      if (effect.turns <= 0) {
-        delete this.racialEffects.healOverTime;
-      }
-
-      return { healed: effect.amount };
-    }
+    // NOTE: Healing over time is now handled by StatusEffectManager
+    // This method is kept for compatibility but healing over time
+    // should use the healingOverTime status effect instead
 
     return null;
   }
@@ -626,6 +649,7 @@ class Player {
       logger.debug(
         `${this.name} gains Stone Armor with ${this.stoneArmorValue} armor`
       );
+      logger.debug(`Total effective armor: ${this.getEffectiveArmor()}`);
     } else {
       this.racialEffects = {};
     }
@@ -641,7 +665,7 @@ class Player {
   }
 
   /**
-   * Updated takeDamage method to handle Unstoppable Rage damage resistance
+   * FIXED: Take damage with proper armor calculation
    * @param {number} amount - Base damage amount
    * @param {string} source - Source of damage
    * @returns {number} Actual damage taken
@@ -667,18 +691,18 @@ class Player {
       modifiedDamage = Math.floor(modifiedDamage * (1 - damageResistance));
     }
 
-    // Apply armor reduction
-    const reducedDamage = this.calculateDamageReduction(modifiedDamage);
+    // Apply armor reduction using the FIXED calculation
+    const finalDamage = this.calculateDamageReduction(modifiedDamage);
 
     // Apply the damage
-    this.hp = Math.max(0, this.hp - reducedDamage);
+    this.hp = Math.max(0, this.hp - finalDamage);
 
     // Check if died
     if (this.hp <= 0) {
       this.isAlive = false;
     }
 
-    return reducedDamage;
+    return finalDamage;
   }
 
   /**
@@ -788,6 +812,7 @@ class Player {
       hp: this.hp,
       maxHp: this.maxHp,
       armor: this.armor,
+      effectiveArmor: this.getEffectiveArmor(), // Add effective armor for UI
       isAlive: this.isAlive,
       isReady: this.isReady,
       hasSubmittedAction: this.hasSubmittedAction,
@@ -804,6 +829,12 @@ class Player {
       data.racialCooldown = this.racialCooldown;
       data.submissionStatus = this.getSubmissionStatus();
       data.damageMod = this.damageMod;
+
+      // Add damage display info for abilities
+      data.abilitiesWithDamage = this.unlocked.map((ability) => ({
+        ...ability,
+        damageDisplay: this.getAbilityDamageDisplay(ability),
+      }));
     }
 
     return data;
