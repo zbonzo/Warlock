@@ -601,29 +601,65 @@ const GamePage = ({
 
   return (
     <div className="game-container">
-      <div className="character-title-section">
-        <h1 className={`game-title ${me.isWarlock ? 'warlock-text' : ''}`}>
-          {characterTitle}
-        </h1>
-
-        <div className="title-health-container">
-          <div className="title-health-text">
-            HP: {me.hp}/{me.maxHp}
+      {/* Mobile Player Header - Always visible on mobile */}
+      {isMobile && (
+        <div className="mobile-player-header">
+          <div className="mobile-character-info">
+            <h2
+              className={`mobile-player-name ${me.isWarlock ? 'warlock-text' : ''}`}
+            >
+              {me.isWarlock ? toZalgo(me.name) : me.name}
+            </h2>
+            <div className="mobile-character-subtitle">
+              {me.race} {me.class}
+            </div>
           </div>
-          <div className="title-health-bar">
-            <div
-              className={`title-health-fill health-${
-                healthPercent < 30
-                  ? 'low'
-                  : healthPercent < 70
-                    ? 'medium'
-                    : 'high'
-              }`}
-              style={{ width: `${healthPercent}%` }}
-            />
+          <div className="mobile-health-section">
+            <div className="mobile-health-text">
+              {me.hp}/{me.maxHp} HP
+            </div>
+            <div className="mobile-health-bar">
+              <div
+                className={`mobile-health-fill health-${
+                  healthPercent < 30
+                    ? 'low'
+                    : healthPercent < 70
+                      ? 'medium'
+                      : 'high'
+                }`}
+                style={{ width: `${healthPercent}%` }}
+              />
+            </div>
           </div>
         </div>
-      </div>
+      )}
+
+      {/* Desktop Character Title Section - Hidden on mobile */}
+      {!isMobile && (
+        <div className="character-title-section">
+          <h1 className={`game-title ${me.isWarlock ? 'warlock-text' : ''}`}>
+            {characterTitle}
+          </h1>
+
+          <div className="title-health-container">
+            <div className="title-health-text">
+              HP: {me.hp}/{me.maxHp}
+            </div>
+            <div className="title-health-bar">
+              <div
+                className={`title-health-fill health-${
+                  healthPercent < 30
+                    ? 'low'
+                    : healthPercent < 70
+                      ? 'medium'
+                      : 'high'
+                }`}
+                style={{ width: `${healthPercent}%` }}
+              />
+            </div>
+          </div>
+        </div>
+      )}
 
       <GameDashboard
         round={lastEvent.turn}

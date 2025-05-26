@@ -1,6 +1,6 @@
 /**
- * @fileoverview Enhanced AbilityCard component with cooldown support
- * Displays abilities with cooldown information and visual indicators
+ * @fileoverview Fixed AbilityCard component with proper damage modifier display
+ * Shows actual modified damage values using server's damage calculation system
  */
 import React from 'react';
 import PropTypes from 'prop-types';
@@ -8,7 +8,7 @@ import { useTheme } from '@contexts/ThemeContext';
 import './AbilityCard.css';
 
 /**
- * AbilityCard component renders ability information with cooldown support
+ * AbilityCard component renders ability information with proper damage modifiers
  *
  * @param {Object} props - Component props
  * @param {Object} props.ability - The ability data to display
@@ -19,6 +19,7 @@ import './AbilityCard.css';
  * @param {number} [props.usesLeft=null] - Number of uses remaining (for racial abilities)
  * @param {number} [props.cooldown=null] - Cooldown turns remaining (for racial abilities)
  * @param {number} [props.abilityCooldown=0] - Class ability cooldown remaining
+ * @param {Object} [props.player=null] - Player object for calculating modifiers
  * @returns {React.ReactElement|null} The rendered component or null if unavailable
  */
 const AbilityCard = ({
@@ -30,6 +31,7 @@ const AbilityCard = ({
   usesLeft = null,
   cooldown = null,
   abilityCooldown = 0,
+  player = null,
 }) => {
   const theme = useTheme();
 
@@ -93,7 +95,7 @@ const AbilityCard = ({
         {ability.flavorText || 'No flavor text available'}
       </div>
       <div className="ability-description">
-        {getEffectDescription(ability, isRacial)}
+        {getEffectDescription(ability, isRacial, player)}
       </div>
       {/* Cooldown indicator for class abilities */}
       {!isRacial && abilityCooldown > 0 && (
@@ -142,6 +144,78 @@ const AbilityCard = ({
     </div>
   );
 };
+
+/**
+ * FIXED: Calculate modified damage using server's damage modifier system
+ * @param {Object} ability - The ability object
+ * @param {Object} player - The player object with modifiers
+ * @returns {Object} Damage display information
+ */
+function calculateModifiedDamage(ability, player) {
+  if (!ability.params?.damage || !player) {
+    return {
+      base: ability.params?.damage || 0,
+      modified: ability.params?.damage || 0,
+      showModified: false,
+      displayText: ability.params?.damage
+        ? `${ability.params.damage} damage`
+        : '0 damage',
+    };
+  }
+
+  const baseDamage = ability.params.damage;
+  // Use the server's damageMod directly (this includes race, class, and level bonuses)
+  const damageMod = player.damageMod || 1.0;
+  const modifiedDamage = Math.floor(baseDamage * damageMod);
+
+  const showModified = Math.abs(modifiedDamage - baseDamage) >= 1;
+
+  return {
+    base: baseDamage,
+    modified: modifiedDamage,
+    modifier: damageMod,
+    showModified,
+    displayText: showModified
+      ? `${modifiedDamage} damage (${baseDamage} base × ${damageMod.toFixed(1)})`
+      : `${baseDamage} damage`,
+  };
+}
+
+/**
+ * FIXED: Calculate modified healing using server's healing modifier system
+ * @param {Object} ability - The ability object
+ * @param {Object} player - The player object with modifiers
+ * @returns {Object} Healing display information
+ */
+function calculateModifiedHealing(ability, player) {
+  if (!ability.params?.amount || !player) {
+    return {
+      base: ability.params?.amount || 0,
+      modified: ability.params?.amount || 0,
+      showModified: false,
+      displayText: ability.params?.amount
+        ? `${ability.params.amount} healing`
+        : '0 healing',
+    };
+  }
+
+  const baseHealing = ability.params.amount;
+  // Calculate healing modifier: 2.0 - damageMod (from server logic)
+  const healingMod = Math.max(0.1, 2.0 - (player.damageMod || 1.0));
+  const modifiedHealing = Math.floor(baseHealing * healingMod);
+
+  const showModified = Math.abs(modifiedHealing - baseHealing) >= 1;
+
+  return {
+    base: baseHealing,
+    modified: modifiedHealing,
+    modifier: healingMod,
+    showModified,
+    displayText: showModified
+      ? `${modifiedHealing} healing (${baseHealing} base × ${healingMod.toFixed(1)})`
+      : `${baseHealing} healing`,
+  };
+}
 
 /**
  * Get appropriate color for ability category
@@ -289,13 +363,73 @@ function getAbilityIcon(ability, isRacial) {
 }
 
 /**
- * Get a descriptive effect text
+ * Helper function to get modified damage display for embedding in descriptions
+ * @param {Object} ability - The ability object
+ * @param {Object} player - The player object with modifiers
+ * @returns {string} Formatted damage text
+ */
+function getDamageText(ability, player) {
+  if (!ability.params?.damage || !player?.damageMod) {
+    return `${ability.params?.damage || 0} damage`;
+  }
+
+  const baseDamage = ability.params.damage;
+  const modifiedDamage = Math.floor(baseDamage * player.damageMod);
+
+  if (Math.abs(modifiedDamage - baseDamage) >= 1) {
+    return `${modifiedDamage} damage (${baseDamage} base × ${player.damageMod.toFixed(1)})`;
+  }
+  return `${baseDamage} damage`;
+}
+
+/**
+ * Helper function to get modified healing display for embedding in descriptions
+ * @param {Object} ability - The ability object
+ * @param {Object} player - The player object with modifiers
+ * @returns {string} Formatted healing text
+ */
+function getHealingText(ability, player) {
+  if (!ability.params?.amount || !player?.damageMod) {
+    return `${ability.params?.amount || 0} HP`;
+  }
+
+  const baseHealing = ability.params.amount;
+  const healingMod = Math.max(0.1, 2.0 - player.damageMod);
+  const modifiedHealing = Math.floor(baseHealing * healingMod);
+
+  if (Math.abs(modifiedHealing - baseHealing) >= 1) {
+    return `${modifiedHealing} HP (${baseHealing} base × ${healingMod.toFixed(1)})`;
+  }
+  return `${baseHealing} HP`;
+}
+
+/**
+ * Helper function to get modified poison damage
+ * @param {number} poisonDamage - Base poison damage
+ * @param {Object} player - The player object with modifiers
+ * @returns {string} Formatted poison damage text
+ */
+function getPoisonDamageText(poisonDamage, player) {
+  if (!player?.damageMod || !poisonDamage) {
+    return poisonDamage.toString();
+  }
+
+  const modifiedPoison = Math.floor(poisonDamage * player.damageMod);
+  if (Math.abs(modifiedPoison - poisonDamage) >= 1) {
+    return `${modifiedPoison} (${poisonDamage} base × ${player.damageMod.toFixed(1)})`;
+  }
+  return poisonDamage.toString();
+}
+
+/**
+ * FIXED: Get a descriptive effect text with properly calculated modified values
  *
  * @param {Object} ability - The ability object
  * @param {boolean} isRacial - Whether this is a racial ability
+ * @param {Object} player - Player object for calculating modifiers
  * @returns {string} Human-readable description of the ability effect
  */
-function getEffectDescription(ability, isRacial) {
+function getEffectDescription(ability, isRacial, player) {
   if (isRacial) {
     return ability.description;
   }
@@ -304,17 +438,24 @@ function getEffectDescription(ability, isRacial) {
 
   let description = '';
 
-  // Handle specific ability types first
-  // eslint-disable-next-line default-case
+  // Handle specific ability types first with properly modified values
   switch (type) {
     case 'recklessStrike':
-      return `Deals ${params.damage || 0} damage but you take ${params.selfDamage || 0} recoil damage`;
+      const selfDamage = params.selfDamage || 0;
+      return `Deals ${getDamageText(ability, player)} but you take ${selfDamage} recoil damage`;
 
     case 'arcaneBarrage':
-      return `Fires ${params.hits || 0} bolts dealing ${params.damagePerHit || 0} damage each (${params.hitChance ? Math.round(params.hitChance * 100) + '% hit chance' : 'guaranteed hit'})`;
+      const damagePerHitAbility = {
+        params: { damage: params.damagePerHit || 0 },
+      };
+      const hits = params.hits || 0;
+      const hitChanceText = params.hitChance
+        ? ` (${Math.round(params.hitChance * 100)}% hit chance per bolt)`
+        : '';
+      return `Fires ${hits} bolts dealing ${getDamageText(damagePerHitAbility, player).replace(' damage', '')} damage each${hitChanceText}`;
 
     case 'twinStrike':
-      return `Strikes twice for ${params.damage || 0} damage each hit`;
+      return `Strikes twice for ${getDamageText(ability, player).replace(' damage', '')} damage each hit`;
 
     case 'bloodFrenzy':
       return `Passive: Gain ${Math.round((params.damageIncreasePerHpMissing || 0.01) * 100)}% more damage for every 1% HP missing`;
@@ -338,63 +479,76 @@ function getEffectDescription(ability, isRacial) {
       return `Gain ${params.armor || 2} armor. Attackers take ${params.counterDamage || 15} damage and are revealed if they are Warlocks`;
 
     case 'sanctuaryOfTruth':
-      return `Heal for ${params.amount || 20} HP. Warlock attackers take ${params.counterDamage || 10} damage and are automatically revealed`;
+      return `Heal for ${getHealingText(ability, player)}. Warlock attackers take ${params.counterDamage || 10} damage and are automatically revealed`;
 
     case 'shiv':
-      return `Deals ${params.damage || 0} damage and makes target vulnerable (+${params.vulnerable?.damageIncrease || 25}% damage taken for ${params.vulnerable?.turns || 3} turns)`;
+      return `Deals ${getDamageText(ability, player)} and makes target vulnerable (+${params.vulnerable?.damageIncrease || 25}% damage taken for ${params.vulnerable?.turns || 3} turns)`;
 
     case 'barbedArrow':
-      return `Deals ${params.damage || 0} damage and causes bleeding for ${params.poison?.damage || 0} damage over ${params.poison?.turns || 0} turns`;
+      const poisonDamage = params.poison?.damage || 0;
+      return `Deals ${getDamageText(ability, player)} and causes bleeding for ${getPoisonDamageText(poisonDamage, player)} damage over ${params.poison?.turns || 0} turns`;
 
     case 'combustion':
-      return `Deals ${params.damage || 0} damage and burns for ${params.poison?.damage || 0} damage over ${params.poison?.turns || 0} turns`;
+      const burnDamage = params.poison?.damage || 0;
+      return `Deals ${getDamageText(ability, player)} and burns for ${getPoisonDamageText(burnDamage, player)} damage over ${params.poison?.turns || 0} turns`;
 
     case 'infernoBlast':
-      return `Deals ${params.damage || 0} damage to all enemies and burns them for ${params.poison?.damage || 0} damage over ${params.poison?.turns || 0} turns`;
+      const infernoPoison = params.poison?.damage || 0;
+      return `Deals ${getDamageText(ability, player)} to all enemies and burns them for ${getPoisonDamageText(infernoPoison, player)} damage over ${params.poison?.turns || 0} turns`;
 
     case 'deathMark':
-      return `Curse target with poison dealing ${params.poison?.damage || 0} damage over ${params.poison?.turns || 0} turns`;
+      const deathMarkPoison = params.poison?.damage || 0;
+      return `Curse target with poison dealing ${getPoisonDamageText(deathMarkPoison, player)} damage over ${params.poison?.turns || 0} turns and become invisible`;
 
     case 'poisonTrap':
-      return `Lay a trap that poisons multiple enemies for ${params.poison?.damage || 0} damage over ${params.poison?.turns || 0} turns`;
+      const trapPoison = params.poison?.damage || 0;
+      return `Lay multiple traps that poison enemies for ${getPoisonDamageText(trapPoison, player)} damage over ${params.poison?.turns || 0} turns and make them vulnerable`;
 
     case 'entangle':
       return `${Math.round((params.chance || 0.5) * 100)}% chance to stun multiple targets for ${params.duration || 1} turn${params.duration !== 1 ? 's' : ''}`;
 
     case 'aimedShot':
-      return `Carefully aimed shot dealing ${params.damage || 0} damage (takes longer to execute)`;
+      return `Carefully aimed shot dealing ${getDamageText(ability, player)} (takes longer to execute)`;
 
     case 'meteorShower':
     case 'ricochetRound':
     case 'chainLightning':
-      return `Deals ${params.damage || 0} damage to multiple targets`;
+      return `Deals ${getDamageText(ability, player)} to multiple targets`;
 
     case 'battleCry':
     case 'divineShield':
       return `Grants ${params.armor || 0} armor to all allies for ${params.duration || 1} turn${params.duration !== 1 ? 's' : ''}`;
 
     case 'rejuvenation':
-      return `Heals all allies for ${params.amount || 0} HP`;
+      return `Heals all allies for ${getHealingText(ability, player)}`;
 
     case 'shadowstep':
       return `Makes target ally invisible for ${params.duration || 1} turn${params.duration !== 1 ? 's' : ''}`;
+
+    case 'controlMonster':
+      const damageBoostPercent = params.damageBoost
+        ? Math.round((params.damageBoost - 1) * 100)
+        : 50;
+      return `Force the Monster to attack your chosen target with ${damageBoostPercent}% more damage`;
   }
 
-  // Fallback to category-based descriptions
+  // Fallback to category-based descriptions with properly modified values
   if (category === 'Attack') {
     if (params.hits && params.damagePerHit) {
       // Multi-hit attacks
-      description = `${params.hits} hits of ${params.damagePerHit} damage each`;
+      const damagePerHitAbility = { params: { damage: params.damagePerHit } };
+      description = `${params.hits} hits of ${getDamageText(damagePerHitAbility, player).replace(' damage', '')} damage each`;
       if (params.hitChance && params.hitChance < 1) {
         description += ` (${Math.round(params.hitChance * 100)}% hit chance)`;
       }
     } else {
       // Single hit attacks
-      description = `Deals ${params.damage || 0} damage`;
+      description = `Deals ${getDamageText(ability, player)}`;
     }
 
     if (effect === 'poison' && params.poison) {
-      description += ` and poisons for ${params.poison.damage || 0} damage over ${params.poison.turns || 0} turns`;
+      const poisonDamage = params.poison.damage || 0;
+      description += ` and poisons for ${getPoisonDamageText(poisonDamage, player)} damage over ${params.poison.turns || 0} turns`;
     }
 
     if (effect === 'vulnerable' && params.vulnerable) {
@@ -405,7 +559,7 @@ function getEffectDescription(ability, isRacial) {
       description += ' to multiple targets';
     }
   } else if (category === 'Heal') {
-    description = `Restores ${params.amount || 0} HP`;
+    description = `Restores ${getHealingText(ability, player)}`;
     if (target === 'Multi') {
       description += ' to multiple allies';
     } else if (target === 'Self') {
@@ -423,7 +577,8 @@ function getEffectDescription(ability, isRacial) {
     }
   } else if (category === 'Special') {
     if (effect === 'poison' && params.poison) {
-      description = `Poisons for ${params.poison.damage || 0} damage over ${params.poison.turns || 0} turns`;
+      const poisonDamage = params.poison.damage || 0;
+      description = `Poisons for ${getPoisonDamageText(poisonDamage, player)} damage over ${params.poison.turns || 0} turns`;
     } else if (effect === 'stunned') {
       const chance = params.chance ? Math.round(params.chance * 100) : 50;
       description = `${chance}% chance to stun targets for ${params.duration || 1} turn${params.duration !== 1 ? 's' : ''}`;
@@ -436,7 +591,7 @@ function getEffectDescription(ability, isRacial) {
       const reduction = Math.round((params.damageReduction || 0.25) * 100);
       description = `Reduces target damage by ${reduction}% for ${params.duration || 1} turn${params.duration !== 1 ? 's' : ''}`;
     } else if (params.damage) {
-      description = `Deals ${params.damage} damage`;
+      description = `Deals ${getDamageText(ability, player)}`;
       if (target === 'Multi') {
         description += ' to multiple targets';
       }
@@ -452,6 +607,7 @@ function getEffectDescription(ability, isRacial) {
 
   return description || 'No description available';
 }
+
 /**
  * Get status message for racial abilities
  *
@@ -486,6 +642,7 @@ AbilityCard.propTypes = {
   usesLeft: PropTypes.number,
   cooldown: PropTypes.number,
   abilityCooldown: PropTypes.number,
+  player: PropTypes.object,
   flavorText: PropTypes.string,
 };
 
