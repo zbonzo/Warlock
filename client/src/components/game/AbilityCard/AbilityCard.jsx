@@ -176,7 +176,7 @@ function calculateModifiedDamage(ability, player) {
     modifier: damageMod,
     showModified,
     displayText: showModified
-      ? `${modifiedDamage} damage (${baseDamage} base × ${damageMod.toFixed(1)})`
+      ? `${modifiedDamage} damage` // (${baseDamage} base × ${damageMod.toFixed(1)})`
       : `${baseDamage} damage`,
   };
 }
@@ -212,7 +212,7 @@ function calculateModifiedHealing(ability, player) {
     modifier: healingMod,
     showModified,
     displayText: showModified
-      ? `${modifiedHealing} healing (${baseHealing} base × ${healingMod.toFixed(1)})`
+      ? `${modifiedHealing} healing` //(${baseHealing} base × ${healingMod.toFixed(1)})`
       : `${baseHealing} healing`,
   };
 }
@@ -377,7 +377,7 @@ function getDamageText(ability, player) {
   const modifiedDamage = Math.floor(baseDamage * player.damageMod);
 
   if (Math.abs(modifiedDamage - baseDamage) >= 1) {
-    return `${modifiedDamage} damage (${baseDamage} base × ${player.damageMod.toFixed(1)})`;
+    return `${modifiedDamage} damage`; // (${baseDamage} base × ${player.damageMod.toFixed(1)})`;
   }
   return `${baseDamage} damage`;
 }
@@ -398,7 +398,7 @@ function getHealingText(ability, player) {
   const modifiedHealing = Math.floor(baseHealing * healingMod);
 
   if (Math.abs(modifiedHealing - baseHealing) >= 1) {
-    return `${modifiedHealing} HP (${baseHealing} base × ${healingMod.toFixed(1)})`;
+    return `${modifiedHealing} HP`; // (${baseHealing} base × ${healingMod.toFixed(1)})`;
   }
   return `${baseHealing} HP`;
 }

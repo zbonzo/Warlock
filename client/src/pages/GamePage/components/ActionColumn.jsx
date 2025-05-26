@@ -246,6 +246,7 @@ const ActionColumn = ({
                       selected={actionType === ability.type}
                       onSelect={onSetActionType}
                       abilityCooldown={cooldown}
+                      player={me}
                     />
                   );
                 })}
