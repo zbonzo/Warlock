@@ -6,3 +6,5 @@ client/node_modules
 server/node_modules
 server/tests
 client/tests
+tests/
+simulation/
