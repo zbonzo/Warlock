@@ -190,9 +190,34 @@ class CombatSystem {
       this.handleCounterAttacks(target, attacker, log);
     }
 
+    /*
+    // Keen Senses has been removed, but if a future race wants it in the future, we can re-enable this
     // Handle Keen Senses racial ability for Elves
     if (isKeenSensesAttack) {
       this.handleKeenSensesAttack(target, attacker, log);
+    }
+      */
+
+    // Handle Elf Moonbeam detection
+    if (target.race === 'Elf' && target.isMoonbeamActive() && attacker.id) {
+      const revealMessage = attacker.isWarlock
+        ? `${target.name}'s desperate Moonbeam reveals that ${attacker.name} IS corrupted!`
+        : `${target.name}'s Moonbeam reveals that ${attacker.name} is pure.`;
+
+      const moonbeamLog = {
+        type: 'moonbeam_detection',
+        public: true,
+        targetId: target.id,
+        attackerId: attacker.id,
+        message: revealMessage,
+        privateMessage: attacker.isWarlock
+          ? `Your Moonbeam detected that ${attacker.name} is a Warlock!`
+          : `Your Moonbeam confirmed that ${attacker.name} is not a Warlock.`,
+        attackerMessage: attacker.isWarlock
+          ? `${target.name}'s Moonbeam exposed your corruption!`
+          : `${target.name}'s Moonbeam confirmed your purity.`,
+      };
+      log.push(moonbeamLog);
     }
 
     // Process potential death

@@ -60,7 +60,7 @@ const raceAttributes = {
       // Removed Seer
     ],
     description:
-      'Quick and perceptive, elves can reveal if a target is a warlock.',
+      'When wounded (below 50% HP), attacks against you reveal if the attacker is corrupted.',
   },
   Orc: {
     hpModifier: 1.1, // More HP
@@ -90,7 +90,8 @@ const raceAttributes = {
       'Druid',
       // Removed Seer
     ],
-    description: 'Connected to nature, satyrs can regenerate health over time.',
+    description:
+      "At the end of each round, heal for 25% of the monster's remaining HP.",
   },
   Skeleton: {
     hpModifier: 0.8, // Less HP
@@ -145,15 +146,18 @@ const racialAbilities = {
   },
 
   Elf: {
-    type: 'keenSenses',
-    name: 'Keen Senses',
-    description: 'Your next attack reveals if your target is a Warlock',
-    usageLimit: 'perGame',
-    maxUses: 1,
+    type: 'moonbeam',
+    name: 'Moonbeam',
+    description:
+      'When wounded (below 50% HP), attacks against you reveal if the attacker is corrupted',
+    usageLimit: 'passive', // Passive ability, always active when conditions are met
+    maxUses: 0,
     cooldown: 0,
-    effect: 'revealWarlock',
-    target: 'Single',
-    params: {},
+    effect: 'moonbeam',
+    target: 'Self',
+    params: {
+      healthThreshold: 0.5, // Triggers when below 50% HP
+    },
   },
 
   Orc: {
@@ -170,15 +174,18 @@ const racialAbilities = {
   },
 
   Satyr: {
-    type: 'forestsGrace',
-    name: "Forest's Grace",
-    description: 'Apply a healing-over-time effect to yourself for 3 rounds',
-    usageLimit: 'perRound',
-    maxUses: 1,
-    cooldown: 4,
-    effect: 'healOverTime',
+    type: 'lifeBond',
+    name: 'Life Bond',
+    description:
+      "At the end of each round, heal for 25% of the monster's remaining HP",
+    usageLimit: 'passive', // Passive ability, always active
+    maxUses: 0,
+    cooldown: 0,
+    effect: 'lifeBond',
     target: 'Self',
-    params: { amount: 100, turns: 3 },
+    params: {
+      healingPercent: 0.25, // 25% of monster's current HP
+    },
   },
 
   Skeleton: {

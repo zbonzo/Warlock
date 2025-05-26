@@ -421,6 +421,13 @@ class GameRoom {
     // Monster attacks
     this.systems.monsterController.attack(log, this.systems.combatSystem);
 
+    if (this.monster.hp > 0) {
+      for (const player of this.players.values()) {
+        if (player.race === 'Satyr' && player.isAlive) {
+          player.processLifeBondHealing(this.monster.hp, log);
+        }
+      }
+    }
     // Status effects tick-down
     this.systems.statusEffectManager.processTimedEffects(log);
 

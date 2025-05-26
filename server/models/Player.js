@@ -654,6 +654,43 @@ class Player {
       this.racialEffects = {};
     }
   }
+  /**
+   * Check if Elf moonbeam is active (wounded condition)
+   * @returns {boolean} Whether moonbeam detection is active
+   */
+  isMoonbeamActive() {
+    if (this.race !== 'Elf' || !this.isAlive) return false;
+    return this.hp <= this.maxHp * 0.5;
+  }
+
+  /**
+   * Process Satyr life bond healing
+   * @param {number} monsterHp - Current monster HP
+   * @param {Array} log - Event log to append messages to
+   * @returns {number} Amount healed
+   */
+  processLifeBondHealing(monsterHp, log = []) {
+    if (this.race !== 'Satyr' || !this.isAlive || monsterHp <= 0) return 0;
+
+    const healAmount = Math.floor(monsterHp * 0.25);
+    const actualHeal = Math.min(healAmount, this.maxHp - this.hp);
+
+    if (actualHeal > 0) {
+      this.hp += actualHeal;
+
+      const healLog = {
+        type: 'life_bond_healing',
+        public: true,
+        targetId: this.id,
+        message: `${this.name}'s Life Bond with the monster heals them for ${actualHeal} HP.`,
+        privateMessage: `Your Life Bond with the monster heals you for ${actualHeal} HP.`,
+        attackerMessage: '',
+      };
+      log.push(healLog);
+    }
+
+    return actualHeal;
+  }
 
   /**
    * Reset per-round racial ability uses
