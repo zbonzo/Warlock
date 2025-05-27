@@ -71,7 +71,7 @@ const EventsLog = ({ events, currentPlayerId, players = [] }) => {
 
   /**
    * Determine if event should be visible to current player
-   * Simple filter: show if player's name appears OR if it's a universal message
+   * Enhanced to include disconnection events which should always be visible
    * @param {Object|string} event - Event object or string
    * @returns {boolean} Whether event should be shown
    */
@@ -80,6 +80,12 @@ const EventsLog = ({ events, currentPlayerId, players = [] }) => {
 
     // Debug which events are being filtered
     console.log('Checking if should show event:', event.type || 'string event');
+
+    // Always show disconnection events - they're part of the story!
+    if (event.type === 'player_disconnect') {
+      console.log('Showing disconnection event');
+      return true;
+    }
 
     // Make sure defensive abilities are always shown to the player
     if (
@@ -106,6 +112,7 @@ const EventsLog = ({ events, currentPlayerId, players = [] }) => {
       'Another hero has been corrupted',
       'activates', // For racial abilities like "Ghost activates Stone Resolve"
       'level up',
+      'wandered into the forest', // Disconnection message
     ];
 
     // Check if it's a universal message
@@ -169,6 +176,34 @@ const EventsLog = ({ events, currentPlayerId, players = [] }) => {
 
     return classes.join(' ');
   };
+
+  /**
+   * Enhanced legacy function for determining CSS class based on event content
+   * Now includes disconnection events
+   */
+  function getEventClass(event) {
+    if (event.includes('Warlock')) return 'warlock-event';
+    if (event.includes('attacked') || event.includes('damage'))
+      return 'attack-event';
+    if (event.includes('healed') || event.includes('healing'))
+      return 'heal-event';
+    if (event.includes('shielded') || event.includes('shield'))
+      return 'defense-event';
+    if (event.includes('Monster')) return 'monster-event';
+    if (
+      event.includes('fallen') ||
+      event.includes('died') ||
+      event.includes('killed')
+    )
+      return 'death-event';
+    if (event.includes('corrupted') || event.includes('converted'))
+      return 'corruption-event';
+    if (event.includes('Undying') || event.includes('resurrected'))
+      return 'resurrect-event';
+    // Add disconnection event styling
+    if (event.includes('wandered into the forest')) return 'disconnect-event';
+    return '';
+  }
 
   return (
     <div className="events-log-container">

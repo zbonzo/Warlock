@@ -10,6 +10,7 @@ import React, {
 } from 'react';
 import PropTypes from 'prop-types';
 import { useTheme } from '@contexts/ThemeContext';
+import { useAppContext } from '@contexts/AppContext';
 import GameDashboard from '@components/game/GameDashboard';
 import PlayerColumn from './components/PlayerColumn';
 import ActionColumn from './components/ActionColumn';
@@ -34,6 +35,7 @@ const GamePage = ({
   onSubmitAction,
 }) => {
   const theme = useTheme();
+  const { addEventLog } = useAppContext();
 
   // Game state
   const [phase, setPhase] = useState('action');
@@ -121,6 +123,26 @@ const GamePage = ({
       };
     }
   }, [actionType, selectedTarget, isCurrentSelectionValid]);
+
+  useEffect(() => {
+    if (!socket) return;
+
+    const handlePlayerDisconnected = (data) => {
+      console.log('Player disconnected:', data);
+
+      // Just show a console log - the disconnect event will appear in the next round results
+      console.log(`${data.playerName} has left the game: ${data.message}`);
+
+      // Optional: Show a brief toast notification that someone left
+      // This is immediate feedback while they wait for the round to process
+    };
+
+    socket.on('playerDisconnected', handlePlayerDisconnected);
+
+    return () => {
+      socket.off('playerDisconnected', handlePlayerDisconnected);
+    };
+  }, [socket]);
 
   /**
    * Enhanced submission state management with validation checking

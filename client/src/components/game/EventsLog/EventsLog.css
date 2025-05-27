@@ -194,3 +194,55 @@
     padding: 5px 8px;
   }
 }
+
+/* Disconnection event styling */
+.disconnect-event {
+  color: var(--color-warning, #f6ad55);
+  background-color: rgba(246, 173, 85, 0.1);
+  border-left: 3px solid var(--color-warning, #f6ad55);
+  padding-left: 8px;
+  font-style: italic;
+  position: relative;
+}
+
+.disconnect-event::before {
+  content: "🏃‍♂️";
+  margin-right: 6px;
+  opacity: 0.7;
+}
+
+/* Alternative styling for different themes */
+.theme-dark .disconnect-event {
+  color: #fbb040;
+  background-color: rgba(251, 176, 64, 0.15);
+  border-left-color: #fbb040;
+}
+
+.theme-colorblind .disconnect-event {
+  color: #8b5a2b;
+  background-color: rgba(139, 90, 43, 0.1);
+  border-left-color: #8b5a2b;
+}
+
+/* Animation for disconnect events */
+.disconnect-event {
+  animation: fadeInDisconnect 0.5s ease-in;
+}
+
+@keyframes fadeInDisconnect {
+  from {
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Make disconnect events stand out slightly */
+.disconnect-event {
+  margin: 4px 0;
+  border-radius: 4px;
+  padding: 6px 8px;
+}

@@ -422,6 +422,15 @@ class GameRoom {
       player.processAbilityCooldowns();
     }
 
+    // ADD PENDING DISCONNECT EVENTS FIRST
+    if (
+      this.pendingDisconnectEvents &&
+      this.pendingDisconnectEvents.length > 0
+    ) {
+      log.push(...this.pendingDisconnectEvents);
+      this.pendingDisconnectEvents = []; // Clear after adding
+    }
+
     // Process racial abilities first
     this.processRacialAbilities(log);
 

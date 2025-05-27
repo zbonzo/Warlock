@@ -182,7 +182,15 @@ function validateCharacterRaceClass(race, className, socket) {
 }
 
 /**
- * Handle player disconnect - SIMPLIFIED: Immediate removal
+ * Get the thematic disconnection message
+ * @param {string} playerName - Name of the disconnected player
+ * @returns {string} Thematic disconnection message
+ */
+function getDisconnectMessage(playerName) {
+  return `${playerName} wandered into the forest to discover that there are many more monsters and they were very much unequipped.`;
+}
+/**
+ * Handle player disconnect with battle log integration
  * @param {Object} io - Socket.IO instance
  * @param {Object} socket - Client socket
  */
@@ -202,19 +210,43 @@ function handlePlayerDisconnect(io, socket) {
       playerName = player ? player.name : 'Unknown Player';
 
       const wasHost = socket.id === game.hostId;
+      const wasAlive = player ? player.isAlive : false;
 
-      // IMMEDIATE REMOVAL - No reconnection window
+      // Create thematic disconnection message
+      const disconnectMessage = getDisconnectMessage(playerName);
+
+      // Add disconnection event to the current round's events
+      if (game.started && wasAlive) {
+        // Create a disconnection event that will appear in the battle log
+        const disconnectionEvent = {
+          type: 'player_disconnect',
+          public: true,
+          message: disconnectMessage,
+          privateMessage: disconnectMessage,
+          attackerMessage: disconnectMessage,
+          targetId: socket.id,
+          playerName: playerName,
+          timestamp: Date.now(),
+        };
+
+        // Add the disconnect event to the pending actions as a special event
+        // This way it gets processed with the current round when processRound() is called
+        game.pendingDisconnectEvents = game.pendingDisconnectEvents || [];
+        game.pendingDisconnectEvents.push(disconnectionEvent);
+
+        // Broadcast the disconnection event immediately to all players for UI feedback
+        io.to(gameCode).emit('playerDisconnected', {
+          playerId: socket.id,
+          playerName,
+          message: disconnectMessage,
+        });
+      }
+
+      // Remove player from game
       game.removePlayer(socket.id);
 
       // Clean up any session data
       playerSessionManager.removeSession(gameCode, playerName);
-
-      // Notify other players with the custom message
-      io.to(gameCode).emit('playerDisconnected', {
-        playerId: socket.id,
-        playerName,
-        message: `${playerName} wandered into the forest to discover that there are many more monsters and they were very much unequipped.`,
-      });
 
       // If this was the host, reassign immediately
       if (wasHost && game.players.size > 0) {
@@ -254,7 +286,7 @@ function handlePlayerDisconnect(io, socket) {
       gameService.broadcastPlayerList(io, gameCode);
 
       logger.info(
-        `Player ${playerName} immediately removed from game ${gameCode}`
+        `Player ${playerName} immediately removed from game ${gameCode} with message: ${disconnectMessage}`
       );
       break;
     }
@@ -264,7 +296,6 @@ function handlePlayerDisconnect(io, socket) {
     logger.info(`Disconnected player ${socket.id} was not in any active games`);
   }
 }
-
 /**
  * Handle player reconnection attempt - REMOVED FUNCTIONALITY
  * Since we're doing immediate disconnect, reconnection is no longer supported
