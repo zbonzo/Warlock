@@ -260,86 +260,6 @@ function isInRoundResults(game) {
 }
 
 /**
- * Handle reconnection of a player to a game
- * @param {string} gameCode - Game code
- * @param {string} playerName - Player name
- * @param {string} newSocketId - New socket ID
- * @returns {Object|false} Reconnection data or false if failed
- */
-function processReconnection(gameCode, playerName, newSocketId) {
-  // Check if the game exists
-  const game = games.get(gameCode);
-  if (!game) {
-    logger.warn(`Reconnection failed: Game ${gameCode} not found`);
-    return false;
-  }
-
-  // Check for existing session
-  const sessionData = playerSessionManager.getSession(gameCode, playerName);
-  if (!sessionData) {
-    logger.warn(
-      `Reconnection failed: No active session for ${playerName} in game ${gameCode}`
-    );
-    return false;
-  }
-
-  // Get old socket ID
-  const oldSocketId = sessionData.socketId;
-
-  // Update the session with the new socket ID
-  playerSessionManager.updateSocketId(gameCode, playerName, newSocketId);
-
-  // Check if player is already in the game with old socket ID
-  if (game.players.has(oldSocketId)) {
-    logger.info(
-      `Reconnecting ${playerName} to game ${gameCode} (${oldSocketId} -> ${newSocketId})`
-    );
-
-    // Transfer player to the new socket ID using the GameRoom method
-    const transferred = game.transferPlayerId(oldSocketId, newSocketId);
-
-    if (!transferred) {
-      logger.error(`Failed to transfer player data for ${playerName}`);
-      return false;
-    }
-
-    // Get additional game state information
-    const gameState = {
-      // Basic game info
-      game,
-      oldSocketId,
-      players: game.getPlayersInfo(),
-      monster: game.systems.monsterController.getState(),
-      turn: game.round,
-      level: game.level,
-      started: game.started,
-      host: game.hostId,
-
-      // Additional context for proper screen routing
-      waitingForActions: isWaitingForActions(game),
-      inRoundResults: isInRoundResults(game),
-
-      // Ready state info for lobby
-      nextReady: Array.from(game.nextReady || []),
-
-      // Action state
-      pendingActionsCount: game.pendingActions ? game.pendingActions.length : 0,
-
-      // Game timing info
-      lastActivity: Date.now(),
-    };
-
-    // Return the comprehensive reconnection data
-    return gameState;
-  } else {
-    logger.warn(
-      `Player ${playerName} not found in game with old socket ID: ${oldSocketId}`
-    );
-    return false;
-  }
-}
-
-/**
  * Get game statistics for debugging
  * @returns {Object} Game statistics
  */
@@ -412,7 +332,6 @@ module.exports = {
   processGameRound,
   checkGameWinConditions,
   canPlayerJoinGame,
-  processReconnection,
   isWaitingForActions,
   isInRoundResults,
   createGameWithCode,

@@ -16,7 +16,7 @@ const availableRaces = ['Human', 'Dwarf', 'Elf', 'Orc', 'Satyr', 'Skeleton'];
  */
 const raceAttributes = {
   Human: {
-    hpModifier: 1.0, // Standard HP
+    hpModifier: 1.3, // Standard HP
     armorModifier: 1.0, // No armor bonus
     damageModifier: 1.0, // Standard damage
     compatibleClasses: [
@@ -32,8 +32,8 @@ const raceAttributes = {
       'Adaptable and versatile, humans can learn abilities from other classes.',
   },
   Dwarf: {
-    hpModifier: 1.2, // More HP
-    armorModifier: 3.0, // Significant armor bonus
+    hpModifier: 1.5, // More HP
+    armorModifier: 5.0, // Significant armor bonus
     damageModifier: 0.9, // Slightly reduced damage
     compatibleClasses: [
       'Warrior',
@@ -48,9 +48,9 @@ const raceAttributes = {
       'Hardy and resilient, dwarves have stone armor that degrades with damage taken.',
   },
   Elf: {
-    hpModifier: 0.9, // Less HP
+    hpModifier: 1.0, // Less HP
     armorModifier: 1.0, // No armor bonus
-    damageModifier: 1.1, // Increased damage
+    damageModifier: 1.2, // Increased damage
     compatibleClasses: [
       'Wizard',
       'Assassin',
@@ -63,9 +63,9 @@ const raceAttributes = {
       'When wounded (below 50% HP), attacks against you reveal if the attacker is corrupted.',
   },
   Orc: {
-    hpModifier: 1.1, // More HP
+    hpModifier: 1.2, // More HP
     armorModifier: 1.0, // No armor bonus
-    damageModifier: 1.2, // Significantly increased damage
+    damageModifier: 1.6, // Significantly increased damage
     compatibleClasses: [
       'Pyromancer',
       'Oracle',
@@ -79,9 +79,9 @@ const raceAttributes = {
       'Fierce and mighty, orcs can boost their attack power at the cost of health.',
   },
   Satyr: {
-    hpModifier: 1.0, // Standard HP
+    hpModifier: 1.3, // Standard HP
     armorModifier: 1.0, // No armor bonus
-    damageModifier: 1.0, // Standard damage
+    damageModifier: 1.2, // Standard damage
     compatibleClasses: [
       'Alchemist',
       'Oracle',
@@ -96,7 +96,7 @@ const raceAttributes = {
   Skeleton: {
     hpModifier: 0.8, // Less HP
     armorModifier: 0.8, // No armor bonus
-    damageModifier: 1.2, // Standard damage
+    damageModifier: 2.0, // Glass Cannon damage
     compatibleClasses: [
       'Warrior',
       'Pyromancer',

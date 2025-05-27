@@ -28,6 +28,7 @@ class GameRoom {
     this.pendingActions = [];
     this.pendingRacialActions = [];
     this.nextReady = new Set();
+    this.disconnectedPlayers = [];
 
     // Monster setup from config
     this.monster = {
@@ -69,8 +70,20 @@ class GameRoom {
     if (p.isAlive) this.aliveCount--;
     if (p.isWarlock) this.systems.warlockSystem.decrementWarlockCount();
     this.players.delete(id);
-  }
 
+    // Clean up any pending actions for this player
+    this.pendingActions = this.pendingActions.filter(
+      (action) => action.actorId !== id
+    );
+    this.pendingRacialActions = this.pendingRacialActions.filter(
+      (action) => action.actorId !== id
+    );
+
+    // Remove from ready set if present
+    if (this.nextReady) {
+      this.nextReady.delete(id);
+    }
+  }
   /**
    * Clear ready status for all players
    */
