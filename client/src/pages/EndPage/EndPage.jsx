@@ -21,7 +21,27 @@ import './EndPage.css';
  * @param {Function} props.onPlayAgain - Callback when player wants to play again
  * @returns {React.ReactElement} The rendered component
  */
-const EndPage = ({ winner, players, eventsLog = [], onPlayAgain }) => {
+const EndPage = ({
+  winner,
+  players,
+  eventsLog,
+  gameCode,
+  playerName,
+  socket,
+  onPlayAgain,
+}) => {
+  const handlePlayAgain = () => {
+    if (!socket || !gameCode || !playerName) {
+      console.error('Missing required data for play again');
+      return;
+    }
+
+    // Emit playAgain event with the same game code
+    socket.emit('playAgain', {
+      gameCode: gameCode, // Reuse the same game code
+      playerName: playerName,
+    });
+  };
   const theme = useTheme();
   const [showConfetti, setShowConfetti] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
@@ -148,8 +168,8 @@ const EndPage = ({ winner, players, eventsLog = [], onPlayAgain }) => {
           </div>
         )}
 
-        <button className="play-again-button" onClick={onPlayAgain}>
-          Play Again
+        <button onClick={handlePlayAgain} className="play-again-button">
+          Play Again (Game Code: {gameCode})
         </button>
       </div>
     </div>

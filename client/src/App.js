@@ -96,6 +96,15 @@ function AppContent() {
       setPlayers(players);
     });
 
+    const unsubscribePlayerJoined = on(
+      'playerJoined',
+      ({ gameCode, playerName, message }) => {
+        console.log('Successfully joined replay game:', message);
+        // Set screen to character select since it's a new game
+        setScreen(GAME_PHASES.CHARACTER_SELECT);
+      }
+    );
+
     // Game started event
     const unsubscribeGameStarted = on('gameStarted', (payload) => {
       const { players: newPlayers, monster: mPayload } = payload;
@@ -203,6 +212,7 @@ function AppContent() {
       unsubscribeRoundResult();
       unsubscribeErrorMessage();
       unsubscribeGameReconnected();
+      unsubscribePlayerJoined();
     };
   }, [
     connected,
@@ -283,10 +293,29 @@ function AppContent() {
   );
 
   const handlePlayAgain = React.useCallback(() => {
-    // Reset game state and return to start screen
-    localStorage.removeItem('lastGameCode');
+    // This can just handle any app-level state reset if needed
     resetGame();
-  }, [resetGame]);
+    setGameCode(gameCode); // Keep the same game code
+    setPlayerName(playerName); // Keep the same player name
+  }, [resetGame, gameCode, playerName, setGameCode, setPlayerName]);
+
+  useEffect(() => {
+    if (!socket) return;
+
+    // Handle play again game creation/joining
+    const handlePlayAgainResponse = (data) => {
+      console.log('Play again response:', data);
+      // This will trigger either gameCreated or playerList events
+      // which are already handled by existing listeners
+    };
+
+    socket.on('gameCreated', handlePlayAgainResponse);
+
+    return () => {
+      socket.off('gameCreated', handlePlayAgainResponse);
+    };
+  }, [socket]);
+
   // Render the appropriate screen based on the current state
   const renderScreen = () => {
     // Get configuration loading state from context
@@ -360,7 +389,10 @@ function AppContent() {
             winner={winner}
             players={players}
             eventsLog={eventsLog}
-            onPlayAgain={handlePlayAgain}
+            gameCode={gameCode} // Add this
+            playerName={playerName} // Add this
+            socket={socket} // Add this
+            onPlayAgain={handlePlayAgain} // Keep this but make it optional
           />
         );
       default:

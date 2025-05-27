@@ -375,6 +375,32 @@ function forceCleanupGame(gameCode) {
   return hasGame || hasTimer;
 }
 
+/**
+ * Create a new game with a specific code (for play again functionality)
+ * @param {string} gameCode - Specific game code to use
+ * @returns {GameRoom|null} New game room or null if creation failed
+ */
+function createGameWithCode(gameCode) {
+  // Check if code is already in use
+  if (games.has(gameCode)) {
+    return null; // Code already exists
+  }
+
+  // Check if we already have too many games
+  const maxGames = config.maxGames || 100;
+  if (games.size >= maxGames) {
+    throwGameStateError(
+      'Server is too busy right now. Please try again later.'
+    );
+    return null;
+  }
+
+  const game = new GameRoom(gameCode);
+  games.set(gameCode, game);
+  logger.info(`Created replay game with code ${gameCode}`);
+  return game;
+}
+
 module.exports = {
   games,
   gameTimers,
@@ -389,6 +415,7 @@ module.exports = {
   processReconnection,
   isWaitingForActions,
   isInRoundResults,
+  createGameWithCode,
 
   // Debug/utility functions
   getGameStats,

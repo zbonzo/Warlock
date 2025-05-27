@@ -152,6 +152,16 @@ io.on('connection', (socket) => {
     )
   );
 
+  socket.on(
+    'playAgain',
+    withSocketErrorHandling(
+      socket,
+      ({ gameCode, playerName }) =>
+        gameController.handlePlayAgain(io, socket, gameCode, playerName),
+      'starting play again game'
+    )
+  );
+
   // Player selects their race and class
   socket.on(
     'selectCharacter',

@@ -8,6 +8,7 @@ const { validateGameAction } = require('@shared/gameChecks');
 const logger = require('@utils/logger');
 const config = require('@config');
 const { throwGameStateError } = require('@utils/errorHandler');
+const playerSessionManager = require('@services/PlayerSessionManager');
 
 /**
  * Handle game creation request
@@ -610,6 +611,131 @@ function handlePlayerNextReady(io, socket, gameCode) {
   }
 }
 
+/**
+ * Handle play again request - reuses existing game code
+ * @param {Object} io - Socket.io instance
+ * @param {Object} socket - Client socket
+ * @param {string} gameCode - Previous game code to reuse
+ * @param {string} playerName - Player's display name
+ * @returns {boolean} Success status
+ */
+function handlePlayAgain(io, socket, gameCode, playerName) {
+  try {
+    // Validate inputs
+    if (!gameCode || !playerName) {
+      socket.emit('errorMessage', {
+        message: 'Missing game code or player name.',
+        type: 'validation_error',
+      });
+      return false;
+    }
+
+    // Basic player name validation (simplified)
+    if (!playerName || playerName.length < 1 || playerName.length > 20) {
+      socket.emit('errorMessage', {
+        message: 'Invalid player name. Please use 1-20 characters.',
+        type: 'validation_error',
+      });
+      return false;
+    }
+
+    // Check if game code already exists (someone else hit play again first)
+    const existingGame = gameService.games.get(gameCode);
+
+    if (existingGame) {
+      // Game already exists, join it directly (bypass normal validation)
+      logger.info(`${playerName} joining existing replay game ${gameCode}`);
+
+      // Check if game is full
+      if (existingGame.players.size >= (config.maxPlayers || 20)) {
+        socket.emit('errorMessage', {
+          message: `Game is full (${config.maxPlayers || 20} players max).`,
+          type: 'game_full',
+        });
+        return false;
+      }
+
+      // Check if player is already in this game
+      if (existingGame.players.has(socket.id)) {
+        socket.emit('errorMessage', {
+          message: 'You are already in this game.',
+          type: 'already_joined',
+        });
+        return false;
+      }
+
+      // Add player directly to the game
+      const success = existingGame.addPlayer(socket.id, playerName);
+      if (!success) {
+        socket.emit('errorMessage', {
+          message: 'Could not join game.',
+          type: 'join_failed',
+        });
+        return false;
+      }
+
+      // Join socket to game room and update clients
+      socket.join(gameCode);
+      gameService.refreshGameTimeout(io, gameCode);
+      gameService.broadcastPlayerList(io, gameCode);
+
+      // Notify client they joined successfully
+      socket.emit('playerJoined', {
+        gameCode,
+        playerName,
+        message: `Successfully joined replay game ${gameCode}`,
+      });
+
+      return true;
+    } else {
+      // Game doesn't exist, create it and become host
+      logger.info(`${playerName} creating replay game ${gameCode}`);
+
+      // Create the game with the specific code
+      const game = gameService.createGameWithCode(gameCode);
+      if (!game) {
+        socket.emit('errorMessage', {
+          message: 'Failed to create game. Server may be busy.',
+          type: 'creation_failed',
+        });
+        return false;
+      }
+
+      // Add this socket as a player (host) in the new game
+      const success = game.addPlayer(socket.id, playerName);
+      if (!success) {
+        // Clean up the game if we can't add the player
+        gameService.games.delete(gameCode);
+        socket.emit('errorMessage', {
+          message: 'Failed to join created game.',
+          type: 'creation_failed',
+        });
+        return false;
+      }
+
+      socket.join(gameCode);
+
+      // Create timeout for the new game
+      gameService.createGameTimeout(io, gameCode);
+
+      // Send the game code back to the host
+      socket.emit('gameCreated', { gameCode: gameCode });
+
+      // Broadcast the updated player list
+      gameService.broadcastPlayerList(io, gameCode);
+
+      return true;
+    }
+  } catch (error) {
+    logger.error(`Error in handlePlayAgain for game ${gameCode}:`, error);
+    socket.emit('errorMessage', {
+      message: 'Failed to start new game. Please try again.',
+      type: 'server_error',
+    });
+    return false;
+  }
+}
+
 module.exports = {
   handleCreateGame,
   handleStartGame,
@@ -618,4 +744,5 @@ module.exports = {
   handlePlayerNextReady,
   handleGetClassAbilities,
   handleAdaptabilityReplace,
+  handlePlayAgain,
 };
