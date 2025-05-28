@@ -6,6 +6,7 @@ const Player = require('./Player');
 const config = require('@config');
 const SystemsFactory = require('./systems/SystemsFactory');
 const logger = require('@utils/logger');
+const messages = require('@messages');
 
 /**
  * GameRoom class represents a single game instance with enhanced action validation
@@ -490,11 +491,8 @@ class GameRoom {
       const levelUpLog = {
         type: 'level_up',
         public: true,
-        message: config.messages.getEvent('levelUp', { level: this.level }),
-        privateMessage: config.messages.success.newAbilitiesUnlocked.replace(
-          '{level}',
-          this.level
-        ),
+        message: messages.getEvent('levelUp', { level: this.level }),
+        privateMessage: messages.getEvent('levelUp', { level: this.level }),
         attackerMessage: null,
       };
       log.push(levelUpLog);
@@ -524,7 +522,7 @@ class GameRoom {
             public: false,
             targetId: player.id,
             message: '',
-            privateMessage: config.messages.getSuccess('bonusesApplied', {
+            privateMessage: messages.getSuccess('bonusesApplied', {
               level: this.level,
               hpIncrease: hpIncrease,
             }),
@@ -542,11 +540,7 @@ class GameRoom {
             public: false,
             targetId: player.id,
             message: '',
-            privateMessage:
-              config.messages.success.newAbilitiesUnlocked.replace(
-                '{level}',
-                this.level
-              ),
+            privateMessage: messages.getEvent('levelUp', { level: this.level }),
             attackerMessage: null,
           };
           log.push(abilityUnlockLog);
@@ -742,7 +736,7 @@ class GameRoom {
             public: false,
             targetId: actor.id,
             message: '',
-            privateMessage: config.messages.privateMessages.youAreStunned,
+            privateMessage: messages.privateMessages.youAreStunned,
             attackerMessage: '',
           };
           log.push(stunnedLog);
@@ -784,7 +778,7 @@ class GameRoom {
           targetId: target.id,
           message: '',
           privateMessage: '',
-          attackerMessage: config.messages.getEvent('attackInvisible', {
+          attackerMessage: messages.getEvent('attackInvisible', {
             targetName: target.name,
           }),
         };
@@ -800,7 +794,7 @@ class GameRoom {
         targetId: target === '__monster__' ? 'monster' : target.id,
         abilityName: ability.name,
         // Public message shows the action (visible to people involved)
-        message: config.messages.getEvent('playerAttacks', {
+        message: messages.getEvent('playerAttacks', {
           playerName: actor.name,
           abilityName: ability.name,
           targetName: target === '__monster__' ? 'the Monster' : target.name,

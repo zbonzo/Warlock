@@ -8,8 +8,8 @@ const { validatePlayerName } = require('@middleware/validation');
 const { validateGameAction } = require('@shared/gameChecks');
 const logger = require('@utils/logger');
 const errorHandler = require('@utils/errorHandler');
-const playerSessionManager = require('@services/PlayerSessionManager');
 const config = require('@config');
+const messages = require('@messages');
 
 /**
  * Handle player joining a game
@@ -32,12 +32,9 @@ function handlePlayerJoin(io, socket, gameCode, playerName) {
   const sanitizedName = playerName || config.player.defaultPlayerName;
   const success = game.addPlayer(socket.id, sanitizedName);
   if (!success) {
-    errorHandler.throwGameStateError(config.messages.getError('joinFailed'));
+    errorHandler.throwGameStateError(messages.getError('joinFailed'));
     return false;
   }
-
-  // Register session with PlayerSessionManager
-  playerSessionManager.registerSession(gameCode, sanitizedName, socket.id);
 
   // Join socket to game room and update clients
   socket.join(gameCode);
@@ -91,20 +88,18 @@ function handleSelectCharacter(io, socket, gameCode, race, className) {
 function validateCharacterSelection(race, className) {
   // Use centralized character validation from config - FAIL HARD if not available
   if (!config.races.includes(race)) {
-    errorHandler.throwValidationError(config.messages.getError('invalidRace'));
+    errorHandler.throwValidationError(messages.getError('invalidRace'));
     return false;
   }
 
   if (!config.classes.includes(className)) {
-    errorHandler.throwValidationError(config.messages.getError('invalidClass'));
+    errorHandler.throwValidationError(messages.getError('invalidClass'));
     return false;
   }
 
   // Use centralized compatibility check - FAIL HARD if not available
   if (!config.isValidCombination(race, className)) {
-    errorHandler.throwValidationError(
-      config.messages.getError('invalidCombination')
-    );
+    errorHandler.throwValidationError(messages.getError('invalidCombination'));
     return false;
   }
 
@@ -166,9 +161,6 @@ function handlePlayerDisconnect(io, socket) {
       // Remove player from game
       game.removePlayer(socket.id);
 
-      // Clean up any session data
-      playerSessionManager.removeSession(gameCode, playerName);
-
       // Handle host reassignment
       handleHostReassignment(io, game, gameCode, playerName, wasHost);
 
@@ -198,7 +190,7 @@ function handlePlayerDisconnect(io, socket) {
  */
 function getThematicDisconnectMessage(playerName) {
   // Use centralized message formatting - FAIL HARD if not available
-  return config.messages.getEvent('playerLeft', { playerName });
+  return messages.getEvent('playerLeft', { playerName });
 }
 
 /**
@@ -218,7 +210,7 @@ function handleHostReassignment(io, game, gameCode, playerName, wasHost) {
     logger.info(`Host ${playerName} disconnected, reassigning to ${gameCode}`);
 
     // Use centralized messaging for host change - FAIL HARD if not available
-    const hostChangeMessage = config.messages.getEvent('hostChanged', {
+    const hostChangeMessage = messages.getEvent('hostChanged', {
       playerName,
     });
 
@@ -269,7 +261,7 @@ function handleGameProgressionAfterDisconnect(io, game, gameCode, playerName) {
  */
 function handlePlayerReconnection(io, socket, gameCode, playerName) {
   // Use centralized messaging for reconnection failure - FAIL HARD if not available
-  const reconnectionMessage = config.messages.getError('reconnectionFailed');
+  const reconnectionMessage = messages.getError('reconnectionFailed');
 
   socket.emit('errorMessage', {
     message: reconnectionMessage,

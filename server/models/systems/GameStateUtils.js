@@ -3,6 +3,7 @@
  * Provides common operations and queries on the game state
  */
 const config = require('@config');
+const messages = require('@messages');
 
 /**
  * Helper class with utility functions for game state
@@ -22,7 +23,7 @@ class GameStateUtils {
    * @returns {Array} Array of alive player objects
    */
   getAlivePlayers() {
-    return Array.from(this.players.values()).filter(p => p.isAlive);
+    return Array.from(this.players.values()).filter((p) => p.isAlive);
   }
 
   /**
@@ -45,36 +46,36 @@ class GameStateUtils {
    * @param {boolean} [options.onlyPlayers=false] - Whether to only target players
    * @returns {string|null} ID of target or null if no valid targets
    */
-  getRandomTarget({ 
-    actorId, 
-    excludeIds = [], 
-    includeMonster = false, 
-    monsterRef = null, 
-    onlyPlayers = false 
+  getRandomTarget({
+    actorId,
+    excludeIds = [],
+    includeMonster = false,
+    monsterRef = null,
+    onlyPlayers = false,
   } = {}) {
     // Get all possible player targets
     let possibleTargets = this.getAlivePlayers()
-      .filter(p => {
+      .filter((p) => {
         // Exclude specified IDs (including actor if not excluded)
         if (p.id === actorId || excludeIds.includes(p.id)) return false;
-        
+
         // Exclude invisible players
         if (p.hasStatusEffect && p.hasStatusEffect('invisible')) return false;
-        
+
         return true;
       })
-      .map(p => p.id);
-    
+      .map((p) => p.id);
+
     // Add monster if allowed and alive
     if (includeMonster && monsterRef && monsterRef.hp > 0 && !onlyPlayers) {
       possibleTargets.push('__monster__');
     }
-    
+
     // If no valid targets found, consider alternate options
     if (possibleTargets.length === 0) {
       // If only player targets were requested but none found, return null
       if (onlyPlayers) return null;
-      
+
       // Try targeting self if alive and not invisible
       if (this.isPlayerAlive(actorId)) {
         const actor = this.players.get(actorId);
@@ -82,16 +83,16 @@ class GameStateUtils {
           return actorId;
         }
       }
-      
+
       // Last resort: monster if allowed
       if (includeMonster && monsterRef && monsterRef.hp > 0) {
         return '__monster__';
       }
-      
+
       // No valid targets at all
       return null;
     }
-    
+
     // Select a random target from the list
     return possibleTargets[Math.floor(Math.random() * possibleTargets.length)];
   }
@@ -105,13 +106,15 @@ class GameStateUtils {
   checkWinConditions(numWarlocks, aliveCount) {
     // Use win conditions from config
     const winConditions = config.gameBalance.warlock.winConditions;
-    
+
     // Good players win if all warlocks are eliminated
-    if (numWarlocks <= 0 && aliveCount > 0) return winConditions.allWarlocksGone || 'Good';
-    
+    if (numWarlocks <= 0 && aliveCount > 0)
+      return winConditions.allWarlocksGone || 'Good';
+
     // Warlocks win if all remaining players are warlocks
-    if (numWarlocks > 0 && numWarlocks === aliveCount) return winConditions.allPlayersWarlocks || 'Evil';
-    
+    if (numWarlocks > 0 && numWarlocks === aliveCount)
+      return winConditions.allPlayersWarlocks || 'Evil';
+
     // Game continues
     return null;
   }
@@ -122,9 +125,9 @@ class GameStateUtils {
    * @returns {number} Number of alive players with the effect
    */
   countPlayersWithEffect(effectName) {
-    return this.getAlivePlayers()
-      .filter(p => p.hasStatusEffect && p.hasStatusEffect(effectName))
-      .length;
+    return this.getAlivePlayers().filter(
+      (p) => p.hasStatusEffect && p.hasStatusEffect(effectName)
+    ).length;
   }
 
   /**
@@ -134,24 +137,28 @@ class GameStateUtils {
    */
   getLowestHpPlayer(includeInvisible = false) {
     const alivePlayers = this.getAlivePlayers();
-    
+
     if (alivePlayers.length === 0) return null;
-    
+
     let lowestHp = Number.MAX_SAFE_INTEGER;
     let lowestHpPlayer = null;
-    
+
     for (const player of alivePlayers) {
       // Skip invisible players if requested
-      if (!includeInvisible && player.hasStatusEffect && player.hasStatusEffect('invisible')) {
+      if (
+        !includeInvisible &&
+        player.hasStatusEffect &&
+        player.hasStatusEffect('invisible')
+      ) {
         continue;
       }
-      
+
       if (player.hp < lowestHp) {
         lowestHp = player.hp;
         lowestHpPlayer = player;
       }
     }
-    
+
     return lowestHpPlayer;
   }
 
@@ -162,24 +169,28 @@ class GameStateUtils {
    */
   getHighestHpPlayer(includeInvisible = false) {
     const alivePlayers = this.getAlivePlayers();
-    
+
     if (alivePlayers.length === 0) return null;
-    
+
     let highestHp = -1;
     let highestHpPlayer = null;
-    
+
     for (const player of alivePlayers) {
       // Skip invisible players if requested
-      if (!includeInvisible && player.hasStatusEffect && player.hasStatusEffect('invisible')) {
+      if (
+        !includeInvisible &&
+        player.hasStatusEffect &&
+        player.hasStatusEffect('invisible')
+      ) {
         continue;
       }
-      
+
       if (player.hp > highestHp) {
         highestHp = player.hp;
         highestHpPlayer = player;
       }
     }
-    
+
     return highestHpPlayer;
   }
 
@@ -192,16 +203,19 @@ class GameStateUtils {
    */
   getPlayersSortedBy(property, ascending = true, includeInvisible = true) {
     const alivePlayers = this.getAlivePlayers();
-    
+
     // Filter invisible players if needed
-    const filteredPlayers = includeInvisible ? alivePlayers : 
-      alivePlayers.filter(p => !p.hasStatusEffect || !p.hasStatusEffect('invisible'));
-    
+    const filteredPlayers = includeInvisible
+      ? alivePlayers
+      : alivePlayers.filter(
+          (p) => !p.hasStatusEffect || !p.hasStatusEffect('invisible')
+        );
+
     // Sort players by the specified property
     return filteredPlayers.sort((a, b) => {
       const aValue = a[property] || 0;
       const bValue = b[property] || 0;
-      
+
       return ascending ? aValue - bValue : bValue - aValue;
     });
   }
@@ -214,7 +228,7 @@ class GameStateUtils {
    * @returns {boolean} Whether all players have the property with value
    */
   allPlayersHave(players, property, value) {
-    return players.every(p => p[property] === value);
+    return players.every((p) => p[property] === value);
   }
 
   /**
@@ -225,20 +239,20 @@ class GameStateUtils {
    */
   getPlayerGroups(property) {
     const groups = {};
-    
+
     for (const player of this.players.values()) {
       if (!player.isAlive) continue;
-      
+
       const value = player[property];
       if (value === undefined || value === null) continue;
-      
+
       if (!groups[value]) {
         groups[value] = [];
       }
-      
+
       groups[value].push(player);
     }
-    
+
     return groups;
   }
 
@@ -249,15 +263,18 @@ class GameStateUtils {
    */
   formatAbilityName(abilityType) {
     if (!abilityType) return '';
-    
+
     // Convert camelCase to spaces (e.g., "fireballAttack" -> "fireball Attack")
     let name = abilityType.replace(/([A-Z])/g, ' $1');
-    
+
     // Capitalize first letter of each word
-    name = name.split(' ').map(word => {
-      return word.charAt(0).toUpperCase() + word.slice(1);
-    }).join(' ');
-    
+    name = name
+      .split(' ')
+      .map((word) => {
+        return word.charAt(0).toUpperCase() + word.slice(1);
+      })
+      .join(' ');
+
     return name;
   }
 
@@ -270,29 +287,29 @@ class GameStateUtils {
     // Look up ability in config
     for (const className in config.classAbilities) {
       const abilities = config.classAbilities[className];
-      const ability = abilities.find(a => a.type === abilityType);
+      const ability = abilities.find((a) => a.type === abilityType);
       if (ability) {
         return ability.category;
       }
     }
-    
+
     // Fallback to pattern matching if not found in config
     const attackTypes = ['fireball', 'slash', 'strike', 'shot', 'blast'];
     const healTypes = ['heal', 'bandage', 'restoration', 'mend'];
     const defenseTypes = ['shield', 'protect', 'barrier', 'dodge'];
-    
+
     for (const type of attackTypes) {
       if (abilityType.toLowerCase().includes(type)) return 'Attack';
     }
-    
+
     for (const type of healTypes) {
       if (abilityType.toLowerCase().includes(type)) return 'Heal';
     }
-    
+
     for (const type of defenseTypes) {
       if (abilityType.toLowerCase().includes(type)) return 'Defense';
     }
-    
+
     // Default to Special if no match found
     return 'Special';
   }
@@ -309,38 +326,43 @@ class GameStateUtils {
     // Find the player
     const player = this.players.get(playerId);
     if (!player) return false;
-    
+
     // Check if the player is Human
     if (player.race !== 'Human') return false;
-    
+
     // Find the old ability in player's abilities
-    const oldAbilityIndex = player.abilities.findIndex(a => a.type === oldAbilityType);
+    const oldAbilityIndex = player.abilities.findIndex(
+      (a) => a.type === oldAbilityType
+    );
     if (oldAbilityIndex === -1) return false;
-    
+
     // Verify the old ability matches the specified level
     const oldAbility = player.abilities[oldAbilityIndex];
     if (oldAbility.unlockAt !== level) return false;
-    
+
     // Find the new ability in the class abilities
-    const newAbilityTemplate = config.getClassAbilitiesByLevel(player.class, level)
-      .find(a => a.type === newAbilityType);
-    
+    const newAbilityTemplate = config
+      .getClassAbilitiesByLevel(player.class, level)
+      .find((a) => a.type === newAbilityType);
+
     if (!newAbilityTemplate) {
       return false;
     }
-    
+
     // Create a deep copy of the ability to avoid reference issues
     const newAbility = JSON.parse(JSON.stringify(newAbilityTemplate));
-    
+
     // Replace the ability in player's abilities array
     player.abilities[oldAbilityIndex] = newAbility;
-    
+
     // If the old ability was unlocked, update the unlocked abilities too
-    const unlockedIndex = player.unlocked.findIndex(a => a.type === oldAbilityType);
+    const unlockedIndex = player.unlocked.findIndex(
+      (a) => a.type === oldAbilityType
+    );
     if (unlockedIndex !== -1) {
       player.unlocked[unlockedIndex] = newAbility;
     }
-    
+
     return true;
   }
 }

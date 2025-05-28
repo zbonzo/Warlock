@@ -10,6 +10,7 @@ const MonsterController = require('@controllers/MonsterController');
 const CombatSystem = require('./CombatSystem');
 const AbilityRegistry = require('../AbilityRegistry');
 const { registerAbilityHandlers } = require('./abilityHandlers');
+const messages = require('@messages');
 
 /**
  * Factory class for creating and connecting game systems

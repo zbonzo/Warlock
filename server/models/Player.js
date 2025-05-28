@@ -4,6 +4,7 @@
  */
 const config = require('@config');
 const logger = require('@utils/logger');
+const messages = require('@messages');
 
 /**
  * Player class representing a single player in the game

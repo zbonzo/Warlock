@@ -9,7 +9,6 @@ const {
   throwValidationError,
 } = require('@utils/errorHandler');
 const logger = require('@utils/logger');
-const playerSessionManager = require('./PlayerSessionManager');
 
 // In-memory storage
 const games = new Map();

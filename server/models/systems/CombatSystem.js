@@ -4,6 +4,7 @@
  */
 const config = require('@config');
 const logger = require('@utils/logger');
+const messages = require('@messages');
 
 /**
  * CombatSystem handles all combat-related operations with FIXED armor calculation
@@ -159,7 +160,7 @@ class CombatSystem {
         type: 'stone_armor_degradation',
         public: true,
         targetId: target.id,
-        message: config.messages.getEvent('dwarfStoneArmor', {
+        message: messages.getEvent('dwarfStoneArmor', {
           playerName: target.name,
           oldValue: armorDegradationInfo.oldValue,
           newValue: armorDegradationInfo.newArmorValue,
@@ -172,12 +173,9 @@ class CombatSystem {
         armorDegradationInfo.destroyed &&
         armorDegradationInfo.newArmorValue <= 0
       ) {
-        armorLogEvent.message = config.messages.getEvent(
-          'stoneArmorDestroyed',
-          {
-            playerName: target.name,
-          }
-        );
+        armorLogEvent.message = messages.getEvent('stoneArmorDestroyed', {
+          playerName: target.name,
+        });
         armorLogEvent.privateMessage = `Your Stone Armor is destroyed! You now take ${Math.abs(armorDegradationInfo.newArmorValue) * 10}% more damage!`;
       }
 
@@ -418,8 +416,8 @@ class CombatSystem {
   handleKeenSensesAttack(target, attacker, log) {
     // Use config for warlock revelation messages
     const revealMessage = target.isWarlock
-      ? config.messages.getEvent('warlockRevealed', { playerName: target.name })
-      : config.messages.getEvent('notWarlock', { playerName: target.name });
+      ? messages.getEvent('warlockRevealed', { playerName: target.name })
+      : messages.getEvent('notWarlock', { playerName: target.name });
 
     log.push(revealMessage);
   }
@@ -456,7 +454,7 @@ class CombatSystem {
         type: 'resurrect',
         public: true,
         targetId: target.id,
-        message: config.messages.getEvent('playerResurrected', {
+        message: messages.getEvent('playerResurrected', {
           playerName: target.name,
           abilityName: 'Undying',
         }),
@@ -476,7 +474,7 @@ class CombatSystem {
         public: true,
         targetId: target.id,
         attackerId: attacker.id || 'monster',
-        message: config.messages.getEvent('playerDies', {
+        message: messages.getEvent('playerDies', {
           playerName: target.name,
         }),
         privateMessage: `You were killed by ${attacker.name || 'The Monster'}.`,
@@ -544,7 +542,7 @@ class CombatSystem {
           player.hp = player.racialEffects.resurrect.resurrectedHp || 1;
 
           log.push(
-            config.messages.getEvent('playerResurrected', {
+            messages.getEvent('playerResurrected', {
               playerName: player.name,
               abilityName: 'Undying',
             })
@@ -559,7 +557,7 @@ class CombatSystem {
           if (player.isWarlock) this.warlockSystem.decrementWarlockCount();
 
           log.push(
-            config.messages.getEvent('playerDies', {
+            messages.getEvent('playerDies', {
               playerName: player.name,
             })
           );
@@ -661,7 +659,7 @@ class CombatSystem {
 
       if (actualHeal > 0) {
         log.push(
-          config.messages.getEvent('playerHealed', {
+          messages.getEvent('playerHealed', {
             playerName: target.name,
             amount: actualHeal,
           })

@@ -4,6 +4,7 @@
  */
 const config = require('@config');
 const logger = require('@utils/logger');
+const messages = require('@messages');
 
 /**
  * RacialAbilitySystem manages all racial ability operations
@@ -129,7 +130,7 @@ class RacialAbilitySystem {
       player.racialCooldown--;
       if (player.racialCooldown === 0) {
         // Use private message from config
-        const racialReadyMessage = config.messages.getMessage(
+        const racialReadyMessage = messages.getMessage(
           'private',
           'racialAbilityReady'
         );
@@ -169,7 +170,7 @@ class RacialAbilitySystem {
 
       if (actualHeal > 0) {
         log.push(
-          config.messages.getEvent('playerHealed', {
+          messages.getEvent('playerHealed', {
             playerName: player.name,
             amount: actualHeal,
           })

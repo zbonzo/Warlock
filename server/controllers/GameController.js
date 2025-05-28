@@ -7,8 +7,9 @@ const { validatePlayerName } = require('@middleware/validation');
 const { validateGameAction } = require('@shared/gameChecks');
 const logger = require('@utils/logger');
 const config = require('@config');
+const messages = require('@messages');
+
 const { throwGameStateError } = require('@utils/errorHandler');
-const playerSessionManager = require('@services/PlayerSessionManager');
 
 /**
  * Handle game creation request
@@ -59,7 +60,7 @@ function handleStartGame(io, socket, gameCode) {
   // Check minimum player count
   if (game.players.size < config.minPlayers) {
     throwGameStateError(
-      config.messages.getError('notEnoughPlayers', {
+      messages.getError('notEnoughPlayers', {
         minPlayers: config.minPlayers,
       })
     );
@@ -71,7 +72,7 @@ function handleStartGame(io, socket, gameCode) {
     (p) => p.race && p.class
   );
   if (!allPlayersReady) {
-    throwGameStateError(config.messages.errors.allPlayersNotReady);
+    throwGameStateError(messages.errors.allPlayersNotReady);
     return false;
   }
 
@@ -311,7 +312,7 @@ function handleRacialAbility(io, socket, gameCode, targetId, abilityType) {
       logger.debug(`Player ${player.name} has no Adaptability uses left`);
       socket.emit('racialAbilityUsed', {
         success: false,
-        message: config.messages.getError('noUsesLeft', {
+        message: messages.getError('noUsesLeft', {
           abilityName: 'Adaptability',
         }),
       });
@@ -359,13 +360,13 @@ function handleRacialAbility(io, socket, gameCode, targetId, abilityType) {
       io.to(gameCode).emit('playerList', { players: game.getPlayersInfo() });
       socket.emit('racialAbilityUsed', {
         success: true,
-        message: config.messages.success.adaptabilityTriggered,
+        message: messages.success.adaptabilityTriggered,
       });
     } else {
       logger.warn(`Failed to use Adaptability for player ${player.name}`);
       socket.emit('racialAbilityUsed', {
         success: false,
-        message: config.messages.errors.adaptabilityFailed,
+        message: messages.errors.adaptabilityFailed,
       });
     }
 
@@ -380,12 +381,12 @@ function handleRacialAbility(io, socket, gameCode, targetId, abilityType) {
     io.to(gameCode).emit('playerList', { players: game.getPlayersInfo() });
     socket.emit('racialAbilityUsed', {
       success: true,
-      message: config.messages.success.racialAbilityUsed,
+      message: messages.success.racialAbilityUsed,
     });
   } else {
     socket.emit('racialAbilityUsed', {
       success: false,
-      message: config.messages.errors.racialAbilityUsed,
+      message: messages.errors.racialAbilityUsed,
     });
   }
 
@@ -421,7 +422,7 @@ function handleAdaptabilityReplace(
   if (!player || player.race !== 'Human') {
     socket.emit('adaptabilityComplete', {
       success: false,
-      message: config.messages.errors.adaptabilityFailed,
+      message: messages.errors.adaptabilityFailed,
     });
     return false;
   }
@@ -440,7 +441,7 @@ function handleAdaptabilityReplace(
     );
     socket.emit('adaptabilityComplete', {
       success: false,
-      message: config.messages.errors.abilityNotFound,
+      message: messages.errors.abilityNotFound,
     });
     return false;
   }
@@ -451,7 +452,7 @@ function handleAdaptabilityReplace(
     logger.error(`Class ${newClassName} not found in abilities config`);
     socket.emit('adaptabilityComplete', {
       success: false,
-      message: config.messages.getError('invalidClass'),
+      message: messages.getError('invalidClass'),
     });
     return false;
   }
@@ -465,7 +466,7 @@ function handleAdaptabilityReplace(
     );
     socket.emit('adaptabilityComplete', {
       success: false,
-      message: config.messages.errors.abilityNotUnlocked,
+      message: messages.errors.abilityNotUnlocked,
     });
     return false;
   }
@@ -492,7 +493,7 @@ function handleAdaptabilityReplace(
   io.to(gameCode).emit('playerList', { players: game.getPlayersInfo() });
   socket.emit('adaptabilityComplete', {
     success: true,
-    message: config.messages.success.adaptabilityComplete,
+    message: messages.success.adaptabilityComplete,
     oldAbility: oldAbilityType,
     newAbility: newAbilityType,
   });

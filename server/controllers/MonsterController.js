@@ -3,6 +3,7 @@
  * Centralizes monster logic and respawn mechanics
  */
 const config = require('@config');
+const messages = require('@messages');
 const logger = require('@utils/logger');
 
 /**
@@ -85,7 +86,7 @@ class MonsterController {
   takeDamage(amount, attacker, log = []) {
     if (this.monster.hp <= 0) {
       log.push(
-        config.messages.getEvent('monsterAlreadyDefeated', {
+        messages.getEvent('monsterAlreadyDefeated', {
           playerName: attacker.name,
         })
       );
@@ -97,7 +98,7 @@ class MonsterController {
 
     // Log attack using config messages
     log.push(
-      config.messages.getEvent('playerAttacksMonster', {
+      messages.getEvent('playerAttacksMonster', {
         playerName: attacker.name,
         damage: amount,
       })
@@ -105,13 +106,13 @@ class MonsterController {
 
     if (this.monster.hp > 0) {
       log.push(
-        config.messages.getEvent('monsterHpRemaining', {
+        messages.getEvent('monsterHpRemaining', {
           hp: this.monster.hp,
           maxHp: this.monster.maxHp,
         })
       );
     } else {
-      log.push(config.messages.getEvent('monsterDefeated'));
+      log.push(messages.getEvent('monsterDefeated'));
     }
 
     return true;
@@ -134,9 +135,9 @@ class MonsterController {
       const logEvent = {
         type: 'monster_no_target',
         public: true,
-        message: config.messages.events.monsterNoTarget,
-        privateMessage: config.messages.events.monsterNoTarget,
-        attackerMessage: config.messages.events.monsterNoTarget,
+        message: messages.events.monsterNoTarget,
+        privateMessage: messages.events.monsterNoTarget,
+        attackerMessage: messages.events.monsterNoTarget,
       };
       log.push(logEvent);
       return null;
@@ -147,9 +148,9 @@ class MonsterController {
       const logEvent = {
         type: 'monster_invisible_target',
         public: true,
-        message: config.messages.events.monsterSwipesAtShadows,
-        privateMessage: config.messages.events.monsterSwipesAtShadows,
-        attackerMessage: config.messages.events.monsterSwipesAtShadows,
+        message: messages.events.monsterSwipesAtShadows,
+        privateMessage: messages.events.monsterSwipesAtShadows,
+        attackerMessage: messages.events.monsterSwipesAtShadows,
       };
       log.push(logEvent);
       return null;
@@ -162,9 +163,9 @@ class MonsterController {
     const attackAnnouncement = {
       type: 'monster_attack_announcement',
       public: true,
-      message: config.messages.events.monsterAttacks,
-      privateMessage: config.messages.events.monsterAttacks,
-      attackerMessage: config.messages.events.monsterAttacks,
+      message: messages.events.monsterAttacks,
+      privateMessage: messages.events.monsterAttacks,
+      attackerMessage: messages.events.monsterAttacks,
     };
     log.push(attackAnnouncement);
 
@@ -244,8 +245,8 @@ class MonsterController {
     this.monster.age = config.gameBalance.monster.baseAge;
 
     // Log respawn using config messages
-    log.push(config.messages.getEvent('levelUp', { level: newLevel }));
-    log.push(config.messages.getEvent('monsterRespawns', { hp: newMonsterHp }));
+    log.push(messages.getEvent('levelUp', { level: newLevel }));
+    log.push(messages.getEvent('monsterRespawns', { hp: newMonsterHp }));
 
     return {
       newLevel,
