@@ -20,7 +20,6 @@ const availableClasses = [
   'Gunslinger',
   'Tracker',
   'Druid',
-  // 'Seer', // Removed from active classes but kept in abilities for reference
 ];
 
 /**
@@ -90,12 +89,6 @@ const classAttributes = {
     damageModifier: 1.3, // High damage
     description: 'Savage warrior who trades safety for overwhelming offense.',
   },
-  // Seer: { // Kept for reference
-  //   hpModifier: 0.9, // Less HP
-  //   armorModifier: 0.0, // No armor bonus
-  //   damageModifier: 1.0, // Standard damage
-  //   description: 'Psychic class with detection abilities.',
-  // },
   Shaman: {
     hpModifier: 1.0, // Standard HP
     armorModifier: 1.5, // Some spiritual protection
@@ -577,56 +570,6 @@ const classAbilities = {
         'Enter an unstoppable rage that makes you incredibly dangerous, but at a terrible cost.',
     },
   ],
-  // Seer: [ // Kept for reference - can be uncommented to re-add to the game
-  //   {
-  //     type: 'psychicBolt',
-  //     name: 'Psychic Bolt',
-  //     category: 'Attack',
-  //     effect: null,
-  //     target: 'Single',
-  //     params: { damage: 28 },
-  //     unlockAt: 1,
-  //     order: 1050,
-  //     cooldown: 0,
-  //     flavorText: 'Assault the mind with a focused blast of pure mental force.',
-  //   },
-  //   {
-  //     type: 'spiritGuard',
-  //     name: 'Spirit Guard',
-  //     category: 'Defense',
-  //     effect: 'shielded',
-  //     target: 'Self',
-  //     params: { armor: 3, duration: 1 },
-  //     unlockAt: 3,
-  //     order: 17,
-  //     cooldown: 0,
-  //     flavorText: 'Summon protective spirits to ward off incoming attacks.',
-  //   },
-  //   {
-  //     type: 'spiritMend',
-  //     name: 'Spirit Mend',
-  //     category: 'Heal',
-  //     effect: null,
-  //     target: 'Self',
-  //     params: { amount: 20 },
-  //     unlockAt: 4,
-  //     order: 10070,
-  //     cooldown: 2,
-  //     flavorText: 'Channel soothing spiritual energy to repair your own form.',
-  //   },
-  //   {
-  //     type: 'revealSecret',
-  //     name: 'Reveal Secret',
-  //     category: 'Special',
-  //     effect: 'detect',
-  //     target: 'Single',
-  //     params: {},
-  //     unlockAt: 2,
-  //     order: 101,
-  //     cooldown: 4,
-  //     flavorText: "Uncover hidden truths and expose the enemy's deceptions.",
-  //   },
-  // ],
   Shaman: [
     {
       type: 'lightningBolt',

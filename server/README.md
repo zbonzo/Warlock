@@ -80,12 +80,31 @@ Status effect definitions and behavior:
 - Racial abilities (Adaptability, Keen Senses, Blood Rage, etc.)
 - Validation helpers
 
+###### `Adding a race example`
+- Add this JSON as an example to character/races.js
+- Seer: {
+--   hpModifier: 0.9, // Less HP
+--   armorModifier: 0.0, // No armor bonus
+--   damageModifier: 1.0, // Standard damage
+--   description: 'Psychic class with detection abilities.',
+-- },
+
+
 ##### `character/classes.js`
 
 - Available classes and their stat modifiers
 - Class abilities by level with damage values
 - Ability categorization (Attack, Defense, Heal, Special)
 - Unlock progression and cooldowns
+
+###### `Adding a class example`
+- Add this JSON as an example to character/classes.js
+- Seer: {
+--   hpModifier: 0.9, // Less HP
+--   armorModifier: 0.0, // No armor bonus
+--   damageModifier: 1.0, // Standard damage
+--   description: 'Psychic class with detection abilities.',
+-- },
 
 ##### `character/playerSettings.js`
 

@@ -12,9 +12,7 @@ const messages = require('@messages');
 function register(registry) {
   // Register racial abilities
   registry.registerRacialAbility('adaptability', handleAdaptability);
-  registry.registerRacialAbility('keenSenses', handleKeenSenses);
   registry.registerRacialAbility('bloodRage', handleBloodRage);
-  registry.registerRacialAbility('forestsGrace', handleForestsGrace);
   registry.registerRacialAbility('undying', handleUndying);
   // Note: Stone Armor is passive and handled in combat system
 }
@@ -61,56 +59,6 @@ function handleAdaptability(actor, target, ability, log, systems) {
 }
 
 /**
- * Handler for Elf Keen Senses racial ability (currently commented out)
- * @param {Object} actor - Actor using the ability
- * @param {Object|string} target - Target to study
- * @param {Object} ability - Ability configuration
- * @param {Array} log - Event log to append messages to
- * @param {Object} systems - Game systems
- * @returns {boolean} Whether the ability was successful
- */
-function handleKeenSenses(actor, target, ability, log, systems) {
-  // This ability is currently disabled/commented out in the codebase
-  // Uncomment the message in racial.js if you want to re-enable it
-
-  /*
-  if (!target || target === '__monster__') {
-    const invalidTargetMessage =messages.getAbilityMessage('abilities.racial', 'keenSensesInvalidTarget');
-    log.push(
-      messages.formatMessage(invalidTargetMessage, {
-        playerName: actor.name
-      })
-    );
-    return false;
-  }
-
-  // Set up keen senses effect for next attack
-  if (!actor.racialEffects) {
-    actor.racialEffects = {};
-  }
-  actor.racialEffects.keenSensesActiveOnNextAttack = target.id;
-
-  const keenSensesMessage =messages.getAbilityMessage('abilities.racial', 'keenSensesUsed');
-  log.push(
-    messages.formatMessage(keenSensesMessage, {
-      playerName: actor.name,
-      targetName: target.name
-    })
-  );
-
-  const nextAttackMessage =messages.getAbilityMessage('abilities.racial', 'keenSensesNextAttack');
-  log.push(
-    messages.formatMessage(nextAttackMessage, {
-      playerName: actor.name,
-      targetName: target.name
-    })
-  );
-  */
-
-  return false; // Currently disabled
-}
-
-/**
  * Handler for Orc Blood Rage racial ability
  * @param {Object} actor - Actor using the ability
  * @param {Object|string} target - Target of the ability (unused for blood rage)
@@ -146,54 +94,6 @@ function handleBloodRage(actor, target, ability, log, systems) {
   );
 
   return true;
-}
-
-/**
- * Handler for Satyr Forest's Grace racial ability (currently commented out)
- * @param {Object} actor - Actor using the ability
- * @param {Object|string} target - Target of the ability (unused)
- * @param {Object} ability - Ability configuration
- * @param {Array} log - Event log to append messages to
- * @param {Object} systems - Game systems
- * @returns {boolean} Whether the ability was successful
- */
-function handleForestsGrace(actor, target, ability, log, systems) {
-  // This ability is currently disabled/commented out in the codebase
-  // Uncomment the message in racial.js if you want to re-enable it
-
-  /*
-  const healAmount = ability.params?.healAmount || 3;
-  const turns = ability.params?.turns || 3;
-
-  // Apply healing over time status effect
-  systems.statusEffectManager.applyEffect(
-    actor.id,
-    'healingOverTime',
-    {
-      amount: healAmount,
-      turns: turns,
-    },
-    log
-  );
-
-  const forestsGraceMessage =messages.getAbilityMessage('abilities.racial', 'forestsGraceUsed');
-  log.push(
-    messages.formatMessage(forestsGraceMessage, {
-      playerName: actor.name
-    })
-  );
-
-  const healingMessage =messages.getAbilityMessage('abilities.racial', 'forestsGraceHealing');
-  log.push(
-    messages.formatMessage(healingMessage, {
-      playerName: actor.name,
-      amount: healAmount,
-      turns: turns
-    })
-  );
-  */
-
-  return false; // Currently disabled
 }
 
 /**

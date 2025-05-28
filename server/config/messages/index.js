@@ -141,6 +141,17 @@ function getEvent(key, data = {}) {
 
 module.exports = {
   messages,
+  events: messages.events,
+  errors: messages.errors,
+  success: messages.success,
+  privateMessages: messages.privateMessages,
+  abilities: messages.abilities,
+  combat: messages.combat,
+  statusEffects: messages.statusEffects,
+  warlock: messages.warlock,
+  monster: messages.monster,
+  player: messages.player,
+  ui: messages.ui,
   formatMessage,
   getMessage,
   getError,
