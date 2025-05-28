@@ -3,6 +3,7 @@
  * Contains all healing-related class abilities including the new HoT Rejuvenation
  */
 const config = require('@config');
+const messages = require('@config/messages');
 const {
   registerAbilitiesByCategory,
   registerAbilitiesByEffectAndTarget,
@@ -97,15 +98,15 @@ function handleHeal(actor, target, ability, log, systems) {
     target.hp += actualHeal;
 
     if (actualHeal > 0) {
-      // Use config message if available
-      const healMessage =
-        config.getMessage('events', 'playerHealed') ||
-        `{playerName} was healed for {amount} health.`;
-
+      const healMessage = messages.getAbilityMessage(
+        'abilities.healing',
+        'healingApplied'
+      );
       log.push(
-        healMessage
-          .replace('{playerName}', target.name)
-          .replace('{amount}', actualHeal)
+        messages.formatMessage(healMessage, {
+          playerName: target.name,
+          amount: actualHeal,
+        })
       );
 
       // Add private messages
@@ -116,8 +117,14 @@ function handleHeal(actor, target, ability, log, systems) {
         attackerId: actor.id,
         heal: actualHeal,
         message: '',
-        privateMessage: `${actor.name} healed you for ${actualHeal} health.`,
-        attackerMessage: `You healed ${target.name} for ${actualHeal} health.`,
+        privateMessage: messages.formatMessage(
+          messages.getAbilityMessage('abilities.healing', 'youWereHealed'),
+          { healerName: actor.name, amount: actualHeal }
+        ),
+        attackerMessage: messages.formatMessage(
+          messages.getAbilityMessage('abilities.healing', 'youHealed'),
+          { targetName: target.name, amount: actualHeal }
+        ),
       };
       log.push(privateHealLog);
     } else {
@@ -128,8 +135,14 @@ function handleHeal(actor, target, ability, log, systems) {
         targetId: target.id,
         attackerId: actor.id,
         message: '',
-        privateMessage: `${actor.name} tried to heal you, but you're already at full health.`,
-        attackerMessage: `${target.name} is already at full health.`,
+        privateMessage: messages.formatMessage(
+          messages.getAbilityMessage('abilities.healing', 'alreadyFullHealth'),
+          { healerName: actor.name }
+        ),
+        attackerMessage: messages.formatMessage(
+          messages.getAbilityMessage('abilities.healing', 'targetFullHealth'),
+          { targetName: target.name }
+        ),
       };
       log.push(healFullLog);
     }
@@ -146,8 +159,17 @@ function handleHeal(actor, target, ability, log, systems) {
       attackerId: actor.id,
       heal: actualHeal,
       message: '', // No public message
-      privateMessage: `You rejected the healing from ${actor.name}.`,
-      attackerMessage: `You attempted to heal ${target.name} (a Warlock), but healed yourself for ${actualHeal} HP instead.`,
+      privateMessage: messages.getAbilityMessage(
+        'abilities.healing',
+        'warlockHealingRejected'
+      ),
+      attackerMessage: messages.formatMessage(
+        messages.getAbilityMessage(
+          'abilities.healing',
+          'warlockHealingSelfHeal'
+        ),
+        { targetName: target.name, amount: actualHeal }
+      ),
     };
     log.push(warlockHealLog);
 
@@ -187,8 +209,15 @@ function handleRejuvenationHoT(actor, target, ability, log, systems) {
   const healPerTurn = Math.floor(modifiedHealAmount / healingTurns);
 
   // Apply healing over time to each valid target
+  const castMessage = messages.getAbilityMessage(
+    'abilities.healing',
+    'rejuvenationCast'
+  );
   log.push(
-    `${actor.name} casts ${ability.name}, blessing nearby allies with healing over time!`
+    messages.formatMessage(castMessage, {
+      playerName: actor.name,
+      abilityName: ability.name,
+    })
   );
 
   let playersAffected = 0;
@@ -224,7 +253,17 @@ function handleRejuvenationHoT(actor, target, ability, log, systems) {
         targetId: potentialTarget.id,
         attackerId: actor.id,
         message: '',
-        privateMessage: `${actor.name} blessed you with healing over time! You will regenerate ${healPerTurn} HP per turn for ${healingTurns} turns.`,
+        privateMessage: messages.formatMessage(
+          messages.getAbilityMessage(
+            'abilities.healing',
+            'rejuvenationBlessing'
+          ),
+          {
+            playerName: actor.name,
+            healPerTurn: healPerTurn,
+            turns: healingTurns,
+          }
+        ),
         attackerMessage: '',
       };
       log.push(privateHealLog);
@@ -232,12 +271,27 @@ function handleRejuvenationHoT(actor, target, ability, log, systems) {
   }
 
   if (playersAffected > 0) {
+    const appliedMessage = messages.getAbilityMessage(
+      'abilities.healing',
+      'rejuvenationApplied'
+    );
     log.push(
-      `${playersAffected} allies were blessed with ${healPerTurn} HP regeneration per turn for ${healingTurns} turns.`
+      messages.formatMessage(appliedMessage, {
+        count: playersAffected,
+        healPerTurn: healPerTurn,
+        turns: healingTurns,
+      })
     );
   } else {
+    const noTargetsMessage = messages.getAbilityMessage(
+      'abilities.healing',
+      'rejuvenationNoTargets'
+    );
     log.push(
-      `${actor.name}'s ${ability.name} finds no valid targets to bless.`
+      messages.formatMessage(noTargetsMessage, {
+        playerName: actor.name,
+        abilityName: ability.name,
+      })
     );
   }
 
@@ -265,7 +319,16 @@ function handleMultiHeal(actor, target, ability, log, systems) {
     config.gameBalance?.player?.healing?.rejectWarlockHealing || true;
 
   // Apply healing to each target
-  log.push(`${actor.name} casts ${ability.name}, healing nearby allies!`);
+  const multiHealMessage = messages.getAbilityMessage(
+    'abilities.healing',
+    'multiHealCast'
+  );
+  log.push(
+    messages.formatMessage(multiHealMessage, {
+      playerName: actor.name,
+      abilityName: ability.name,
+    })
+  );
 
   for (const potentialTarget of targets) {
     // Skip warlocks if configured to do so (unless it's the actor and they're a warlock)
@@ -285,15 +348,15 @@ function handleMultiHeal(actor, target, ability, log, systems) {
     potentialTarget.hp += actualHeal;
 
     if (actualHeal > 0) {
-      // Use config message if available
-      const healMessage =
-        config.getMessage('events', 'playerHealed') ||
-        `{playerName} was healed for {amount} health.`;
-
+      const healMessage = messages.getAbilityMessage(
+        'abilities.healing',
+        'healingApplied'
+      );
       log.push(
-        healMessage
-          .replace('{playerName}', potentialTarget.name)
-          .replace('{amount}', actualHeal)
+        messages.formatMessage(healMessage, {
+          playerName: potentialTarget.name,
+          amount: actualHeal,
+        })
       );
 
       // Add private messages for the recipient
@@ -304,7 +367,10 @@ function handleMultiHeal(actor, target, ability, log, systems) {
         attackerId: actor.id,
         heal: actualHeal,
         message: '',
-        privateMessage: `${actor.name} healed you for ${actualHeal} health.`,
+        privateMessage: messages.formatMessage(
+          messages.getAbilityMessage('abilities.healing', 'youWereHealed'),
+          { healerName: actor.name, amount: actualHeal }
+        ),
         attackerMessage: '',
       };
       log.push(privateHealLog);

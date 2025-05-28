@@ -82,17 +82,17 @@ function handleShieldWall(actor, target, ability, log, systems) {
   );
 
   // Use message from config if available
-  const protectionMessage =
-    config.getMessage('events', 'playerShielded') ||
-    `{playerName} is shielded with {armor} armor for {turns} turn(s).`;
-
-  log.push(
-    protectionMessage
-      .replace('{playerName}', target.name)
-      .replace('{armor}', ability.params.armor || protectionDefaults.armor)
-      .replace('{turns}', ability.params.duration || protectionDefaults.turns)
+  const protectionMessage = messages.getAbilityMessage(
+    'abilities.defense',
+    'shieldApplied'
   );
-
+  log.push(
+    messages.formatMessage(protectionMessage, {
+      playerName: target.name,
+      armor: ability.params.armor || protectionDefaults.armor,
+      turns: ability.params.duration || protectionDefaults.turns,
+    })
+  );
   return true;
 }
 
@@ -121,14 +121,15 @@ function handleInvisibility(actor, target, ability, log, systems) {
   );
 
   // Use message from config if available
-  const invisibilityMessage =
-    config.getMessage('events', 'playerInvisible') ||
-    `{playerName} becomes invisible for {turns} turn(s).`;
-
+  const invisibilityMessage = messages.getAbilityMessage(
+    'abilities.defense',
+    'invisibilityApplied'
+  );
   log.push(
-    invisibilityMessage
-      .replace('{playerName}', target.name)
-      .replace('{turns}', ability.params.duration || invisibilityDefaults.turns)
+    messages.formatMessage(invisibilityMessage, {
+      playerName: target.name,
+      turns: ability.params.duration || invisibilityDefaults.turns,
+    })
   );
 
   return true;
@@ -145,8 +146,15 @@ function handleInvisibility(actor, target, ability, log, systems) {
  */
 function handleShadowstep(actor, target, ability, log, systems) {
   if (!target || target === '__monster__') {
+    const invalidTargetMessage = messages.getAbilityMessage(
+      'abilities.defense',
+      'shadowstepInvalidTarget'
+    );
     log.push(
-      `${actor.name} tries to use ${ability.name}, but the target is invalid.`
+      messages.formatMessage(invalidTargetMessage, {
+        playerName: actor.name,
+        abilityName: ability.name,
+      })
     );
     return false;
   }
@@ -165,12 +173,21 @@ function handleShadowstep(actor, target, ability, log, systems) {
     log
   );
 
-  log.push(
-    `${actor.name} uses ${ability.name} on ${target.name}, shrouding them in shadows for ${ability.params.duration || invisibilityDefaults.turns} turn(s).`
+  const shadowstepMessage = messages.getAbilityMessage(
+    'abilities.defense',
+    'shadowstepUsed'
   );
+  log.push(
+    messages.formatMessage(shadowstepMessage, {
+      playerName: actor.name,
+      abilityName: ability.name,
+      targetName: target.name,
+      turns: ability.params.duration || invisibilityDefaults.turns,
+    })
+  );
+
   return true;
 }
-
 /**
  * Handler for multi-target protection abilities
  * @param {Object} actor - Actor using the ability
@@ -205,9 +222,20 @@ function handleMultiProtection(actor, target, ability, log, systems) {
     shieldedCount++;
   }
 
-  log.push(
-    `${actor.name} uses ${ability.name}, protecting ${shieldedCount} allies with ${ability.params.armor || protectionDefaults.armor} armor for ${ability.params.duration || protectionDefaults.turns} turn(s).`
+  const multiProtectionMessage = messages.getAbilityMessage(
+    'abilities.defense',
+    'multiProtectionUsed'
   );
+  log.push(
+    messages.formatMessage(multiProtectionMessage, {
+      playerName: actor.name,
+      abilityName: ability.name,
+      count: shieldedCount,
+      armor: ability.params.armor || protectionDefaults.armor,
+      turns: ability.params.duration || protectionDefaults.turns,
+    })
+  );
+
   return true;
 }
 

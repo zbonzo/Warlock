@@ -3,6 +3,7 @@
  * Contains damage-dealing class abilities
  */
 const config = require('@config');
+const messages = require('@config/messages');
 const {
   registerAbilitiesByCategory,
   registerAbilitiesByEffectAndTarget,
@@ -101,14 +102,15 @@ function handleAttack(actor, target, ability, log, systems) {
     target.hasStatusEffect &&
     target.hasStatusEffect('invisible')
   ) {
-    const attackFailMessage =
-      config.getMessage('events', 'attackInvisible') ||
-      `${actor.name} tries to attack ${target.name}, but they are invisible and cannot be seen!`;
-
+    const attackFailMessage = messages.getAbilityMessage(
+      'abilities.attacks',
+      'attackInvisible'
+    );
     log.push(
-      attackFailMessage
-        .replace('{attackerName}', actor.name)
-        .replace('{targetName}', target.name)
+      messages.formatMessage(attackFailMessage, {
+        attackerName: actor.name,
+        targetName: target.name,
+      })
     );
     return false;
   }
@@ -135,8 +137,15 @@ function handlePoisonStrike(actor, target, ability, log, systems) {
     target.hasStatusEffect &&
     target.hasStatusEffect('invisible')
   ) {
+    const invisibleMessage = messages.getAbilityMessage(
+      'abilities.attacks',
+      'attackInvisible'
+    );
     log.push(
-      `${actor.name} tries to use ${ability.name} on ${target.name}, but they are invisible!`
+      messages.formatMessage(invisibleMessage, {
+        attackerName: actor.name,
+        targetName: target.name,
+      })
     );
     return false;
   }
@@ -166,17 +175,17 @@ function handlePoisonStrike(actor, target, ability, log, systems) {
       log
     );
 
-    // Use config message if available
-    const poisonMessage =
-      config.getMessage('events', 'playerPoisoned') ||
-      `{targetName} is poisoned for {damage} damage over {turns} turns.`;
-
+    const poisonMessage = messages.getAbilityMessage(
+      'abilities.attacks',
+      'poisonApplied'
+    );
     log.push(
-      poisonMessage
-        .replace('{playerName}', target.name)
-        .replace('{targetName}', target.name)
-        .replace('{damage}', modifiedPoisonDamage)
-        .replace('{turns}', poisonData.turns || poisonDefaults.turns)
+      messages.formatMessage(poisonMessage, {
+        playerName: target.name,
+        targetName: target.name,
+        damage: modifiedPoisonDamage,
+        turns: poisonData.turns || poisonDefaults.turns,
+      })
     );
   }
 
@@ -202,14 +211,30 @@ function handleAoeDamage(actor, target, ability, log, systems) {
   );
 
   if (targets.length === 0) {
+    const noTargetsMessage = messages.getAbilityMessage(
+      'abilities.attacks',
+      'aoeNoTargets'
+    );
     log.push(
-      `${actor.name} uses ${ability.name}, but there are no valid targets.`
+      messages.formatMessage(noTargetsMessage, {
+        playerName: actor.name,
+        abilityName: ability.name,
+      })
     );
     return false;
   }
 
   // Apply damage to multiple targets
-  log.push(`${actor.name} unleashes ${ability.name}!`);
+  const announceMessage = messages.getAbilityMessage(
+    'abilities.attacks',
+    'aoeAnnounce'
+  );
+  log.push(
+    messages.formatMessage(announceMessage, {
+      playerName: actor.name,
+      abilityName: ability.name,
+    })
+  );
 
   for (const potentialTarget of targets) {
     systems.combatSystem.applyDamageToPlayer(
@@ -265,17 +290,22 @@ function handleVulnerabilityStrike(actor, target, ability, log, systems) {
     target.applyVulnerability(damageIncrease, turns);
 
     // Add a clear message
-    log.push(
-      `${target.name} is VULNERABLE and will take ${damageIncrease}% more damage for ${turns} turn(s)!`
+    const vulnMessage = messages.getAbilityMessage(
+      'abilities.attacks',
+      'vulnerabilityApplied'
     );
-  } else {
-    if (target === '__monster__') {
-      console.log('Cannot apply vulnerability to monster');
-    }
+    log.push(
+      messages.formatMessage(vulnMessage, {
+        targetName: target.name,
+        increase: damageIncrease,
+        turns: turns,
+      })
+    );
   }
 
   return attackResult;
 }
+
 /**
  * Handler for inferno blast ability
  * @param {Object} actor - Actor using the ability
@@ -295,14 +325,30 @@ function handleInfernoBlast(actor, target, ability, log, systems) {
   );
 
   if (targets.length === 0) {
+    const noTargetsMessage = messages.getAbilityMessage(
+      'abilities.attacks',
+      'aoeNoTargets'
+    );
     log.push(
-      `${actor.name} uses ${ability.name}, but there are no valid targets.`
+      messages.formatMessage(noTargetsMessage, {
+        playerName: actor.name,
+        abilityName: ability.name,
+      })
     );
     return false;
   }
 
   // Apply damage and poison to multiple targets
-  log.push(`${actor.name} unleashes ${ability.name}!`);
+  const announceMessage = messages.getAbilityMessage(
+    'abilities.attacks',
+    'aoeAnnounce'
+  );
+  log.push(
+    messages.formatMessage(announceMessage, {
+      playerName: actor.name,
+      abilityName: ability.name,
+    })
+  );
 
   // Get poison defaults from config if needed
   const poisonDefaults = config.getStatusEffectDefaults('poison') || {
@@ -336,17 +382,16 @@ function handleInfernoBlast(actor, target, ability, log, systems) {
         log
       );
 
-      // Use config message if available
-      const poisonMessage =
-        config.getMessage('events', 'playerPoisoned') ||
-        `{targetName} is poisoned for {damage} damage over {turns} turns.`;
-
+      const poisonMessage = messages.getAbilityMessage(
+        'abilities.attacks',
+        'infernoBlastPoison'
+      );
       log.push(
-        poisonMessage
-          .replace('{playerName}', potentialTarget.name)
-          .replace('{targetName}', potentialTarget.name)
-          .replace('{damage}', modifiedPoisonDamage)
-          .replace('{turns}', poisonData.turns || poisonDefaults.turns)
+        messages.formatMessage(poisonMessage, {
+          targetName: potentialTarget.name,
+          damage: modifiedPoisonDamage,
+          turns: poisonData.turns || poisonDefaults.turns,
+        })
       );
     }
   }
@@ -365,8 +410,15 @@ function handleInfernoBlast(actor, target, ability, log, systems) {
  */
 function handleDeathMark(actor, target, ability, log, systems) {
   if (target === '__monster__') {
+    const invalidMessage = messages.getAbilityMessage(
+      'abilities.attacks',
+      'deathMarkInvalidTarget'
+    );
     log.push(
-      `${actor.name} tries to use ${ability.name} on the Monster, but it has no effect.`
+      messages.formatMessage(invalidMessage, {
+        playerName: actor.name,
+        abilityName: ability.name,
+      })
     );
     return false;
   }
@@ -404,8 +456,18 @@ function handleDeathMark(actor, target, ability, log, systems) {
     log
   );
 
+  const deathMarkMessage = messages.getAbilityMessage(
+    'abilities.attacks',
+    'deathMarkPoison'
+  );
   log.push(
-    `${actor.name} uses ${ability.name} on ${target.name}, marking them for death with ${modifiedPoisonDamage} poison damage over ${poisonData.turns || poisonDefaults.turns} turns, then vanishes into the shadows!`
+    messages.formatMessage(deathMarkMessage, {
+      playerName: actor.name,
+      abilityName: ability.name,
+      targetName: target.name,
+      damage: modifiedPoisonDamage,
+      turns: poisonData.turns || poisonDefaults.turns,
+    })
   );
 
   return true;
@@ -427,8 +489,15 @@ function handlePoisonTrap(actor, target, ability, log, systems) {
   );
 
   if (targets.length === 0) {
+    const noTargetsMessage = messages.getAbilityMessage(
+      'abilities.attacks',
+      'aoeNoTargets'
+    );
     log.push(
-      `${actor.name} uses ${ability.name}, but there are no valid targets.`
+      messages.formatMessage(noTargetsMessage, {
+        playerName: actor.name,
+        abilityName: ability.name,
+      })
     );
     return false;
   }
@@ -446,7 +515,17 @@ function handlePoisonTrap(actor, target, ability, log, systems) {
   );
 
   // Apply poison and vulnerability to multiple targets
-  log.push(`${actor.name} sets multiple ${ability.name}s!`);
+  const announceMessage = messages.getAbilityMessage(
+    'abilities.attacks',
+    'poisonTrapAnnounce'
+  );
+  log.push(
+    messages.formatMessage(announceMessage, {
+      playerName: actor.name,
+      abilityName: ability.name,
+    })
+  );
+
   let targetsHit = 0;
 
   // Get trap hit chance from ability params or use default
@@ -471,17 +550,46 @@ function handlePoisonTrap(actor, target, ability, log, systems) {
         vulnerableData.turns || 2
       );
 
+      const caughtMessage = messages.getAbilityMessage(
+        'abilities.attacks',
+        'poisonTrapCaught'
+      );
       log.push(
-        `${potentialTarget.name} is caught in ${actor.name}'s ${ability.name}, taking ${modifiedPoisonDamage} poison damage over ${poisonData.turns || poisonDefaults.turns} turns and becoming vulnerable (+${vulnerableData.damageIncrease || 30}% damage) for ${vulnerableData.turns || 2} turns!`
+        messages.formatMessage(caughtMessage, {
+          targetName: potentialTarget.name,
+          playerName: actor.name,
+          abilityName: ability.name,
+          damage: modifiedPoisonDamage,
+          turns: poisonData.turns || poisonDefaults.turns,
+          increase: vulnerableData.damageIncrease || 30,
+          vulnerableTurns: vulnerableData.turns || 2,
+        })
       );
       targetsHit++;
     }
   }
 
   if (targetsHit === 0) {
-    log.push(`${actor.name}'s ${ability.name}s don't catch anyone!`);
+    const missedMessage = messages.getAbilityMessage(
+      'abilities.attacks',
+      'poisonTrapMissed'
+    );
+    log.push(
+      messages.formatMessage(missedMessage, {
+        playerName: actor.name,
+        abilityName: ability.name,
+      })
+    );
   } else {
-    log.push(`${targetsHit} enemies were caught in the traps!`);
+    const summaryMessage = messages.getAbilityMessage(
+      'abilities.attacks',
+      'poisonTrapSummary'
+    );
+    log.push(
+      messages.formatMessage(summaryMessage, {
+        count: targetsHit,
+      })
+    );
   }
 
   return true;
@@ -503,8 +611,16 @@ function handleRecklessStrike(actor, target, ability, log, systems) {
     target.hasStatusEffect &&
     target.hasStatusEffect('invisible')
   ) {
-    const attackFailMessage = `${actor.name} tries to attack ${target.name}, but they are invisible and cannot be seen!`;
-    log.push(attackFailMessage);
+    const invisibleMessage = messages.getAbilityMessage(
+      'abilities.attacks',
+      'attackInvisible'
+    );
+    log.push(
+      messages.formatMessage(invisibleMessage, {
+        attackerName: actor.name,
+        targetName: target.name,
+      })
+    );
     return false;
   }
 
@@ -515,8 +631,15 @@ function handleRecklessStrike(actor, target, ability, log, systems) {
   const actualSelfDamage = oldHp - actor.hp;
 
   if (actualSelfDamage > 0) {
+    const selfDamageMessage = messages.getAbilityMessage(
+      'abilities.attacks',
+      'recklessStrikeSelfDamage'
+    );
     log.push(
-      `${actor.name} commits to a reckless strike, taking ${actualSelfDamage} damage!`
+      messages.formatMessage(selfDamageMessage, {
+        playerName: actor.name,
+        damage: actualSelfDamage,
+      })
     );
   }
 
@@ -647,14 +770,15 @@ function handleMultiHitAttack(actor, target, ability, log, systems) {
     target.hasStatusEffect &&
     target.hasStatusEffect('invisible')
   ) {
-    const attackFailMessage =
-      config.getMessage('events', 'attackInvisible') ||
-      `${actor.name} tries to attack ${target.name}, but they are invisible and cannot be seen!`;
-
+    const invisibleMessage = messages.getAbilityMessage(
+      'abilities.attacks',
+      'attackInvisible'
+    );
     log.push(
-      attackFailMessage
-        .replace('{attackerName}', actor.name)
-        .replace('{targetName}', target.name)
+      messages.formatMessage(invisibleMessage, {
+        attackerName: actor.name,
+        targetName: target.name,
+      })
     );
     return false;
   }
@@ -668,8 +792,17 @@ function handleMultiHitAttack(actor, target, ability, log, systems) {
     ability.params.damagePerHit || ability.params.damage || 10;
 
   // Announce the multi-hit attack
+  const announceMessage = messages.getAbilityMessage(
+    'abilities.attacks',
+    'multiHitAnnounce'
+  );
   log.push(
-    `${actor.name} uses ${ability.name} on ${target === '__monster__' ? 'the Monster' : target.name}, striking ${hits} times!`
+    messages.formatMessage(announceMessage, {
+      playerName: actor.name,
+      abilityName: ability.name,
+      targetName: target === '__monster__' ? 'the Monster' : target.name,
+      hits: hits,
+    })
   );
 
   // Total damage counter
@@ -708,24 +841,52 @@ function handleMultiHitAttack(actor, target, ability, log, systems) {
         );
 
         // Add hit-specific damage messages to the log
+        const hitMessage = messages.getAbilityMessage(
+          'abilities.attacks',
+          'multiHitIndividual'
+        );
         log.push(
-          `Hit #${hitCount}: ${actor.name} dealt ${modifiedDamage} damage to ${target.name}`
+          messages.formatMessage(hitMessage, {
+            hitNumber: hitCount,
+            playerName: actor.name,
+            damage: modifiedDamage,
+            targetName: target.name,
+          })
         );
         totalDamage += modifiedDamage;
       }
     } else {
       // Log missed hits
-      log.push(`Hit #${i + 1} missed!`);
+      const missMessage = messages.getAbilityMessage(
+        'abilities.attacks',
+        'multiHitMiss'
+      );
+      log.push(
+        messages.formatMessage(missMessage, {
+          hitNumber: i + 1,
+        })
+      );
     }
   }
 
   // Log the total damage
   if (hitCount > 0) {
+    const summaryMessage = messages.getAbilityMessage(
+      'abilities.attacks',
+      'multiHitSummary'
+    );
     log.push(
-      `${hitCount} hits connected, dealing a total of ${totalDamage} damage.`
+      messages.formatMessage(summaryMessage, {
+        hitCount: hitCount,
+        totalDamage: totalDamage,
+      })
     );
   } else {
-    log.push(`All hits missed!`);
+    const allMissedMessage = messages.getAbilityMessage(
+      'abilities.attacks',
+      'multiHitMissed'
+    );
+    log.push(allMissedMessage);
   }
 
   // Check for warlock conversion on player targets

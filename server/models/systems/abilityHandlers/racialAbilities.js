@@ -3,239 +3,241 @@
  * Contains race-specific ability implementations
  */
 const config = require('@config');
+const messages = require('@config/messages');
 
 /**
  * Register all racial ability handlers with the registry
  * @param {AbilityRegistry} registry - Ability registry to register with
  */
 function register(registry) {
-  // Human racial ability - Adaptability
+  // Register racial abilities
   registry.registerRacialAbility('adaptability', handleAdaptability);
-
-  // Potential future racial - Keen Senses
-  //registry.registerRacialAbility('keenSenses', handleKeenSenses);
-
-  // Orc racial ability - Blood Rage
+  registry.registerRacialAbility('keenSenses', handleKeenSenses);
   registry.registerRacialAbility('bloodRage', handleBloodRage);
-
-  // Potential future racial ability - Forest's Grace
-  // registry.registerRacialAbility('forestsGrace', handleForestsGrace);
-
-  // Skeleton racial ability - Undying
+  registry.registerRacialAbility('forestsGrace', handleForestsGrace);
   registry.registerRacialAbility('undying', handleUndying);
-
-  // Dwarf racial ability - Stone Armor is passive and doesn't need a handler
+  // Note: Stone Armor is passive and handled in combat system
 }
 
 /**
- * Handler for Human's Adaptability ability
+ * Handler for Human Adaptability racial ability
  * @param {Object} actor - Actor using the ability
- * @param {Object} target - Target of the ability (always self)
- * @param {Object} racialAbility - Racial ability configuration
+ * @param {Object|string} target - Target of the ability (unused for adaptability)
+ * @param {Object} ability - Ability configuration
  * @param {Array} log - Event log to append messages to
  * @param {Object} systems - Game systems
  * @returns {boolean} Whether the ability was successful
  */
-function handleAdaptability(actor, target, racialAbility, log, systems) {
-  // This ability requires UI integration to let player choose
-  // Use config message if available
-  const adaptabilityMessage =
-    config.getMessage('events', 'humanAdaptability') ||
-    `{playerName} uses Adaptability to replace one ability.`;
+function handleAdaptability(actor, target, ability, log, systems) {
+  // Mark that adaptability is being used
+  actor.usingAdaptability = true;
 
-  log.push(adaptabilityMessage.replace('{playerName}', actor.name));
+  const adaptabilityMessage = messages.getAbilityMessage(
+    'abilities.racial',
+    'adaptabilityUsed'
+  );
+  log.push(
+    messages.formatMessage(adaptabilityMessage, {
+      playerName: actor.name,
+    })
+  );
 
-  // Log the available abilities for reference
-  const allAbilities = actor.abilities;
-  const unlockedByLevel = {};
-
-  allAbilities.forEach((a) => {
-    unlockedByLevel[a.unlockAt] = unlockedByLevel[a.unlockAt] || [];
-    unlockedByLevel[a.unlockAt].push(a.name);
-  });
-
-  // Emit an event to trigger the UI selection
-  if (systems.socket) {
-    systems.socket.emit('adaptabilityChooseAbility', {
-      abilities: getAbilitiesByLevel(actor.abilities),
-      maxLevel: actor.level || 1,
-    });
-  }
+  // Add private message asking player to choose ability to replace
+  const privateAdaptabilityLog = {
+    type: 'adaptability_choose',
+    public: false,
+    targetId: actor.id,
+    attackerId: actor.id,
+    message: '',
+    privateMessage: messages.getAbilityMessage(
+      'abilities.racial',
+      'adaptabilityAvailableAbilities'
+    ),
+    attackerMessage: '',
+  };
+  log.push(privateAdaptabilityLog);
 
   return true;
 }
 
 /**
- * Handler for Elf's Keen Senses ability
+ * Handler for Elf Keen Senses racial ability (currently commented out)
  * @param {Object} actor - Actor using the ability
- * @param {Object} target - Target to reveal information about
- * @param {Object} racialAbility - Racial ability configuration
+ * @param {Object|string} target - Target to study
+ * @param {Object} ability - Ability configuration
  * @param {Array} log - Event log to append messages to
  * @param {Object} systems - Game systems
  * @returns {boolean} Whether the ability was successful
  */
-function handleKeenSenses(actor, target, racialAbility, log, systems) {
-  if (target === '__monster__') {
+function handleKeenSenses(actor, target, ability, log, systems) {
+  // This ability is currently disabled/commented out in the codebase
+  // Uncomment the message in racial.js if you want to re-enable it
+
+  /*
+  if (!target || target === '__monster__') {
+    const invalidTargetMessage = messages.getAbilityMessage('abilities.racial', 'keenSensesInvalidTarget');
     log.push(
-      `${actor.name} tried to use Keen Senses on the Monster, but it has no effect.`
+      messages.formatMessage(invalidTargetMessage, {
+        playerName: actor.name
+      })
     );
     return false;
   }
 
-  if (!target || !target.isAlive) {
-    log.push(
-      `${actor.name} tried to use Keen Senses, but the target is invalid.`
-    );
-    return false;
-  }
-
+  // Set up keen senses effect for next attack
   if (!actor.racialEffects) {
     actor.racialEffects = {};
   }
-
-  // Set up the effect for next attack
   actor.racialEffects.keenSensesActiveOnNextAttack = target.id;
 
-  // Use config message if available
-  const keenSensesMessage =
-    config.getMessage('events', 'elfKeenSenses') ||
-    `{playerName} uses Keen Senses to study {targetName} closely.`;
-
+  const keenSensesMessage = messages.getAbilityMessage('abilities.racial', 'keenSensesUsed');
   log.push(
-    keenSensesMessage
-      .replace('{playerName}', actor.name)
-      .replace('{targetName}', target.name)
+    messages.formatMessage(keenSensesMessage, {
+      playerName: actor.name,
+      targetName: target.name
+    })
   );
 
+  const nextAttackMessage = messages.getAbilityMessage('abilities.racial', 'keenSensesNextAttack');
   log.push(
-    `${actor.name}'s next attack on ${target.name} will reveal their true nature.`
+    messages.formatMessage(nextAttackMessage, {
+      playerName: actor.name,
+      targetName: target.name
+    })
   );
+  */
 
-  return true;
+  return false; // Currently disabled
 }
 
 /**
- * Handler for Orc's Blood Rage ability
+ * Handler for Orc Blood Rage racial ability
  * @param {Object} actor - Actor using the ability
- * @param {Object} target - Target of the ability (always self)
- * @param {Object} racialAbility - Racial ability configuration
+ * @param {Object|string} target - Target of the ability (unused for blood rage)
+ * @param {Object} ability - Ability configuration
  * @param {Array} log - Event log to append messages to
  * @param {Object} systems - Game systems
  * @returns {boolean} Whether the ability was successful
  */
-function handleBloodRage(actor, target, racialAbility, log, systems) {
-  if (!actor.racialEffects) {
-    actor.racialEffects = {};
-  }
-
-  // Set up the blood rage effect
-  actor.racialEffects.bloodRage = true;
+function handleBloodRage(actor, target, ability, log, systems) {
+  const selfDamage = ability.params?.selfDamage || 3;
+  const damageMultiplier = ability.params?.damageMultiplier || 2.0;
 
   // Apply self-damage
-  const selfDamage = racialAbility.params.selfDamage || 10;
   const oldHp = actor.hp;
   actor.hp = Math.max(1, actor.hp - selfDamage); // Cannot reduce below 1 HP
-  const actualDamage = oldHp - actor.hp;
+  const actualSelfDamage = oldHp - actor.hp;
 
-  // Use config message if available
-  const bloodRageMessage =
-    config.getMessage('events', 'orcBloodRage') ||
-    `{playerName} enters a Blood Rage, taking {damage} damage but doubling their next attack!`;
+  // Set up blood rage effect for next attack
+  if (!actor.racialEffects) {
+    actor.racialEffects = {};
+  }
+  actor.racialEffects.bloodRageMultiplier = damageMultiplier;
 
+  const bloodRageMessage = messages.getAbilityMessage(
+    'abilities.racial',
+    'bloodRageUsed'
+  );
   log.push(
-    bloodRageMessage
-      .replace('{playerName}', actor.name)
-      .replace('{damage}', actualDamage)
+    messages.formatMessage(bloodRageMessage, {
+      playerName: actor.name,
+      damage: actualSelfDamage,
+    })
   );
 
   return true;
 }
 
 /**
- * Handler for Satyr's Forest's Grace ability
+ * Handler for Satyr Forest's Grace racial ability (currently commented out)
  * @param {Object} actor - Actor using the ability
- * @param {Object} target - Target of the ability (always self)
- * @param {Object} racialAbility - Racial ability configuration
+ * @param {Object|string} target - Target of the ability (unused)
+ * @param {Object} ability - Ability configuration
  * @param {Array} log - Event log to append messages to
  * @param {Object} systems - Game systems
  * @returns {boolean} Whether the ability was successful
  */
-function handleForestsGrace(actor, target, racialAbility, log, systems) {
-  if (!actor.racialEffects) {
-    actor.racialEffects = {};
-  }
+function handleForestsGrace(actor, target, ability, log, systems) {
+  // This ability is currently disabled/commented out in the codebase
+  // Uncomment the message in racial.js if you want to re-enable it
 
-  // Set up the healing over time effect
-  actor.racialEffects.healOverTime = {
-    amount: racialAbility.params.amount || 5,
-    turns: racialAbility.params.turns || 3,
-  };
+  /*
+  const healAmount = ability.params?.healAmount || 3;
+  const turns = ability.params?.turns || 3;
 
-  // Use config message if available
-  const forestsGraceMessage =
-    config.getMessage('events', 'satyrForestsGrace') ||
-    `{playerName} calls upon Forest's Grace, gaining healing over time.`;
-
-  log.push(forestsGraceMessage.replace('{playerName}', actor.name));
-  log.push(
-    `${actor.name} will heal for ${actor.racialEffects.healOverTime.amount} HP each turn for ${actor.racialEffects.healOverTime.turns} turns.`
+  // Apply healing over time status effect
+  systems.statusEffectManager.applyEffect(
+    actor.id,
+    'healingOverTime',
+    {
+      amount: healAmount,
+      turns: turns,
+    },
+    log
   );
 
-  return true;
+  const forestsGraceMessage = messages.getAbilityMessage('abilities.racial', 'forestsGraceUsed');
+  log.push(
+    messages.formatMessage(forestsGraceMessage, {
+      playerName: actor.name
+    })
+  );
+
+  const healingMessage = messages.getAbilityMessage('abilities.racial', 'forestsGraceHealing');
+  log.push(
+    messages.formatMessage(healingMessage, {
+      playerName: actor.name,
+      amount: healAmount,
+      turns: turns
+    })
+  );
+  */
+
+  return false; // Currently disabled
 }
 
 /**
- * Handler for Skeleton's Undying ability
+ * Handler for Skeleton Undying racial ability
  * @param {Object} actor - Actor using the ability
- * @param {Object} target - Target of the ability (always self)
- * @param {Object} racialAbility - Racial ability configuration
+ * @param {Object|string} target - Target of the ability (unused)
+ * @param {Object} ability - Ability configuration
  * @param {Array} log - Event log to append messages to
  * @param {Object} systems - Game systems
  * @returns {boolean} Whether the ability was successful
  */
-function handleUndying(actor, target, racialAbility, log, systems) {
+function handleUndying(actor, target, ability, log, systems) {
+  // Check if undying is already active
   if (!actor.racialEffects) {
     actor.racialEffects = {};
   }
 
-  // Check if ability is already active
-  if (actor.racialEffects.resurrect) {
-    // Use config message if available
-    const undyingActiveMessage =
-      config.getMessage('events', 'skeletonUndying') ||
-      `{playerName}'s Undying ability is already active.`;
-
-    log.push(undyingActiveMessage.replace('{playerName}', actor.name));
+  if (actor.racialEffects.undyingActive) {
+    const alreadyActiveMessage = messages.getAbilityMessage(
+      'abilities.racial',
+      'undyingAlreadyActive'
+    );
+    log.push(
+      messages.formatMessage(alreadyActiveMessage, {
+        playerName: actor.name,
+      })
+    );
     return false;
   }
 
-  // Set up the resurrection effect
-  actor.racialEffects.resurrect = {
-    resurrectedHp: racialAbility.params.resurrectedHp || 1,
-  };
+  // Activate undying ability
+  actor.racialEffects.undyingActive = true;
 
-  log.push(
-    `${actor.name}'s Undying ability is now active and will trigger automatically when needed.`
+  const undyingMessage = messages.getAbilityMessage(
+    'abilities.racial',
+    'undyingActivated'
   );
+  log.push(
+    messages.formatMessage(undyingMessage, {
+      playerName: actor.name,
+    })
+  );
+
   return true;
-}
-
-/**
- * Helper to organize abilities by level for UI
- * @param {Array} abilities - List of player abilities
- * @returns {Object} Object with abilities organized by level
- * @private
- */
-function getAbilitiesByLevel(abilities) {
-  const byLevel = {};
-
-  abilities.forEach((ability) => {
-    const level = ability.unlockAt || 1;
-    byLevel[level] = byLevel[level] || [];
-    byLevel[level].push(ability);
-  });
-
-  return byLevel;
 }
 
 module.exports = { register };

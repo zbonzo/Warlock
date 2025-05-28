@@ -3,6 +3,7 @@
  * Contains utility, detection, and status-effect abilities
  */
 const config = require('@config');
+const messages = require('@config/messages');
 const {
   registerAbilitiesByCategory,
   registerAbilitiesByEffectAndTarget,
@@ -69,8 +70,16 @@ function register(registry) {
     'Special',
     (actor, target, ability, log, systems) => {
       // Default handler for Special category abilities without a specific handler
-      // Log that the ability was used
-      log.push(`${actor.name} uses ${ability.name}.`);
+      const abilityUsedMessage = messages.getAbilityMessage(
+        'abilities.special',
+        'specialAbilityUsed'
+      );
+      log.push(
+        messages.formatMessage(abilityUsedMessage, {
+          playerName: actor.name,
+          abilityName: ability.name,
+        })
+      );
       return true;
     }
   );
@@ -87,25 +96,40 @@ function register(registry) {
  */
 function handleDetectionAbility(actor, target, ability, log, systems) {
   if (!target || target === '__monster__') {
+    const invalidTargetMessage = messages.getAbilityMessage(
+      'abilities.special',
+      'detectionInvalidTarget'
+    );
     log.push(
-      `${actor.name} tries to use ${ability.name}, but it can only target players.`
+      messages.formatMessage(invalidTargetMessage, {
+        playerName: actor.name,
+        abilityName: ability.name,
+      })
     );
     return false;
   }
 
-  log.push(`${actor.name} uses ${ability.name} on ${target.name}.`);
+  const detectionUsedMessage = messages.getAbilityMessage(
+    'abilities.special',
+    'detectionUsed'
+  );
+  log.push(
+    messages.formatMessage(detectionUsedMessage, {
+      playerName: actor.name,
+      abilityName: ability.name,
+      targetName: target.name,
+    })
+  );
 
   // Reveal warlock status
-  // Use config message if available
   const isWarlock = target.isWarlock;
-  const warlockMessage = isWarlock
-    ? config.getMessage('events', 'warlockRevealed') ||
-      `{playerName} IS a Warlock!`
-    : config.getMessage('events', 'notWarlock') ||
-      `{playerName} is NOT a Warlock.`;
+  const revealMessage = isWarlock
+    ? messages.getAbilityMessage('abilities.special', 'warlockDetected')
+    : messages.getAbilityMessage('abilities.special', 'warlockNotDetected');
 
-  const revealText = warlockMessage.replace('{playerName}', target.name);
-
+  const revealText = messages.formatMessage(revealMessage, {
+    targetName: target.name,
+  });
   log.push(`Revelation: ${revealText}`);
   return true;
 }
@@ -127,8 +151,15 @@ function handleStunAbility(actor, target, ability, log, systems) {
 
   // For single-target stun abilities
   if (!target || target === '__monster__') {
+    const invalidTargetMessage = messages.getAbilityMessage(
+      'abilities.special',
+      'stunInvalidTarget'
+    );
     log.push(
-      `${actor.name} tries to use ${ability.name}, but the target is invalid.`
+      messages.formatMessage(invalidTargetMessage, {
+        playerName: actor.name,
+        abilityName: ability.name,
+      })
     );
     return false;
   }
@@ -152,20 +183,30 @@ function handleStunAbility(actor, target, ability, log, systems) {
       log
     );
 
-    // Use config message if available
-    const stunMessage =
-      config.getMessage('events', 'playerStunned') ||
-      `{playerName} is stunned for {turns} turn(s).`;
-
+    const stunMessage = messages.getAbilityMessage(
+      'abilities.special',
+      'stunApplied'
+    );
     log.push(
-      stunMessage
-        .replace('{playerName}', target.name)
-        .replace('{turns}', ability.params.duration || stunDefaults.turns)
+      messages.formatMessage(stunMessage, {
+        playerName: target.name,
+        turns: ability.params.duration || stunDefaults.turns,
+      })
     );
 
     return true;
   } else {
-    log.push(`${target.name} resists ${actor.name}'s ${ability.name}!`);
+    const resistMessage = messages.getAbilityMessage(
+      'abilities.special',
+      'stunResisted'
+    );
+    log.push(
+      messages.formatMessage(resistMessage, {
+        targetName: target.name,
+        playerName: actor.name,
+        abilityName: ability.name,
+      })
+    );
     return false;
   }
 }
@@ -181,8 +222,15 @@ function handleStunAbility(actor, target, ability, log, systems) {
  */
 function handlePrimalRoar(actor, target, ability, log, systems) {
   if (!target || target === '__monster__') {
+    const invalidTargetMessage = messages.getAbilityMessage(
+      'abilities.special',
+      'primalRoarInvalidTarget'
+    );
     log.push(
-      `${actor.name} tries to use ${ability.name}, but the target is invalid.`
+      messages.formatMessage(invalidTargetMessage, {
+        playerName: actor.name,
+        abilityName: ability.name,
+      })
     );
     return false;
   }
@@ -202,8 +250,17 @@ function handlePrimalRoar(actor, target, ability, log, systems) {
     log
   );
 
+  const primalRoarMessage = messages.getAbilityMessage(
+    'abilities.special',
+    'primalRoarUsed'
+  );
   log.push(
-    `${actor.name} lets out a terrifying roar! ${target.name} is weakened and will deal ${Math.round(damageReduction * 100)}% less damage for ${duration} turn(s).`
+    messages.formatMessage(primalRoarMessage, {
+      playerName: actor.name,
+      targetName: target.name,
+      reduction: Math.round(damageReduction * 100),
+      turns: duration,
+    })
   );
 
   return true;
@@ -231,8 +288,17 @@ function handleBloodFrenzy(actor, target, ability, log, systems) {
     active: true,
   };
 
+  const bloodFrenzyMessage = messages.getAbilityMessage(
+    'abilities.special',
+    'bloodFrenzyActivated'
+  );
   log.push(
-    `${actor.name} enters a Blood Frenzy! Damage increases as health decreases (${Math.round((ability.params.damageIncreasePerHpMissing || 0.01) * 100)}% per 1% HP missing).`
+    messages.formatMessage(bloodFrenzyMessage, {
+      playerName: actor.name,
+      rate: Math.round(
+        (ability.params.damageIncreasePerHpMissing || 0.01) * 100
+      ),
+    })
   );
 
   return true;
@@ -278,87 +344,38 @@ function handleUnstoppableRage(actor, target, ability, log, systems) {
     damageResistance: damageResistance,
     turnsLeft: duration + 1, // Add 1 to account for immediate countdown
     selfDamagePercent: selfDamagePercent,
+    active: true,
   };
 
-  log.push(
-    `${actor.name} enters an Unstoppable Rage! Damage boosted by ${Math.round((damageBoost - 1) * 100)}% and damage resistance increased by ${Math.round(damageResistance * 100)}% for ${duration} turns.`
+  const unstoppableRageMessage = messages.getAbilityMessage(
+    'abilities.special',
+    'unstoppableRageActivated'
   );
   log.push(
-    `Warning: When the rage ends, ${actor.name} will take ${Math.round(selfDamagePercent * 100)}% of max HP as damage!`
+    messages.formatMessage(unstoppableRageMessage, {
+      playerName: actor.name,
+      damageBoost: Math.round((damageBoost - 1) * 100),
+      resistance: Math.round(damageResistance * 100),
+      turns: duration,
+    })
+  );
+
+  const warningMessage = messages.getAbilityMessage(
+    'abilities.special',
+    'unstoppableRageWarning'
+  );
+  log.push(
+    messages.formatMessage(warningMessage, {
+      playerName: actor.name,
+      selfDamage: Math.round(selfDamagePercent * 100),
+    })
   );
 
   return true;
 }
 
 /**
- * Handler for Eye of Fate ability (Oracle) - FIXED
- * @param {Object} actor - Actor using the ability
- * @param {Object|string} target - Target of the ability
- * @param {Object} ability - Ability configuration
- * @param {Array} log - Event log to append messages to
- * @param {Object} systems - Game systems
- * @returns {boolean} Whether the ability was successful
- */
-function handleEyeOfFate(actor, target, ability, log, systems) {
-  if (!target || target === '__monster__') {
-    log.push(
-      `${actor.name} tries to use ${ability.name}, but it can only target players.`
-    );
-    return false;
-  }
-
-  log.push(`${actor.name} uses ${ability.name} on ${target.name}.`);
-
-  // Reveal warlock status
-  const isWarlock = target.isWarlock;
-
-  if (isWarlock) {
-    const revealMessage = `Revelation: ${target.name} IS a Warlock!`;
-    log.push(revealMessage);
-
-    // Private message to the Oracle
-    const privateRevealLog = {
-      type: 'warlock_detected',
-      public: false,
-      targetId: actor.id,
-      message: '',
-      privateMessage: `Your Eye of Fate reveals that ${target.name} is a Warlock!`,
-      attackerMessage: '',
-    };
-    log.push(privateRevealLog);
-  } else {
-    const notWarlockMessage = `Revelation: ${target.name} is NOT a Warlock.`;
-    log.push(notWarlockMessage);
-
-    // Apply self-damage for failed detection
-    const selfDamage = ability.params.selfDamageOnFailure || 10;
-    const oldHp = actor.hp;
-    actor.hp = Math.max(1, actor.hp - selfDamage);
-    const actualSelfDamage = oldHp - actor.hp;
-
-    if (actualSelfDamage > 0) {
-      log.push(
-        `${actor.name} takes ${actualSelfDamage} psychic backlash for failing to find a Warlock!`
-      );
-
-      // Private message to the Oracle
-      const backlashLog = {
-        type: 'psychic_backlash',
-        public: false,
-        targetId: actor.id,
-        message: '',
-        privateMessage: `You take ${actualSelfDamage} psychic damage for not detecting a Warlock!`,
-        attackerMessage: '',
-      };
-      log.push(backlashLog);
-    }
-  }
-
-  return true;
-}
-
-/**
- * Handler for Spirit Guard ability (Oracle) - FIXED
+ * Handler for Spirit Guard ability (Shaman) - FIXED
  * @param {Object} actor - Actor using the ability
  * @param {Object|string} target - Target of the ability
  * @param {Object} ability - Ability configuration
@@ -367,44 +384,40 @@ function handleEyeOfFate(actor, target, ability, log, systems) {
  * @returns {boolean} Whether the ability was successful
  */
 function handleSpiritGuard(actor, target, ability, log, systems) {
-  // Apply protection with counter-damage and warlock detection
-  const armor = ability.params.armor || 2;
-  const counterDamage = ability.params.counterDamage || 15;
-  const duration = ability.params.duration || 1;
+  const armor = ability.params.armor || 3;
+  const counterDamage = ability.params.counterDamage || 5;
+  const duration = ability.params.duration || 2;
 
-  // Apply shielded status with special counter-damage property
+  // Apply spirit guard status effect
   systems.statusEffectManager.applyEffect(
     actor.id,
-    'shielded',
+    'spiritGuard',
     {
       armor: armor,
-      turns: duration + 1, // Add 1 to account for immediate countdown
       counterDamage: counterDamage,
-      revealsWarlocks: true, // Special property for Spirit Guard
+      turns: duration,
     },
     log
   );
 
-  // Also set up the counter-attack effect in classEffects
-  if (!actor.classEffects) {
-    actor.classEffects = {};
-  }
-
-  actor.classEffects.spiritGuard = {
-    counterDamage: counterDamage,
-    revealsWarlocks: true,
-    turnsLeft: duration + 1, // Add 1 to account for immediate countdown
-  };
-
+  const spiritGuardMessage = messages.getAbilityMessage(
+    'abilities.special',
+    'spiritGuardActivated'
+  );
   log.push(
-    `${actor.name} summons vengeful spirits! Gains ${armor} armor and attackers will take ${counterDamage} damage and be revealed if they are Warlocks for ${duration} turn(s).`
+    messages.formatMessage(spiritGuardMessage, {
+      playerName: actor.name,
+      armor: armor,
+      counterDamage: counterDamage,
+      turns: duration,
+    })
   );
 
   return true;
 }
 
 /**
- * Handler for Sanctuary of Truth ability (Oracle) - FIXED
+ * Handler for Sanctuary of Truth ability (Paladin) - FIXED
  * @param {Object} actor - Actor using the ability
  * @param {Object|string} target - Target of the ability
  * @param {Object} ability - Ability configuration
@@ -413,49 +426,263 @@ function handleSpiritGuard(actor, target, ability, log, systems) {
  * @returns {boolean} Whether the ability was successful
  */
 function handleSanctuaryOfTruth(actor, target, ability, log, systems) {
-  // Apply healing
-  const healAmount = Math.floor(
-    (ability.params.amount || 20) * actor.getHealingModifier()
-  );
+  const healAmount = ability.params.healAmount || 10;
+  const counterDamage = ability.params.counterDamage || 15;
+  const duration = ability.params.duration || 2;
+
+  // Heal the actor immediately
   const actualHeal = Math.min(healAmount, actor.maxHp - actor.hp);
   actor.hp += actualHeal;
 
-  if (actualHeal > 0) {
-    log.push(
-      `${actor.name} creates a Sanctuary of Truth and heals for ${actualHeal} health.`
-    );
+  // Apply sanctuary status effect
+  systems.statusEffectManager.applyEffect(
+    actor.id,
+    'sanctuary',
+    {
+      counterDamage: counterDamage,
+      turns: duration,
+    },
+    log
+  );
 
-    // Private healing message
-    const healLog = {
-      type: 'sanctuary_heal',
-      public: false,
-      targetId: actor.id,
-      message: '',
-      privateMessage: `Your Sanctuary heals you for ${actualHeal} HP.`,
-      attackerMessage: '',
-    };
-    log.push(healLog);
-  }
-
-  // Set up the sanctuary effect
-  if (!actor.classEffects) {
-    actor.classEffects = {};
-  }
-
-  actor.classEffects.sanctuaryOfTruth = {
-    counterDamage: ability.params.counterDamage || 10,
-    autoDetect: ability.params.autoDetect || true,
-    turnsLeft: 2, // Active for this round and next
-  };
-
+  const sanctuaryMessage = messages.getAbilityMessage(
+    'abilities.special',
+    'sanctuaryOfTruthActivated'
+  );
   log.push(
-    `${actor.name}'s Sanctuary will automatically detect and punish any Warlocks who attack!`
+    messages.formatMessage(sanctuaryMessage, {
+      playerName: actor.name,
+      amount: actualHeal,
+    })
+  );
+
+  const detectionMessage = messages.getAbilityMessage(
+    'abilities.special',
+    'sanctuaryOfTruthDetection'
+  );
+  log.push(
+    messages.formatMessage(detectionMessage, {
+      playerName: actor.name,
+    })
   );
 
   return true;
 }
+
 /**
- * Handler for multi-target stun abilities
+ * Handler for Control Monster ability (Warlock) - FIXED
+ * @param {Object} actor - Actor using the ability
+ * @param {Object|string} target - Target to force the monster to attack
+ * @param {Object} ability - Ability configuration
+ * @param {Array} log - Event log to append messages to
+ * @param {Object} systems - Game systems
+ * @returns {boolean} Whether the ability was successful
+ */
+function handleControlMonster(actor, target, ability, log, systems) {
+  // Check if monster is still alive
+  if (!systems.monsterController.monster.isAlive) {
+    const deadMonsterMessage = messages.getAbilityMessage(
+      'abilities.special',
+      'controlMonsterDeadMonster'
+    );
+    log.push(
+      messages.formatMessage(deadMonsterMessage, {
+        playerName: actor.name,
+        abilityName: ability.name,
+      })
+    );
+    return false;
+  }
+
+  // Check if trying to attack the monster itself
+  if (target === '__monster__') {
+    const invalidTargetMessage = messages.getAbilityMessage(
+      'abilities.special',
+      'controlMonsterInvalidTarget'
+    );
+    log.push(
+      messages.formatMessage(invalidTargetMessage, {
+        playerName: actor.name,
+        abilityName: ability.name,
+      })
+    );
+    return false;
+  }
+
+  // Check if target is valid and alive
+  if (!target || !target.isAlive) {
+    const noTargetsMessage = messages.getAbilityMessage(
+      'abilities.special',
+      'controlMonsterNoTargets'
+    );
+    log.push(
+      messages.formatMessage(noTargetsMessage, {
+        playerName: actor.name,
+        abilityName: ability.name,
+      })
+    );
+    return false;
+  }
+
+  const controlMessage = messages.getAbilityMessage(
+    'abilities.special',
+    'controlMonsterUsed'
+  );
+  log.push(
+    messages.formatMessage(controlMessage, {
+      playerName: actor.name,
+      abilityName: ability.name,
+      targetName: target.name,
+    })
+  );
+
+  // Force monster to attack the target with boosted damage
+  const damageBoost = ability.params.damageBoost || 1.5;
+  const boostedDamage = Math.floor(
+    systems.monsterController.monster.damage * damageBoost
+  );
+
+  // Apply damage to the target
+  systems.combatSystem.applyDamageToPlayer(
+    target,
+    boostedDamage,
+    {
+      name: 'Monster',
+      id: '__monster__',
+    },
+    log
+  );
+
+  const damageMessage = messages.getAbilityMessage(
+    'abilities.special',
+    'controlMonsterDamage'
+  );
+  log.push(
+    messages.formatMessage(damageMessage, {
+      damage: boostedDamage,
+      boost: Math.round((damageBoost - 1) * 100),
+      playerName: actor.name,
+    })
+  );
+
+  return true;
+}
+
+/**
+ * Handler for Eye of Fate ability (Oracle) - FIXED
+ * @param {Object} actor - Actor using the ability
+ * @param {Object|string} target - Target to detect
+ * @param {Object} ability - Ability configuration
+ * @param {Array} log - Event log to append messages to
+ * @param {Object} systems - Game systems
+ * @returns {boolean} Whether the ability was successful
+ */
+function handleEyeOfFate(actor, target, ability, log, systems) {
+  if (!target || target === '__monster__') {
+    const invalidTargetMessage = messages.getAbilityMessage(
+      'abilities.special',
+      'detectionInvalidTarget'
+    );
+    log.push(
+      messages.formatMessage(invalidTargetMessage, {
+        playerName: actor.name,
+        abilityName: ability.name,
+      })
+    );
+    return false;
+  }
+
+  const eyeOfFateMessage = messages.getAbilityMessage(
+    'abilities.special',
+    'eyeOfFateUsed'
+  );
+  log.push(
+    messages.formatMessage(eyeOfFateMessage, {
+      playerName: actor.name,
+      abilityName: ability.name,
+      targetName: target.name,
+    })
+  );
+
+  if (target.isWarlock) {
+    // Found a warlock
+    const warlockFoundMessage = messages.getAbilityMessage(
+      'abilities.special',
+      'warlockDetected'
+    );
+    log.push(
+      messages.formatMessage(warlockFoundMessage, {
+        targetName: target.name,
+      })
+    );
+
+    // Private message to the oracle
+    const privateFoundLog = {
+      type: 'oracle_success',
+      public: false,
+      targetId: target.id,
+      attackerId: actor.id,
+      message: '',
+      privateMessage: '',
+      attackerMessage: messages.formatMessage(
+        messages.getAbilityMessage(
+          'abilities.special',
+          'eyeOfFateWarlockFound'
+        ),
+        { targetName: target.name }
+      ),
+    };
+    log.push(privateFoundLog);
+  } else {
+    // Not a warlock - take psychic backlash
+    const backlashDamage = ability.params.backlashDamage || 5;
+    actor.hp = Math.max(1, actor.hp - backlashDamage);
+
+    const notWarlockMessage = messages.getAbilityMessage(
+      'abilities.special',
+      'eyeOfFateWarlockNotFound'
+    );
+    log.push(
+      messages.formatMessage(notWarlockMessage, {
+        targetName: target.name,
+      })
+    );
+
+    const backlashMessage = messages.getAbilityMessage(
+      'abilities.special',
+      'eyeOfFatePsychicBacklash'
+    );
+    log.push(
+      messages.formatMessage(backlashMessage, {
+        playerName: actor.name,
+        damage: backlashDamage,
+      })
+    );
+
+    // Private message to the oracle
+    const privateBacklashLog = {
+      type: 'oracle_backlash',
+      public: false,
+      targetId: target.id,
+      attackerId: actor.id,
+      message: '',
+      privateMessage: '',
+      attackerMessage: messages.formatMessage(
+        messages.getAbilityMessage(
+          'abilities.special',
+          'eyeOfFateBacklashPrivate'
+        ),
+        { damage: backlashDamage }
+      ),
+    };
+    log.push(privateBacklashLog);
+  }
+
+  return true;
+}
+
+/**
+ * Helper for multi-target stun abilities
  * @param {Object} actor - Actor using the ability
  * @param {Object} ability - Ability configuration
  * @param {Array} log - Event log to append messages to
@@ -470,23 +697,37 @@ function handleMultiStun(actor, ability, log, systems) {
   );
 
   if (targets.length === 0) {
+    const noTargetsMessage = messages.getAbilityMessage(
+      'abilities.special',
+      'multiStunNoTargets'
+    );
     log.push(
-      `${actor.name} uses ${ability.name}, but there are no valid targets.`
+      messages.formatMessage(noTargetsMessage, {
+        playerName: actor.name,
+        abilityName: ability.name,
+      })
     );
     return false;
   }
+
+  const multiStunMessage = messages.getAbilityMessage(
+    'abilities.special',
+    'multiStunCast'
+  );
+  log.push(
+    messages.formatMessage(multiStunMessage, {
+      playerName: actor.name,
+      abilityName: ability.name,
+    })
+  );
 
   // Get stun defaults from config if needed
   const stunDefaults = config.getStatusEffectDefaults('stunned') || {
     turns: 1,
   };
 
-  // Apply stun to multiple targets
-  log.push(`${actor.name} casts ${ability.name}!`);
-  let targetsStunned = 0;
-
-  // Get stun chance from ability or use default
   const stunChance = ability.params.chance || 0.5;
+  let stunCount = 0;
 
   for (const potentialTarget of targets) {
     if (Math.random() < stunChance) {
@@ -499,91 +740,34 @@ function handleMultiStun(actor, ability, log, systems) {
         log
       );
 
-      // Use config message if available
-      const stunMessage =
-        config.getMessage('events', 'playerStunned') ||
-        `{playerName} is stunned for {turns} turn(s).`;
-
-      log.push(
-        stunMessage
-          .replace('{playerName}', potentialTarget.name)
-          .replace('{turns}', ability.params.duration || stunDefaults.turns)
+      const stunMessage = messages.getAbilityMessage(
+        'abilities.special',
+        'stunApplied'
       );
-
-      targetsStunned++;
-    } else {
       log.push(
-        `${potentialTarget.name} resists ${actor.name}'s ${ability.name}!`
+        messages.formatMessage(stunMessage, {
+          targetName: potentialTarget.name,
+          turns: ability.params.duration || stunDefaults.turns,
+        })
       );
+      stunCount++;
     }
   }
 
-  if (targetsStunned === 0) {
-    log.push(`${actor.name}'s ${ability.name} doesn't stun anyone!`);
+  if (stunCount === 0) {
+    const noneAffectedMessage = messages.getAbilityMessage(
+      'abilities.special',
+      'multiStunNoneAffected'
+    );
+    log.push(
+      messages.formatMessage(noneAffectedMessage, {
+        playerName: actor.name,
+        abilityName: ability.name,
+      })
+    );
   }
 
-  return true;
+  return stunCount > 0;
 }
 
-function handleControlMonster(actor, target, ability, log, systems) {
-  // Check if monster is alive
-  if (systems.monsterController.isDead()) {
-    log.push(
-      `${actor.name} tries to use ${ability.name}, but the Monster is already defeated.`
-    );
-    return false;
-  }
-
-  // Validate target
-  let finalTarget = null;
-  if (target === '__monster__') {
-    log.push(
-      `${actor.name} tries to use ${ability.name}, but cannot force the Monster to attack itself.`
-    );
-    return false;
-  } else if (target && target.isAlive) {
-    finalTarget = target;
-  } else {
-    // If target is invalid, pick a random target
-    const alivePlayers = systems.gameStateUtils.getAlivePlayers();
-    if (alivePlayers.length === 0) {
-      log.push(
-        `${actor.name} uses ${ability.name}, but there are no valid targets for the Monster to attack.`
-      );
-      return false;
-    }
-
-    // Pick random target (excluding the actor if possible)
-    const validTargets = alivePlayers.filter((p) => p.id !== actor.id);
-    finalTarget =
-      validTargets.length > 0
-        ? validTargets[Math.floor(Math.random() * validTargets.length)]
-        : alivePlayers[0];
-  }
-
-  // Calculate enhanced damage
-  const baseDamage = systems.monsterController.calculateNextAttackDamage();
-  const damageBoost = ability.params.damageBoost || 1.5;
-  const enhancedDamage = Math.floor(baseDamage * damageBoost);
-
-  // Log the control attempt
-  log.push(
-    `${actor.name} uses ${ability.name}! The Monster's eyes glow with unnatural fury as it focuses on ${finalTarget.name}!`
-  );
-
-  // Apply the enhanced damage immediately
-  systems.combatSystem.applyDamageToPlayer(
-    finalTarget,
-    enhancedDamage,
-    { name: 'The Controlled Monster' },
-    log
-  );
-
-  // Add additional context log
-  log.push(
-    `The Monster deals ${enhancedDamage} damage (${Math.round((damageBoost - 1) * 100)}% more than normal) under ${actor.name}'s command!`
-  );
-
-  return true;
-}
 module.exports = { register };
