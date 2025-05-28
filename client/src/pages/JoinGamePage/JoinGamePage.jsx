@@ -30,24 +30,15 @@ const JoinGamePage = ({ onCreateGame, onJoinGame, onReconnect }) => {
   const [showTutorial, setShowTutorial] = useState(false);
   const [showCodeHelp, setShowCodeHelp] = useState(false);
   const [isGeneratingName, setIsGeneratingName] = useState(false);
-  const [showReconnectPrompt, setShowReconnectPrompt] = useState(false);
-  const [lastGameInfo, setLastGameInfo] = useState(null);
 
   /**
-   * Check for a previous game session on component mount
+   * Clear any previous game session data on component mount
+   * This ensures the rejoin prompt never appears
    */
   useEffect(() => {
-    const lastGameCode = localStorage.getItem('lastGameCode');
-    const lastPlayerName = localStorage.getItem('lastPlayerName');
-
-    if (lastGameCode && lastPlayerName) {
-      setLastGameInfo({ gameCode: lastGameCode, playerName: lastPlayerName });
-      setShowReconnectPrompt(true);
-
-      // Pre-fill the form with the saved values
-      setJoinCode(lastGameCode);
-      setName(lastPlayerName);
-    }
+    // Clear any existing game session data
+    localStorage.removeItem('lastGameCode');
+    localStorage.removeItem('lastPlayerName');
   }, []);
 
   /**
@@ -73,7 +64,7 @@ const JoinGamePage = ({ onCreateGame, onJoinGame, onReconnect }) => {
       alert('Please enter your name to create a game.');
       return;
     }
-    // If creating a new game, clear any previous session
+    // Clear any previous session data when creating a new game
     localStorage.removeItem('lastGameCode');
     localStorage.removeItem('lastPlayerName');
     onCreateGame(name);
@@ -87,28 +78,8 @@ const JoinGamePage = ({ onCreateGame, onJoinGame, onReconnect }) => {
       alert('Please enter a game code and your name to join.');
       return;
     }
-    // Save info for potential reconnection
-    localStorage.setItem('lastGameCode', joinCode);
-    localStorage.setItem('lastPlayerName', name);
+    // Don't save game info anymore since reconnection is disabled
     onJoinGame(joinCode.trim(), name);
-  };
-
-  /**
-   * Handle reconnecting to the previous game
-   */
-  const handleReconnect = () => {
-    if (lastGameInfo) {
-      onReconnect(lastGameInfo.gameCode, lastGameInfo.playerName);
-    }
-  };
-
-  /**
-   * Decline reconnection and clear saved game
-   */
-  const handleDeclineReconnect = () => {
-    setShowReconnectPrompt(false);
-    localStorage.removeItem('lastGameCode');
-    localStorage.removeItem('lastPlayerName');
   };
 
   /**
@@ -130,27 +101,7 @@ const JoinGamePage = ({ onCreateGame, onJoinGame, onReconnect }) => {
         onComplete={() => setShowTutorial(false)}
       />
 
-      {/* Reconnection prompt */}
-      {showReconnectPrompt && (
-        <div className="reconnect-prompt">
-          <h3>Rejoin Previous Game?</h3>
-          <p>
-            You were playing as <strong>{lastGameInfo?.playerName}</strong> in
-            game <strong>{lastGameInfo?.gameCode}</strong>.
-          </p>
-          <div className="reconnect-buttons">
-            <button className="reconnect-button" onClick={handleReconnect}>
-              Rejoin Game
-            </button>
-            <button
-              className="decline-reconnect-button"
-              onClick={handleDeclineReconnect}
-            >
-              Start Fresh
-            </button>
-          </div>
-        </div>
-      )}
+      {/* Removed reconnection prompt - it will never show now */}
 
       <div className="join-card">
         <h1 className="game-logo">Warlock</h1>

@@ -26,8 +26,6 @@ router.get('/', (req, res) => {
  * Returns available races and their attributes
  */
 router.get('/races', (req, res) => {
-  logger.info('Config API: Races configuration requested');
-
   res.json({
     races: config.races,
     raceAttributes: config.raceAttributes,
@@ -40,8 +38,6 @@ router.get('/races', (req, res) => {
  * Returns available classes and their attributes
  */
 router.get('/classes', (req, res) => {
-  logger.info('Config API: Classes configuration requested');
-
   res.json({
     classes: config.classes,
     classAttributes: config.classAttributes,
@@ -54,8 +50,6 @@ router.get('/classes', (req, res) => {
  * Returns race-class compatibility mappings
  */
 router.get('/compatibility', (req, res) => {
-  logger.info('Config API: Compatibility mappings requested');
-
   res.json({
     classToRaces: config.classRaceCompatibility,
     // Build inverse mapping if not already available in config
@@ -78,7 +72,6 @@ router.get('/compatibility', (req, res) => {
  */
 router.get('/abilities/:className', (req, res) => {
   const { className } = req.params;
-  logger.info(`Config API: Abilities requested for class ${className}`);
 
   if (!config.classes.includes(className)) {
     return res.status(404).json({ error: 'Class not found' });
@@ -97,8 +90,6 @@ router.get('/abilities/:className', (req, res) => {
  * Returns all racial abilities
  */
 router.get('/racial-abilities', (req, res) => {
-  logger.info('Config API: Racial abilities requested');
-
   // Create a mapping of race to racial ability
   const racialAbilities = {};
   config.races.forEach((race) => {
