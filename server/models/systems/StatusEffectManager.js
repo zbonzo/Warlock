@@ -3,6 +3,7 @@
  * Handles application, removal, and round-based processing of effects including healing
  */
 const config = require('@config');
+const messages = require('@messages');
 const logger = require('@utils/logger');
 
 /**
@@ -31,57 +32,6 @@ class StatusEffectManager {
       },
       healingOverTime: { default: { amount: 5, turns: 3 } }, // New effect
     };
-  }
-
-  getEffectApplicationMessage(playerName, effectName, data) {
-    switch (effectName) {
-      case 'poison':
-        return `${playerName} is poisoned for ${data.damage} damage over ${data.turns} turns.`;
-      case 'shielded':
-        return `${playerName} is shielded with ${data.armor} armor for ${data.turns} turn(s).`;
-      case 'invisible':
-        return `${playerName} becomes invisible for ${data.turns} turn(s).`;
-      case 'stunned':
-        return `${playerName} is stunned for ${data.turns} turn(s).`;
-      case 'healingOverTime':
-        return `${playerName} is blessed with healing over time for ${data.amount} HP per turn for ${data.turns} turns.`;
-      default:
-        return `${playerName} is affected by ${effectName}.`;
-    }
-  }
-
-  getEffectRefreshMessage(playerName, effectName, data) {
-    switch (effectName) {
-      case 'poison':
-        return `${playerName}'s poison is refreshed for ${data.damage} damage over ${data.turns} turns.`;
-      case 'shielded':
-        return `${playerName}'s protection is refreshed for ${data.turns} turn(s).`;
-      case 'invisible':
-        return `${playerName}'s invisibility is extended for ${data.turns} turn(s).`;
-      case 'stunned':
-        return `${playerName} remains stunned for ${data.turns} more turn(s).`;
-      case 'healingOverTime':
-        return `${playerName}'s healing blessing is renewed for ${data.turns} turns.`;
-      default:
-        return `${playerName}'s ${effectName} effect is refreshed.`;
-    }
-  }
-
-  getEffectExpirationMessage(playerName, effectName) {
-    switch (effectName) {
-      case 'poison':
-        return `The poison affecting ${playerName} has worn off.`;
-      case 'shielded':
-        return `${playerName} is no longer shielded.`;
-      case 'invisible':
-        return `${playerName} is no longer invisible.`;
-      case 'stunned':
-        return `${playerName} is no longer stunned.`;
-      case 'healingOverTime':
-        return `The healing blessing on ${playerName} has faded.`;
-      default:
-        return `The ${effectName} effect on ${playerName} has worn off.`;
-    }
   }
 
   /**
@@ -128,8 +78,16 @@ class StatusEffectManager {
       player.applyVulnerability(finalData.damageIncrease, finalData.turns);
 
       // Special log for vulnerability
+      const vulnMessage = messages.getAbilityMessage(
+        'statusEffects',
+        'vulnerable.applied'
+      );
       log.push(
-        `${player.name} is VULNERABLE and will take ${finalData.damageIncrease}% more damage for ${finalData.turns - 1} turn(s)!`
+        messages.formatMessage(vulnMessage, {
+          playerName: player.name,
+          increase: finalData.damageIncrease,
+          turns: finalData.turns - 1, // Display turns (subtract the +1 we added)
+        })
       );
       return true;
     }
@@ -142,29 +100,59 @@ class StatusEffectManager {
     const logData = { ...finalData, turns: displayTurns };
 
     if (!hasEffect) {
-      // Use config messages module directly
-      const template = config.statusEffects.getEffectMessage
-        ? config.statusEffects.getEffectMessage(effectName, 'applied')
-        : `${player.name} is affected by ${effectName}.`;
-
-      log.push(
-        config.messages.formatMessage(template, {
-          playerName: player.name,
-          ...logData,
-        })
+      // Get application message
+      const appliedMessage = messages.getAbilityMessage(
+        'statusEffects',
+        `${effectName}.applied`
       );
+      if (appliedMessage) {
+        log.push(
+          messages.formatMessage(appliedMessage, {
+            playerName: player.name,
+            ...logData,
+          })
+        );
+      } else {
+        // Fallback to generic message
+        const genericMessage = messages.getAbilityMessage(
+          'statusEffects',
+          'generic.applied'
+        );
+        log.push(
+          messages.formatMessage(genericMessage, {
+            playerName: player.name,
+            effectName: effectName,
+            ...logData,
+          })
+        );
+      }
     } else {
-      // Use config messages module directly
-      const template = config.statusEffects.getEffectMessage
-        ? config.statusEffects.getEffectMessage(effectName, 'refreshed')
-        : `${player.name}'s ${effectName} effect is refreshed.`;
-
-      log.push(
-        config.messages.formatMessage(template, {
-          playerName: player.name,
-          ...logData,
-        })
+      // Get refresh message
+      const refreshMessage = messages.getAbilityMessage(
+        'statusEffects',
+        `${effectName}.refreshed`
       );
+      if (refreshMessage) {
+        log.push(
+          messages.formatMessage(refreshMessage, {
+            playerName: player.name,
+            ...logData,
+          })
+        );
+      } else {
+        // Fallback to generic message
+        const genericMessage = messages.getAbilityMessage(
+          'statusEffects',
+          'generic.refreshed'
+        );
+        log.push(
+          messages.formatMessage(genericMessage, {
+            playerName: player.name,
+            effectName: effectName,
+            ...logData,
+          })
+        );
+      }
     }
 
     return true;
@@ -188,7 +176,16 @@ class StatusEffectManager {
       player.isVulnerable = false;
       player.vulnerabilityIncrease = 0;
       delete player.statusEffects.vulnerable;
-      log.push(`${player.name} is no longer vulnerable.`);
+
+      const expiredMessage = messages.getAbilityMessage(
+        'statusEffects',
+        'vulnerable.expired'
+      );
+      log.push(
+        messages.formatMessage(expiredMessage, {
+          playerName: player.name,
+        })
+      );
       return true;
     }
 
@@ -197,11 +194,29 @@ class StatusEffectManager {
 
     // Add log message if effect was present
     if (hadEffect) {
-      log.push(
-        config.statusEffects.getEffectMessage(effectName, 'expired', {
-          playerName: player.name,
-        })
+      const expiredMessage = messages.getAbilityMessage(
+        'statusEffects',
+        `${effectName}.expired`
       );
+      if (expiredMessage) {
+        log.push(
+          messages.formatMessage(expiredMessage, {
+            playerName: player.name,
+          })
+        );
+      } else {
+        // Fallback to generic message
+        const genericMessage = messages.getAbilityMessage(
+          'statusEffects',
+          'generic.expired'
+        );
+        log.push(
+          messages.formatMessage(genericMessage, {
+            playerName: player.name,
+            effectName: effectName,
+          })
+        );
+      }
     }
 
     return hadEffect;
@@ -264,12 +279,28 @@ class StatusEffectManager {
         const expired = player.processVulnerability();
 
         if (expired) {
-          log.push(`${player.name} is no longer vulnerable.`);
+          const expiredMessage = messages.getAbilityMessage(
+            'statusEffects',
+            'vulnerable.expired'
+          );
+          log.push(
+            messages.formatMessage(expiredMessage, {
+              playerName: player.name,
+            })
+          );
         } else {
           const increase = player.vulnerabilityIncrease;
           const turns = (player.statusEffects.vulnerable?.turns || 1) - 1; // Subtract 1 for display
+          const activeMessage = messages.getAbilityMessage(
+            'statusEffects',
+            'vulnerable.active'
+          );
           log.push(
-            `${player.name} remains VULNERABLE (${increase}% more damage) for ${turns} more turn(s).`
+            messages.formatMessage(activeMessage, {
+              playerName: player.name,
+              increase: increase,
+              turns: turns,
+            })
           );
         }
       }
@@ -327,15 +358,16 @@ class StatusEffectManager {
       const actualHeal = player.hp - oldHp;
 
       if (actualHeal > 0) {
-        // Use config message if available
-        const healMessage =
-          config.statusEffects.getEffectMessage('healingOverTime', 'heal', {
+        const healMessage = messages.getAbilityMessage(
+          'statusEffects',
+          'healingOverTime.healing'
+        );
+        log.push(
+          messages.formatMessage(healMessage, {
             playerName: player.name,
             amount: actualHeal,
-          }) ||
-          `${player.name} regenerates ${actualHeal} health from their blessing.`;
-
-        log.push(healMessage);
+          })
+        );
 
         // Add private message to the player
         const privateHealLog = {
@@ -343,7 +375,13 @@ class StatusEffectManager {
           public: false,
           targetId: player.id,
           message: '',
-          privateMessage: `You regenerate ${actualHeal} HP from healing over time.`,
+          privateMessage: messages.formatMessage(
+            messages.getAbilityMessage(
+              'statusEffects',
+              'private.youRegenerateHP'
+            ),
+            { amount: actualHeal }
+          ),
           attackerMessage: '',
         };
         log.push(privateHealLog);
@@ -357,13 +395,15 @@ class StatusEffectManager {
     if (healing.turns <= 0) {
       player.removeStatusEffect('healingOverTime');
 
-      // Use config message if available
-      const expiredMessage =
-        config.statusEffects.getEffectMessage('healingOverTime', 'expired', {
+      const expiredMessage = messages.getAbilityMessage(
+        'statusEffects',
+        'healingOverTime.expired'
+      );
+      log.push(
+        messages.formatMessage(expiredMessage, {
           playerName: player.name,
-        }) || `The healing blessing on ${player.name} has faded.`;
-
-      log.push(expiredMessage);
+        })
+      );
     }
   }
 
@@ -385,11 +425,30 @@ class StatusEffectManager {
     // Remove if expired
     if (effect.turns <= 0) {
       player.removeStatusEffect(effectName);
-      log.push(
-        config.statusEffects.getEffectMessage(effectName, 'expired', {
-          playerName: player.name,
-        })
+
+      const expiredMessage = messages.getAbilityMessage(
+        'statusEffects',
+        `${effectName}.expired`
       );
+      if (expiredMessage) {
+        log.push(
+          messages.formatMessage(expiredMessage, {
+            playerName: player.name,
+          })
+        );
+      } else {
+        // Fallback to generic message
+        const genericMessage = messages.getAbilityMessage(
+          'statusEffects',
+          'generic.expired'
+        );
+        log.push(
+          messages.formatMessage(genericMessage, {
+            playerName: player.name,
+            effectName: effectName,
+          })
+        );
+      }
     }
   }
 
@@ -413,8 +472,12 @@ class StatusEffectManager {
     // Apply poison damage
     player.hp = Math.max(0, player.hp - poison.damage);
 
+    const poisonDamageMessage = messages.getAbilityMessage(
+      'statusEffects',
+      'poison.damage'
+    );
     log.push(
-      config.statusEffects.getEffectMessage('poison', 'damage', {
+      messages.formatMessage(poisonDamageMessage, {
         playerName: player.name,
         damage: poison.damage,
       })
@@ -422,8 +485,9 @@ class StatusEffectManager {
 
     // Add Stone Armor degradation message if applicable
     if (armorDegradationInfo && armorDegradationInfo.degraded) {
+      const armorMessage = messages.getEvent('dwarfStoneArmor');
       log.push(
-        config.messages.getEvent('dwarfStoneArmor', {
+        messages.formatMessage(armorMessage, {
           playerName: player.name,
           oldValue: armorDegradationInfo.oldValue,
           newValue: armorDegradationInfo.newArmorValue,
@@ -434,8 +498,9 @@ class StatusEffectManager {
         armorDegradationInfo.destroyed &&
         armorDegradationInfo.newArmorValue <= 0
       ) {
+        const destroyedMessage = messages.getEvent('stoneArmorDestroyed');
         log.push(
-          config.messages.getEvent('stoneArmorDestroyed', {
+          messages.formatMessage(destroyedMessage, {
             playerName: player.name,
           })
         );
@@ -454,8 +519,13 @@ class StatusEffectManager {
     // Remove if expired
     if (poison.turns <= 0) {
       player.removeStatusEffect('poison');
+
+      const expiredMessage = messages.getAbilityMessage(
+        'statusEffects',
+        'poison.expired'
+      );
       log.push(
-        config.statusEffects.getEffectMessage('poison', 'expired', {
+        messages.formatMessage(expiredMessage, {
           playerName: player.name,
         })
       );

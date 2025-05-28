@@ -13,6 +13,16 @@ const healingMessages = require('./abilities/healing');
 const specialMessages = require('./abilities/special');
 const racialMessages = require('./abilities/racial');
 
+// Import system messages
+const combatMessages = require('./combat');
+const statusEffectMessages = require('./status-effects');
+const warlockMessages = require('./warlock');
+const monsterMessages = require('./monster');
+
+// Import player and UI messages
+const playerMessages = require('./player');
+const uiMessages = require('./ui');
+
 /**
  * Combined message configuration
  */
@@ -32,6 +42,16 @@ const messages = {
     special: specialMessages,
     racial: racialMessages,
   },
+
+  // System messages
+  combat: combatMessages,
+  statusEffects: statusEffectMessages,
+  warlock: warlockMessages,
+  monster: monsterMessages,
+
+  // Player and UI messages
+  player: playerMessages,
+  ui: uiMessages,
 };
 
 /**

@@ -3,7 +3,7 @@
  * Contains all healing-related class abilities including the new HoT Rejuvenation
  */
 const config = require('@config');
-const messages = require('@config/messages');
+const messages = require('@messages');
 const {
   registerAbilitiesByCategory,
   registerAbilitiesByEffectAndTarget,

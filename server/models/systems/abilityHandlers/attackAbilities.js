@@ -1,9 +1,9 @@
 /**
  * @fileoverview Attack-related ability handlers
- * Contains damage-dealing class abilities
+ * Contains damage-dealing class abilities with centralized messaging
  */
 const config = require('@config');
-const messages = require('@config/messages');
+const messages = require('@messages');
 const {
   registerAbilitiesByCategory,
   registerAbilitiesByEffectAndTarget,
@@ -245,9 +245,8 @@ function handleAoeDamage(actor, target, ability, log, systems) {
     );
 
     // Check for warlock conversion with reduced chance for AoE
-    // Get warlock conversion rate modifier from config if available
     const conversionModifier =
-      config.gameBalance?.warlock?.conversion?.aoeModifier || 0.5;
+      config.gameBalance.warlock.conversion.aoeModifier;
 
     if (
       actor.isWarlock &&
@@ -651,7 +650,8 @@ function handleRecklessStrike(actor, target, ability, log, systems) {
 
     // Warlocks generate "threat" attacking monster
     if (actor.isWarlock) {
-      const randomConversionModifier = 0.5;
+      const randomConversionModifier =
+        config.gameBalance.warlock.conversion.randomModifier;
       systems.warlockSystem.attemptConversion(
         actor,
         null,
@@ -698,9 +698,8 @@ function handleMonsterAttack(actor, ability, log, systems) {
 
   // Warlocks generate "threat" attacking monster
   if (actor.isWarlock) {
-    // Get warlock random conversion modifier from config if available
     const randomConversionModifier =
-      config.gameBalance?.warlock?.conversion?.randomModifier || 0.5;
+      config.gameBalance.warlock.conversion.randomModifier;
     systems.warlockSystem.attemptConversion(
       actor,
       null,

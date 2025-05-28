@@ -3,7 +3,7 @@
  * Contains race-specific ability implementations
  */
 const config = require('@config');
-const messages = require('@config/messages');
+const messages = require('@messages');
 
 /**
  * Register all racial ability handlers with the registry
@@ -75,7 +75,7 @@ function handleKeenSenses(actor, target, ability, log, systems) {
 
   /*
   if (!target || target === '__monster__') {
-    const invalidTargetMessage = messages.getAbilityMessage('abilities.racial', 'keenSensesInvalidTarget');
+    const invalidTargetMessage =messages.getAbilityMessage('abilities.racial', 'keenSensesInvalidTarget');
     log.push(
       messages.formatMessage(invalidTargetMessage, {
         playerName: actor.name
@@ -90,7 +90,7 @@ function handleKeenSenses(actor, target, ability, log, systems) {
   }
   actor.racialEffects.keenSensesActiveOnNextAttack = target.id;
 
-  const keenSensesMessage = messages.getAbilityMessage('abilities.racial', 'keenSensesUsed');
+  const keenSensesMessage =messages.getAbilityMessage('abilities.racial', 'keenSensesUsed');
   log.push(
     messages.formatMessage(keenSensesMessage, {
       playerName: actor.name,
@@ -98,7 +98,7 @@ function handleKeenSenses(actor, target, ability, log, systems) {
     })
   );
 
-  const nextAttackMessage = messages.getAbilityMessage('abilities.racial', 'keenSensesNextAttack');
+  const nextAttackMessage =messages.getAbilityMessage('abilities.racial', 'keenSensesNextAttack');
   log.push(
     messages.formatMessage(nextAttackMessage, {
       playerName: actor.name,
@@ -176,14 +176,14 @@ function handleForestsGrace(actor, target, ability, log, systems) {
     log
   );
 
-  const forestsGraceMessage = messages.getAbilityMessage('abilities.racial', 'forestsGraceUsed');
+  const forestsGraceMessage =messages.getAbilityMessage('abilities.racial', 'forestsGraceUsed');
   log.push(
     messages.formatMessage(forestsGraceMessage, {
       playerName: actor.name
     })
   );
 
-  const healingMessage = messages.getAbilityMessage('abilities.racial', 'forestsGraceHealing');
+  const healingMessage =messages.getAbilityMessage('abilities.racial', 'forestsGraceHealing');
   log.push(
     messages.formatMessage(healingMessage, {
       playerName: actor.name,

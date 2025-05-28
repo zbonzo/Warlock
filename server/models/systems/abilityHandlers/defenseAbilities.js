@@ -3,6 +3,8 @@
  * Contains protective and defensive class abilities
  */
 const config = require('@config');
+const messages = require('@messages');
+
 const {
   registerAbilitiesByCategory,
   registerAbilitiesByEffectAndTarget,

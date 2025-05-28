@@ -3,7 +3,7 @@
  * Contains utility, detection, and status-effect abilities
  */
 const config = require('@config');
-const messages = require('@config/messages');
+const messages = require('@messages');
 const {
   registerAbilitiesByCategory,
   registerAbilitiesByEffectAndTarget,

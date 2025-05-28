@@ -3,6 +3,7 @@
  * Centralizes warlock-specific logic with improved balance controls
  */
 const config = require('@config');
+const messages = require('@messages');
 const logger = require('@utils/logger');
 
 /**
@@ -277,16 +278,20 @@ class WarlockSystem {
       const conversionLog = {
         type: 'corruption',
         public: true,
-        message: config.messages.getEvent('playerCorrupted'),
+        message: messages.getAbilityMessage(
+          'warlock',
+          'corruption.playerCorrupted'
+        ),
         targetId: target.id,
         attackerId: actor.id,
-        privateMessage: config.messages.getMessage(
-          'private',
-          'youWereCorrupted'
+        privateMessage: messages.getAbilityMessage(
+          'warlock',
+          'private.youWereCorrupted'
         ),
-        attackerMessage: config.messages.getMessage('private', 'youCorrupted', {
-          targetName: target.name,
-        }),
+        attackerMessage: messages.formatMessage(
+          messages.getAbilityMessage('warlock', 'private.youCorrupted'),
+          { targetName: target.name }
+        ),
         moveToEnd: true, // Move to end of log for clarity
       };
       log.push(conversionLog);
@@ -351,8 +356,15 @@ class WarlockSystem {
     this.incrementWarlockCount();
     this.totalCorruptionsThisGame++;
 
+    const forceConvertMessage = messages.getAbilityMessage(
+      'warlock',
+      'corruption.playerConverted'
+    );
     log.push(
-      `${player.name} has been turned into a Warlock! (Reason: ${reason})`
+      messages.formatMessage(forceConvertMessage, {
+        playerName: player.name,
+        reason: reason,
+      })
     );
     return true;
   }

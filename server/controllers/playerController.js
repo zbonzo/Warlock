@@ -1,25 +1,15 @@
 /**
  * @fileoverview Controller for player-related operations
  * Handles player joining, character selection, and immediate disconnection
+ * Uses centralized config and messaging systems
  */
 const gameService = require('@services/gameService');
 const { validatePlayerName } = require('@middleware/validation');
-const { validateGame } = require('@middleware/validation');
 const { validateGameAction } = require('@shared/gameChecks');
 const logger = require('@utils/logger');
 const errorHandler = require('@utils/errorHandler');
 const playerSessionManager = require('@services/PlayerSessionManager');
 const config = require('@config');
-
-/**
- * Get an error message or fall back if it's missing
- * @param {string} key   Error key
- * @param {string} fallback  Fallback message if key not found
- * @returns {string}
- */
-function getErrorMessage(key, fallback) {
-  return config?.messages?.errors?.[key] ?? fallback;
-}
 
 /**
  * Handle player joining a game
@@ -39,14 +29,11 @@ function handlePlayerJoin(io, socket, gameCode, playerName) {
   if (!gameService.canPlayerJoinGame(game, socket.id)) return false;
 
   // Add player and update game state
-  const sanitizedName = playerName || config.defaultPlayerName || 'Player';
+  const sanitizedName = playerName || config.player.defaultPlayerName;
   const success = game.addPlayer(socket.id, sanitizedName);
   if (!success) {
-    errorHandler.throwGameStateError(
-      getErrorMessage('joinFailed', 'Could not join game.')
-    );
-    /* istanbul ignore next */
-    return false; // This covers the edge case where throwGameStateError doesn't throw
+    errorHandler.throwGameStateError(config.messages.getError('joinFailed'));
+    return false;
   }
 
   // Register session with PlayerSessionManager
@@ -74,8 +61,10 @@ function handleSelectCharacter(io, socket, gameCode, race, className) {
   // Use consolidated validation
   const game = validateGameAction(socket, gameCode, false, false);
 
-  // Validate race and class
-  validateCharacterRaceClass(race, className, socket);
+  // Validate race and class using centralized config
+  if (!validateCharacterSelection(race, className)) {
+    return false;
+  }
 
   // Refresh game timeout
   gameService.refreshGameTimeout(io, gameCode);
@@ -93,102 +82,35 @@ function handleSelectCharacter(io, socket, gameCode, race, className) {
 }
 
 /**
- * Helper function for character selection validation
- * @param {string} race - Race to validate
- * @param {string} className - Class to validate
- * @param {Object} socket - Client socket
- * @returns {boolean} Whether the combination is valid
+ * Centralized character selection validation
+ * @param {string} race - Selected race
+ * @param {string} className - Selected class
+ * @returns {boolean} Whether the selection is valid
  * @private
  */
-function validateCharacterRaceClass(race, className, socket) {
-  const validRaces = config.races || [
-    'Human',
-    'Dwarf',
-    'Elf',
-    'Orc',
-    'Satyr',
-    'Skeleton',
-  ];
-  const validClasses = config.classes || [
-    'Warrior',
-    'Pyromancer',
-    'Wizard',
-    'Assassin',
-    'Alchemist',
-    'Priest',
-    'Oracle',
-    'Seer',
-    'Shaman',
-    'Gunslinger',
-    'Tracker',
-    'Druid',
-  ];
-
-  // Use class-race compatibility from config if available
-  const classToRaces = config.classRaceCompatibility || {
-    Warrior: ['Human', 'Dwarf', 'Skeleton'],
-    Pyromancer: ['Dwarf', 'Skeleton', 'Orc'],
-    Wizard: ['Human', 'Elf', 'Skeleton'],
-    Assassin: ['Human', 'Elf', 'Skeleton'],
-    Alchemist: ['Human', 'Elf', 'Satyr'],
-    Priest: ['Human', 'Dwarf', 'Skeleton'],
-    Oracle: ['Dwarf', 'Satyr', 'Orc'],
-    Seer: ['Elf', 'Satyr', 'Orc'],
-    Shaman: ['Dwarf', 'Satyr', 'Orc'],
-    Gunslinger: ['Human', 'Dwarf', 'Skeleton'],
-    Tracker: ['Elf', 'Satyr', 'Orc'],
-    Druid: ['Elf', 'Satyr', 'Orc'],
-  };
-
-  if (!validRaces.includes(race)) {
-    errorHandler.throwValidationError(
-      getErrorMessage('invalidRace', 'Invalid race selection.')
-    );
+function validateCharacterSelection(race, className) {
+  // Use centralized character validation from config - FAIL HARD if not available
+  if (!config.races.includes(race)) {
+    errorHandler.throwValidationError(config.messages.getError('invalidRace'));
+    return false;
   }
 
-  // Check if class exists in classes array OR in classRaceCompatibility
-  const classExistsInList = validClasses.includes(className);
-  const classExistsInCompatibility = Object.prototype.hasOwnProperty.call(
-    classToRaces,
-    className
-  );
-
-  if (!classExistsInList && !classExistsInCompatibility) {
-    errorHandler.throwValidationError(
-      getErrorMessage('invalidClass', 'Invalid race and class combination.')
-    );
+  if (!config.classes.includes(className)) {
+    errorHandler.throwValidationError(config.messages.getError('invalidClass'));
+    return false;
   }
 
-  // For a class to be valid, it must exist in the main classes list
-  // The compatibility check is secondary
-  if (!classExistsInList) {
+  // Use centralized compatibility check - FAIL HARD if not available
+  if (!config.isValidCombination(race, className)) {
     errorHandler.throwValidationError(
-      getErrorMessage('invalidClass', 'Invalid race and class combination.')
+      config.messages.getError('invalidCombination')
     );
-  }
-
-  // Check race-class compatibility
-  const allowedRaces = classToRaces[className] || [];
-  if (!allowedRaces.includes(race)) {
-    errorHandler.throwValidationError(
-      getErrorMessage(
-        'invalidCombination',
-        'Invalid race and class combination.'
-      )
-    );
+    return false;
   }
 
   return true;
 }
 
-/**
- * Get the thematic disconnection message
- * @param {string} playerName - Name of the disconnected player
- * @returns {string} Thematic disconnection message
- */
-function getDisconnectMessage(playerName) {
-  return `${playerName} wandered into the forest to discover that there are many more monsters and they were very much unequipped.`;
-}
 /**
  * Handle player disconnect with battle log integration
  * @param {Object} io - Socket.IO instance
@@ -212,8 +134,8 @@ function handlePlayerDisconnect(io, socket) {
       const wasHost = socket.id === game.hostId;
       const wasAlive = player ? player.isAlive : false;
 
-      // Create thematic disconnection message
-      const disconnectMessage = getDisconnectMessage(playerName);
+      // Create thematic disconnection message using centralized messaging
+      const disconnectMessage = getThematicDisconnectMessage(playerName);
 
       // Add disconnection event to the current round's events
       if (game.started && wasAlive) {
@@ -230,7 +152,6 @@ function handlePlayerDisconnect(io, socket) {
         };
 
         // Add the disconnect event to the pending actions as a special event
-        // This way it gets processed with the current round when processRound() is called
         game.pendingDisconnectEvents = game.pendingDisconnectEvents || [];
         game.pendingDisconnectEvents.push(disconnectionEvent);
 
@@ -248,39 +169,11 @@ function handlePlayerDisconnect(io, socket) {
       // Clean up any session data
       playerSessionManager.removeSession(gameCode, playerName);
 
-      // If this was the host, reassign immediately
-      if (wasHost && game.players.size > 0) {
-        const newHostId = Array.from(game.players.keys())[0];
-        game.hostId = newHostId;
+      // Handle host reassignment
+      handleHostReassignment(io, game, gameCode, playerName, wasHost);
 
-        logger.info(
-          `Host ${playerName} disconnected, reassigning to ${gameCode}`
-        );
-
-        io.to(gameCode).emit('hostChanged', {
-          hostId: newHostId,
-          message: `${playerName} left the game. Host transferred to another player.`,
-        });
-      }
-
-      // If game is in progress, check win conditions
-      if (game.started) {
-        if (gameService.checkGameWinConditions(io, gameCode, playerName)) {
-          // Game ended, already handled in the helper
-          return;
-        }
-
-        // Check if all remaining players have submitted actions
-        if (game.allActionsSubmitted()) {
-          logger.info(
-            `Player disconnect triggered round processing for game ${gameCode}`
-          );
-          // Small delay to ensure UI updates
-          setTimeout(() => {
-            gameService.processGameRound(io, gameCode);
-          }, 500);
-        }
-      }
+      // Handle game progression checks
+      handleGameProgressionAfterDisconnect(io, game, gameCode, playerName);
 
       // Broadcast updated player list
       gameService.broadcastPlayerList(io, gameCode);
@@ -296,9 +189,78 @@ function handlePlayerDisconnect(io, socket) {
     logger.info(`Disconnected player ${socket.id} was not in any active games`);
   }
 }
+
 /**
- * Handle player reconnection attempt - REMOVED FUNCTIONALITY
- * Since we're doing immediate disconnect, reconnection is no longer supported
+ * Get thematic disconnection message using centralized messaging
+ * @param {string} playerName - Name of the disconnected player
+ * @returns {string} Thematic disconnection message
+ * @private
+ */
+function getThematicDisconnectMessage(playerName) {
+  // Use centralized message formatting - FAIL HARD if not available
+  return config.messages.getEvent('playerLeft', { playerName });
+}
+
+/**
+ * Handle host reassignment after disconnect
+ * @param {Object} io - Socket.IO instance
+ * @param {Object} game - Game instance
+ * @param {string} gameCode - Game code
+ * @param {string} playerName - Disconnected player name
+ * @param {boolean} wasHost - Whether the disconnected player was host
+ * @private
+ */
+function handleHostReassignment(io, game, gameCode, playerName, wasHost) {
+  if (wasHost && game.players.size > 0) {
+    const newHostId = Array.from(game.players.keys())[0];
+    game.hostId = newHostId;
+
+    logger.info(`Host ${playerName} disconnected, reassigning to ${gameCode}`);
+
+    // Use centralized messaging for host change - FAIL HARD if not available
+    const hostChangeMessage = config.messages.getEvent('hostChanged', {
+      playerName,
+    });
+
+    io.to(gameCode).emit('hostChanged', {
+      hostId: newHostId,
+      message: hostChangeMessage,
+    });
+  }
+}
+
+/**
+ * Handle game progression checks after disconnect
+ * @param {Object} io - Socket.IO instance
+ * @param {Object} game - Game instance
+ * @param {string} gameCode - Game code
+ * @param {string} playerName - Disconnected player name
+ * @private
+ */
+function handleGameProgressionAfterDisconnect(io, game, gameCode, playerName) {
+  if (game.started) {
+    // Check win conditions first
+    if (gameService.checkGameWinConditions(io, gameCode, playerName)) {
+      // Game ended, already handled in the helper
+      return;
+    }
+
+    // Check if all remaining players have submitted actions
+    if (game.allActionsSubmitted()) {
+      logger.info(
+        `Player disconnect triggered round processing for game ${gameCode}`
+      );
+      // Small delay to ensure UI updates
+      setTimeout(() => {
+        gameService.processGameRound(io, gameCode);
+      }, 500);
+    }
+  }
+}
+
+/**
+ * Handle player reconnection attempt - DISABLED
+ * Reconnection is no longer supported with immediate disconnect system
  * @param {Object} io - Socket.IO instance
  * @param {Object} socket - Client socket
  * @param {string} gameCode - Game code
@@ -306,9 +268,11 @@ function handlePlayerDisconnect(io, socket) {
  * @returns {boolean} Always returns false (reconnection not supported)
  */
 function handlePlayerReconnection(io, socket, gameCode, playerName) {
-  // Reconnection is no longer supported - treat as a new join attempt
+  // Use centralized messaging for reconnection failure - FAIL HARD if not available
+  const reconnectionMessage = config.messages.getError('reconnectionFailed');
+
   socket.emit('errorMessage', {
-    message: 'Reconnection is not supported. Please join a new game.',
+    message: reconnectionMessage,
   });
   return false;
 }

@@ -4,30 +4,21 @@
   "description": "Server for the Warlock multiplayer game",
   "main": "index.js",
   "scripts": {
-    "start": "babel-node index.js",
+    "start": "babel-node index.js --trace-warnings",
     "dev": "nodemon --exec babel-node index.js",
     "dev-regular": "nodemon index.js"
   },
   "dependencies": {
     "cors": "^2.8.5",
     "express": "^5.1.0",
-    "module-alias": "^2.2.3",
     "nodemon": "^3.1.10",
     "socket.io": "^4.8.1"
   },
   "devDependencies": {
+    "module-alias": "^2.2.3",
     "@babel/core": "^7.23.0",
     "@babel/node": "^7.22.0",
     "@babel/preset-env": "^7.23.0",
     "babel-plugin-module-resolver": "^5.0.0"
-  },
-  "_moduleAliases": {
-    "@config": "./config",
-    "@controllers": "./controllers",
-    "@middleware": "./middleware",
-    "@models": "./models",
-    "@services": "./services",
-    "@utils": "./utils",
-    "@shared": "./shared"
   }
 }
