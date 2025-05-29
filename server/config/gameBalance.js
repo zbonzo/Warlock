@@ -9,17 +9,17 @@
 const monster = {
   // Base stats for level 1 monster
   baseHp: 100,
-  baseDamage: 10,
+  baseDamage: 25,
   baseAge: 0,
 
   // Enhanced scaling formulas
-  hpPerLevel: 75, // Increased from 50
+  hpPerLevel: 25, // Increased from 50
   useExponentialScaling: true, // New option for exponential scaling
-  hpScalingMultiplier: 1.5, // 150% scaling rate vs players
+  hpScalingMultiplier: 2, // 150% scaling rate vs players
 
   // Damage scaling with age
   damageScaling: {
-    ageMultiplier: 1, // Damage = baseDamage * (age + ageMultiplier)
+    ageMultiplier: 2, // Damage = baseDamage * (age + ageMultiplier)
     maxAge: null, // null = no age limit
   },
 
@@ -28,6 +28,7 @@ const monster = {
     preferLowestHp: true,
     canAttackInvisible: false,
     fallbackToHighestHp: true,
+    canAttackWarlock: false,
   },
 };
 
@@ -38,7 +39,7 @@ const player = {
   // Armor and damage reduction
   armor: {
     reductionRate: 0.1, // 10% reduction per armor point
-    maxReduction: 0.9, // 90% max damage reduction
+    maxReduction: 0.5, // 90% max damage reduction
     minReduction: 0.0, // 0% min (for negative armor)
   },
 
@@ -69,22 +70,38 @@ const player = {
 const warlock = {
   // Conversion chance calculation
   conversion: {
-    baseChance: 0.15, // Reduced from 0.2
-    maxChance: 0.4, // Reduced from 0.5
-    scalingFactor: 0.25, // Reduced from 0.3
+    baseChance: 0.2, // Reduced from 0.2
+    maxChance: 1.0, // Reduced from 0.5
+    scalingFactor: 0.3, // Reduced from 0.3
 
     // New corruption control options
     preventLevelUpCorruption: false, // Option to disable corruption on level-ups
-    maxCorruptionsPerRound: 2, // Maximum corruptions allowed per round
+    maxCorruptionsPerRound: 1, // Maximum corruptions allowed per round
     maxCorruptionsPerPlayer: 1, // Maximum times a single player can corrupt others per round
-    corruptionCooldown: 2, // Rounds before a player can corrupt again
+    corruptionCooldown: 0, // Rounds before a player can corrupt again
 
     // Modifiers for different scenarios
     aoeModifier: 0.3, // Reduced from 0.5
     randomModifier: 0.3, // Reduced from 0.5
     untargetedModifier: 0.3, // Reduced from 0.5
   },
+  scaling: {
+    enabled: true, // Enable/disable warlock scaling
+    playersPerWarlock: 4, // How many players per additional warlock (4 = every 4 players adds 1 warlock)
+    minimumWarlocks: 1, // Minimum number of warlocks regardless of player count
+    maximumWarlocks: 5, // Maximum number of warlocks regardless of player count
 
+    scalingMethod: 'linear', // 'linear', 'exponential', 'custom'
+
+    customScaling: {
+      1: 1, // 1-3 players = 1 warlock
+      4: 1, // 4-7 players = 1 warlock
+      8: 2, // 8-11 players = 2 warlocks
+      12: 3, // 12-15 players = 3 warlocks
+      16: 4, // 16-19 players = 4 warlocks
+      20: 5, // 20+ players = 5 warlocks
+    },
+  },
   // Win conditions
   winConditions: {
     allWarlocksGone: 'Good', // Good wins if no warlocks left
@@ -97,7 +114,7 @@ const warlock = {
  * Stone Armor mechanics (Dwarf racial)
  */
 const stoneArmor = {
-  initialValue: 10, // Starting stone armor value
+  initialValue: 5, // Starting stone armor value
   degradationPerHit: 1, // Amount lost per hit taken
   minimumValue: -10, // Most negative armor allowed
   allowNegative: true, // Can go negative for vulnerability
@@ -267,6 +284,54 @@ function calculateStats(race, className) {
     damageMod: damageModifier,
   };
 }
+/**
+ * Calculate the number of warlocks needed based on player count
+ * @param {number} playerCount - Total number of players in the game
+ * @returns {number} Number of warlocks that should be active
+ */
+function calculateWarlockCount(playerCount) {
+  const scalingConfig = warlock.scaling;
+
+  if (!scalingConfig.enabled) {
+    return scalingConfig.minimumWarlocks;
+  }
+
+  let warlockCount;
+
+  switch (scalingConfig.scalingMethod) {
+    case 'linear':
+      // Linear scaling: every X players adds 1 warlock
+      warlockCount =
+        Math.floor((playerCount - 1) / scalingConfig.playersPerWarlock) + 1;
+      break;
+
+    case 'exponential':
+      // Exponential scaling (for future use)
+      warlockCount = Math.floor(Math.sqrt(playerCount)) + 1;
+      break;
+
+    case 'custom':
+      // Custom scaling table
+      warlockCount = scalingConfig.minimumWarlocks;
+      for (const [threshold, count] of Object.entries(
+        scalingConfig.customScaling
+      )) {
+        if (playerCount >= parseInt(threshold)) {
+          warlockCount = count;
+        }
+      }
+      break;
+
+    default:
+      warlockCount = scalingConfig.minimumWarlocks;
+  }
+
+  // Apply min/max constraints
+  warlockCount = Math.max(scalingConfig.minimumWarlocks, warlockCount);
+  warlockCount = Math.min(scalingConfig.maximumWarlocks, warlockCount);
+
+  return warlockCount;
+}
 
 module.exports = {
   monster,
@@ -287,4 +352,5 @@ module.exports = {
   calculateMonsterDamage,
   calculateConversionChance,
   calculateDamageReduction,
+  calculateWarlockCount,
 };

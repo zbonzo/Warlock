@@ -92,6 +92,16 @@ module.exports = {
     mistakeRevealed: 'The suspicion about {playerName} was misplaced.',
     innocentAccused: 'An innocent has been accused of corruption.',
   },
+  scaling: {
+    multipleWarlocksAssigned:
+      'Multiple heroes have been corrupted at the start! {count} Warlocks are among you.',
+    warlockCountForPlayers:
+      'With {playerCount} players, {warlockCount} Warlock(s) have been chosen.',
+    rebalancingWarlock:
+      'The balance of power shifts... A new Warlock emerges due to changing numbers.',
+    rebalancingComplete:
+      'Game rebalanced: {warlocksAdded} new Warlock(s) added due to player count changes.',
+  },
 
   // Private warlock messages
   private: {

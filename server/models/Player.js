@@ -673,7 +673,9 @@ class Player {
   processLifeBondHealing(monsterHp, log = []) {
     if (this.race !== 'Satyr' || !this.isAlive || monsterHp <= 0) return 0;
 
-    const healAmount = Math.floor(monsterHp * 0.25);
+    const healAmount = Math.floor(
+      monsterHp * this.racialAbility?.params?.healingPercent
+    );
     const actualHeal = Math.min(healAmount, this.maxHp - this.hp);
 
     if (actualHeal > 0) {

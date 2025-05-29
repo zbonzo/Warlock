@@ -192,14 +192,17 @@ class MonsterController {
       config.gameBalance.monster.targeting.canAttackInvisible;
     const fallbackToHighestHp =
       config.gameBalance.monster.targeting.fallbackToHighestHp;
+    const canAttackWarlock =
+      config.gameBalance.monster.targeting.canAttackWarlock;
 
-    // Get all visible players
+    // Get all non-warlock visible players
     const visiblePlayers = Array.from(this.players.values()).filter(
       (p) =>
         p.isAlive &&
         (!p.hasStatusEffect ||
           !p.hasStatusEffect('invisible') ||
-          canAttackInvisible)
+          canAttackInvisible) &&
+        (canAttackWarlock || !p.isWarlock)
     );
 
     // If no visible targets, return null

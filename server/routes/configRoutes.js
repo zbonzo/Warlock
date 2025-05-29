@@ -99,4 +99,28 @@ router.get('/racial-abilities', (req, res) => {
   res.json(racialAbilities);
 });
 
+/**
+ * GET /api/config/warlock-scaling
+ * Returns warlock scaling configuration for UI
+ */
+router.get('/warlock-scaling', (req, res) => {
+  const scalingConfig = config.gameBalance.warlock.scaling;
+
+  res.json({
+    enabled: scalingConfig.enabled,
+    playersPerWarlock: scalingConfig.playersPerWarlock,
+    minimumWarlocks: scalingConfig.minimumWarlocks,
+    maximumWarlocks: scalingConfig.maximumWarlocks,
+    scalingMethod: scalingConfig.scalingMethod,
+    // Include examples of warlock counts for different player counts
+    examples: {
+      4: config.gameBalance.calculateWarlockCount(4),
+      8: config.gameBalance.calculateWarlockCount(8),
+      12: config.gameBalance.calculateWarlockCount(12),
+      16: config.gameBalance.calculateWarlockCount(16),
+      20: config.gameBalance.calculateWarlockCount(20),
+    },
+  });
+});
+
 module.exports = router;

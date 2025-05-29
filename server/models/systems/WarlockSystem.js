@@ -130,28 +130,100 @@ class WarlockSystem {
   }
 
   /**
-   * Assign the initial warlock randomly
-   * @param {string|null} preferredPlayerId - Preferred player ID to make warlock
-   * @returns {Object|null} The assigned warlock player or null if failed
+   * Assign initial warlocks based on player count scaling
+   * @param {Array} preferredPlayerIds - Optional array of preferred player IDs
+   * @returns {Array} Array of assigned warlock players
+   */
+  assignInitialWarlocks(preferredPlayerIds = []) {
+    const playerIds = Array.from(this.players.keys());
+    const alivePlayerCount = this.gameStateUtils.getAlivePlayers().length;
+
+    if (playerIds.length === 0) return [];
+
+    // Calculate how many warlocks we need based on player count
+    const requiredWarlocks =
+      config.gameBalance.calculateWarlockCount(alivePlayerCount);
+
+    logger.info(
+      `Assigning ${requiredWarlocks} warlocks for ${alivePlayerCount} players`
+    );
+
+    const assignedWarlocks = [];
+    const availablePlayerIds = [...playerIds];
+
+    // First, try to assign preferred players as warlocks
+    for (const preferredId of preferredPlayerIds) {
+      if (assignedWarlocks.length >= requiredWarlocks) break;
+
+      if (availablePlayerIds.includes(preferredId)) {
+        const warlock = this.players.get(preferredId);
+        if (warlock && warlock.isAlive) {
+          warlock.isWarlock = true;
+          assignedWarlocks.push(warlock);
+
+          // Remove from available list
+          const index = availablePlayerIds.indexOf(preferredId);
+          availablePlayerIds.splice(index, 1);
+
+          logger.info(`Assigned preferred player ${warlock.name} as warlock`);
+        }
+      }
+    }
+
+    // Then, randomly assign remaining warlocks
+    while (
+      assignedWarlocks.length < requiredWarlocks &&
+      availablePlayerIds.length > 0
+    ) {
+      const randomIndex = Math.floor(Math.random() * availablePlayerIds.length);
+      const chosenId = availablePlayerIds[randomIndex];
+      const warlock = this.players.get(chosenId);
+
+      if (warlock && warlock.isAlive) {
+        warlock.isWarlock = true;
+        assignedWarlocks.push(warlock);
+
+        logger.info(`Randomly assigned player ${warlock.name} as warlock`);
+      }
+
+      // Remove from available list
+      availablePlayerIds.splice(randomIndex, 1);
+    }
+
+    // Update warlock count
+    this.numWarlocks = assignedWarlocks.length;
+
+    logger.info(`Successfully assigned ${this.numWarlocks} initial warlocks`);
+    return assignedWarlocks;
+  }
+
+  /**
+   * DEPRECATED: Use assignInitialWarlocks instead
+   * Kept for backward compatibility
    */
   assignInitialWarlock(preferredPlayerId = null) {
-    const playerIds = Array.from(this.players.keys());
-    if (playerIds.length === 0) return null;
+    const preferredIds = preferredPlayerId ? [preferredPlayerId] : [];
+    const warlocks = this.assignInitialWarlocks(preferredIds);
+    return warlocks.length > 0 ? warlocks[0] : null;
+  }
 
-    let chosenId = preferredPlayerId;
-    if (!chosenId || !this.players.has(chosenId)) {
-      chosenId = playerIds[Math.floor(Math.random() * playerIds.length)];
-    }
+  /**
+   * Get warlock scaling information for current player count (for debugging/stats)
+   * @returns {Object} Scaling information
+   */
+  getWarlockScalingInfo() {
+    const alivePlayerCount = this.gameStateUtils.getAlivePlayers().length;
+    const currentWarlockCount = this.countAliveWarlocks();
+    const initialRequiredCount =
+      config.gameBalance.calculateWarlockCount(alivePlayerCount);
 
-    const warlock = this.players.get(chosenId);
-    if (warlock) {
-      warlock.isWarlock = true;
-      this.numWarlocks = 1;
-      logger.info(`Player ${warlock.name} assigned as initial warlock`);
-      return warlock;
-    }
-
-    return null;
+    return {
+      currentPlayerCount: alivePlayerCount,
+      currentWarlockCount: currentWarlockCount,
+      initialRequiredCount: initialRequiredCount,
+      scalingEnabled: config.gameBalance.warlock.scaling.enabled,
+      playersPerWarlock: config.gameBalance.warlock.scaling.playersPerWarlock,
+    };
   }
 
   /**

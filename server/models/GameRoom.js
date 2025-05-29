@@ -165,13 +165,24 @@ class GameRoom {
   }
 
   /**
-   * Assign the initial warlock
-   * @param {string|null} pref - Preferred player ID to make warlock
+   * Assign initial warlocks with scaling
+   * @param {Array} preferredPlayerIds - Optional preferred player IDs
    */
-  assignInitialWarlock(pref = null) {
-    this.systems.warlockSystem.assignInitialWarlock(pref);
+  assignInitialWarlock(preferredPlayerIds = []) {
+    // Convert single ID to array for backward compatibility
+    const preferredIds = Array.isArray(preferredPlayerIds)
+      ? preferredPlayerIds
+      : preferredPlayerIds
+        ? [preferredPlayerIds]
+        : [];
+
+    const assignedWarlocks =
+      this.systems.warlockSystem.assignInitialWarlocks(preferredIds);
+
     // Set phase to action when game starts
     this.phase = 'action';
+
+    return assignedWarlocks;
   }
 
   /**

@@ -79,11 +79,28 @@ function handleStartGame(io, socket, gameCode) {
   // Refresh game timeout
   gameService.refreshGameTimeout(io, gameCode);
 
-  // Start the game
+  // Start the game with scaled warlock assignment
   game.started = true;
   game.round = 1;
-  game.assignInitialWarlock();
-  logger.info(`Game ${gameCode} started. Warlock assigned.`);
+
+  const assignedWarlocks = game.assignInitialWarlock(); // Now returns array
+  const warlockCount = assignedWarlocks.length;
+  const playerCount = game.players.size;
+
+  logger.info(
+    `Game ${gameCode} started with ${warlockCount} warlocks for ${playerCount} players`
+  );
+
+  // Create appropriate start message based on warlock count
+  let warlockMessage;
+  if (warlockCount === 1) {
+    warlockMessage = 'A Warlock has been chosen and walks among you.';
+  } else {
+    warlockMessage = messages.formatMessage(
+      messages.getAbilityMessage('warlock', 'scaling.multipleWarlocksAssigned'),
+      { count: warlockCount }
+    );
+  }
 
   // Inform all players that the game has started
   io.to(gameCode).emit('gameStarted', {
@@ -93,6 +110,11 @@ function handleStartGame(io, socket, gameCode) {
       hp: game.monster.hp,
       maxHp: game.monster.maxHp,
       nextDamage: config.gameBalance.calculateMonsterDamage(game.monster.age),
+    },
+    warlockInfo: {
+      count: warlockCount,
+      message: warlockMessage,
+      scalingEnabled: config.gameBalance.warlock.scaling.enabled,
     },
   });
 

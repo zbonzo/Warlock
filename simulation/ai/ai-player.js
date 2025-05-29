@@ -377,10 +377,6 @@ class BalancedStrategy extends BaseAIStrategy {
  * @returns {BaseAIStrategy} AI strategy instance
  */
 function createAIStrategy(race, className) {
-  // Race-based strategies (these override class-based ones)
-  if (race === 'Orc' && className === 'Barbarian') {
-    return new BarbarianStrategy();
-  }
   if (race === 'Elf') {
     return new ElfStrategy();
   }

@@ -28,7 +28,7 @@ const availableClasses = [
  */
 const classCategories = {
   Melee: ['Warrior', 'Assassin', 'Alchemist', 'Barbarian'], // Added Barbarian to Melee
-  Caster: ['Pyromancer', 'Wizard', 'Priest', 'Oracle', 'Shaman', 'Druid'], // Removed Seer
+  Caster: ['Pyromancer', 'Wizard', 'Priest', 'Oracle', 'Shaman', 'Druid'],
   Ranged: ['Gunslinger', 'Tracker'],
 };
 
@@ -52,9 +52,9 @@ const classAttributes = {
     description: 'Fire-based caster with high damage output and area effects.',
   },
   Wizard: {
-    hpModifier: 0.9, // Low HP
+    hpModifier: 1.0, // Low HP
     armorModifier: 1.5, // Some magical protection
-    damageModifier: 1.1, // Higher damage
+    damageModifier: 1.3, // Higher damage
     description: 'Versatile spellcaster with powerful arcane abilities.',
   },
   Assassin: {
@@ -84,7 +84,7 @@ const classAttributes = {
       'Divination-focused class that can reveal warlocks and manipulate fate.',
   },
   Barbarian: {
-    hpModifier: 1.8, // High HP
+    hpModifier: 1.4, // High HP
     armorModifier: 1.0, // No armor bonus
     damageModifier: 1.4, // High damage
     description: 'Savage warrior who trades safety for overwhelming offense.',
@@ -109,8 +109,8 @@ const classAttributes = {
   },
   Druid: {
     hpModifier: 1.2, // More HP
-    armorModifier: 1.4, // Some natural protection
-    damageModifier: 0.8, // Slightly decreased damage
+    armorModifier: 1.8, // Some natural protection
+    damageModifier: 3.0, // Slightly decreased damage
     description: 'Nature-focused class with healing and crowd control.',
   },
 };

@@ -23,12 +23,12 @@ async function runSingleGame() {
 
   // Add the 6 specified players
   const players = [
-    { name: 'Alchemist', race: 'Human', class: 'Alchemist' },
-    { name: 'Oracle', race: 'Dwarf', class: 'Oracle' },
+    { name: 'Warrior', race: 'Human', class: 'Warrior' },
+    { name: 'Priest', race: 'Dwarf', class: 'Priest' },
     { name: 'Wizard', race: 'Elf', class: 'Wizard' },
-    { name: 'Druid', race: 'Orc', class: 'Druid' },
-    { name: 'Shaman', race: 'Satyr', class: 'Shaman' },
-    { name: 'Assassin', race: 'Skeleton', class: 'Assassin' },
+    { name: 'Barbarian', race: 'Orc', class: 'Barbarian' },
+    { name: 'Oracle', race: 'Satyr', class: 'Oracle' },
+    { name: 'Pyromancer', race: 'Skeleton', class: 'Pyromancer' },
   ];
 
   // Add players to game

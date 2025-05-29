@@ -16,95 +16,91 @@ const availableRaces = ['Human', 'Dwarf', 'Elf', 'Orc', 'Satyr', 'Skeleton'];
  */
 const raceAttributes = {
   Human: {
-    hpModifier: 1.3, // Standard HP
-    armorModifier: 1.0, // No armor bonus
-    damageModifier: 1.0, // Standard damage
+    hpModifier: 1.3,
+    armorModifier: 1.0,
+    damageModifier: 1.0,
     compatibleClasses: [
-      'Warrior',
-      'Wizard',
-      'Assassin',
-      'Alchemist',
-      'Priest',
-      'Gunslinger',
-      'Barbarian', // Added Barbarian
+      'Warrior', // Thematic Score: 8 (Adaptable, soldier-like)
+      'Assassin', // Thematic Score: 8 (Versatile, can be stealthy)
+      'Alchemist', // Thematic Score: 8 (Intellectual, scientific curiosity)
+      'Priest', // Thematic Score: 8 (Common spiritualism)
+      'Gunslinger', // Thematic Score: 7 (Adaptable to new tech, skilled marksmanship)
+      'Druid', // Thematic Score: 8 (Adaptable, can learn arcane arts) - ADDED to balance Wizard class
     ],
     description:
       'Adaptable and versatile, humans can learn abilities from other classes.',
   },
   Dwarf: {
-    hpModifier: 1.5, // More HP
-    armorModifier: 4.0, // Significant armor bonus
-    damageModifier: 0.9, // Slightly reduced damage
+    hpModifier: 1.5,
+    armorModifier: 4.0,
+    damageModifier: 0.9,
     compatibleClasses: [
-      'Warrior',
-      'Pyromancer',
-      'Priest',
-      'Oracle',
-      'Shaman',
-      'Gunslinger',
-      'Barbarian', // Added Barbarian
+      'Warrior', // Thematic Score: 9 (Sturdy, martial, axe-wielding)
+      'Oracle', // Thematic Score: 8 (Ancient knowledge, prophecies from stone)
+      'Shaman', // Thematic Score: 8 (Earth connection, ancestral spirits of mountains)
+      'Barbarian', // Thematic Score: 9 (Hardy, fierce, unyielding)
+      'Pyromancer', // Thematic Score: 8 (Forge fires, molten earth magic)
+      'Priest', // Thematic Score: 8 (Devout, traditional)
     ],
     description:
       'Hardy and resilient, dwarves have stone armor that degrades with damage taken.',
   },
   Elf: {
-    hpModifier: 1.0, // Less HP
-    armorModifier: 1.0, // No armor bonus
-    damageModifier: 1.2, // Increased damage
+    hpModifier: 1.0,
+    armorModifier: 1.0,
+    damageModifier: 1.2,
     compatibleClasses: [
-      'Wizard',
-      'Assassin',
-      'Alchemist',
-      'Tracker',
-      'Druid',
-      // Removed Seer
+      'Assassin', // Thematic Score: 9 (Agile, stealthy, cunning)
+      'Alchemist', // Thematic Score: 8 (Nature-attuned, herbalism)
+      'Wizard', // Thematic Score: 9 (Inherent magical talent, arcane grace)
+      'Tracker', // Thematic Score: 9 (Keen senses, agile, wilderness survival)
+      'Druid', // Thematic Score: 10 (Deep connection to nature, guardian of forests)
+      'Shaman', // Thematic Score: 8 (Nature spirits, primal magic)
     ],
     description:
       'When wounded (below 50% HP), attacks against you reveal if the attacker is corrupted.',
   },
   Orc: {
-    hpModifier: 1.2, // More HP
-    armorModifier: 1.0, // No armor bonus
-    damageModifier: 1.6, // Significantly increased damage
+    hpModifier: 1.2,
+    armorModifier: 1.0,
+    damageModifier: 1.6,
     compatibleClasses: [
-      'Pyromancer',
-      'Oracle',
-      'Shaman',
-      'Tracker',
-      'Druid',
-      'Barbarian', // Added Barbarian
-      // Removed Seer
+      'Warrior', // Thematic Score: 10 (Brutal, frontline, iconic warrior)
+      'Barbarian', // Thematic Score: 10 (Primal, rage-filled, fierce)
+      'Oracle', // Thematic Score: 7 (Primal visions, shamanistic elements)
+      'Tracker', // Thematic Score: 8 (Hunter, brutal efficiency)
+      'Gunslinger', // Thematic Score: 7 (Brutal efficiency, can be ranged)
+      'Pyromancer', // Thematic Score: 9 (Destructive primal magic, fiery temperament)
     ],
     description:
       'Fierce and mighty, orcs can boost their attack power at the cost of health.',
   },
   Satyr: {
-    hpModifier: 1.3, // Standard HP
-    armorModifier: 1.0, // No armor bonus
-    damageModifier: 1.2, // Standard damage
+    hpModifier: 0.1,
+    armorModifier: 0.1,
+    damageModifier: 0.1,
     compatibleClasses: [
-      'Alchemist',
-      'Oracle',
-      'Shaman',
-      'Tracker',
-      'Druid',
-      // Removed Seer
+      'Alchemist', // Thematic Score: 9 (Nature-attuned, herbalism, potion crafting)
+      'Oracle', // Thematic Score: 9 (Nature's wisdom, prophecy)
+      'Shaman', // Thematic Score: 9 (Nature spirits, primal connection)
+      'Tracker', // Thematic Score: 9 (Forest dwelling, keen senses)
+      'Druid', // Thematic Score: 10 (Deep connection to nature, harmonious)
+      'Wizard', // Thematic Score: 7 (Nature magic, less formal than human/elf wizardry) - ADDED to balance Wizard class
     ],
     description:
       "At the end of each round, heal for 25% of the monster's remaining HP.",
   },
   Skeleton: {
-    hpModifier: 0.8, // Less HP
-    armorModifier: 0.8, // No armor bonus
-    damageModifier: 2.0, // Glass Cannon damage
+    hpModifier: 0.8,
+    armorModifier: 0.9,
+    damageModifier: 2.0,
     compatibleClasses: [
-      'Warrior',
-      'Pyromancer',
-      'Wizard',
-      'Assassin',
-      'Priest',
-      'Gunslinger',
-      'Barbarian', // Added Barbarian
+      'Assassin', // Thematic Score: 8 (Silent, unnerving, hard to detect)
+      'Priest', // Thematic Score: 6 (Dark priest, necromancy, antithetical to traditional holy themes)
+      'Wizard', // Thematic Score: 8 (Dark magic, necromancy)
+      'Gunslinger', // Thematic Score: 7 (Unfeeling aim, precise)
+      'Barbarian', // Thematic Score: 6 (Undead rage, less primal than living barbarians)
+      'Pyromancer', // Thematic Score: 7 (Cold fire, destructive magic, less vital than living pyromancers)
     ],
     description:
       'Undead and resilient, skeletons can return to life once after being defeated.',
@@ -177,14 +173,14 @@ const racialAbilities = {
     type: 'lifeBond',
     name: 'Life Bond',
     description:
-      "At the end of each round, heal for 20% of the monster's remaining HP",
+      "At the end of each round, heal for 10% of the monster's remaining HP",
     usageLimit: 'passive',
     maxUses: 0,
     cooldown: 0,
     effect: 'lifeBond',
     target: 'Self',
     params: {
-      healingPercent: 0.2,
+      healingPercent: 0.1,
     },
   },
 
