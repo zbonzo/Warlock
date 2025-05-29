@@ -7,11 +7,15 @@
   ],
   "scripts": {
     "dev": "concurrently \"npm:dev:server\" \"npm:dev:client\"",
-    "dev:server": "npm --workspace server run dev",
-    "dev:client": "npm --workspace client start",
-    "build": "npm --workspace client run build",
-    "start": "npm --workspace server run start",
-    "test": "npm test --workspaces"
+    "dev:server": "npm run dev --workspace=server",
+    "dev:client": "npm start --workspace=client",
+    "build": "npm run build --workspace=client",
+    "build:server": "npm run build --workspace=server",
+    "start": "npm run start --workspace=server",
+    "start:server": "npm run start --workspace=server",
+    "start:client": "npm start --workspace=client",
+    "test": "npm test --workspaces",
+    "install:all": "npm ci"
   },
   "devDependencies": {
     "concurrently": "^8.2.0"

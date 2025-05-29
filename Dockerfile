@@ -1,61 +1,54 @@
-# Stage 1: Build the React frontend
-FROM node:24-alpine AS builder_frontend
-WORKDIR /app_frontend
+# Stage 1: Build everything in workspace context
+FROM node:24-alpine AS builder
+WORKDIR /app
 
-# Copy client's package.json and lock file
-COPY client/package.json client/package-lock.json* ./
-RUN npm install
+# Copy workspace configuration first (for better layer caching)
+COPY package.json package-lock.json ./
+COPY client/package.json ./client/
+COPY server/package.json ./server/
 
-# Copy the rest of the client application's source code
-COPY client/ ./
+# Install all dependencies (this layer will be cached if package files don't change)
+RUN npm ci
 
-# Set production environment variables for React build
+# Copy all source code
+COPY client/ ./client/
+COPY server/ ./server/
+
+# Build the React frontend
 ENV NODE_ENV=production
 ENV REACT_APP_API_URL=/api
+RUN npm run build --workspace=client
 
-# Build the client application for production
-RUN npm run build
-
-# Stage 2: Prepare the Node.js backend
-FROM node:24-alpine AS builder_backend
-WORKDIR /app_backend
-
-# Copy backend's package.json and lock file (if they exist)
-COPY server/package.json server/package-lock.json* ./
-# Install backend dependencies (only production if package.json exists)
-RUN if [ -f package.json ]; then npm install --only=production; fi
-
-# Copy the rest of the backend application's source code
-COPY server/ ./
-
-# Stage 3: Final image to run both frontend (via Nginx) and backend
-FROM node:24-alpine
+# Stage 2: Production runtime
+FROM node:24-alpine AS production
 LABEL maintainer="Zachery Bonzo (Zachery@bonzo.dev)"
 LABEL game="Warlock"
 
 ENV NODE_ENV=production
 
-# Install Nginx and Supervisor
+# Install system dependencies
 RUN apk add --no-cache nginx supervisor
 
-# Create a non-root user for the Node.js application
+# Create non-root user early
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup
 
-# Set up directories
-WORKDIR /opt/app
-RUN mkdir -p /opt/app/frontend_build /opt/app/backend \
+# Create directories with proper ownership from the start
+RUN mkdir -p /opt/app/frontend_build /opt/app/workspace \
              /var/log/supervisor /var/log/nginx \
-             /run/nginx # Nginx needs this for its PID file
+             /run/nginx && \
+    chown -R appuser:appgroup /opt/app && \
+    chown -R appuser:appgroup /var/log/supervisor
 
-COPY --from=builder_frontend /app_frontend/build /opt/app/frontend_build
-COPY --from=builder_backend /app_backend /opt/app/backend
+# Copy files with ownership set during copy (much faster than chown after)
+COPY --from=builder --chown=appuser:appgroup /app/client/build /opt/app/frontend_build
+COPY --from=builder --chown=appuser:appgroup /app /opt/app/workspace
 
-RUN chown -R appuser:appgroup /opt/app
-
+# Copy configuration files
 COPY nginx.conf /etc/nginx/http.d/default.conf
 COPY supervisor.conf /etc/supervisord.conf
 
 EXPOSE 80
 EXPOSE 3001
 
+# Use exec form for better signal handling
 CMD ["/usr/bin/supervisord", "-c", "/etc/supervisord.conf"]
