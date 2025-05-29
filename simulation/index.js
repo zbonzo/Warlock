@@ -152,11 +152,11 @@ async function main() {
     } else {
       // Random mode with options
       const options = {
-        minPlayers: 10,
-        maxPlayers: 10,
-        maxRounds: 500,
+        minPlayers: 3,
+        maxPlayers: 20,
+        maxRounds: 50,
         gameOptions: {
-          preferBalancedSetup: false,
+          preferBalancedSetup: true,
           allowDuplicateNames: false,
         },
       };

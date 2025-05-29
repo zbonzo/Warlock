@@ -207,6 +207,12 @@ async function runRandomGame(options = {}) {
     gameOptions
   );
 
+  // Debug: Log player count for first few games
+  if (Math.random() < 0.01) {
+    // 1% of games
+    console.log(`  Generated ${playerConfigs.length} players for this game`);
+  }
+
   // Add players to game
   for (const playerConfig of playerConfigs) {
     const strategy = createAIStrategy(playerConfig.race, playerConfig.class);
@@ -247,6 +253,7 @@ async function runRandomGameBatch(numGames = 50, options = {}) {
     totalGames: numGames,
     winners: { Good: 0, Evil: 0, Draw: 0 },
     playerCountDistribution: {},
+    warlockWinRateByPlayerCount: {}, // Track warlock win % by game size
     averageRounds: 0,
     averageSurvivors: 0,
     averageLevel: 0,
@@ -277,6 +284,28 @@ async function runRandomGameBatch(numGames = 50, options = {}) {
       stats.playerCountDistribution[playerCount] =
         (stats.playerCountDistribution[playerCount] || 0) + 1;
 
+      // Track warlock win rate by player count
+      if (!stats.warlockWinRateByPlayerCount[playerCount]) {
+        stats.warlockWinRateByPlayerCount[playerCount] = {
+          good: 0,
+          evil: 0,
+          draw: 0,
+          total: 0,
+          evilWinRate: 0,
+        };
+      }
+
+      const playerCountStats = stats.warlockWinRateByPlayerCount[playerCount];
+      playerCountStats.total++;
+
+      if (result.winner === 'Good') {
+        playerCountStats.good++;
+      } else if (result.winner === 'Evil') {
+        playerCountStats.evil++;
+      } else {
+        playerCountStats.draw++;
+      }
+
       // Update win rates if not a draw
       if (result.winner !== 'Draw' && result.gameSummary?.players) {
         updateAdvancedWinRates(stats, result.gameSummary, result.winner);
@@ -290,12 +319,19 @@ async function runRandomGameBatch(numGames = 50, options = {}) {
     }
   }
 
-  // Calculate averages
+  // Calculate averages and final rates
   const completedGames = results.length;
   if (completedGames > 0) {
     stats.averageRounds /= completedGames;
     stats.averageSurvivors /= completedGames;
     stats.averageLevel /= completedGames;
+
+    // Calculate warlock win rates by player count
+    Object.keys(stats.warlockWinRateByPlayerCount).forEach((playerCount) => {
+      const data = stats.warlockWinRateByPlayerCount[playerCount];
+      data.evilWinRate =
+        data.total > 0 ? ((data.evil / data.total) * 100).toFixed(1) : '0.0';
+    });
   }
 
   // Convert counts to rates
@@ -310,7 +346,7 @@ async function runRandomGameBatch(numGames = 50, options = {}) {
 }
 
 /**
- * Update win rates with advanced tracking
+ * Update win rates with proper tracking of wins vs total appearances
  * @param {Object} stats - Statistics object
  * @param {Object} gameSummary - Game summary
  * @param {string} winner - Winner (Good/Evil)
@@ -323,41 +359,60 @@ function updateAdvancedWinRates(stats, gameSummary, winner) {
       (winner === 'Good' && !player.isWarlock) ||
       (winner === 'Evil' && player.isWarlock);
 
-    if (isWinner) {
-      // Update class wins
-      stats.classWinRates[player.class] =
-        (stats.classWinRates[player.class] || 0) + 1;
+    // Initialize tracking objects if they don't exist
+    if (!stats.classWinRates[player.class]) {
+      stats.classWinRates[player.class] = { wins: 0, total: 0 };
+    }
+    if (!stats.raceWinRates[player.race]) {
+      stats.raceWinRates[player.race] = { wins: 0, total: 0 };
+    }
 
-      // Update race wins
-      stats.raceWinRates[player.race] =
-        (stats.raceWinRates[player.race] || 0) + 1;
+    const combo = `${player.race} ${player.class}`;
+    if (!stats.combinationWinRates[combo]) {
+      stats.combinationWinRates[combo] = { wins: 0, total: 0 };
+    }
 
-      // Update combination wins
-      const combo = `${player.race} ${player.class}`;
-      stats.combinationWinRates[combo] =
-        (stats.combinationWinRates[combo] || 0) + 1;
-
-      // Update category wins
-      for (const [category, classes] of Object.entries(
-        serverConfig.classCategories
-      )) {
-        if (classes.includes(player.class)) {
-          stats.categoryWinRates[category] =
-            (stats.categoryWinRates[category] || 0) + 1;
-          break;
+    // Find and initialize category
+    let playerCategory = null;
+    for (const [category, classes] of Object.entries(
+      serverConfig.classCategories
+    )) {
+      if (classes.includes(player.class)) {
+        playerCategory = category;
+        if (!stats.categoryWinRates[category]) {
+          stats.categoryWinRates[category] = { wins: 0, total: 0 };
         }
+        break;
+      }
+    }
+
+    // Update totals for everyone
+    stats.classWinRates[player.class].total++;
+    stats.raceWinRates[player.race].total++;
+    stats.combinationWinRates[combo].total++;
+    if (playerCategory) {
+      stats.categoryWinRates[playerCategory].total++;
+    }
+
+    // Update wins only for winners
+    if (isWinner) {
+      stats.classWinRates[player.class].wins++;
+      stats.raceWinRates[player.race].wins++;
+      stats.combinationWinRates[combo].wins++;
+      if (playerCategory) {
+        stats.categoryWinRates[playerCategory].wins++;
       }
     }
   });
 }
 
 /**
- * Convert win counts to rates
+ * Convert win counts to proper win rates
  * @param {Object} stats - Statistics object
  * @param {number} completedGames - Number of completed games
  */
 function convertCountsToRates(stats, completedGames) {
-  // Convert all win rate objects
+  // Convert all win rate objects to show actual win percentages
   const winRateCategories = [
     'classWinRates',
     'raceWinRates',
@@ -367,12 +422,109 @@ function convertCountsToRates(stats, completedGames) {
 
   winRateCategories.forEach((category) => {
     Object.keys(stats[category]).forEach((key) => {
-      const wins = stats[category][key];
+      const data = stats[category][key];
+      const winRate = data.total > 0 ? (data.wins / data.total) * 100 : 0;
+
       stats[category][key] = {
-        wins: wins,
-        rate: ((wins / completedGames) * 100).toFixed(1) + '%',
+        wins: data.wins,
+        total: data.total,
+        rate: winRate.toFixed(1) + '%',
+        winRate: winRate, // For sorting
       };
     });
+  });
+}
+
+/**
+ * Analyze warlock performance by game size
+ * @param {Object} warlockStats - Warlock win rate stats by player count
+ * @returns {Object} Analysis results
+ */
+function analyzeWarlockPerformanceBySize(warlockStats) {
+  const analysis = {
+    bestSize: null,
+    worstSize: null,
+    sizeRecommendations: [],
+    balanceBySize: {},
+  };
+
+  let bestRate = -1;
+  let worstRate = 101;
+
+  Object.entries(warlockStats).forEach(([size, data]) => {
+    const evilRate = parseFloat(data.evilWinRate);
+    const balanceScore = Math.abs(50 - evilRate);
+
+    analysis.balanceBySize[size] = {
+      evilRate: evilRate,
+      balanceScore: balanceScore,
+      rating:
+        balanceScore < 5
+          ? 'Excellent'
+          : balanceScore < 10
+          ? 'Good'
+          : balanceScore < 15
+          ? 'Fair'
+          : 'Poor',
+      games: data.total,
+    };
+
+    if (evilRate > bestRate) {
+      bestRate = evilRate;
+      analysis.bestSize = size;
+    }
+
+    if (evilRate < worstRate) {
+      worstRate = evilRate;
+      analysis.worstSize = size;
+    }
+
+    // Generate recommendations
+    if (balanceScore > 10) {
+      if (evilRate < 40) {
+        analysis.sizeRecommendations.push({
+          size: size,
+          issue: 'Warlocks severely underpowered',
+          suggestion:
+            'Consider increasing corruption chances or reducing good team coordination at this size',
+        });
+      } else if (evilRate > 60) {
+        analysis.sizeRecommendations.push({
+          size: size,
+          issue: 'Warlocks overpowered',
+          suggestion:
+            'Consider reducing corruption chances or improving good team abilities at this size',
+        });
+      }
+    }
+  });
+
+  return analysis;
+}
+/*
+ * @param {Object} aggregatedResults - Results from runRandomGameBatch
+ */
+function printRandomGameResults(aggregatedResults) {
+  const { stats, completedGames } = aggregatedResults;
+
+  console.log('\n' + '='.repeat(60));
+  console.log('RANDOM WARLOCK SIMULATION RESULTS');
+  console.log('='.repeat(60));
+
+  console.log(`\nGames Completed: ${completedGames}/${stats.totalGames}`);
+  if (stats.errors.length > 0) {
+    console.log(`Errors: ${stats.errors.length}`);
+  }
+
+  // Player count distribution
+  console.log('\nPLAYER COUNT DISTRIBUTION:');
+  const sortedPlayerCounts = Object.entries(stats.playerCountDistribution).sort(
+    (a, b) => parseInt(a[0]) - parseInt(b[0])
+  );
+
+  sortedPlayerCounts.forEach(([count, games]) => {
+    const percentage = ((games / completedGames) * 100).toFixed(1);
+    console.log(`  ${count} players: ${games} games (${percentage}%)`);
   });
 }
 
@@ -394,12 +546,55 @@ function printRandomGameResults(aggregatedResults) {
 
   // Player count distribution
   console.log('\nPLAYER COUNT DISTRIBUTION:');
-  Object.entries(stats.playerCountDistribution).forEach(([count, games]) => {
+  const sortedPlayerCounts = Object.entries(stats.playerCountDistribution).sort(
+    (a, b) => parseInt(a[0]) - parseInt(b[0])
+  );
+
+  sortedPlayerCounts.forEach(([count, games]) => {
     const percentage = ((games / completedGames) * 100).toFixed(1);
     console.log(`  ${count} players: ${games} games (${percentage}%)`);
   });
 
-  console.log('\nWIN DISTRIBUTION:');
+  // Warlock win rate by player count
+  console.log('\nWARLOCK WIN RATE BY GAME SIZE:');
+  const sortedWarlockStats = Object.entries(
+    stats.warlockWinRateByPlayerCount
+  ).sort((a, b) => parseInt(a[0]) - parseInt(b[0]));
+
+  sortedWarlockStats.forEach(([playerCount, data]) => {
+    const goodRate = ((data.good / data.total) * 100).toFixed(1);
+    const evilRate = data.evilWinRate;
+    const drawRate = ((data.draw / data.total) * 100).toFixed(1);
+    console.log(
+      `  ${playerCount} players: Good ${goodRate}% | Evil ${evilRate}% | Draw ${drawRate}% (${data.total} games)`
+    );
+  });
+
+  // Analyze warlock performance by size
+  if (Object.keys(stats.warlockWinRateByPlayerCount).length > 1) {
+    const analysis = analyzeWarlockPerformanceBySize(
+      stats.warlockWinRateByPlayerCount
+    );
+
+    console.log('\nGAME SIZE BALANCE ANALYSIS:');
+    Object.entries(analysis.balanceBySize).forEach(([size, data]) => {
+      console.log(
+        `  ${size} players: ${data.evilRate.toFixed(1)}% evil win rate - ${
+          data.rating
+        } balance (${data.balanceScore.toFixed(1)}% deviation)`
+      );
+    });
+
+    if (analysis.sizeRecommendations.length > 0) {
+      console.log('\nGAME SIZE RECOMMENDATIONS:');
+      analysis.sizeRecommendations.forEach((rec) => {
+        console.log(`  ${rec.size} players: ${rec.issue}`);
+        console.log(`    Suggestion: ${rec.suggestion}`);
+      });
+    }
+  }
+
+  console.log('\nOVERALL WIN DISTRIBUTION:');
   console.log(
     `  Good (Heroes): ${stats.winners.Good} (${(
       (stats.winners.Good / completedGames) *
@@ -426,38 +621,42 @@ function printRandomGameResults(aggregatedResults) {
 
   // Category performance
   console.log('\nCATEGORY PERFORMANCE:');
-  Object.entries(stats.categoryWinRates).forEach(([category, data]) => {
-    console.log(`  ${category}: ${data.wins} wins (${data.rate})`);
+  const sortedCategories = Object.entries(stats.categoryWinRates).sort(
+    (a, b) => b[1].winRate - a[1].winRate
+  );
+
+  sortedCategories.forEach(([category, data]) => {
+    console.log(`  ${category}: ${data.wins}/${data.total} (${data.rate})`);
   });
 
   // Top performing classes
-  console.log('\nCLASSES:');
+  console.log('\nTOP PERFORMING CLASSES:');
   const sortedClasses = Object.entries(stats.classWinRates)
-    .sort((a, b) => b[1].wins - a[1].wins)
+    .sort((a, b) => b[1].winRate - a[1].winRate)
     .slice(0, 12);
 
   sortedClasses.forEach(([className, data]) => {
-    console.log(`  ${className}: ${data.wins} wins (${data.rate})`);
+    console.log(`  ${className}: ${data.wins}/${data.total} (${data.rate})`);
   });
 
   // Top performing races
-  console.log('\nRACES:');
+  console.log('\nTOP PERFORMING RACES:');
   const sortedRaces = Object.entries(stats.raceWinRates).sort(
-    (a, b) => b[1].wins - a[1].wins
+    (a, b) => b[1].winRate - a[1].winRate
   );
 
   sortedRaces.forEach(([raceName, data]) => {
-    console.log(`  ${raceName}: ${data.wins} wins (${data.rate})`);
+    console.log(`  ${raceName}: ${data.wins}/${data.total} (${data.rate})`);
   });
 
   // Top combinations
-  console.log('\nRACE/CLASS COMBINATIONS:');
+  console.log('\nTOP RACE/CLASS COMBINATIONS:');
   const sortedCombos = Object.entries(stats.combinationWinRates)
-    .sort((a, b) => b[1].wins - a[1].wins)
-    .slice(0, 36);
+    .sort((a, b) => b[1].winRate - a[1].winRate)
+    .slice(0, 20);
 
   sortedCombos.forEach(([combo, data]) => {
-    console.log(`  ${combo}: ${data.wins} wins (${data.rate})`);
+    console.log(`  ${combo}: ${data.wins}/${data.total} (${data.rate})`);
   });
 
   if (stats.errors.length > 0) {

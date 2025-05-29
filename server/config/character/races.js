@@ -31,9 +31,9 @@ const raceAttributes = {
       'Adaptable and versatile, humans can learn abilities from other classes.',
   },
   Dwarf: {
-    hpModifier: 1.5,
-    armorModifier: 4.0,
-    damageModifier: 0.9,
+    hpModifier: 1.3,
+    armorModifier: 3.0,
+    damageModifier: 0.8,
     compatibleClasses: [
       'Warrior', // Thematic Score: 9 (Sturdy, martial, axe-wielding)
       'Oracle', // Thematic Score: 8 (Ancient knowledge, prophecies from stone)
@@ -76,9 +76,9 @@ const raceAttributes = {
       'Fierce and mighty, orcs can boost their attack power at the cost of health.',
   },
   Satyr: {
-    hpModifier: 0.1,
-    armorModifier: 0.1,
-    damageModifier: 0.1,
+    hpModifier: 1.0,
+    armorModifier: 1.0,
+    damageModifier: 1.0,
     compatibleClasses: [
       'Alchemist', // Thematic Score: 9 (Nature-attuned, herbalism, potion crafting)
       'Oracle', // Thematic Score: 9 (Nature's wisdom, prophecy)
@@ -91,9 +91,9 @@ const raceAttributes = {
       "At the end of each round, heal for 25% of the monster's remaining HP.",
   },
   Skeleton: {
-    hpModifier: 0.8,
-    armorModifier: 0.9,
-    damageModifier: 2.0,
+    hpModifier: 0.9,
+    armorModifier: 1.0,
+    damageModifier: 2.5,
     compatibleClasses: [
       'Assassin', // Thematic Score: 8 (Silent, unnerving, hard to detect)
       'Priest', // Thematic Score: 6 (Dark priest, necromancy, antithetical to traditional holy themes)
@@ -136,8 +136,8 @@ const racialAbilities = {
     effect: 'stoneArmor',
     target: 'Self',
     params: {
-      initialArmor: 10,
-      degradationPerHit: 1,
+      initialArmor: 8,
+      degradationPerHit: 2,
     },
   },
 

@@ -91,15 +91,29 @@ const warlock = {
     minimumWarlocks: 1, // Minimum number of warlocks regardless of player count
     maximumWarlocks: 5, // Maximum number of warlocks regardless of player count
 
-    scalingMethod: 'linear', // 'linear', 'exponential', 'custom'
+    scalingMethod: 'custom', // 'linear', 'exponential', 'custom'
 
     customScaling: {
       1: 1, // 1-3 players = 1 warlock
+      2: 1,
+      3: 1,
       4: 1, // 4-7 players = 1 warlock
+      5: 1,
+      6: 2,
+      7: 2,
       8: 2, // 8-11 players = 2 warlocks
-      12: 3, // 12-15 players = 3 warlocks
-      16: 4, // 16-19 players = 4 warlocks
-      20: 5, // 20+ players = 5 warlocks
+      9: 3,
+      10: 3,
+      11: 3,
+      12: 4, // 12-15 players = 3 warlocks
+      13: 4,
+      14: 4,
+      15: 5,
+      16: 5, // 16-19 players = 4 warlocks
+      17: 5,
+      18: 6,
+      19: 7,
+      20: 7, // 20+ players = 5 warlocks
     },
   },
   // Win conditions

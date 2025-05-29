@@ -39,22 +39,22 @@ const classCategories = {
  */
 const classAttributes = {
   Warrior: {
-    hpModifier: 1.2, // More HP
-    armorModifier: 2.5, // More armor
-    damageModifier: 1.1, // Slightly increased damage
+    hpModifier: 1.1, // More HP
+    armorModifier: 2.0, // More armor
+    damageModifier: 0.9, // Slightly increased damage
     description:
       'Tank class with high health and armor, focused on protection.',
   },
   Pyromancer: {
     hpModifier: 1.0, // Less HP
     armorModifier: 1.0, // No armor bonus
-    damageModifier: 1.2, // High damage
+    damageModifier: 2.5, // High damage
     description: 'Fire-based caster with high damage output and area effects.',
   },
   Wizard: {
-    hpModifier: 1.0, // Low HP
+    hpModifier: 1.1, // Low HP
     armorModifier: 1.5, // Some magical protection
-    damageModifier: 1.3, // Higher damage
+    damageModifier: 1.5, // Higher damage
     description: 'Versatile spellcaster with powerful arcane abilities.',
   },
   Assassin: {
@@ -109,8 +109,8 @@ const classAttributes = {
   },
   Druid: {
     hpModifier: 1.2, // More HP
-    armorModifier: 1.8, // Some natural protection
-    damageModifier: 3.0, // Slightly decreased damage
+    armorModifier: 1.5, // Some natural protection
+    damageModifier: 1.3, // Slightly decreased damage
     description: 'Nature-focused class with healing and crowd control.',
   },
 };
@@ -740,7 +740,7 @@ const classAbilities = {
       category: 'Attack',
       effect: null,
       target: 'Single',
-      params: { damage: 25 },
+      params: { damage: 15 },
       unlockAt: 1,
       order: 5,
       cooldown: 0,
@@ -752,10 +752,10 @@ const classAbilities = {
       category: 'Defense',
       effect: 'shielded',
       target: 'Self',
-      params: { armor: 3, duration: 1 },
+      params: { armor: 2, duration: 1 },
       unlockAt: 2,
       order: 21,
-      cooldown: 0,
+      cooldown: 3,
       flavorText: 'Your skin toughens, becoming as resilient as ancient wood.',
     },
     {
@@ -765,7 +765,7 @@ const classAbilities = {
       effect: 'healingOverTime', // Changed from null to healingOverTime
       target: 'Multi',
       params: {
-        amount: 300, // Total healing over time (will be divided by turns)
+        amount: 250, // Total healing over time (will be divided by turns)
         turns: 3, // Duration in turns
       },
       unlockAt: 3,
@@ -780,10 +780,10 @@ const classAbilities = {
       category: 'Special',
       effect: 'stunned',
       target: 'Multi',
-      params: { chance: 0.5, duration: 1 },
+      params: { chance: 0.25, duration: 2 },
       unlockAt: 4,
       order: 130,
-      cooldown: 3,
+      cooldown: 5,
       flavorText:
         'Summon grasping roots from the earth to bind and hinder your enemies.',
     },
