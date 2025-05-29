@@ -1,0 +1,19 @@
+{
+  "name": "warlock-simulation",
+  "version": "1.0.0",
+  "description": "Warlock game simulation and analysis tools",
+  "main": "index.js",
+  "scripts": {
+    "test": "node index.js 10",
+    "sim": "node index.js",
+    "sim:quick": "node index.js 5",
+    "sim:batch": "node index.js 100"
+  },
+  "dependencies": {
+    "module-alias": "^2.2.3"
+  },
+  "devDependencies": {},
+  "engines": {
+    "node": ">=14.0.0"
+  }
+}

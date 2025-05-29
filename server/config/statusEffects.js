@@ -14,7 +14,7 @@ const poison = {
   },
 
   // Effect behavior
-  stackable: false, // Can multiple poisons stack?
+  stackable: true, // Can multiple poisons stack?
   refreshable: true, // Can poison be refreshed/renewed?
 
   // Interaction with other systems

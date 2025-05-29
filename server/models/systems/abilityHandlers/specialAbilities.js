@@ -1,6 +1,6 @@
 /**
- * @fileoverview Special ability handlers
- * Contains utility, detection, and status-effect abilities
+ * @fileoverview Special ability handlers - FIXED
+ * Contains utility, detection, and status-effect abilities with correct status effect usage
  */
 const config = require('@config');
 const messages = require('@messages');
@@ -267,7 +267,7 @@ function handlePrimalRoar(actor, target, ability, log, systems) {
 }
 
 /**
- * Handler for Blood Frenzy ability (Barbarian) - FIXED
+ * Handler for Blood Frenzy ability (Barbarian)
  * @param {Object} actor - Actor using the ability
  * @param {Object|string} target - Target of the ability
  * @param {Object} ability - Ability configuration
@@ -375,7 +375,7 @@ function handleUnstoppableRage(actor, target, ability, log, systems) {
 }
 
 /**
- * Handler for Spirit Guard ability (Shaman) - FIXED
+ * Handler for Spirit Guard ability (Oracle)
  * @param {Object} actor - Actor using the ability
  * @param {Object|string} target - Target of the ability
  * @param {Object} ability - Ability configuration
@@ -384,11 +384,11 @@ function handleUnstoppableRage(actor, target, ability, log, systems) {
  * @returns {boolean} Whether the ability was successful
  */
 function handleSpiritGuard(actor, target, ability, log, systems) {
-  const armor = ability.params.armor || 3;
-  const counterDamage = ability.params.counterDamage || 5;
-  const duration = ability.params.duration || 2;
+  const armor = ability.params.armor || 2;
+  const counterDamage = ability.params.counterDamage || 25;
+  const duration = ability.params.duration || 1;
 
-  // Apply spirit guard status effect
+  // Apply spirit guard status effect using the correct effect name
   systems.statusEffectManager.applyEffect(
     actor.id,
     'spiritGuard',
@@ -417,7 +417,7 @@ function handleSpiritGuard(actor, target, ability, log, systems) {
 }
 
 /**
- * Handler for Sanctuary of Truth ability (Paladin) - FIXED
+ * Handler for Sanctuary of Truth ability (Oracle)
  * @param {Object} actor - Actor using the ability
  * @param {Object|string} target - Target of the ability
  * @param {Object} ability - Ability configuration
@@ -426,15 +426,15 @@ function handleSpiritGuard(actor, target, ability, log, systems) {
  * @returns {boolean} Whether the ability was successful
  */
 function handleSanctuaryOfTruth(actor, target, ability, log, systems) {
-  const healAmount = ability.params.healAmount || 10;
-  const counterDamage = ability.params.counterDamage || 15;
-  const duration = ability.params.duration || 2;
+  const healAmount = ability.params.amount || 20;
+  const counterDamage = ability.params.counterDamage || 50;
+  const duration = ability.params.duration || 1;
 
   // Heal the actor immediately
   const actualHeal = Math.min(healAmount, actor.maxHp - actor.hp);
   actor.hp += actualHeal;
 
-  // Apply sanctuary status effect
+  // Apply sanctuary status effect using the correct effect name
   systems.statusEffectManager.applyEffect(
     actor.id,
     'sanctuary',
@@ -470,7 +470,7 @@ function handleSanctuaryOfTruth(actor, target, ability, log, systems) {
 }
 
 /**
- * Handler for Control Monster ability (Warlock) - FIXED
+ * Handler for Control Monster ability (Tracker)
  * @param {Object} actor - Actor using the ability
  * @param {Object|string} target - Target to force the monster to attack
  * @param {Object} ability - Ability configuration
@@ -480,7 +480,7 @@ function handleSanctuaryOfTruth(actor, target, ability, log, systems) {
  */
 function handleControlMonster(actor, target, ability, log, systems) {
   // Check if monster is still alive
-  if (!systems.monsterController.monster.isAlive) {
+  if (systems.monsterController.isDead()) {
     const deadMonsterMessage = messages.getAbilityMessage(
       'abilities.special',
       'controlMonsterDeadMonster'
@@ -537,17 +537,16 @@ function handleControlMonster(actor, target, ability, log, systems) {
   );
 
   // Force monster to attack the target with boosted damage
-  const damageBoost = ability.params.damageBoost || 1.5;
-  const boostedDamage = Math.floor(
-    systems.monsterController.monster.damage * damageBoost
-  );
+  const damageBoost = ability.params.damageBoost || 2;
+  const normalDamage = systems.monsterController.calculateNextAttackDamage();
+  const boostedDamage = Math.floor(normalDamage * damageBoost);
 
   // Apply damage to the target
   systems.combatSystem.applyDamageToPlayer(
     target,
     boostedDamage,
     {
-      name: 'Monster',
+      name: 'The Monster',
       id: '__monster__',
     },
     log
@@ -635,7 +634,7 @@ function handleEyeOfFate(actor, target, ability, log, systems) {
     log.push(privateFoundLog);
   } else {
     // Not a warlock - take psychic backlash
-    const backlashDamage = ability.params.backlashDamage || 5;
+    const backlashDamage = ability.params.selfDamageOnFailure || 10;
     actor.hp = Math.max(1, actor.hp - backlashDamage);
 
     const notWarlockMessage = messages.getAbilityMessage(

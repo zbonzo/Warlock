@@ -46,21 +46,21 @@ const classAttributes = {
       'Tank class with high health and armor, focused on protection.',
   },
   Pyromancer: {
-    hpModifier: 0.9, // Less HP
+    hpModifier: 1.0, // Less HP
     armorModifier: 1.0, // No armor bonus
-    damageModifier: 1.3, // High damage
+    damageModifier: 1.2, // High damage
     description: 'Fire-based caster with high damage output and area effects.',
   },
   Wizard: {
-    hpModifier: 0.8, // Low HP
+    hpModifier: 0.9, // Low HP
     armorModifier: 1.5, // Some magical protection
-    damageModifier: 1.2, // Higher damage
+    damageModifier: 1.1, // Higher damage
     description: 'Versatile spellcaster with powerful arcane abilities.',
   },
   Assassin: {
     hpModifier: 0.9, // Less HP
     armorModifier: 1.0, // No armor bonus
-    damageModifier: 1.4, // Very high damage
+    damageModifier: 1.3, // Very high damage
     description: 'Stealth-focused class with high single-target damage.',
   },
   Alchemist: {
@@ -84,15 +84,15 @@ const classAttributes = {
       'Divination-focused class that can reveal warlocks and manipulate fate.',
   },
   Barbarian: {
-    hpModifier: 1.3, // High HP
+    hpModifier: 1.8, // High HP
     armorModifier: 1.0, // No armor bonus
-    damageModifier: 1.3, // High damage
+    damageModifier: 1.4, // High damage
     description: 'Savage warrior who trades safety for overwhelming offense.',
   },
   Shaman: {
-    hpModifier: 1.0, // Standard HP
-    armorModifier: 1.5, // Some spiritual protection
-    damageModifier: 1.0, // Standard damage
+    hpModifier: 1.1, // Standard HP
+    armorModifier: 1.3, // Some spiritual protection
+    damageModifier: 0.9, // Standard damage
     description: 'Elemental caster with healing and lightning abilities.',
   },
   Gunslinger: {
@@ -108,9 +108,9 @@ const classAttributes = {
     description: 'Skilled hunter with traps and precise attacks.',
   },
   Druid: {
-    hpModifier: 1.1, // More HP
-    armorModifier: 1.5, // Some natural protection
-    damageModifier: 0.9, // Slightly decreased damage
+    hpModifier: 1.2, // More HP
+    armorModifier: 1.4, // Some natural protection
+    damageModifier: 0.8, // Slightly decreased damage
     description: 'Nature-focused class with healing and crowd control.',
   },
 };

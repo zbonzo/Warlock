@@ -33,7 +33,7 @@ const raceAttributes = {
   },
   Dwarf: {
     hpModifier: 1.5, // More HP
-    armorModifier: 5.0, // Significant armor bonus
+    armorModifier: 4.0, // Significant armor bonus
     damageModifier: 0.9, // Slightly reduced damage
     compatibleClasses: [
       'Warrior',
@@ -177,14 +177,14 @@ const racialAbilities = {
     type: 'lifeBond',
     name: 'Life Bond',
     description:
-      "At the end of each round, heal for 25% of the monster's remaining HP",
-    usageLimit: 'passive', // Passive ability, always active
+      "At the end of each round, heal for 20% of the monster's remaining HP",
+    usageLimit: 'passive',
     maxUses: 0,
     cooldown: 0,
     effect: 'lifeBond',
     target: 'Self',
     params: {
-      healingPercent: 0.25, // 25% of monster's current HP
+      healingPercent: 0.2,
     },
   },
 
