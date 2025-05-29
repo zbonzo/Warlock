@@ -146,7 +146,8 @@ const events = {
 
   // Player connection
   playerJoined: '{playerName} joined the game.',
-  playerLeft: '{playerName} left the game.',
+  playerLeft:
+    '{playerName} wandered into the forest to discover that there are many more monsters and they were very much unequipped',
   playerDisconnected: '{playerName} temporarily disconnected.',
   playerReconnected: '{playerName} has reconnected.',
   hostChanged: 'Game host changed to {playerName}.',

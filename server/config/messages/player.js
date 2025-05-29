@@ -35,7 +35,8 @@ module.exports = {
   // Player state messages
   state: {
     playerJoined: '{playerName} joined the game.',
-    playerLeft: '{playerName} left the game.',
+    playerLeft:
+      '{playerName} wandered into the forest to discover that there are many more monsters and they were very much unequipped',
     playerDisconnected:
       '{playerName} wandered into the forest to discover that there are many more monsters and they were very much unequipped.',
     playerReconnected: '{playerName} has reconnected.',
