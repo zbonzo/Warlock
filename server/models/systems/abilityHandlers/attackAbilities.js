@@ -73,8 +73,10 @@ function register(registry) {
     },
     ['infernoBlast'] // Exclude abilities with specific handlers
   );
-  // Add explicit handler for Arcane Barrage
+
   registry.registerClassAbility('arcaneBarrage', handleMultiHitAttack);
+  registry.registerClassAbility('twinStrike', handleMultiHitAttack);
+
   registry.registerClassAbility('recklessStrike', handleRecklessStrike);
 
   // Register all vulnerable effect abilities
@@ -754,7 +756,7 @@ function handlePlayerAttack(actor, target, ability, log, systems) {
 }
 
 /**
- * Handler for multi-hit attack abilities
+ * FIXED: Handler for multi-hit attack abilities (both single and multi-target)
  * @param {Object} actor - Actor using the ability
  * @param {Object|string} target - Target of the ability
  * @param {Object} ability - Ability configuration
@@ -785,10 +787,16 @@ function handleMultiHitAttack(actor, target, ability, log, systems) {
   // Get hit parameters
   const hits = ability.params.hits || 1;
 
-  // IMPORTANT FIX: Make sure we get the correct damage per hit
-  // If damagePerHit is specified, use that, otherwise use damage, or fallback to 10
-  const damagePerHit =
-    ability.params.damagePerHit || ability.params.damage || 10;
+  // IMPORTANT FIX: For single-target multi-hit abilities like Twin Strike,
+  // use damage parameter directly, not damagePerHit
+  let damagePerHit;
+  if (ability.params.damagePerHit) {
+    // Multi-target abilities like Arcane Barrage use damagePerHit
+    damagePerHit = ability.params.damagePerHit;
+  } else {
+    // Single-target multi-hit abilities like Twin Strike use damage for each hit
+    damagePerHit = ability.params.damage || 10;
+  }
 
   // Announce the multi-hit attack
   const announceMessage = messages.getAbilityMessage(
@@ -830,16 +838,19 @@ function handleMultiHitAttack(actor, target, ability, log, systems) {
           totalDamage += modifiedDamage;
         }
       } else {
-        // For player target
-        const damageLog = [];
-        systems.combatSystem.applyDamageToPlayer(
-          target,
-          modifiedDamage,
-          actor,
-          damageLog
-        );
+        // For player target - apply damage without additional logging to avoid spam
+        const oldHp = target.hp;
+        const finalDamage = target.calculateDamageReduction(modifiedDamage);
+        target.hp = Math.max(0, target.hp - finalDamage);
+        const actualDamage = oldHp - target.hp;
 
-        // Add hit-specific damage messages to the log
+        // Check if target died
+        if (target.hp <= 0) {
+          target.isAlive = false;
+          systems.combatSystem.handlePotentialDeath(target, actor, log);
+        }
+
+        // Log individual hit damage
         const hitMessage = messages.getAbilityMessage(
           'abilities.attacks',
           'multiHitIndividual'
@@ -848,11 +859,11 @@ function handleMultiHitAttack(actor, target, ability, log, systems) {
           messages.formatMessage(hitMessage, {
             hitNumber: hitCount,
             playerName: actor.name,
-            damage: modifiedDamage,
+            damage: actualDamage,
             targetName: target.name,
           })
         );
-        totalDamage += modifiedDamage;
+        totalDamage += actualDamage;
       }
     } else {
       // Log missed hits
@@ -868,7 +879,7 @@ function handleMultiHitAttack(actor, target, ability, log, systems) {
     }
   }
 
-  // Log the total damage
+  // Log the total damage summary
   if (hitCount > 0) {
     const summaryMessage = messages.getAbilityMessage(
       'abilities.attacks',
@@ -893,7 +904,7 @@ function handleMultiHitAttack(actor, target, ability, log, systems) {
     systems.warlockSystem.attemptConversion(actor, target, log);
   }
 
-  return true;
+  return hitCount > 0;
 }
 
 module.exports = { register };
