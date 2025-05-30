@@ -17,7 +17,11 @@
         "alias": {
           "@config": "../server/config",
           "@models": "../server/models",
-          "@utils": "../server/utils"
+          "@utils": "../server/utils",
+          "@controllers": "../server/controllers",
+          "@middleware": "../server/middleware",
+          "@services": "../server/services",
+          "@shared": "../server/shared"
         }
       }
     ]

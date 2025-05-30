@@ -7,10 +7,15 @@ const AIPlayer = require('./ai-player');
 const WarlockStrategy = require('./warlock-strategy');
 const GoodTeamStrategy = require('./good-strategy');
 const TargetingSystem = require('./targeting');
+const { createThematicAIStrategy } = require('./thematic-ai-strategies');
+const { ThematicSimulatedGameRoom } = require('./thematic-ai-integration');
 
 module.exports = {
   AIPlayer,
   WarlockStrategy,
   GoodTeamStrategy,
-  TargetingSystem
+  TargetingSystem,
+  createThematicAIStrategy,
+  ThematicSimulatedGameRoom,
+  thematicComponents,
 };

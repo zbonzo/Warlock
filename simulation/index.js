@@ -1,14 +1,15 @@
 /**
- * @fileoverview Enhanced simulation entry point with random game support
- * Supports both fixed 6-player games and random compositions
+ * @fileoverview Enhanced simulation entry point with thematic AI support
+ * Supports both fixed 6-player games and random compositions with social deduction
  */
 
 const path = require('path');
 const moduleAlias = require('module-alias');
 
-process.env.LOG_LEVEL = 'ERROR';
+// Set environment to reduce logging
+process.env.LOG_LEVEL = 'INFO';
 
-// Set up module aliases to match server configuration
+// Set up module aliases BEFORE any other imports
 moduleAlias.addAliases({
   '@config': path.resolve(__dirname, '../server/config'),
   '@controllers': path.resolve(__dirname, '../server/controllers'),
@@ -20,35 +21,80 @@ moduleAlias.addAliases({
   '@messages': path.resolve(__dirname, '../server/config/messages'),
 });
 
-// Import simulation modules
+// Import simulation modules AFTER setting up aliases
 const { runMultipleGames, printResults } = require('./runner');
-const {
-  runRandomGameBatch,
-  printRandomGameResults,
-  getCombinationStats,
-  getAllValidCombinations,
-} = require('./random-game-generator');
+
+// Only require thematic AI modules if the mode is thematic/detective/compare
+let thematicModules = null;
+
+function getThematicModules() {
+  if (!thematicModules) {
+    try {
+      const {
+        runThematicGameBatch,
+        runDetectiveMode,
+        runComparisonMode,
+        printThematicGameResults,
+        printDetectiveResults,
+        printComparisonResults,
+      } = require('./enhanced-simulation-runner');
+      thematicModules = {
+        runThematicGameBatch,
+        runDetectiveMode,
+        runComparisonMode,
+        printThematicGameResults,
+        printDetectiveResults,
+        printComparisonResults,
+      };
+    } catch (error) {
+      console.error('Failed to load thematic AI modules:', error.message);
+      console.error(
+        'Make sure thematic-ai-strategies.js and thematic-ai-integration.js are in the ai/ directory'
+      );
+      process.exit(1);
+    }
+  }
+  return thematicModules;
+}
 
 /**
- * Print usage information
+ * Print usage information with thematic AI options
  */
 function printUsage() {
-  console.log('Warlock Game Simulator');
-  console.log('======================');
+  console.log('Enhanced Warlock Game Simulator');
+  console.log('==============================');
   console.log('');
   console.log('Usage:');
   console.log('  node index.js [mode] [number_of_games] [options]');
   console.log('');
   console.log('Modes:');
-  console.log('  fixed   - Run fixed 6-player setup (default)');
-  console.log('  random  - Run random race/class combinations');
-  console.log('  stats   - Show valid race/class combination statistics');
+  console.log(
+    '  fixed      - Run fixed 6-player setup with basic AI (default)'
+  );
+  console.log(
+    '  random     - Run random race/class combinations with basic AI'
+  );
+  console.log('  thematic   - Run games with enhanced thematic AI strategies');
+  console.log(
+    '  detective  - Run thematic AI with detailed social deduction analysis'
+  );
+  console.log('  compare    - Compare basic vs thematic AI performance');
+  console.log('  stats      - Show valid race/class combination statistics');
   console.log('');
   console.log('Examples:');
-  console.log('  node index.js fixed 10     # 10 fixed games');
-  console.log('  node index.js random 50    # 50 random games');
-  console.log('  node index.js stats        # Show combination stats');
-  console.log('  node index.js              # 10 fixed games (default)');
+  console.log('  node index.js thematic 50     # 50 games with thematic AI');
+  console.log(
+    '  node index.js detective 20    # 20 games with detailed AI analysis'
+  );
+  console.log('  node index.js compare 100     # Compare AI strategies');
+  console.log('  node index.js fixed 10        # 10 fixed games, basic AI');
+  console.log('');
+  console.log('Thematic AI Features:');
+  console.log('  • Social deduction and warlock detection');
+  console.log('  • Reputation management and lying');
+  console.log('  • Class-specific strategies and behaviors');
+  console.log('  • Dynamic suspicion tracking');
+  console.log('  • Enhanced decision making');
   console.log('');
 }
 
@@ -56,41 +102,50 @@ function printUsage() {
  * Print combination statistics
  */
 function printCombinationStats() {
-  console.log('Valid Race/Class Combination Statistics');
-  console.log('========================================');
+  try {
+    const {
+      getCombinationStats,
+      getAllValidCombinations,
+    } = require('./random-game-generator');
 
-  const stats = getCombinationStats();
-  const validCombos = getAllValidCombinations();
+    console.log('Valid Race/Class Combination Statistics');
+    console.log('========================================');
 
-  console.log(`\nTotal Valid Combinations: ${stats.totalCombinations}`);
+    const stats = getCombinationStats();
+    const validCombos = getAllValidCombinations();
 
-  console.log('\nBy Category:');
-  Object.entries(stats.byCategory).forEach(([category, count]) => {
-    console.log(`  ${category}: ${count} combinations`);
-  });
+    console.log(`\nTotal Valid Combinations: ${stats.totalCombinations}`);
 
-  console.log('\nBy Race:');
-  Object.entries(stats.byRace).forEach(([race, count]) => {
-    console.log(`  ${race}: ${count} combinations`);
-  });
+    console.log('\nBy Category:');
+    Object.entries(stats.byCategory).forEach(([category, count]) => {
+      console.log(`  ${category}: ${count} combinations`);
+    });
 
-  console.log('\nBy Class:');
-  Object.entries(stats.byClass).forEach(([cls, count]) => {
-    console.log(`  ${cls}: ${count} combinations`);
-  });
+    console.log('\nBy Race:');
+    Object.entries(stats.byRace).forEach(([race, count]) => {
+      console.log(`  ${race}: ${count} combinations`);
+    });
 
-  console.log('\nSample Valid Combinations (first 20):');
-  validCombos.slice(0, 20).forEach((combo, i) => {
-    console.log(`  ${i + 1}. ${combo.race} ${combo.class}`);
-  });
+    console.log('\nBy Class:');
+    Object.entries(stats.byClass).forEach(([cls, count]) => {
+      console.log(`  ${cls}: ${count} combinations`);
+    });
 
-  if (validCombos.length > 20) {
-    console.log(`  ... and ${validCombos.length - 20} more`);
+    console.log('\nSample Valid Combinations (first 20):');
+    validCombos.slice(0, 20).forEach((combo, i) => {
+      console.log(`  ${i + 1}. ${combo.race} ${combo.class}`);
+    });
+
+    if (validCombos.length > 20) {
+      console.log(`  ... and ${validCombos.length - 20} more`);
+    }
+  } catch (error) {
+    console.error('Failed to load random game generator:', error.message);
   }
 }
 
 /**
- * Main entry point
+ * Enhanced main function
  */
 async function main() {
   const args = process.argv.slice(2);
@@ -107,7 +162,9 @@ async function main() {
   } else if (args[0] === 'stats') {
     printCombinationStats();
     return;
-  } else if (['fixed', 'random'].includes(args[0])) {
+  } else if (
+    ['fixed', 'random', 'thematic', 'detective', 'compare'].includes(args[0])
+  ) {
     mode = args[0];
     if (args[1]) {
       numGames = parseInt(args[1]);
@@ -127,18 +184,41 @@ async function main() {
     }
   }
 
-  console.log('Warlock Game Simulator');
-  console.log('======================');
+  console.log('Enhanced Warlock Game Simulator');
+  console.log('==============================');
 
+  // Mode-specific descriptions
   if (mode === 'fixed') {
-    console.log('Fixed 6-Player Test Configuration:');
-    console.log('  Human Alchemist, Dwarf Oracle, Elf Wizard');
-    console.log('  Orc Druid, Satyr Shaman, Skeleton Assassin');
-  } else {
-    console.log('Random Game Configuration:');
+    console.log('Fixed 6-Player Configuration (Basic AI):');
+    console.log('  Human Warrior, Dwarf Priest, Elf Wizard');
+    console.log('  Orc Barbarian, Satyr Oracle, Skeleton Pyromancer');
+    console.log('  Using generic balanced AI strategies');
+  } else if (mode === 'random') {
+    console.log('Random Game Configuration (Basic AI):');
     console.log('  Variable player counts (3-8 players)');
     console.log('  All valid race/class combinations');
-    console.log('  Balanced category representation');
+    console.log('  Using generic balanced AI strategies');
+  } else if (mode === 'thematic') {
+    console.log('Thematic AI Configuration:');
+    console.log('  Enhanced AI with social deduction capabilities');
+    console.log('  • Priests excel at healing and warlock detection');
+    console.log('  • Oracles master information gathering and sanctuary');
+    console.log('  • Barbarians focus on monster combat for self-healing');
+    console.log('  • Assassins use stealth and precision targeting');
+    console.log('  • Trackers use monster control against confirmed warlocks');
+    console.log('  • All classes manage reputation and suspicion dynamically');
+  } else if (mode === 'detective') {
+    console.log('Detective Mode Configuration:');
+    console.log('  Thematic AI with detailed social deduction analysis');
+    console.log('  • Tracks suspicion accuracy and detection patterns');
+    console.log('  • Analyzes reputation management effectiveness');
+    console.log('  • Provides AI improvement recommendations');
+  } else if (mode === 'compare') {
+    console.log('AI Comparison Mode:');
+    console.log('  Direct comparison between basic and thematic AI');
+    console.log('  • Measures strategic improvement');
+    console.log('  • Analyzes social deduction effectiveness');
+    console.log('  • Provides balance recommendations');
   }
   console.log('');
 
@@ -149,62 +229,123 @@ async function main() {
     if (mode === 'fixed') {
       results = await runMultipleGames(numGames);
       printResults(results);
-    } else {
-      // Random mode with options
+    } else if (mode === 'random') {
+      const {
+        runRandomGameBatch,
+        printRandomGameResults,
+      } = require('./random-game-generator');
       const options = {
         minPlayers: 3,
-        maxPlayers: 20,
+        maxPlayers: 8,
         maxRounds: 50,
-        gameOptions: {
-          preferBalancedSetup: true,
-          allowDuplicateNames: false,
-        },
+        gameOptions: { preferBalancedSetup: true, allowDuplicateNames: false },
       };
-
       results = await runRandomGameBatch(numGames, options);
       printRandomGameResults(results);
+    } else if (mode === 'thematic') {
+      const thematic = getThematicModules();
+      results = await thematic.runThematicGameBatch(numGames, {
+        maxRounds: 50,
+      });
+      thematic.printThematicGameResults(results);
+    } else if (mode === 'detective') {
+      const thematic = getThematicModules();
+      results = await thematic.runDetectiveMode(numGames, {
+        maxRounds: 50,
+      });
+      thematic.printDetectiveResults(results);
+    } else if (mode === 'compare') {
+      const thematic = getThematicModules();
+      results = await thematic.runComparisonMode(numGames);
+      thematic.printComparisonResults(results);
     }
 
     const endTime = Date.now();
     const duration = (endTime - startTime) / 1000;
 
     console.log(`\nSimulation completed in ${duration.toFixed(2)} seconds`);
-    console.log(
-      `Average game time: ${(duration / results.completedGames).toFixed(
-        3
-      )} seconds`
-    );
 
-    // Show balance summary
-    const goodWinRate =
-      (results.stats.winners.Good / results.completedGames) * 100;
-    const evilWinRate =
-      (results.stats.winners.Evil / results.completedGames) * 100;
-
-    console.log('\nBALANCE SUMMARY:');
-    console.log(
-      `  Good vs Evil: ${goodWinRate.toFixed(1)}% vs ${evilWinRate.toFixed(1)}%`
-    );
-
-    const balanceScore = Math.abs(50 - goodWinRate);
-    let balanceRating;
-    if (balanceScore < 5) balanceRating = 'Excellent';
-    else if (balanceScore < 10) balanceRating = 'Good';
-    else if (balanceScore < 15) balanceRating = 'Fair';
-    else balanceRating = 'Poor';
-
-    console.log(
-      `  Balance Rating: ${balanceRating} (${balanceScore.toFixed(
-        1
-      )}% deviation from 50/50)`
-    );
-
-    if (mode === 'random') {
-      console.log('\nTo run fixed games: node index.js fixed [number]');
-      console.log('To see combination stats: node index.js stats');
+    if (mode === 'compare') {
+      console.log(
+        `Average game time: ${(
+          duration /
+          (results.basic.completedGames + results.thematic.completedGames)
+        ).toFixed(3)} seconds`
+      );
     } else {
-      console.log('\nTo run random games: node index.js random [number]');
-      console.log('To see combination stats: node index.js stats');
+      console.log(
+        `Average game time: ${(duration / results.completedGames).toFixed(
+          3
+        )} seconds`
+      );
+    }
+
+    // Show balance summary for single-mode runs
+    if (mode !== 'compare' && results.stats) {
+      const goodWinRate =
+        (results.stats.winners.Good / results.completedGames) * 100;
+      const evilWinRate =
+        (results.stats.winners.Evil / results.completedGames) * 100;
+
+      console.log('\nBALANCE SUMMARY:');
+      console.log(
+        `  Good vs Evil: ${goodWinRate.toFixed(1)}% vs ${evilWinRate.toFixed(
+          1
+        )}%`
+      );
+
+      const balanceScore = Math.abs(50 - goodWinRate);
+      let balanceRating;
+      if (balanceScore < 5) balanceRating = 'Excellent';
+      else if (balanceScore < 10) balanceRating = 'Good';
+      else if (balanceScore < 15) balanceRating = 'Fair';
+      else balanceRating = 'Poor';
+
+      console.log(
+        `  Balance Rating: ${balanceRating} (${balanceScore.toFixed(
+          1
+        )}% deviation from 50/50)`
+      );
+
+      // AI-specific insights
+      if (mode === 'thematic' || mode === 'detective') {
+        if (
+          results.stats.suspicionAccuracy &&
+          results.stats.suspicionAccuracy.total > 0
+        ) {
+          const accuracy = (
+            (results.stats.suspicionAccuracy.correct /
+              results.stats.suspicionAccuracy.total) *
+            100
+          ).toFixed(1);
+          console.log(`  AI Detection Accuracy: ${accuracy}%`);
+        }
+        if (results.stats.detectionAttempts !== undefined) {
+          console.log(
+            `  AI Made ${results.stats.detectionAttempts} detection attempts`
+          );
+        }
+      }
+    }
+
+    // Mode-specific suggestions
+    if (mode === 'fixed' || mode === 'random') {
+      console.log('\nTry enhanced AI modes:');
+      console.log('  node index.js thematic [number]   # Social deduction AI');
+      console.log('  node index.js detective [number]  # Detailed AI analysis');
+      console.log(
+        '  node index.js compare [number]    # Compare AI strategies'
+      );
+    } else if (mode === 'thematic') {
+      console.log('\nExplore more AI options:');
+      console.log('  node index.js detective [number]  # Detailed analysis');
+      console.log(
+        '  node index.js compare [number]    # Compare with basic AI'
+      );
+    } else if (mode === 'detective') {
+      console.log('\nTry other modes:');
+      console.log('  node index.js thematic [number]   # Run thematic AI');
+      console.log('  node index.js compare [number]    # Compare strategies');
     }
   } catch (error) {
     console.error('Simulation failed:', error);
@@ -213,10 +354,10 @@ async function main() {
   }
 }
 
-// Export for testing
+// Export for testing and integration
 module.exports = { main };
 
-// Run the simulation
+// Run the simulation if this is the main module
 if (require.main === module) {
   main().catch(console.error);
 }
