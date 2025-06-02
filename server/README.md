@@ -146,7 +146,7 @@ server/
 **Combat Flow**:
 1. All actions submitted simultaneously
 2. Actions execute by `order` property (shields first, then attacks, then healing)
-3. Monster attacks lowest HP visible player  
+3. Monster targets highest threat player (with avoidance rules)
 4. Status effects process (poison damage, effect countdown)
 5. Deaths processed (including Undying resurrection)
 
@@ -154,6 +154,15 @@ server/
 - **Armor**: 10% damage reduction per point, 90% max reduction
 - **Monster Scaling**: Base 100 HP + 25 per level, damage = base × (age + 2)
 - **Player Scaling**: +20% HP and +25% damage per level
+- **Threat**: `((armor × monsterDamage) + totalDamage + healing) × decayRate`
+
+
+**Threat System**:
+- Players generate threat through damage, healing, and abilities
+- High-armor players generate amplified threat when attacking monsters
+- Monster targets highest threat player (with avoidance rules)
+- 25% threat decay per round prevents infinite buildup
+- 50% threat reduction on monster death for repositioning opportunities
 
 ### Development Patterns
 
@@ -210,6 +219,11 @@ messages.formatMessage("Player {playerName} takes {damage} damage", {
 - `models/systems/abilityHandlers/racialAbilities.js` (racial ability implementation)
 - `config/messages/abilities/racial.js` (racial ability messages)
 - `config/character/index.js` (if compatibility changes needed)
+
+### Scenario: "Tanks can't hold aggro effectively"
+**Needs**:
+- `config/gameBalance.js` (increase `armorMultiplier` or reduce `decayRate`)
+- `models/systems/MonsterController.js` (check threat calculation logic)
 
 ---
 
