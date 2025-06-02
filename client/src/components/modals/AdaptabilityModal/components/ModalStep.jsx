@@ -49,3 +49,4 @@ ModalStep.propTypes = {
 };
 
 export default ModalStep;
+

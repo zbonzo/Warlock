@@ -8,18 +8,18 @@
  * @type {Array<string>}
  */
 const availableClasses = [
-  'Warrior',
-  'Pyromancer',
-  'Wizard',
-  'Assassin',
   'Alchemist',
-  'Priest',
-  'Oracle',
-  'Barbarian', // New class added
-  'Shaman',
-  'Gunslinger',
-  'Tracker',
+  'Assassin',
+  'Barbarian',
   'Druid',
+  'Gunslinger',
+  'Oracle',
+  'Priest',
+  'Pyromancer',
+  'Shaman',
+  'Tracker',
+  'Warrior',
+  'Wizard',
 ];
 
 /**

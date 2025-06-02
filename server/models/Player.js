@@ -411,7 +411,7 @@ class Player {
   getEffectiveArmor() {
     let totalArmor = this.armor || 0;
 
-    // Add stone armor for Dwarves
+    // Add stone armor for Rockhewn
     if (this.stoneArmorIntact) {
       totalArmor += this.stoneArmorValue;
     }
@@ -912,4 +912,5 @@ class Player {
 }
 
 module.exports = Player;
+
 

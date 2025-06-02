@@ -7,7 +7,14 @@
  * Available player races
  * @type {Array<string>}
  */
-const availableRaces = ['Artisan', 'Rockhewn', 'Crestfallen', 'Orc', 'Kinfolk', 'Lich'];
+const availableRaces = [
+  'Artisan',
+  'Rockhewn',
+  'Lich',
+  'Orc',
+  'Crestfallen',
+  'Kinfolk',
+];
 
 /**
  * Base attributes for each race
@@ -28,7 +35,7 @@ const raceAttributes = {
       'Druid', // Thematic Score: 8 (Adaptable, can learn arcane arts) - ADDED to balance Wizard class
     ],
     description:
-      'Adaptable and versatile, humans can learn abilities from other classes.',
+      'Adaptable and versatile, artisans can learn abilities from other classes.',
   },
   Rockhewn: {
     hpModifier: 1.3,
@@ -43,22 +50,23 @@ const raceAttributes = {
       'Priest', // Thematic Score: 8 (Devout, traditional)
     ],
     description:
-      'Hardy and resilient, dwarves have stone armor that degrades with damage taken.',
+      'Hardy and resilient, Rockhewn have stone armor that degrades with damage taken.',
   },
-  Crestfallen: {
-    hpModifier: 1.0,
+
+  Lich: {
+    hpModifier: 0.9,
     armorModifier: 1.0,
-    damageModifier: 1.2,
+    damageModifier: 2.5,
     compatibleClasses: [
-      'Assassin', // Thematic Score: 9 (Agile, stealthy, cunning)
-      'Alchemist', // Thematic Score: 8 (Nature-attuned, herbalism)
-      'Wizard', // Thematic Score: 9 (Inherent magical talent, arcane grace)
-      'Tracker', // Thematic Score: 9 (Keen senses, agile, wilderness survival)
-      'Druid', // Thematic Score: 10 (Deep connection to nature, guardian of forests)
-      'Shaman', // Thematic Score: 8 (Nature spirits, primal magic)
+      'Assassin', // Thematic Score: 8 (Silent, unnerving, hard to detect)
+      'Priest', // Thematic Score: 6 (Dark priest, necromancy, antithetical to traditional holy themes)
+      'Wizard', // Thematic Score: 8 (Dark magic, necromancy)
+      'Gunslinger', // Thematic Score: 7 (Unfeeling aim, precise)
+      'Barbarian', // Thematic Score: 6 (Undead rage, less primal than living barbarians)
+      'Pyromancer', // Thematic Score: 7 (Cold fire, destructive magic, less vital than living pyromancers)
     ],
     description:
-      'When wounded (below 50% HP), attacks against you reveal if the attacker is corrupted.',
+      'Undead and resilient, Lich can return to life once after being defeated.',
   },
   Orc: {
     hpModifier: 1.2,
@@ -75,6 +83,22 @@ const raceAttributes = {
     description:
       'Fierce and mighty, orcs can boost their attack power at the cost of health.',
   },
+
+  Crestfallen: {
+    hpModifier: 1.0,
+    armorModifier: 1.0,
+    damageModifier: 1.2,
+    compatibleClasses: [
+      'Assassin', // Thematic Score: 9 (Agile, stealthy, cunning)
+      'Alchemist', // Thematic Score: 8 (Nature-attuned, herbalism)
+      'Wizard', // Thematic Score: 9 (Inherent magical talent, arcane grace)
+      'Tracker', // Thematic Score: 9 (Keen senses, agile, wilderness survival)
+      'Druid', // Thematic Score: 10 (Deep connection to nature, guardian of forests)
+      'Shaman', // Thematic Score: 8 (Nature spirits, primal magic)
+    ],
+    description:
+      'When wounded (below 50% HP), attacks against you reveal if the attacker is corrupted.',
+  },
   Kinfolk: {
     hpModifier: 1.0,
     armorModifier: 1.0,
@@ -89,21 +113,6 @@ const raceAttributes = {
     ],
     description:
       "At the end of each round, heal for 25% of the monster's remaining HP.",
-  },
-  Lich: {
-    hpModifier: 0.9,
-    armorModifier: 1.0,
-    damageModifier: 2.5,
-    compatibleClasses: [
-      'Assassin', // Thematic Score: 8 (Silent, unnerving, hard to detect)
-      'Priest', // Thematic Score: 6 (Dark priest, necromancy, antithetical to traditional holy themes)
-      'Wizard', // Thematic Score: 8 (Dark magic, necromancy)
-      'Gunslinger', // Thematic Score: 7 (Unfeeling aim, precise)
-      'Barbarian', // Thematic Score: 6 (Undead rage, less primal than living barbarians)
-      'Pyromancer', // Thematic Score: 7 (Cold fire, destructive magic, less vital than living pyromancers)
-    ],
-    description:
-      'Undead and resilient, skeletons can return to life once after being defeated.',
   },
 };
 

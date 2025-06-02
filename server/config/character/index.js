@@ -34,3 +34,4 @@ module.exports = {
   getClassAbilitiesByLevel: classes.getClassAbilitiesByLevel,
   isValidCombination: races.isValidCombination
 };
+

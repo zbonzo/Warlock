@@ -42,3 +42,4 @@ StatsPanel.propTypes = {
 };
 
 export default StatsPanel;
+

@@ -124,3 +124,4 @@ export const RANDOM_NAMES = [
   'Hunter',
   'Berserker',
 ];
+

@@ -28,3 +28,4 @@ const playerSettings = {
 };
 
 module.exports = playerSettings;
+

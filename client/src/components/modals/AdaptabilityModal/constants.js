@@ -28,3 +28,4 @@ export const STEPS = {
    * @type {Object}
    */
   export const DEFAULT_CATEGORY = { icon: '📜', color: '#7f8c8d' };
+

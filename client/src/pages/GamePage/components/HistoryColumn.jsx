@@ -314,3 +314,4 @@ HistoryColumn.propTypes = {
 
 export default HistoryColumn;
 
+

@@ -78,3 +78,4 @@ PlayerColumn.propTypes = {
 };
 
 export default PlayerColumn;
+

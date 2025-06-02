@@ -132,3 +132,4 @@ GameTutorialModal.propTypes = {
 };
 
 export default GameTutorialModal;
+

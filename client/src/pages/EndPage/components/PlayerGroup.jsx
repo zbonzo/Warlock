@@ -70,3 +70,4 @@ PlayerGroup.propTypes = {
 };
 
 export default PlayerGroup;
+

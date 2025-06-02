@@ -38,3 +38,4 @@ function validateGameAction(socket, gameCode, shouldBeStarted, requireHost = fal
 module.exports = {
   validateGameAction
 };
+

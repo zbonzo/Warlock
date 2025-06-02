@@ -48,3 +48,4 @@ function checkUnregisteredAbilities(registry) {
 }
 
 module.exports = { registerAbilityHandlers };
+

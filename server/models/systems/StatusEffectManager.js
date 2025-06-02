@@ -457,7 +457,7 @@ class StatusEffectManager {
 
     const poison = player.statusEffects.poison;
 
-    // Process Stone Armor degradation for Dwarves (before applying poison damage)
+    // Process Stone Armor degradation for Rockhewn (before applying poison damage)
     let armorDegradationInfo = null;
     if (player.race === 'Rockhewn' && player.stoneArmorIntact) {
       armorDegradationInfo = player.processStoneArmorDegradation(poison.damage);
@@ -500,4 +500,5 @@ class StatusEffectManager {
 }
 
 module.exports = StatusEffectManager;
+
 

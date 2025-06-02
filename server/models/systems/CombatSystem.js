@@ -62,7 +62,7 @@ class CombatSystem {
     // Initialize armor degradation info
     let armorDegradationInfo = null;
 
-    // Process Stone Armor degradation for Dwarves (before damage calculation)
+    // Process Stone Armor degradation for Rockhewn (before damage calculation)
     if (target.race === 'Rockhewn' && target.stoneArmorIntact) {
       armorDegradationInfo = target.processStoneArmorDegradation(damageAmount);
     }
@@ -656,4 +656,5 @@ class CombatSystem {
 }
 
 module.exports = CombatSystem;
+
 

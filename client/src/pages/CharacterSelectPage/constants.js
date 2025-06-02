@@ -9,10 +9,10 @@
 export const RACES = [
   { id: 'Artisan', label: 'Artisan', icon: '👤' },
   { id: 'Rockhewn', label: 'Rockhewn', icon: '🧔‍♂️' },
-  { id: 'Crestfallen', label: 'Crestfallen', icon: '🧝' },
-  { id: 'Orc', label: 'Orc', icon: '👹' },
-  { id: 'Kinfolk', label: 'Kinfolk', icon: '👺' },
   { id: 'Lich', label: 'Lich', icon: '💀' },
+  { id: 'Orc', label: 'Orc', icon: '👹' },
+  { id: 'Crestfallen', label: 'Crestfallen', icon: '🧝' },
+  { id: 'Kinfolk', label: 'Kinfolk', icon: '👺' },
 ];
 
 /**

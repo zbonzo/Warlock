@@ -89,3 +89,4 @@ ResultsPhase.propTypes = {
 };
 
 export default ResultsPhase;
+

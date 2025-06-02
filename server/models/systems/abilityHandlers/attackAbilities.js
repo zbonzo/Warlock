@@ -969,3 +969,4 @@ function handleMultiHitAttack(actor, target, ability, log, systems) {
 
 module.exports = { register };
 
+

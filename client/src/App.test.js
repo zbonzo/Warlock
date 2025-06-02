@@ -38,3 +38,4 @@ describe('App Component', () => {
     expect(appContainer).toHaveStyle('font-family: var(--font-body)');
   });
 });
+

@@ -56,3 +56,4 @@ AbilityCard.propTypes = {
 };
 
 export default AbilityCard;
+

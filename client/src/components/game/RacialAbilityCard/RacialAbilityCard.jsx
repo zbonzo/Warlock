@@ -149,3 +149,4 @@ RacialAbilityCard.defaultProps = {
 };
 
 export default RacialAbilityCard;
+

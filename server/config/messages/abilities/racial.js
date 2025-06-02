@@ -35,3 +35,4 @@ module.exports = {
     '{playerName} tries to use their racial ability, but it fails.',
 };
 
+

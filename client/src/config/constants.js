@@ -101,10 +101,10 @@ export const ICONS = {
   RACES: {
     Artisan: '👩‍🌾',
     Rockhewn: '🧔‍♂️',
-    Crestfallen: '🧝',
-    Orc: '🧌',
-    Kinfolk: '🐐',
     Lich: '💀',
+    Orc: '🧌',
+    Crestfallen: '🧝',
+    Kinfolk: '🐐',
   },
 
   CLASSES: {

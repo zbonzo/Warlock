@@ -779,3 +779,4 @@ GamePage.propTypes = {
 
 export default GamePage;
 
+

@@ -522,3 +522,4 @@ AdaptabilityModal.propTypes = {
 
 export default AdaptabilityModal;
 
+

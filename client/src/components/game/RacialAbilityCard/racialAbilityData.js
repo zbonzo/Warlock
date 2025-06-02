@@ -75,3 +75,4 @@ export const RACE_TO_ABILITY = {
   export function getRaceColor(race, theme) {
     return RACE_COLORS[race] || (theme ? theme.colors.primary : '#4a2c82');
   }
+

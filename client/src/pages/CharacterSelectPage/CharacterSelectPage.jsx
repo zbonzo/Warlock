@@ -299,3 +299,4 @@ CharacterSelectPage.propTypes = {
 
 export default CharacterSelectPage;
 
+

@@ -144,7 +144,7 @@ class GameRoom {
         logger.debug(`Total effective armor: ${p.getEffectiveArmor()}`);
       }
 
-      // Double-check Undying for Skeletons - ensure it's properly set up
+      // Double-check Undying for Lich - ensure it's properly set up
       if (race === 'Lich') {
         logger.debug(`=== Lich SETUP for ${p.name} ===`);
         logger.debug(`Racial ability:`, racialAbility);
@@ -951,4 +951,5 @@ class GameRoom {
 }
 
 module.exports = { GameRoom };
+
 
