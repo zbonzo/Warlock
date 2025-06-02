@@ -310,13 +310,16 @@ function calculateStats(race, className) {
 
   // Calculate final stats
   const hpModifier =
-    (raceAttributes.hpModifier || 1.0) * (classAttributes.hpModifier || 1.0);
+    ((raceAttributes.hpModifier || 1.0) + (classAttributes.hpModifier || 1.0)) /
+    2;
   const armorModifier =
-    (raceAttributes.armorModifier || 0.0) +
-    (classAttributes.armorModifier || 0.0);
+    ((raceAttributes.armorModifier || 0.0) +
+      (classAttributes.armorModifier || 0.0)) /
+    2;
   const damageModifier =
-    (raceAttributes.damageModifier || 1.0) *
-    (classAttributes.damageModifier || 1.0);
+    ((raceAttributes.damageModifier || 1.0) +
+      (classAttributes.damageModifier || 1.0)) /
+    2;
 
   return {
     maxHp: Math.floor(baseHp * hpModifier),
@@ -412,5 +415,3 @@ module.exports = {
   calculateWarlockCount,
   calculateThreatGeneration,
 };
-
-

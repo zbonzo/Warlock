@@ -23,9 +23,9 @@ const availableRaces = [
  */
 const raceAttributes = {
   Artisan: {
-    hpModifier: 1.3,
-    armorModifier: 1.0,
-    damageModifier: 1.0,
+    hpModifier: 1.2,
+    armorModifier: 1.2,
+    damageModifier: 1.3,
     compatibleClasses: [
       'Warrior', // Thematic Score: 8 (Adaptable, soldier-like)
       'Assassin', // Thematic Score: 8 (Versatile, can be stealthy)
@@ -38,8 +38,8 @@ const raceAttributes = {
       'Adaptable and versatile, artisans can learn abilities from other classes.',
   },
   Rockhewn: {
-    hpModifier: 1.3,
-    armorModifier: 3.0,
+    hpModifier: 1.0,
+    armorModifier: 1.5,
     damageModifier: 0.8,
     compatibleClasses: [
       'Warrior', // Thematic Score: 9 (Sturdy, martial, axe-wielding)
@@ -54,9 +54,9 @@ const raceAttributes = {
   },
 
   Lich: {
-    hpModifier: 0.9,
-    armorModifier: 1.0,
-    damageModifier: 2.5,
+    hpModifier: 0.6,
+    armorModifier: 0.7,
+    damageModifier: 1.6,
     compatibleClasses: [
       'Assassin', // Thematic Score: 8 (Silent, unnerving, hard to detect)
       'Priest', // Thematic Score: 6 (Dark priest, necromancy, antithetical to traditional holy themes)
@@ -69,9 +69,9 @@ const raceAttributes = {
       'Undead and resilient, Lich can return to life once after being defeated.',
   },
   Orc: {
-    hpModifier: 1.2,
-    armorModifier: 1.0,
-    damageModifier: 1.6,
+    hpModifier: 0.9,
+    armorModifier: 0.9,
+    damageModifier: 1.5,
     compatibleClasses: [
       'Warrior', // Thematic Score: 10 (Brutal, frontline, iconic warrior)
       'Barbarian', // Thematic Score: 10 (Primal, rage-filled, fierce)
@@ -85,9 +85,9 @@ const raceAttributes = {
   },
 
   Crestfallen: {
-    hpModifier: 1.0,
-    armorModifier: 1.0,
-    damageModifier: 1.2,
+    hpModifier: 1.15,
+    armorModifier: 1.25,
+    damageModifier: 1.3,
     compatibleClasses: [
       'Assassin', // Thematic Score: 9 (Agile, stealthy, cunning)
       'Alchemist', // Thematic Score: 8 (Nature-attuned, herbalism)
@@ -100,9 +100,9 @@ const raceAttributes = {
       'When wounded (below 50% HP), attacks against you reveal if the attacker is corrupted.',
   },
   Kinfolk: {
-    hpModifier: 1.0,
-    armorModifier: 1.0,
-    damageModifier: 1.0,
+    hpModifier: 1.5,
+    armorModifier: 1.1,
+    damageModifier: 0.8,
     compatibleClasses: [
       'Alchemist', // Thematic Score: 9 (Nature-attuned, herbalism, potion crafting)
       'Oracle', // Thematic Score: 9 (Nature's wisdom, prophecy)
@@ -255,4 +255,3 @@ module.exports = {
   isValidCombination,
   getRacialAbility,
 };
-
