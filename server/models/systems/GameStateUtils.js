@@ -104,6 +104,14 @@ class GameStateUtils {
    * @returns {string|null} Winner ('Good', 'Evil') or null if game continues
    */
   checkWinConditions(numWarlocks, aliveCount) {
+    const pendingResurrections = this.countPendingResurrections();
+
+    if (pendingResurrections > 0) {
+      logger.debug(
+        `Win condition check: ${pendingResurrections} pending resurrections, delaying win condition check`
+      );
+      return null; // Don't end game yet, resurrections are coming
+    }
     // Use win conditions from config
     const winConditions = config.gameBalance.warlock.winConditions;
 
@@ -117,6 +125,36 @@ class GameStateUtils {
 
     // Game continues
     return null;
+  }
+
+  /**
+   * Count players with pending resurrections (Undying abilities)
+   * @returns {number} Number of players who will be resurrected
+   */
+  countPendingResurrections() {
+    let count = 0;
+
+    for (const player of this.players.values()) {
+      if (player.pendingDeath && this.hasActiveUndying(player)) {
+        count++;
+      }
+    }
+
+    return count;
+  }
+
+  /**
+   * Check if a player has an active Undying ability
+   * @param {Object} player - Player to check
+   * @returns {boolean} Whether player will be resurrected
+   */
+  hasActiveUndying(player) {
+    return (
+      player.race === 'Skeleton' &&
+      player.racialEffects &&
+      player.racialEffects.resurrect &&
+      player.racialEffects.resurrect.active
+    );
   }
 
   /**

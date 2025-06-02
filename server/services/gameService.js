@@ -187,6 +187,14 @@ function checkGameWinConditions(io, gameCode, disconnectedPlayerName) {
   const game = games.get(gameCode);
   if (!game) return false;
 
+  const pendingResurrections =
+    game.systems.gameStateUtils.countPendingResurrections();
+  if (pendingResurrections > 0) {
+    logger.debug(
+      `Disconnect win check: ${pendingResurrections} pending resurrections, not ending game`
+    );
+    return false; // Don't end game, resurrections are coming
+  }
   // Check if all warlocks are gone
   if (game.systems.warlockSystem.getWarlockCount() <= 0) {
     io.to(gameCode).emit('roundResult', {

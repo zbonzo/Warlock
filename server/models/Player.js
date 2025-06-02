@@ -618,7 +618,7 @@ class Player {
   }
 
   /**
-   * Set racial ability for player
+   * Set racial ability for player - FIXED for Undying
    * @param {Object} abilityData - Racial ability definition
    */
   setRacialAbility(abilityData) {
@@ -637,24 +637,28 @@ class Player {
 
     // Special handling for different racial abilities
     if (abilityData.type === 'undying') {
+      // FIXED: Properly initialize Undying effect
       this.racialEffects = this.racialEffects || {};
       this.racialEffects.resurrect = {
-        resurrectedHp: abilityData.params.resurrectedHp,
+        resurrectedHp: abilityData.params?.resurrectedHp || 1,
+        active: true, // Mark as active and ready
       };
+
+      logger.debug(
+        `UNDYING SETUP: ${this.name} now has Undying effect:`,
+        this.racialEffects.resurrect
+      );
     } else if (abilityData.type === 'stoneArmor') {
       // Initialize Stone Armor
       this.stoneArmorIntact = true;
       this.stoneArmorValue =
         abilityData.params.initialArmor ||
         config.gameBalance.stoneArmor.initialValue;
-      logger.debug(
-        `${this.name} gains Stone Armor with ${this.stoneArmorValue} armor`
-      );
-      logger.debug(`Total effective armor: ${this.getEffectiveArmor()}`);
     } else {
       this.racialEffects = {};
     }
   }
+
   /**
    * Check if Elf moonbeam is active (wounded condition)
    * @returns {boolean} Whether moonbeam detection is active

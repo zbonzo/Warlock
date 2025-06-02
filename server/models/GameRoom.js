@@ -146,19 +146,23 @@ class GameRoom {
 
       // Double-check Undying for Skeletons - ensure it's properly set up
       if (race === 'Skeleton') {
-        logger.debug(
-          `Skeleton racial ability set for ${p.name}:`,
-          p.racialEffects
-        );
+        logger.debug(`=== SKELETON SETUP for ${p.name} ===`);
+        logger.debug(`Racial ability:`, racialAbility);
+        logger.debug(`Player racial effects after setup:`, p.racialEffects);
 
-        // If not set correctly, set it manually
-        if (!p.racialEffects || !p.racialEffects.resurrect) {
-          logger.debug(`Manually setting up Undying for ${p.name}`);
+        // Double-check that Undying is properly set up
+        if (
+          !p.racialEffects ||
+          !p.racialEffects.resurrect ||
+          !p.racialEffects.resurrect.active
+        ) {
+          logger.warn(`UNDYING SETUP FAILED for ${p.name}, fixing...`);
           p.racialEffects = p.racialEffects || {};
           p.racialEffects.resurrect = {
-            resurrectedHp: racialAbility.params.resurrectedHp || 1,
+            resurrectedHp: racialAbility.params?.resurrectedHp || 1,
+            active: true,
           };
-          logger.debug(`Undying now set:`, p.racialEffects);
+          logger.debug(`UNDYING FIXED:`, p.racialEffects.resurrect);
         }
       }
     }

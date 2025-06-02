@@ -1,13 +1,13 @@
 /**
- * @fileoverview Fixed Combat System with proper armor damage reduction
- * Ensures armor is correctly applied in all damage calculations
+ * @fileoverview Fixed Combat System with proper Undying timing
+ * Ensures Undying resurrection happens AFTER monster attacks, not during damage
  */
 const config = require('@config');
 const logger = require('@utils/logger');
 const messages = require('@messages');
 
 /**
- * CombatSystem handles all combat-related operations with FIXED armor calculation
+ * CombatSystem handles all combat-related operations with FIXED Undying timing
  * Ensures consistent damage calculation and death processing
  */
 class CombatSystem {
@@ -187,14 +187,6 @@ class CombatSystem {
       // Only for player attackers who dealt damage
       this.handleCounterAttacks(target, attacker, log);
     }
-
-    /*
-    // Keen Senses has been removed, but if a future race wants it in the future, we can re-enable this
-    // Handle Keen Senses racial ability for Elves
-    if (isKeenSensesAttack) {
-      this.handleKeenSensesAttack(target, attacker, log);
-    }
-      */
 
     // Handle Elf Moonbeam detection
     if (target.race === 'Elf' && target.isMoonbeamActive() && attacker.id) {
@@ -407,81 +399,33 @@ class CombatSystem {
   }
 
   /**
-   * Handle Keen Senses racial ability attack
-   * @param {Object} target - Target player
-   * @param {Object} attacker - Attacker (player)
-   * @param {Array} log - Event log to append messages to
-   * @private
-   */
-  handleKeenSensesAttack(target, attacker, log) {
-    // Use config for warlock revelation messages
-    const revealMessage = target.isWarlock
-      ? messages.getEvent('warlockRevealed', { playerName: target.name })
-      : messages.getEvent('notWarlock', { playerName: target.name });
-
-    log.push(revealMessage);
-  }
-
-  /**
-   * Handle potential death when HP reaches 0
+   * FIXED: Handle potential death when HP reaches 0 - NO IMMEDIATE RESURRECTION
    * @param {Object} target - Target player
    * @param {Object} attacker - Attacker (player or monster)
    * @param {Array} log - Event log to append messages to
    * @private
    */
   handlePotentialDeath(target, attacker, log) {
-    // Add extensive logging for debugging
-    logger.debug(`Checking potential death for ${target.name}`);
-    logger.debug(
-      `Race: ${target.race}, Has racial ability:`,
-      Boolean(target.racialAbility)
-    );
-    if (target.racialAbility) {
-      logger.debug(`Racial ability type: ${target.racialAbility.type}`);
-    }
-    logger.debug(`Racial effects:`, JSON.stringify(target.racialEffects));
+    logger.debug(`=== DEATH CHECK for ${target.name} ===`);
+    logger.debug(`Race: ${target.race}, HP: ${target.hp}`);
 
-    // Check for Undying racial ability (Skeleton)
-    if (
-      target.race === 'Skeleton' &&
-      target.racialEffects &&
-      target.racialEffects.resurrect
-    ) {
-      // Resurrect the player
-      target.hp = target.racialEffects.resurrect.resurrectedHp || 1;
+    // FIXED: Don't resurrect immediately - just mark for pending death
+    // Undying will be checked during processPendingDeaths() AFTER monster attacks
+    target.pendingDeath = true;
+    target.deathAttacker = attacker.name || 'The Monster';
 
-      const resurrectLog = {
-        type: 'resurrect',
-        public: true,
-        targetId: target.id,
-        message: messages.getEvent('playerResurrected', {
-          playerName: target.name,
-          abilityName: 'Undying',
-        }),
-        privateMessage: 'You were resurrected by Undying.',
-        attackerMessage: `${target.name} avoided death through Undying.`,
-      };
-      log.push(resurrectLog);
-
-      delete target.racialEffects.resurrect;
-    } else {
-      // Mark for pending death
-      target.pendingDeath = true;
-      target.deathAttacker = attacker.name || 'The Monster';
-
-      const deathLog = {
-        type: 'death',
-        public: true,
-        targetId: target.id,
-        attackerId: attacker.id || 'monster',
-        message: messages.getEvent('playerDies', {
-          playerName: target.name,
-        }),
-        privateMessage: `You were killed by ${attacker.name || 'The Monster'}.`,
-        attackerMessage: `You killed ${target.name}.`,
-      };
-      log.push(deathLog);
-    }
+    const deathLog = {
+      type: 'death',
+      public: true,
+      targetId: target.id,
+      attackerId: attacker.id || 'monster',
+      message: messages.getEvent('playerDies', {
+        playerName: target.name,
+      }),
+      privateMessage: `You were killed by ${attacker.name || 'The Monster'}.`,
+      attackerMessage: `You killed ${target.name}.`,
+    };
+    log.push(deathLog);
   }
 
   /**
@@ -516,54 +460,67 @@ class CombatSystem {
   }
 
   /**
-   * Process all pending deaths
+   * FIXED: Process all pending deaths - this is where Undying actually triggers
    * @param {Array} log - Event log to append messages to
    */
   processPendingDeaths(log = []) {
     for (const player of this.players.values()) {
       if (player.pendingDeath) {
-        logger.debug(`Processing pending death for ${player.name}`);
-        logger.debug(
-          `Race: ${player.race}, Has racial ability:`,
-          Boolean(player.racialAbility)
-        );
-        if (player.racialAbility) {
-          logger.debug(`Racial ability type: ${player.racialAbility.type}`);
-        }
-        logger.debug(`Racial effects:`, JSON.stringify(player.racialEffects));
+        logger.debug(`=== PROCESSING PENDING DEATH for ${player.name} ===`);
+        logger.debug(`Race: ${player.race}`);
+        logger.debug(`Has racial effects:`, player.racialEffects);
 
-        // Check if player has Undying effect
+        // FIXED: Check if player has Undying effect - THIS IS WHERE RESURRECTION HAPPENS
         if (
           player.race === 'Skeleton' &&
           player.racialEffects &&
-          player.racialEffects.resurrect
+          player.racialEffects.resurrect &&
+          player.racialEffects.resurrect.active
         ) {
-          // Resurrect the player
-          player.hp = player.racialEffects.resurrect.resurrectedHp || 1;
-
-          log.push(
-            messages.getEvent('playerResurrected', {
-              playerName: player.name,
-              abilityName: 'Undying',
-            })
+          logger.debug(
+            `UNDYING TRIGGERED: Resurrecting ${player.name} AFTER all attacks!`
           );
 
-          delete player.racialEffects.resurrect;
+          // Resurrect the player
+          const resurrectedHp =
+            player.racialEffects.resurrect.resurrectedHp || 1;
+          player.hp = resurrectedHp;
+          player.isAlive = true;
+
+          // Create a resurrection message that overwrites the death message
+          const resurrectLog = {
+            type: 'resurrect',
+            public: true,
+            targetId: player.id,
+            message: `${player.name} refuses to stay down! Undying ability activated.`,
+            privateMessage: 'Your Undying ability saved you from death!',
+            attackerMessage: `${player.name} avoided death through Undying.`,
+          };
+          log.push(resurrectLog);
+
+          // Consume the effect (one-time use)
+          player.racialEffects.resurrect.active = false;
+          player.racialUsesLeft = 0;
+
+          // Clear pending death
           delete player.pendingDeath;
           delete player.deathAttacker;
+
+          logger.debug(
+            `UNDYING SUCCESS: ${player.name} resurrected to ${resurrectedHp} HP AFTER monster attacks`
+          );
         } else {
-          // Player dies
+          // Player actually dies permanently
           player.isAlive = false;
           if (player.isWarlock) this.warlockSystem.decrementWarlockCount();
 
-          log.push(
-            messages.getEvent('playerDies', {
-              playerName: player.name,
-            })
-          );
+          // The death message was already logged in handlePotentialDeath
+          // No need to log again
 
           delete player.pendingDeath;
           delete player.deathAttacker;
+
+          logger.debug(`DEATH FINAL: ${player.name} has died permanently`);
         }
       }
     }
@@ -689,6 +646,7 @@ class CombatSystem {
       player.racialEffects = player.racialEffects || {};
       player.racialEffects.resurrect = {
         resurrectedHp: 1, // Default value if params not available
+        active: true,
       };
       logger.debug(`Fixed Undying effect:`, player.racialEffects);
       return true;
