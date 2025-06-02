@@ -482,20 +482,28 @@ class Player {
   }
 
   /**
-   * Apply damage modifiers from player stats and effects
    * @param {number} rawDamage - Base damage value
    * @returns {number} Modified damage
    */
   modifyDamage(rawDamage) {
-    // First apply the normal damage modifier
+    // First apply the normal damage modifier (level progression)
     let modifiedDamage = Math.floor(rawDamage * (this.damageMod || 1.0));
 
-    // Apply blood rage effect if active (Orc racial)
+    // FIXED: Apply blood rage effect if active (Orc racial) - check both old and new properties
     if (this.racialEffects && this.racialEffects.bloodRage) {
       modifiedDamage = modifiedDamage * 2; // Double the already-modified damage
 
       // One-time use - clear the effect
       delete this.racialEffects.bloodRage;
+    }
+    // ALSO check for the newer bloodRageMultiplier property
+    else if (this.racialEffects && this.racialEffects.bloodRageMultiplier) {
+      modifiedDamage = Math.floor(
+        modifiedDamage * this.racialEffects.bloodRageMultiplier
+      );
+
+      // One-time use - clear the effect
+      delete this.racialEffects.bloodRageMultiplier;
     }
 
     // Apply Blood Frenzy passive effect (Barbarian class ability)
@@ -567,9 +575,27 @@ class Player {
    * @returns {number} Healing modifier value
    */
   getHealingModifier() {
-    const baseHealingMod =
-      config.gameBalance.player.healing.modifierBase || 2.0;
-    return baseHealingMod - (this.damageMod || 1.0);
+    const config = require('@config');
+
+    // Get class base damage modifier
+    const classDamageModifier =
+      this.class && config.classAttributes && config.classAttributes[this.class]
+        ? config.classAttributes[this.class].damageModifier || 1.0
+        : 1.0;
+
+    // Calculate pure level scaling (removing class modifier influence)
+    const levelMultiplier = (this.damageMod || 1.0) / classDamageModifier;
+    console.log(
+      'levelMultiplier: ',
+      levelMultiplier,
+      ' = this.damageMod ',
+      this.damageMod,
+      ' / classDamageModifier ',
+      classDamageModifier
+    );
+
+    // Healing scales directly with level progression
+    return levelMultiplier;
   }
 
   /**

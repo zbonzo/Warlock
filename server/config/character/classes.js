@@ -506,7 +506,7 @@ const classAbilities = {
       target: 'Self',
       params: { amount: 20, counterDamage: 50, autoDetect: true },
       unlockAt: 4,
-      order: 10070,
+      order: 2,
       cooldown: 3,
       flavorText:
         'Create a sacred space that heals you and exposes attackers as warlocks.',

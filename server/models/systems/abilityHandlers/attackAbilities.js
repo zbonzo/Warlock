@@ -1,6 +1,6 @@
 /**
- * @fileoverview Attack-related ability handlers
- * Contains damage-dealing class abilities with centralized messaging
+ * @fileoverview FIXED Attack-related ability handlers
+ * Contains damage-dealing class abilities with proper Blood Rage interaction
  */
 const config = require('@config');
 const messages = require('@messages');
@@ -49,9 +49,10 @@ function register(registry) {
     handleVulnerabilityStrike
   );
 
-  // AOE damage abilities
+  // AOE damage abilities - FIXED Inferno Blast
   registry.registerClassAbility('meteorShower', handleAoeDamage);
   registry.registerClassAbility('infernoBlast', handleInfernoBlast);
+  registry.registerClassAbility('chainLightning', handleAoeDamage);
 
   registry.registerClassAbility('shiv', handleVulnerabilityStrike);
 
@@ -71,7 +72,7 @@ function register(registry) {
         systems
       );
     },
-    ['infernoBlast'] // Exclude abilities with specific handlers
+    ['infernoBlast', 'chainLightning'] // Exclude abilities with specific handlers
   );
 
   registry.registerClassAbility('arcaneBarrage', handleMultiHitAttack);
@@ -308,7 +309,7 @@ function handleVulnerabilityStrike(actor, target, ability, log, systems) {
 }
 
 /**
- * Handler for inferno blast ability
+ * FIXED: Handler for inferno blast ability - now properly applies Blood Rage
  * @param {Object} actor - Actor using the ability
  * @param {Object|string} target - Target of the ability
  * @param {Object} ability - Ability configuration
@@ -318,6 +319,7 @@ function handleVulnerabilityStrike(actor, target, ability, log, systems) {
  */
 function handleInfernoBlast(actor, target, ability, log, systems) {
   const rawDamage = Number(ability.params.damage) || 0;
+  // FIXED: Use actor.modifyDamage which includes Blood Rage effects
   const modifiedDamage = actor.modifyDamage(rawDamage);
 
   // Get potential targets (all alive players except self)
@@ -358,7 +360,7 @@ function handleInfernoBlast(actor, target, ability, log, systems) {
   };
 
   for (const potentialTarget of targets) {
-    // Apply direct damage
+    // Apply direct damage (already modified with Blood Rage)
     systems.combatSystem.applyDamageToPlayer(
       potentialTarget,
       modifiedDamage,
@@ -369,6 +371,7 @@ function handleInfernoBlast(actor, target, ability, log, systems) {
     // Apply poison if target is still alive
     if (potentialTarget.isAlive && ability.effect === 'poison') {
       const poisonData = ability.params.poison || {};
+      // FIXED: Also apply damage modifier to poison damage
       const modifiedPoisonDamage = Math.floor(
         (poisonData.damage || poisonDefaults.damage) * (actor.damageMod || 1.0)
       );

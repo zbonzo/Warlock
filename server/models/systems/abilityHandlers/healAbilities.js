@@ -1,6 +1,6 @@
 /**
- * @fileoverview Updated healing ability handlers with Rejuvenation as heal over time
- * Contains all healing-related class abilities including the new HoT Rejuvenation
+ * @fileoverview FIXED healing ability handlers
+ * Contains all healing-related class abilities with proper parameter usage and level scaling
  */
 const config = require('@config');
 const messages = require('@messages');
@@ -17,6 +17,10 @@ const {
 function register(registry) {
   // Basic single-target healing
   registry.registerClassAbility('heal', handleHeal);
+  registry.registerClassAbility('swiftMend', handleHeal);
+  registry.registerClassAbility('bandage', handleHeal);
+  registry.registerClassAbility('cauterize', handleHeal);
+  registry.registerClassAbility('ancestralHeal', handleHeal);
 
   // Register all 'Heal' category abilities with Self target to use the heal handler
   registerAbilitiesByCriteria(
@@ -50,31 +54,24 @@ function register(registry) {
     }
   );
 
-  // Register the NEW rejuvenation as heal over time
+  // Register the FIXED rejuvenation as heal over time
   registry.registerClassAbility('rejuvenation', handleRejuvenationHoT);
 
-  // Register other multi-target healing abilities to use the old multi-heal handler
+  // Register other multi-target healing abilities to use the multi-heal handler
   registerAbilitiesByCriteria(
     registry,
     { category: 'Heal', target: 'Multi' },
     (actor, target, ability, log, systems) => {
       // Skip rejuvenation since it has its own handler now
       if (ability.type !== 'rejuvenation') {
-        return registry.executeClassAbility(
-          'heal',
-          actor,
-          target,
-          ability,
-          log,
-          systems
-        );
+        return handleMultiHeal(actor, target, ability, log, systems);
       }
     }
   );
 }
 
 /**
- * Handler for generic healing abilities
+ * FIXED: Handler for generic healing abilities - now uses ability params and proper healing scaling
  * @param {Object} actor - Actor using the ability
  * @param {Object} target - Target of the healing
  * @param {Object} ability - Ability configuration
@@ -83,8 +80,15 @@ function register(registry) {
  * @returns {boolean} Whether the ability was successful
  */
 function handleHeal(actor, target, ability, log, systems) {
+  // FIXED: Use ability.params.amount from classes.js configuration
   let healAmount = Number(ability.params.amount) || 0;
-  healAmount = Math.floor(healAmount * actor.getHealingModifier());
+
+  // FIXED: Use proper healing scaling instead of damage modifier
+  // Healing should use the healing modifier system from game balance
+  const healingModifier = actor.getHealingModifier
+    ? actor.getHealingModifier()
+    : 1.0;
+  healAmount = Math.floor(healAmount * healingModifier);
 
   // Handle warlock behavior from game balance config
   const rejectWarlockHealing =
@@ -181,7 +185,7 @@ function handleHeal(actor, target, ability, log, systems) {
 }
 
 /**
- * NEW: Handler for Rejuvenation as heal over time effect
+ * FIXED: Handler for Rejuvenation as heal over time effect
  * @param {Object} actor - Actor using the ability
  * @param {Object|string} target - Initial target (may be ignored for multi-target)
  * @param {Object} ability - Ability configuration
@@ -197,14 +201,16 @@ function handleRejuvenationHoT(actor, target, ability, log, systems) {
   const excludeWarlocks =
     config.gameBalance?.player?.healing?.rejectWarlockHealing || true;
 
-  // Get healing parameters
-  let baseHealAmount = Number(ability.params.amount) || 12;
-  const healingMod = actor.getHealingModifier
+  // FIXED: Use ability.params.amount from classes.js configuration
+  let baseHealAmount = Number(ability.params.amount) || 250; // Default from classes.js
+
+  // FIXED: Use proper healing scaling instead of damage modifier
+  const healingModifier = actor.getHealingModifier
     ? actor.getHealingModifier()
     : 1.0;
-  const modifiedHealAmount = Math.floor(baseHealAmount * healingMod);
+  const modifiedHealAmount = Math.floor(baseHealAmount * healingModifier);
 
-  // Determine turns - default to 3 turns for heal over time
+  // FIXED: Get turns from ability params, default to 3
   const healingTurns = ability.params.turns || 3;
   const healPerTurn = Math.floor(modifiedHealAmount / healingTurns);
 
@@ -299,7 +305,7 @@ function handleRejuvenationHoT(actor, target, ability, log, systems) {
 }
 
 /**
- * Legacy multi-target instant healing handler (for other abilities that might need it)
+ * FIXED: Multi-target instant healing handler
  * @param {Object} actor - Actor using the ability
  * @param {Object|string} target - Initial target (may be ignored for multi-target)
  * @param {Object} ability - Ability configuration
@@ -308,8 +314,14 @@ function handleRejuvenationHoT(actor, target, ability, log, systems) {
  * @returns {boolean} Whether the ability was successful
  */
 function handleMultiHeal(actor, target, ability, log, systems) {
+  // FIXED: Use ability.params.amount from classes.js configuration
   let healAmount = Number(ability.params.amount) || 0;
-  healAmount = Math.floor(healAmount * actor.getHealingModifier());
+
+  // FIXED: Use proper healing scaling instead of damage modifier
+  const healingModifier = actor.getHealingModifier
+    ? actor.getHealingModifier()
+    : 1.0;
+  healAmount = Math.floor(healAmount * healingModifier);
 
   // Get potential targets (all alive players)
   const targets = Array.from(systems.players.values()).filter((p) => p.isAlive);

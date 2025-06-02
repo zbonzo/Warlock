@@ -394,7 +394,7 @@ function getHealingText(ability, player) {
   }
 
   const baseHealing = ability.params.amount;
-  const healingMod = Math.max(0.1, 2.0 - player.damageMod);
+  const healingMod = Math.max(player.damageMod);
   const modifiedHealing = Math.floor(baseHealing * healingMod);
 
   if (Math.abs(modifiedHealing - baseHealing) >= 1) {
