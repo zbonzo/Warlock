@@ -381,3 +381,4 @@ EventsLog.propTypes = {
 };
 
 export default EventsLog;
+

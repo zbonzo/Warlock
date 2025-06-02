@@ -63,7 +63,7 @@ class CombatSystem {
     let armorDegradationInfo = null;
 
     // Process Stone Armor degradation for Dwarves (before damage calculation)
-    if (target.race === 'Dwarf' && target.stoneArmorIntact) {
+    if (target.race === 'Rockhewn' && target.stoneArmorIntact) {
       armorDegradationInfo = target.processStoneArmorDegradation(damageAmount);
     }
 
@@ -188,8 +188,8 @@ class CombatSystem {
       this.handleCounterAttacks(target, attacker, log);
     }
 
-    // Handle Elf Moonbeam detection
-    if (target.race === 'Elf' && target.isMoonbeamActive() && attacker.id) {
+    // Handle Crestfallen Moonbeam detection
+    if (target.race === 'Crestfallen' && target.isMoonbeamActive() && attacker.id) {
       const revealMessage = attacker.isWarlock
         ? `${target.name}'s desperate Moonbeam reveals that ${attacker.name} IS corrupted!`
         : `${target.name}'s Moonbeam reveals that ${attacker.name} is pure.`;
@@ -375,7 +375,7 @@ class CombatSystem {
    * @private
    */
   checkImmunityEffects(target, attacker, log) {
-    // Check for Stone Resolve immunity (Dwarf racial)
+    // Check for Stone Resolve immunity (Rockhewn racial)
     if (target.racialEffects && target.racialEffects.immuneNextDamage) {
       // Create an anonymous immunity message
       const immunityLog = {
@@ -472,7 +472,7 @@ class CombatSystem {
 
         // FIXED: Check if player has Undying effect - THIS IS WHERE RESURRECTION HAPPENS
         if (
-          player.race === 'Skeleton' &&
+          player.race === 'Lich' &&
           player.racialEffects &&
           player.racialEffects.resurrect &&
           player.racialEffects.resurrect.active
@@ -637,7 +637,7 @@ class CombatSystem {
   checkAndSetupUndyingIfNeeded(player) {
     if (
       player &&
-      player.race === 'Skeleton' &&
+      player.race === 'Lich' &&
       (!player.racialEffects || !player.racialEffects.resurrect)
     ) {
       logger.debug(
@@ -656,3 +656,4 @@ class CombatSystem {
 }
 
 module.exports = CombatSystem;
+

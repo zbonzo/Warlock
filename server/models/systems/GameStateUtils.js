@@ -150,7 +150,7 @@ class GameStateUtils {
    */
   hasActiveUndying(player) {
     return (
-      player.race === 'Skeleton' &&
+      player.race === 'Lich' &&
       player.racialEffects &&
       player.racialEffects.resurrect &&
       player.racialEffects.resurrect.active
@@ -353,7 +353,7 @@ class GameStateUtils {
   }
 
   /**
-   * Replace player ability (for Human Adaptability)
+   * Replace player ability (for Artisan Adaptability)
    * @param {string} playerId - Player ID
    * @param {string} oldAbilityType - Ability type to replace
    * @param {string} newAbilityType - New ability type
@@ -365,8 +365,8 @@ class GameStateUtils {
     const player = this.players.get(playerId);
     if (!player) return false;
 
-    // Check if the player is Human
-    if (player.race !== 'Human') return false;
+    // Check if the player is Artisan
+    if (player.race !== 'Artisan') return false;
 
     // Find the old ability in player's abilities
     const oldAbilityIndex = player.abilities.findIndex(
@@ -406,3 +406,4 @@ class GameStateUtils {
 }
 
 module.exports = GameStateUtils;
+

@@ -99,12 +99,12 @@ export const UI = {
 // Class and race icons (these are UI-specific and don't need to be fetched)
 export const ICONS = {
   RACES: {
-    Human: '👩‍🌾',
-    Dwarf: '🧔‍♂️',
-    Elf: '🧝',
+    Artisan: '👩‍🌾',
+    Rockhewn: '🧔‍♂️',
+    Crestfallen: '🧝',
     Orc: '🧌',
-    Satyr: '🐐',
-    Skeleton: '💀',
+    Kinfolk: '🐐',
+    Lich: '💀',
   },
 
   CLASSES: {
@@ -157,3 +157,4 @@ export default {
   ICONS,
   STORAGE_KEYS,
 };
+

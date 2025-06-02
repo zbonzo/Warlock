@@ -135,3 +135,4 @@ BattleResultsModal.propTypes = {
 };
 
 export default BattleResultsModal;
+

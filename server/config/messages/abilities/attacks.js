@@ -70,3 +70,4 @@ module.exports = {
   abilityFailed:
     '{playerName} tries to use {abilityName}, but something goes wrong!',
 };
+

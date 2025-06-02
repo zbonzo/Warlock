@@ -52,7 +52,7 @@ module.exports = {
 
   // Armor and protection messages
   armor: {
-    // Stone Armor (Dwarf racial)
+    // Stone Armor (Rockhewn racial)
     stoneArmorDegrades:
       "{playerName}'s Stone Armor cracks and weakens! ({oldValue} → {newValue})",
     stoneArmorDestroyed:
@@ -111,7 +111,7 @@ module.exports = {
     rageFading: "{playerName}'s rage is fading...",
   },
 
-  // Moonbeam detection (Elf racial)
+  // Moonbeam detection (Crestfallen racial)
   moonbeam: {
     warlockDetected:
       "{targetName}'s desperate Moonbeam reveals that {attackerName} IS corrupted!",
@@ -124,7 +124,7 @@ module.exports = {
     moonbeamConfirmedPurity: "{targetName}'s Moonbeam confirmed your purity.",
   },
 
-  // Life Bond (Satyr racial)
+  // Life Bond (Kinfolk racial)
   lifeBond: {
     healing:
       "{playerName}'s Life Bond with the monster heals them for {amount} HP.",
@@ -147,3 +147,4 @@ module.exports = {
     youWereAttackedSimple: '{attackerName} attacked you for {damage} damage.',
   },
 };
+

@@ -150,3 +150,4 @@ module.exports = {
     willRestored: "The Monster's natural will is restored.",
   },
 };
+

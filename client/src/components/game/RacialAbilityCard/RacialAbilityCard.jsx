@@ -105,12 +105,12 @@ function getRaceFromAbilityType(abilityType) {
  */
 function getRaceColor(race, theme) {
   switch (race) {
-    case 'Human': return '#4169E1'; // Royal Blue
-    case 'Dwarf': return '#8B4513'; // Saddle Brown
-    case 'Elf': return '#228B22'; // Forest Green
+    case 'Artisan': return '#4169E1'; // Royal Blue
+    case 'Rockhewn': return '#8B4513'; // Saddle Brown
+    case 'Crestfallen': return '#228B22'; // Forest Green
     case 'Orc': return '#8B0000'; // Dark Red
-    case 'Satyr': return '#9932CC'; // Dark Orchid
-    case 'Skeleton': return '#36454F'; // Charcoal
+    case 'Kinfolk': return '#9932CC'; // Dark Orchid
+    case 'Lich': return '#36454F'; // Charcoal
     default: return theme.colors.primary;
   }
 }

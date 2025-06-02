@@ -99,3 +99,4 @@ module.exports = {
   specialAbilityFailed:
     '{playerName} tries to use {abilityName}, but it fails.',
 };
+

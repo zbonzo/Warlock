@@ -48,3 +48,4 @@ module.exports = {
     '{playerName} tries to use {abilityName}, but the healing fails.',
   healingUsed: '{playerName} uses {abilityName}.',
 };
+

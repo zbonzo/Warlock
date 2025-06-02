@@ -107,7 +107,7 @@ module.exports = {
     sanctuaryActive: 'Sanctuary of Truth is active for {turns} more turn(s).',
   },
 
-  // Stone Armor (Dwarf racial) messages
+  // Stone Armor (Rockhewn racial) messages
   stoneArmor: {
     armorIntact: 'Your Stone Armor is intact with {value} armor value.',
     armorDegraded: 'Your Stone Armor has degraded to {value} armor value.',
@@ -148,3 +148,4 @@ module.exports = {
     gameEnding: 'Game is ending.',
   },
 };
+

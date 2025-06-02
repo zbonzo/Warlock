@@ -818,3 +818,4 @@ module.exports = {
   getClassAbilities,
   getClassAbilitiesByLevel,
 };
+

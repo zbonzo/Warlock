@@ -247,17 +247,17 @@ function getRaceColor(race, theme) {
   if (!race) return getCategoryColor('Racial', theme);
 
   switch (race) {
-    case 'Human':
+    case 'Artisan':
       return '#4169E1'; // Royal Blue
-    case 'Dwarf':
+    case 'Rockhewn':
       return '#8B4513'; // Saddle Brown
-    case 'Elf':
+    case 'Crestfallen':
       return '#228B22'; // Forest Green
     case 'Orc':
       return '#8B0000'; // Dark Red
-    case 'Satyr':
+    case 'Kinfolk':
       return '#9932CC'; // Dark Orchid
-    case 'Skeleton':
+    case 'Lich':
       return '#36454F'; // Charcoal
     default:
       return getCategoryColor('Racial', theme);
@@ -427,7 +427,7 @@ function getPoisonDamageText(poisonDamage, player) {
  * @param {Object} ability - The ability object
  * @param {boolean} isRacial - Whether this is a racial ability
  * @param {Object} player - Player object for calculating modifiers
- * @returns {string} Human-readable description of the ability effect
+ * @returns {string} Artisan-readable description of the ability effect
  */
 function getEffectDescription(ability, isRacial, player) {
   if (isRacial) {
@@ -647,3 +647,4 @@ AbilityCard.propTypes = {
 };
 
 export default AbilityCard;
+

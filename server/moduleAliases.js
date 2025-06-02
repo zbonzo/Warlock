@@ -23,3 +23,4 @@ console.log('Module aliases registered successfully');
 // Register the aliases
 moduleAlias();
  */
+

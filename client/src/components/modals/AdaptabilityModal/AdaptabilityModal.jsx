@@ -1,5 +1,5 @@
 /**
- * @fileoverview Modal component for the Human race's Adaptability ability
+ * @fileoverview Modal component for the Artisan race's Adaptability ability
  * Allows players to replace one ability with another from a different class
  */
 import React, { useState, useEffect, useRef } from 'react';
@@ -331,7 +331,7 @@ const AdaptabilityModal = ({
   return (
     <div className="adaptability-modal-overlay">
       <div className="adaptability-modal-content">
-        <h2 className="modal-title">Human Adaptability</h2>
+        <h2 className="modal-title">Artisan Adaptability</h2>
 
         {error && (
           <div className="error-message">
@@ -521,3 +521,4 @@ AdaptabilityModal.propTypes = {
 };
 
 export default AdaptabilityModal;
+

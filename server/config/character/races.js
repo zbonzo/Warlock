@@ -7,7 +7,7 @@
  * Available player races
  * @type {Array<string>}
  */
-const availableRaces = ['Human', 'Dwarf', 'Elf', 'Orc', 'Satyr', 'Skeleton'];
+const availableRaces = ['Artisan', 'Rockhewn', 'Crestfallen', 'Orc', 'Kinfolk', 'Lich'];
 
 /**
  * Base attributes for each race
@@ -15,7 +15,7 @@ const availableRaces = ['Human', 'Dwarf', 'Elf', 'Orc', 'Satyr', 'Skeleton'];
  * @type {Object}
  */
 const raceAttributes = {
-  Human: {
+  Artisan: {
     hpModifier: 1.3,
     armorModifier: 1.0,
     damageModifier: 1.0,
@@ -30,7 +30,7 @@ const raceAttributes = {
     description:
       'Adaptable and versatile, humans can learn abilities from other classes.',
   },
-  Dwarf: {
+  Rockhewn: {
     hpModifier: 1.3,
     armorModifier: 3.0,
     damageModifier: 0.8,
@@ -45,7 +45,7 @@ const raceAttributes = {
     description:
       'Hardy and resilient, dwarves have stone armor that degrades with damage taken.',
   },
-  Elf: {
+  Crestfallen: {
     hpModifier: 1.0,
     armorModifier: 1.0,
     damageModifier: 1.2,
@@ -75,7 +75,7 @@ const raceAttributes = {
     description:
       'Fierce and mighty, orcs can boost their attack power at the cost of health.',
   },
-  Satyr: {
+  Kinfolk: {
     hpModifier: 1.0,
     armorModifier: 1.0,
     damageModifier: 1.0,
@@ -85,12 +85,12 @@ const raceAttributes = {
       'Shaman', // Thematic Score: 9 (Nature spirits, primal connection)
       'Tracker', // Thematic Score: 9 (Forest dwelling, keen senses)
       'Druid', // Thematic Score: 10 (Deep connection to nature, harmonious)
-      'Wizard', // Thematic Score: 7 (Nature magic, less formal than human/elf wizardry) - ADDED to balance Wizard class
+      'Wizard', // Thematic Score: 7 (Nature magic, less formal than Artisan/Crestfallen wizardry) - ADDED to balance Wizard class
     ],
     description:
       "At the end of each round, heal for 25% of the monster's remaining HP.",
   },
-  Skeleton: {
+  Lich: {
     hpModifier: 0.9,
     armorModifier: 1.0,
     damageModifier: 2.5,
@@ -112,7 +112,7 @@ const raceAttributes = {
  * @type {Object}
  */
 const racialAbilities = {
-  Human: {
+  Artisan: {
     type: 'adaptability',
     name: 'Adaptability',
     description:
@@ -125,7 +125,7 @@ const racialAbilities = {
     params: {},
   },
 
-  Dwarf: {
+  Rockhewn: {
     type: 'stoneArmor',
     name: 'Stone Armor',
     description:
@@ -141,7 +141,7 @@ const racialAbilities = {
     },
   },
 
-  Elf: {
+  Crestfallen: {
     type: 'moonbeam',
     name: 'Moonbeam',
     description:
@@ -169,7 +169,7 @@ const racialAbilities = {
     params: { selfDamage: 10 },
   },
 
-  Satyr: {
+  Kinfolk: {
     type: 'lifeBond',
     name: 'Life Bond',
     description:
@@ -184,7 +184,7 @@ const racialAbilities = {
     },
   },
 
-  Skeleton: {
+  Lich: {
     type: 'undying',
     name: 'Undying',
     description: 'Return to 1 HP the first time you would die',
@@ -246,3 +246,4 @@ module.exports = {
   isValidCombination,
   getRacialAbility,
 };
+

@@ -192,12 +192,12 @@ const CustomAvatar = ({ player, isCurrentPlayer }) => {
 
     // Get race color
     const raceColors = {
-      Human: '#4169E1',
-      Dwarf: '#8B4513',
-      Elf: '#228B22',
+      Artisan: '#4169E1',
+      Rockhewn: '#8B4513',
+      Crestfallen: '#228B22',
       Orc: '#8B0000',
-      Satyr: '#9932CC',
-      Skeleton: '#36454F',
+      Kinfolk: '#9932CC',
+      Lich: '#36454F',
     };
 
     const raceColor = raceColors[player.race] || '#666666';
@@ -348,3 +348,4 @@ TargetSelector.propTypes = {
 };
 
 export default TargetSelector;
+

@@ -151,7 +151,7 @@ const warlock = {
 };
 
 /**
- * Stone Armor mechanics (Dwarf racial)
+ * Stone Armor mechanics (Rockhewn racial)
  */
 const stoneArmor = {
   initialValue: 5, // Starting stone armor value
@@ -412,3 +412,4 @@ module.exports = {
   calculateWarlockCount,
   calculateThreatGeneration,
 };
+

@@ -57,3 +57,4 @@ ClassCard.propTypes = {
 };
 
 export default ClassCard;
+

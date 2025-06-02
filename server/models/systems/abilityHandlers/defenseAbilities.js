@@ -261,3 +261,4 @@ function handleMultiProtection(actor, target, ability, log, systems) {
 }
 
 module.exports = { register };
+

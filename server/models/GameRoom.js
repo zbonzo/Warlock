@@ -136,17 +136,17 @@ class GameRoom {
     if (racialAbility) {
       p.setRacialAbility(racialAbility);
 
-      // Special setup for Stone Armor (Dwarf)
-      if (race === 'Dwarf') {
+      // Special setup for Stone Armor (Rockhewn)
+      if (race === 'Rockhewn') {
         logger.debug(
-          `Dwarf ${p.name} starts with Stone Armor: ${p.stoneArmorValue} armor`
+          `Rockhewn ${p.name} starts with Stone Armor: ${p.stoneArmorValue} armor`
         );
         logger.debug(`Total effective armor: ${p.getEffectiveArmor()}`);
       }
 
       // Double-check Undying for Skeletons - ensure it's properly set up
-      if (race === 'Skeleton') {
-        logger.debug(`=== SKELETON SETUP for ${p.name} ===`);
+      if (race === 'Lich') {
+        logger.debug(`=== Lich SETUP for ${p.name} ===`);
         logger.debug(`Racial ability:`, racialAbility);
         logger.debug(`Player racial effects after setup:`, p.racialEffects);
 
@@ -461,7 +461,7 @@ class GameRoom {
 
     if (this.monster.hp > 0) {
       for (const player of this.players.values()) {
-        if (player.race === 'Satyr' && player.isAlive) {
+        if (player.race === 'Kinfolk' && player.isAlive) {
           player.processLifeBondHealing(this.monster.hp, log);
         }
       }
@@ -951,3 +951,4 @@ class GameRoom {
 }
 
 module.exports = { GameRoom };
+

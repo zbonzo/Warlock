@@ -222,3 +222,4 @@ JoinGamePage.propTypes = {
 };
 
 export default JoinGamePage;
+

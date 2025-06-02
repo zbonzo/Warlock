@@ -534,7 +534,7 @@ const GamePage = ({
   const handleRacialAbilityUse = (abilityType) => {
     setRacialSelected(true);
 
-    if (abilityType === 'adaptability' && me?.race === 'Human') {
+    if (abilityType === 'adaptability' && me?.race === 'Artisan') {
       socket.emit('useRacialAbility', {
         gameCode,
         targetId: me.id,
@@ -778,3 +778,4 @@ GamePage.propTypes = {
 };
 
 export default GamePage;
+

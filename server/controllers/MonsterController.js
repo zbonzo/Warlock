@@ -582,3 +582,4 @@ class MonsterController {
 }
 
 module.exports = MonsterController;
+

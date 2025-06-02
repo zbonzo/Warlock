@@ -8,12 +8,12 @@
  * @type {Object.<string, string>}
  */
 export const RACE_TO_ABILITY = {
-    'Human': 'adaptability',
-    'Dwarf': 'stoneResolve',
-    'Elf': 'keenSenses',
+    'Artisan': 'adaptability',
+    'Rockhewn': 'stoneResolve',
+    'Crestfallen': 'keenSenses',
     'Orc': 'bloodRage',
-    'Satyr': 'forestsGrace',
-    'Skeleton': 'undying'
+    'Kinfolk': 'forestsGrace',
+    'Lich': 'undying'
   };
   
   /**
@@ -34,12 +34,12 @@ export const RACE_TO_ABILITY = {
    * @type {Object.<string, string>}
    */
   export const RACE_COLORS = {
-    'Human': '#4169E1',    // Royal Blue
-    'Dwarf': '#8B4513',    // Saddle Brown
-    'Elf': '#228B22',      // Forest Green
+    'Artisan': '#4169E1',    // Royal Blue
+    'Rockhewn': '#8B4513',    // Saddle Brown
+    'Crestfallen': '#228B22',      // Forest Green
     'Orc': '#8B0000',      // Dark Red
-    'Satyr': '#9932CC',    // Dark Orchid
-    'Skeleton': '#36454F'  // Charcoal
+    'Kinfolk': '#9932CC',    // Dark Orchid
+    'Lich': '#36454F'  // Charcoal
   };
   
   /**

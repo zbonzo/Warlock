@@ -49,7 +49,7 @@ const errors = {
     'Your racial ability is on cooldown for {turns} more turn(s).',
   noUsesLeft: 'No uses left for {abilityName} ability.',
 
-  // Human Adaptability specific
+  // Artisan Adaptability specific
   adaptabilityFailed: 'Failed to use Adaptability ability.',
   abilityNotFound: 'Original ability not found.',
   abilityNotUnlocked: 'Ability not unlocked at this level.',
@@ -210,3 +210,4 @@ module.exports = {
   privateMessages,
   winConditions,
 };
+

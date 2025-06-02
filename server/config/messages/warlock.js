@@ -145,3 +145,4 @@ module.exports = {
     difficultyIncrease: 'Corruption becomes more difficult with fewer targets.',
   },
 };
+

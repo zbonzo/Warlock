@@ -18,7 +18,7 @@ function register(registry) {
 }
 
 /**
- * Handler for Human Adaptability racial ability
+ * Handler for Artisan Adaptability racial ability
  * @param {Object} actor - Actor using the ability
  * @param {Object|string} target - Target of the ability (unused for adaptability)
  * @param {Object} ability - Ability configuration
@@ -97,7 +97,7 @@ function handleBloodRage(actor, target, ability, log, systems) {
 }
 
 /**
- * Handler for Skeleton Undying racial ability
+ * Handler for Lich Undying racial ability
  * @param {Object} actor - Actor using the ability
  * @param {Object|string} target - Target of the ability (unused)
  * @param {Object} ability - Ability configuration
@@ -141,3 +141,4 @@ function handleUndying(actor, target, ability, log, systems) {
 }
 
 module.exports = { register };
+

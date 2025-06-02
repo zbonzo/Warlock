@@ -323,10 +323,10 @@ function handleRacialAbility(io, socket, gameCode, targetId, abilityType) {
   // Get player info
   const player = game.players.get(socket.id);
 
-  // Special handling for Human Adaptability
-  if (abilityType === 'adaptability' && player.race === 'Human') {
+  // Special handling for Artisan Adaptability
+  if (abilityType === 'adaptability' && player.race === 'Artisan') {
     logger.debug(
-      `Player ${player.name} (${socket.id}) is using Human Adaptability`
+      `Player ${player.name} (${socket.id}) is using Artisan Adaptability`
     );
 
     // First check if they have uses left
@@ -416,7 +416,7 @@ function handleRacialAbility(io, socket, gameCode, targetId, abilityType) {
 }
 
 /**
- * Handle ability replacement from Human Adaptability racial
+ * Handle ability replacement from Artisan Adaptability racial
  * @param {Object} io - Socket.io instance
  * @param {Object} socket - Client socket
  * @param {string} gameCode - Game code
@@ -441,7 +441,7 @@ function handleAdaptabilityReplace(
 
   // Get player
   const player = game.players.get(socket.id);
-  if (!player || player.race !== 'Human') {
+  if (!player || player.race !== 'Artisan') {
     socket.emit('adaptabilityComplete', {
       success: false,
       message: messages.errors.adaptabilityFailed,
@@ -769,3 +769,4 @@ module.exports = {
   handleAdaptabilityReplace,
   handlePlayAgain,
 };
+

@@ -52,7 +52,7 @@ class Player {
     this.vulnerabilityIncrease = 0; // Amount of damage increase
 
     // Stone Armor tracking
-    this.stoneArmorIntact = false; // Whether the dwarf has stone armor
+    this.stoneArmorIntact = false; // Whether the Rockhewn has stone armor
     this.stoneArmorValue = 0; // Current stone armor value
   }
 
@@ -686,22 +686,22 @@ class Player {
   }
 
   /**
-   * Check if Elf moonbeam is active (wounded condition)
+   * Check if Crestfallen moonbeam is active (wounded condition)
    * @returns {boolean} Whether moonbeam detection is active
    */
   isMoonbeamActive() {
-    if (this.race !== 'Elf' || !this.isAlive) return false;
+    if (this.race !== 'Crestfallen' || !this.isAlive) return false;
     return this.hp <= this.maxHp * 0.5;
   }
 
   /**
-   * Process Satyr life bond healing
+   * Process Kinfolk life bond healing
    * @param {number} monsterHp - Current monster HP
    * @param {Array} log - Event log to append messages to
    * @returns {number} Amount healed
    */
   processLifeBondHealing(monsterHp, log = []) {
-    if (this.race !== 'Satyr' || !this.isAlive || monsterHp <= 0) return 0;
+    if (this.race !== 'Kinfolk' || !this.isAlive || monsterHp <= 0) return 0;
 
     const healAmount = Math.floor(
       monsterHp * this.racialAbility?.params?.healingPercent
@@ -912,3 +912,4 @@ class Player {
 }
 
 module.exports = Player;
+

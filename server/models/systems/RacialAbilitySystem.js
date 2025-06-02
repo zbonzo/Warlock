@@ -114,7 +114,7 @@ class RacialAbilitySystem {
       // Process cooldown timers
       this.processCooldowns(player, log);
 
-      // Process healing over time effect (Satyr racial)
+      // Process healing over time effect (Kinfolk racial)
       this.processHealOverTime(player, log);
     }
   }
@@ -190,3 +190,4 @@ class RacialAbilitySystem {
 }
 
 module.exports = RacialAbilitySystem;
+

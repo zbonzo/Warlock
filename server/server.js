@@ -266,7 +266,7 @@ io.on('connection', (socket) => {
     )
   );
 
-  // Player uses Human Adaptability to replace an ability
+  // Player uses Artisan Adaptability to replace an ability
   socket.on(
     'adaptabilityReplaceAbility',
     withSocketErrorHandling(
@@ -285,7 +285,7 @@ io.on('connection', (socket) => {
     )
   );
 
-  // Receive abilities to pick for Human Adaptability
+  // Receive abilities to pick for Artisan Adaptability
   socket.on(
     'getClassAbilities',
     withSocketErrorHandling(
@@ -335,3 +335,4 @@ process.on('uncaughtException', (error) => {
 process.on('unhandledRejection', (reason, promise) => {
   logger.error('Unhandled promise rejection', reason);
 });
+

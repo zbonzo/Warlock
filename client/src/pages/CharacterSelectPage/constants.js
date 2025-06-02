@@ -7,12 +7,12 @@
  * @type {Array}
  */
 export const RACES = [
-  { id: 'Human', label: 'Human', icon: '👤' },
-  { id: 'Dwarf', label: 'Dwarf', icon: '🧔‍♂️' },
-  { id: 'Elf', label: 'Elf', icon: '🧝' },
+  { id: 'Artisan', label: 'Artisan', icon: '👤' },
+  { id: 'Rockhewn', label: 'Rockhewn', icon: '🧔‍♂️' },
+  { id: 'Crestfallen', label: 'Crestfallen', icon: '🧝' },
   { id: 'Orc', label: 'Orc', icon: '👹' },
-  { id: 'Satyr', label: 'Satyr', icon: '👺' },
-  { id: 'Skeleton', label: 'Skeleton', icon: '💀' },
+  { id: 'Kinfolk', label: 'Kinfolk', icon: '👺' },
+  { id: 'Lich', label: 'Lich', icon: '💀' },
 ];
 
 /**
@@ -39,18 +39,18 @@ export const CLASSES = [
  * @type {Object}
  */
 export const CLASS_TO_RACES = {
-  Warrior: ['Human', 'Dwarf', 'Skeleton'],
-  Pyromancer: ['Dwarf', 'Skeleton', 'Orc'],
-  Wizard: ['Human', 'Elf', 'Skeleton'],
-  Assassin: ['Human', 'Elf', 'Skeleton'],
-  Alchemist: ['Human', 'Elf', 'Satyr'],
-  Priest: ['Human', 'Dwarf', 'Skeleton'],
-  Oracle: ['Dwarf', 'Satyr', 'Orc'],
-  Seer: ['Elf', 'Satyr', 'Orc'],
-  Shaman: ['Dwarf', 'Satyr', 'Orc'],
-  Gunslinger: ['Human', 'Dwarf', 'Skeleton'],
-  Tracker: ['Elf', 'Satyr', 'Orc'],
-  Druid: ['Elf', 'Satyr', 'Orc'],
+  Warrior: ['Artisan', 'Rockhewn', 'Lich'],
+  Pyromancer: ['Rockhewn', 'Lich', 'Orc'],
+  Wizard: ['Artisan', 'Crestfallen', 'Lich'],
+  Assassin: ['Artisan', 'Crestfallen', 'Lich'],
+  Alchemist: ['Artisan', 'Crestfallen', 'Kinfolk'],
+  Priest: ['Artisan', 'Rockhewn', 'Lich'],
+  Oracle: ['Rockhewn', 'Kinfolk', 'Orc'],
+  Seer: ['Crestfallen', 'Kinfolk', 'Orc'],
+  Shaman: ['Rockhewn', 'Kinfolk', 'Orc'],
+  Gunslinger: ['Artisan', 'Rockhewn', 'Lich'],
+  Tracker: ['Crestfallen', 'Kinfolk', 'Orc'],
+  Druid: ['Crestfallen', 'Kinfolk', 'Orc'],
 };
 
 /**
@@ -85,3 +85,4 @@ export function getCompatibleRaces(classId) {
 export function isValidCombination(race, classId) {
   return CLASS_TO_RACES[classId]?.includes(race) || false;
 }
+

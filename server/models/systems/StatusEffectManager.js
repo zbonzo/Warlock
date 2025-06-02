@@ -459,7 +459,7 @@ class StatusEffectManager {
 
     // Process Stone Armor degradation for Dwarves (before applying poison damage)
     let armorDegradationInfo = null;
-    if (player.race === 'Dwarf' && player.stoneArmorIntact) {
+    if (player.race === 'Rockhewn' && player.stoneArmorIntact) {
       armorDegradationInfo = player.processStoneArmorDegradation(poison.damage);
     }
 
@@ -500,3 +500,4 @@ class StatusEffectManager {
 }
 
 module.exports = StatusEffectManager;
+

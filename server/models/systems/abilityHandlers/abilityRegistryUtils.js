@@ -240,3 +240,4 @@ module.exports = {
   getAllAbilities,
   applyThreatForAbility,
 };
+

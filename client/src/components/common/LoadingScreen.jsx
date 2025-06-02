@@ -27,3 +27,4 @@ LoadingScreen.propTypes = {
 };
 
 export default LoadingScreen;
+

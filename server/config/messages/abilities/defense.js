@@ -32,3 +32,4 @@ module.exports = {
   defenseActivated: '{playerName} activates {abilityName}.',
   defenseFailed: '{playerName} tries to use {abilityName}, but it fails.',
 };
+
