@@ -1,485 +1,234 @@
-# Warlock Game Server
+# Warlock Game Server - Development Guide
 
-A Node.js/Socket.IO server for the multiplayer Warlock game, featuring real-time gameplay, character abilities, status effects, and game state management.
+## System Overview
 
-## Architecture Overview
+A real-time multiplayer deduction game where players collaborate to defeat monsters while secretly-assigned Warlocks try to corrupt the group. Built with Node.js, Socket.IO, and a modular event-driven architecture.
 
-The server follows a modular architecture with clear separation of concerns:
+### Core Game Loop
+1. **Setup**: Players join, select race/class, host starts
+2. **Action Phase**: All players submit actions simultaneously  
+3. **Resolution**: Actions execute in order, monster attacks, effects process
+4. **Progression**: Check wins, level up, repeat
+
+## Architecture Map
 
 ```
 server/
-├── config/           # Game configuration and balance
-├── controllers/      # Socket event handlers
-├── middleware/       # Validation and request processing
-├── models/           # Game entities and business logic
-├── services/         # High-level game services
-├── utils/            # Utility functions and helpers
-├── shared/           # Shared validation logic
-└── routes/           # REST API endpoints
+├── 🎯 ENTRY POINTS
+│   ├── index.js                    # App entry point
+│   └── server.js                   # Express + Socket.IO setup
+├── ⚙️ CONFIGURATION  
+│   ├── index.js                    # Config aggregator
+│   ├── gameBalance.js              # 🔥 Core balance (damage, scaling, conversion)
+│   ├── statusEffects.js            # Status effect rules
+│   ├── character/                  # Character system
+│   │   ├── index.js                # Character config aggregator  
+│   │   ├── races.js                # 🔥 6 races + racial abilities
+│   │   ├── classes.js              # 🔥 12 classes + ALL abilities
+│   │   └── playerSettings.js       # Base player stats
+│   ├── messages/                   # All game text
+│   │   ├── index.js                # Message system + formatting
+│   │   ├── core.js                 # Errors, success, events
+│   │   ├── combat.js               # Damage/death messages
+│   │   ├── abilities/              # Ability-specific text
+│   │   │   ├── attacks.js, defense.js, healing.js
+│   │   │   ├── special.js, racial.js
+│   │   ├── warlock.js, monster.js, player.js, ui.js
+│   └── environments/               # Dev/prod overrides
+├── 🎮 CONTROLLERS (Socket Event Handlers)
+│   ├── GameController.js           # 🔥 Game lifecycle (create/start/actions)
+│   ├── playerController.js         # Player join/disconnect/character
+│   └── MonsterController.js        # 🔥 Monster AI and behavior
+├── 🛡️ MIDDLEWARE
+│   └── validation.js               # Input validation
+├── 🏗️ MODELS (Game Entities)
+│   ├── GameRoom.js                 # 🔥 Central game state coordinator
+│   ├── Player.js                   # 🔥 Player entity (stats/abilities/effects)
+│   ├── AbilityRegistry.js          # Maps ability types → handlers
+│   └── systems/                    # Game subsystems
+│       ├── SystemsFactory.js       # 🔥 Dependency injection for all systems
+│       ├── CombatSystem.js         # 🔥 Damage calculation + death processing  
+│       ├── StatusEffectManager.js  # 🔥 Poison/buffs/debuffs lifecycle
+│       ├── WarlockSystem.js        # 🔥 Conversion mechanics + win conditions
+│       ├── RacialAbilitySystem.js  # Racial ability processing
+│       ├── GameStateUtils.js       # Common game state queries
+│       └── abilityHandlers/        # Individual ability implementations
+│           ├── index.js            # Registers all handlers
+│           ├── attackAbilities.js  # Damage-dealing abilities
+│           ├── defenseAbilities.js # Shields/invisibility  
+│           ├── healAbilities.js    # Healing abilities
+│           ├── specialAbilities.js # Detection/stun/utility
+│           ├── racialAbilities.js  # Race-specific abilities
+│           └── abilityRegistryUtils.js # Registration helpers
+├── 🔧 SERVICES
+│   └── gameService.js              # 🔥 High-level game management
+├── 🛠️ UTILITIES  
+│   ├── errorHandler.js             # Centralized error handling
+│   └── logger.js                   # Logging utility
+├── 🔗 SHARED
+│   └── gameChecks.js               # Reusable validation
+└── 🌐 ROUTES
+    └── configRoutes.js             # REST API for configuration
 ```
 
-## Core Components
-
-### 🎮 Entry Points
-
-#### `index.js`
-
-Main entry point that registers module aliases and starts the server.
-
-#### `server.js`
-
-Express and Socket.IO server setup with:
-
-- CORS configuration
-- Socket event handlers
-- Rate limiting
-- Error handling
-- Health check endpoints
-
-### ⚙️ Configuration (`config/`)
-
-#### `index.js`
-
-Central configuration loader that combines all config modules and applies environment overrides.
-
-#### `gameBalance.js`
-
-Core game balance settings including:
-
-- Monster scaling (HP, damage progression)
-- Player stats (armor reduction, level bonuses)
-- Warlock conversion mechanics
-- Combat timing and orders
-- Helper functions for calculations
-
-#### `messages.js`
-
-Centralized message templates for:
-
-- Error messages (validation, game state, permissions)
-- Success messages (actions completed)
-- Event messages (combat, status effects, game progression)
-- Private messages (player-specific notifications)
-- Win condition messages
-
-#### `statusEffects.js`
-
-Status effect definitions and behavior:
-
-- Effect defaults (poison, shielded, invisible, stunned, etc.)
-- Processing order and timing
-- Message templates for each effect
-- Helper functions for effect management
-
-#### Character Configuration
-
-##### `character/races.js`
-
-- Available races and their stat modifiers
-- Race-class compatibility mappings
-- Racial abilities (Adaptability, Keen Senses, Blood Rage, etc.)
-- Validation helpers
-
-###### `Adding a race example`
-- Add this JSON as an example to character/races.js
-- Seer: {
---   hpModifier: 0.9, // Less HP
---   armorModifier: 0.0, // No armor bonus
---   damageModifier: 1.0, // Standard damage
---   description: 'Psychic class with detection abilities.',
--- },
-
-
-##### `character/classes.js`
-
-- Available classes and their stat modifiers
-- Class abilities by level with damage values
-- Ability categorization (Attack, Defense, Heal, Special)
-- Unlock progression and cooldowns
-
-###### `Adding a class example`
-- Add this JSON as an example to character/classes.js
-- Seer: {
---   hpModifier: 0.9, // Less HP
---   armorModifier: 0.0, // No armor bonus
---   damageModifier: 1.0, // Standard damage
---   description: 'Psychic class with detection abilities.',
--- },
-
-##### `character/playerSettings.js`
-
-- Base player stats and progression
-- Reconnection and death settings
-- Default values and limits
-
-#### Environment Configuration
-
-##### `environments/development.js`
-
-Development-specific settings with relaxed timeouts and increased logging.
-
-##### `environments/production.js`
-
-Production settings with strict rate limiting and performance optimizations.
-
-##### `environments/test.js`
-
-Test environment with minimal timeouts and deterministic behavior.
-
-### 🎯 Controllers (`controllers/`)
-
-#### `GameController.js`
-
-Handles core game mechanics:
-
-- `handleCreateGame()` - Create new game rooms
-- `handleStartGame()` - Initialize gameplay
-- `handlePerformAction()` - Process player actions
-- `handleRacialAbility()` - Handle racial ability usage
-- `handleAdaptabilityReplace()` - Human racial ability implementation
-- `handlePlayerNextReady()` - Round progression voting
-
-#### `playerController.js`
-
-Manages player lifecycle:
-
-- `handlePlayerJoin()` - Player joining games
-- `handleSelectCharacter()` - Race/class selection
-- `handlePlayerDisconnect()` - Disconnect handling with reconnection support
-- `handlePlayerReconnection()` - Reconnection logic
-
-#### `MonsterController.js`
-
-Manages the monster entity:
-
-- State management (HP, damage, age)
-- Target selection algorithms
-- Attack execution with damage calculation
-- Death/respawn and level progression
-- Integration with combat system
-
-### 🛡️ Middleware (`middleware/`)
-
-#### `validation.js`
-
-Input validation and sanitization:
-
-- `validateGame()` - Game existence and format
-- `validatePlayer()` - Player membership validation
-- `validateGameState()` - Game phase validation
-- `validateHost()` - Host permission checks
-- `validateAction()` - Action validity with cooldown checks
-
-### 🏗️ Models (`models/`)
-
-#### `GameRoom.js`
-
-Central game state manager:
-
-- Player management (add, remove, character selection)
-- Action queuing and validation with cooldown support
-- Round processing coordination
-- Win condition checking
-- System integration and coordination
-
-#### `Player.js`
-
-Player entity with comprehensive state management:
-
-- Basic stats (HP, armor, damage modifiers)
-- Status effect tracking and processing
-- Ability cooldown management
-- Racial ability state and effects
-- Combat calculations (damage, healing, armor)
-- Class effect processing (Blood Frenzy, Unstoppable Rage)
-
-#### `AbilityRegistry.js`
-
-Centralized ability handler registry:
-
-- Class and racial ability registration
-- Handler execution with error handling
-- Dynamic ability discovery
-- Debug information and statistics
-
-#### Systems (`models/systems/`)
-
-##### `SystemsFactory.js`
-
-Factory for creating and wiring all game systems with proper dependencies.
-
-##### `CombatSystem.js`
-
-Combat mechanics and damage processing:
-
-- Player and monster damage application
-- Death and resurrection handling
-- Area-of-effect abilities (damage and healing)
-- Armor calculations and vulnerability
-- Counter-attack mechanics (Spirit Guard, Sanctuary)
-
-##### `StatusEffectManager.js`
-
-Status effect lifecycle management:
-
-- Effect application with proper timing
-- Round-based processing and countdown
-- Effect stacking and refresh logic
-- Poison damage and armor degradation
-- Message generation for all effects
-
-##### `WarlockSystem.js`
-
-Warlock mechanics and conversion:
-
-- Initial warlock assignment
-- Conversion chance calculations
-- Warlock count tracking
-- Win condition evaluation
-- Random and targeted conversion logic
-
-##### `RacialAbilitySystem.js`
-
-Racial ability processing:
-
-- Ability validation and queuing
-- Cooldown and usage tracking
-- Healing over time effects (Satyr)
-- End-of-round effect processing
-
-##### `GameStateUtils.js`
-
-Game state utility functions:
-
-- Player filtering and targeting
-- Win condition checking
-- Statistical queries (lowest HP, groups, etc.)
-- Random target selection with invisibility handling
-- Ability replacement (Human Adaptability)
-
-##### `MonsterController.js`
-
-Monster AI and behavior:
-
-- Intelligent target selection
-- Damage scaling with age
-- Level progression and respawn
-- Attack pattern coordination
-
-#### Ability Handlers (`models/systems/abilityHandlers/`)
-
-##### `index.js`
-
-Entry point that registers all ability handlers and validates coverage.
-
-##### `attackAbilities.js`
-
-Damage-dealing abilities:
-
-- Basic attacks with damage calculation
-- Poison attacks (Death Mark, Poison Strike)
-- Multi-hit abilities (Arcane Barrage)
-- Area damage (Meteor Shower, Inferno Blast)
-- Special attacks (Reckless Strike with self-damage)
-
-##### `defenseAbilities.js`
-
-Protective abilities:
-
-- Shield effects (Shield Wall, Battle Cry)
-- Invisibility (Shadow Veil, Smoke Bomb)
-- Multi-target protection
-- Status effect application
-
-##### `healAbilities.js`
-
-Healing abilities:
-
-- Single-target healing with warlock rejection
-- Multi-target healing (Rejuvenation)
-- Healing modifier calculations
-- Warlock-specific healing behavior
-
-##### `specialAbilities.js`
-
-Utility and special abilities:
-
-- Detection abilities (Eye of Fate)
-- Status infliction (Primal Roar, Entangle)
-- Barbarian abilities (Blood Frenzy, Unstoppable Rage)
-- Oracle abilities (Spirit Guard, Sanctuary of Truth)
-- Monster control (Control Monster)
-
-##### `racialAbilities.js`
-
-Race-specific abilities:
-
-- Human Adaptability with UI integration
-- Elf Keen Senses with next-attack flagging
-- Orc Blood Rage with damage doubling
-- Satyr Forest's Grace with healing over time
-- Skeleton Undying with resurrection logic
-
-##### `abilityRegistryUtils.js`
-
-Utility functions for dynamic ability registration:
-
-- Category-based registration
-- Effect and target filtering
-- Criteria-based matching
-- Pattern matching and debugging
-
-### 🔧 Services (`services/`)
-
-#### `gameService.js`
-
-High-level game management:
-
-- Game creation and cleanup
-- Timeout management
-- Round processing orchestration
-- Player list broadcasting
-- Win condition checking
-- Reconnection support
-
-#### `PlayerSessionManager.js`
-
-Player session and reconnection management:
-
-- Session tracking across disconnections
-- Socket ID mapping and updates
-- Automatic cleanup of expired sessions
-- Reconnection window enforcement
-
-### 🛠️ Utilities (`utils/`)
-
-#### `errorHandler.js`
-
-Centralized error handling:
-
-- Standardized error types and creation
-- Socket error handling wrapper
-- User-friendly error messages
-- Logging integration
-
-#### `logger.js`
-
-Logging utility with:
-
-- Multiple log levels (ERROR, WARN, INFO, DEBUG)
-- Environment-based level control
-- Consistent formatting with timestamps
-
-### 🔗 Shared (`shared/`)
-
-#### `gameChecks.js`
-
-Reusable validation logic:
-
-- Combined game state validation
-- Host and player permission checks
-- Consistent error handling
-
-### 🌐 Routes (`routes/`)
-
-#### `configRoutes.js`
-
-REST API for game configuration:
-
-- `/api/config` - Basic server settings
-- `/api/config/races` - Race information
-- `/api/config/classes` - Class information
-- `/api/config/compatibility` - Race-class mappings
-- `/api/config/abilities/:className` - Class abilities
-- `/api/config/racial-abilities` - Racial abilities
-
-### 📋 Configuration Files
-
-#### `babel.config.js`
-
-Babel configuration for ES6+ support and module aliases.
-
-#### `jest.config.js`
-
-Jest testing configuration with:
-
-- Module path mapping
-- Coverage settings
-- Test environment setup
-
-#### `package.json`
-
-Dependencies and scripts:
-
-- Socket.IO for real-time communication
-- Express for REST API
-- Babel for modern JavaScript
-- Jest for testing
-
-## Key Features
-
-### 🎲 Game Mechanics
-
-- **Real-time multiplayer** with Socket.IO
-- **Character system** with races, classes, and abilities
-- **Status effects** with proper timing and stacking
-- **Ability cooldowns** to prevent spam
-- **Monster scaling** that increases difficulty over time
-- **Warlock conversion** with dynamic probability
-
-### 🔄 State Management
-
-- **Centralized game state** in GameRoom
-- **System coordination** through SystemsFactory
-- **Event-driven architecture** with proper logging
-- **Reconnection support** with session management
-
-### ⚖️ Balance System
-
-- **Configurable damage values** for all abilities
-- **Armor reduction calculations** with diminishing returns
-- **Level progression** with stat increases
-- **Win condition balancing** based on player ratios
-
-### 🛡️ Error Handling
-
-- **Comprehensive validation** at all entry points
-- **User-friendly error messages** with proper categorization
-- **Graceful failure handling** with logging
-- **Rate limiting** to prevent abuse
-
-### 🧪 Testing Support
-
-- **Modular architecture** for easy unit testing
-- **Dependency injection** through SystemsFactory
-- **Test-specific configuration** with deterministic behavior
-- **Mock-friendly design** with clear interfaces
-
-## Development Workflow
-
-1. **Configuration** - Modify balance and game rules in `config/`
-2. **Abilities** - Add new abilities in `abilityHandlers/`
-3. **Features** - Implement new systems in `models/systems/`
-4. **API** - Extend REST endpoints in `routes/`
-5. **Testing** - Write tests with Jest configuration
-
-## Environment Variables
-
-- `NODE_ENV` - Environment (development/production/test)
-- `PORT` - Server port (default: 3001)
-- `LOG_LEVEL` - Logging verbosity (ERROR/WARN/INFO/DEBUG)
-- `GAME_TIMEOUT_MINUTES` - Game timeout in minutes
-
-## Module Aliases
-
-The server uses module aliases for clean imports:
-
-- `@config` - Configuration modules
-- `@controllers` - Socket event handlers
-- `@middleware` - Validation middleware
-- `@models` - Game entities and systems
-- `@services` - High-level services
-- `@utils` - Utility functions
-- `@shared` - Shared validation logic
-
-This architecture provides a scalable, maintainable foundation for the multiplayer Warlock game with comprehensive feature support and robust error handling.
+🔥 = Most frequently modified files
+
+---
+
+## Quick Reference: File Selection Guide
+
+### Game Balance & Rules
+| Task | Primary Files | Supporting Files |
+|------|---------------|------------------|
+| Adjust damage/HP | `config/gameBalance.js` | `config/character/classes.js` |
+| Warlock conversion rates | `config/gameBalance.js` | `models/systems/WarlockSystem.js` |
+| Status effect rules | `config/statusEffects.js` | `models/systems/StatusEffectManager.js` |
+| Combat mechanics | `models/systems/CombatSystem.js` | `config/gameBalance.js` |
+
+### Character System  
+| Task | Primary Files | Supporting Files |
+|------|---------------|------------------|
+| Add new race | `config/character/races.js` | `models/systems/abilityHandlers/racialAbilities.js` |
+| Add new class | `config/character/classes.js` | Appropriate `abilityHandlers/*.js` |
+| Modify abilities | `config/character/classes.js` | `models/systems/abilityHandlers/` |
+| Race/class compatibility | `config/character/races.js` | `config/character/index.js` |
+
+### Game Flow & Events
+| Task | Primary Files | Supporting Files |
+|------|---------------|------------------|
+| Socket events | `server.js` | Appropriate controller |
+| Game lifecycle | `controllers/GameController.js` | `services/gameService.js` |
+| Player actions | `models/GameRoom.js` | `models/Player.js` |
+| Round processing | `models/GameRoom.js` | `models/systems/SystemsFactory.js` |
+
+### Abilities & Effects
+| Task | Primary Files | Supporting Files |
+|------|---------------|------------------|
+| Attack abilities | `models/systems/abilityHandlers/attackAbilities.js` | `config/messages/abilities/attacks.js` |
+| Healing abilities | `models/systems/abilityHandlers/healAbilities.js` | `config/messages/abilities/healing.js` |
+| Status effects | `models/systems/StatusEffectManager.js` | `config/statusEffects.js` |
+| Racial abilities | `models/systems/abilityHandlers/racialAbilities.js` | `config/character/races.js` |
+
+### Error Handling & Validation
+| Task | Primary Files | Supporting Files |
+|------|---------------|------------------|
+| Input validation | `middleware/validation.js` | `shared/gameChecks.js` |
+| Error messages | `utils/errorHandler.js` | `config/messages/core.js` |
+| Socket error handling | `server.js` | `utils/errorHandler.js` |
+
+---
+
+## Human Guide: Understanding the System
+
+### Character System Deep Dive
+
+**Races (6 total)** - Each has unique passive or active abilities:
+- **Human**: Adaptability - Replace one class ability permanently
+- **Dwarf**: Stone Armor - Starts with armor that degrades when hit
+- **Elf**: Moonbeam - When wounded, attacks reveal if attacker is Warlock  
+- **Orc**: Blood Rage - Double next attack damage, take self-damage
+- **Satyr**: Life Bond - Heal based on monster's remaining HP each turn
+- **Skeleton**: Undying - Resurrect once at 1 HP when killed
+
+**Classes (12 total)** - Each has 4 abilities unlocked by level:
+- **Melee**: Warrior (tank), Assassin (stealth), Alchemist (poison), Barbarian (rage)
+- **Caster**: Pyromancer (fire), Wizard (arcane), Priest (healing), Oracle (detection), Shaman (lightning), Druid (nature)
+- **Ranged**: Gunslinger (guns), Tracker (bow + monster control)
+
+### Core Mechanics
+
+**Warlock System**: 
+- 1-5 players secretly assigned as Warlocks based on player count
+- Warlocks try to corrupt others through combat
+- Conversion chance increases with Warlock population
+- Win by majority corruption OR eliminating all good players
+
+**Combat Flow**:
+1. All actions submitted simultaneously
+2. Actions execute by `order` property (shields first, then attacks, then healing)
+3. Monster attacks lowest HP visible player  
+4. Status effects process (poison damage, effect countdown)
+5. Deaths processed (including Undying resurrection)
+
+**Key Formulas**:
+- **Armor**: 10% damage reduction per point, 90% max reduction
+- **Monster Scaling**: Base 100 HP + 25 per level, damage = base × (age + 2)
+- **Player Scaling**: +20% HP and +25% damage per level
+
+### Development Patterns
+
+**Adding New Content**:
+1. **New Ability**: Define in `classes.js` → Implement handler → Add messages
+2. **New Race**: Define in `races.js` → Implement racial ability → Add to compatibility  
+3. **New Status Effect**: Define in `statusEffects.js` → Update manager → Add messages
+
+**Debugging Common Issues**:
+- **Action not working**: Check ability definition + handler registration + validation
+- **Damage wrong**: Check `CombatSystem.js` + `Player.modifyDamage()` + balance config
+- **Effect not applying**: Check `StatusEffectManager.js` + effect definition
+- **Conversion issues**: Check `WarlockSystem.js` + balance settings
+
+### Message System
+All game text centralized in `config/messages/` with placeholder support:
+```javascript
+messages.formatMessage("Player {playerName} takes {damage} damage", {
+  playerName: "Alice", 
+  damage: 15
+}); // "Player Alice takes 15 damage"
+```
+
+### System Dependencies
+- `GameRoom` orchestrates everything via `SystemsFactory`
+- `SystemsFactory` handles dependency injection between systems
+- `AbilityRegistry` maps ability types to handler functions
+- All systems use `GameStateUtils` for common queries
+
+---
+
+## Common Development Scenarios
+
+### Scenario: "I want to add a new attack ability"
+**Needs**: 
+- `config/character/classes.js` (to add ability definition)
+- `models/systems/abilityHandlers/attackAbilities.js` (to implement handler)  
+- `config/messages/abilities/attacks.js` (for ability messages)
+
+### Scenario: "Players are complaining Warlocks convert too often"
+**Needs**:
+- `config/gameBalance.js` (conversion rates and limits)
+- `models/systems/WarlockSystem.js` (conversion logic)
+
+### Scenario: "I need to fix a bug where poison doesn't work"
+**Needs**:
+- `models/systems/StatusEffectManager.js` (poison processing)
+- `config/statusEffects.js` (poison configuration)
+- `models/Player.js` (if poison affects player stats)
+
+### Scenario: "I want to add a new race"
+**Needs**:
+- `config/character/races.js` (race definition)
+- `models/systems/abilityHandlers/racialAbilities.js` (racial ability implementation)
+- `config/messages/abilities/racial.js` (racial ability messages)
+- `config/character/index.js` (if compatibility changes needed)
+
+---
+
+## Testing & Deployment
+
+**Local Development**:
+```bash
+npm run dev          # Nodemon with Babel
+npm start            # Production start
+```
+
+**Key Environment Variables**:
+- `NODE_ENV`: development/production/test
+- `PORT`: Server port (default 3001)  
+- `LOG_LEVEL`: ERROR/WARN/INFO/DEBUG
+
+**Architecture Benefits**:
+- ✅ **Modular**: Systems are independent and testable
+- ✅ **Configurable**: Balance changes don't require code changes
+- ✅ **Extensible**: New abilities/races follow established patterns  
+- ✅ **Maintainable**: Clear separation of concerns
+- ✅ **Real-time**: Socket.IO handles all client communication
