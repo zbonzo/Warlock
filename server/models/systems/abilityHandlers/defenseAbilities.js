@@ -9,6 +9,7 @@ const {
   registerAbilitiesByCategory,
   registerAbilitiesByEffectAndTarget,
   registerAbilitiesByCriteria,
+  applyThreatForAbility,
 } = require('./abilityRegistryUtils');
 
 /**
@@ -199,6 +200,10 @@ function handleShadowstep(actor, target, ability, log, systems) {
  * @param {Object} systems - Game systems
  * @returns {boolean} Whether the ability was successful
  */
+/**
+ * Modified handleMultiProtection function for defenseAbilities.js
+ * Add threat tracking for multi-target protection abilities
+ */
 function handleMultiProtection(actor, target, ability, log, systems) {
   // Get all alive players
   const targets = Array.from(systems.players.values()).filter((p) => p.isAlive);
@@ -237,6 +242,20 @@ function handleMultiProtection(actor, target, ability, log, systems) {
       turns: ability.params.duration || protectionDefaults.turns,
     })
   );
+
+  // NEW: Apply threat for protection abilities (treat armor given as "healing equivalent")
+  if (shieldedCount > 0) {
+    const armorValue = ability.params.armor || protectionDefaults.armor;
+    const equivalentHealing = armorValue * shieldedCount * 10; // Each armor point = 10 threat
+    applyThreatForAbility(
+      actor,
+      '__multi__',
+      ability,
+      0,
+      equivalentHealing,
+      systems
+    );
+  }
 
   return true;
 }

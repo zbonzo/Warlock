@@ -13,19 +13,18 @@ const { registerAbilityHandlers } = require('./abilityHandlers');
 const messages = require('@messages');
 
 /**
- * Factory class for creating and connecting game systems
- * Centralizes the creation and dependency injection of all game systems
+ * Enhanced SystemsFactory to ensure AbilityRegistry has access to all systems
+ * This should be added to or modify the existing SystemsFactory.js
  */
 class SystemsFactory {
   /**
-   * Create all game systems with proper dependencies
-   *
-   * @param {Map} players - The map of player objects
-   * @param {Object} monster - The monster state object
-   * @returns {Object} Object containing all initialized systems
+   * Create all game systems with proper dependency injection
+   * @param {Map} players - Map of player objects
+   * @param {Object} monster - Monster state object
+   * @returns {Object} All game systems
    */
   static createSystems(players, monster) {
-    // Create systems in dependency order
+    // Create individual systems
     const gameStateUtils = new GameStateUtils(players);
     const statusEffectManager = new StatusEffectManager(
       players,
@@ -34,9 +33,10 @@ class SystemsFactory {
     const warlockSystem = new WarlockSystem(players, gameStateUtils);
     const racialAbilitySystem = new RacialAbilitySystem(
       players,
-      gameStateUtils,
       statusEffectManager
     );
+
+    // Create enhanced MonsterController with threat system
     const monsterController = new MonsterController(
       monster,
       players,
@@ -44,6 +44,7 @@ class SystemsFactory {
       racialAbilitySystem,
       gameStateUtils
     );
+
     const combatSystem = new CombatSystem(
       players,
       monsterController,
@@ -53,27 +54,25 @@ class SystemsFactory {
       gameStateUtils
     );
 
-    // Initialize ability registry
+    // Create AbilityRegistry and register all handlers
     const abilityRegistry = new AbilityRegistry();
 
-    // Set up system references for ability handlers
-    abilityRegistry.setSystems({
+    // IMPORTANT: Store systems reference in the registry for handler access
+    abilityRegistry.systems = {
       players,
-      gameStateUtils,
+      monster,
+      monsterController,
+      combatSystem,
       statusEffectManager,
       warlockSystem,
       racialAbilitySystem,
-      monsterController,
-      combatSystem,
-    });
-
-    // Connect RacialAbilitySystem to the registry
-    racialAbilitySystem.setAbilityRegistry(abilityRegistry);
+      gameStateUtils,
+    };
 
     // Register all ability handlers
+    const { registerAbilityHandlers } = require('./abilityHandlers');
     registerAbilityHandlers(abilityRegistry);
 
-    // Return all systems as an object
     return {
       gameStateUtils,
       statusEffectManager,

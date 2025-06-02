@@ -8,6 +8,7 @@ const {
   registerAbilitiesByCategory,
   registerAbilitiesByEffectAndTarget,
   registerAbilitiesByCriteria,
+  applyThreatForAbility,
 } = require('./abilityRegistryUtils');
 
 /**
@@ -80,11 +81,10 @@ function register(registry) {
  * @returns {boolean} Whether the ability was successful
  */
 function handleHeal(actor, target, ability, log, systems) {
-  // FIXED: Use ability.params.amount from classes.js configuration
+  // Use ability.params.amount from classes.js configuration
   let healAmount = Number(ability.params.amount) || 0;
 
-  // FIXED: Use proper healing scaling instead of damage modifier
-  // Healing should use the healing modifier system from game balance
+  // Use proper healing scaling
   const healingModifier = actor.getHealingModifier
     ? actor.getHealingModifier()
     : 1.0;
@@ -96,9 +96,11 @@ function handleHeal(actor, target, ability, log, systems) {
   const warlockSelfHealOnly =
     config.gameBalance?.player?.healing?.warlockSelfHealOnly || true;
 
+  let actualHeal = 0;
+
   if (!target.isWarlock || !rejectWarlockHealing) {
     // Normal healing
-    const actualHeal = Math.min(healAmount, target.maxHp - target.hp);
+    actualHeal = Math.min(healAmount, target.maxHp - target.hp);
     target.hp += actualHeal;
 
     if (actualHeal > 0) {
@@ -152,7 +154,7 @@ function handleHeal(actor, target, ability, log, systems) {
     }
   } else {
     // Warlock healing behavior - heal self instead
-    const actualHeal = Math.min(healAmount, actor.maxHp - actor.hp);
+    actualHeal = Math.min(healAmount, actor.maxHp - actor.hp);
     actor.hp += actualHeal;
 
     // Warlock-specific messages
@@ -162,7 +164,7 @@ function handleHeal(actor, target, ability, log, systems) {
       targetId: target.id,
       attackerId: actor.id,
       heal: actualHeal,
-      message: '', // No public message
+      message: '',
       privateMessage: messages.getAbilityMessage(
         'abilities.healing',
         'warlockHealingRejected'
@@ -179,6 +181,11 @@ function handleHeal(actor, target, ability, log, systems) {
 
     // Trigger potential conversion
     systems.warlockSystem.attemptConversion(actor, target, log);
+  }
+
+  // NEW: Apply threat for healing done
+  if (actualHeal > 0) {
+    applyThreatForAbility(actor, target, ability, 0, actualHeal, systems);
   }
 
   return true;
@@ -201,16 +208,16 @@ function handleRejuvenationHoT(actor, target, ability, log, systems) {
   const excludeWarlocks =
     config.gameBalance?.player?.healing?.rejectWarlockHealing || true;
 
-  // FIXED: Use ability.params.amount from classes.js configuration
-  let baseHealAmount = Number(ability.params.amount) || 250; // Default from classes.js
+  // Use ability.params.amount from classes.js configuration
+  let baseHealAmount = Number(ability.params.amount) || 250;
 
-  // FIXED: Use proper healing scaling instead of damage modifier
+  // Use proper healing scaling
   const healingModifier = actor.getHealingModifier
     ? actor.getHealingModifier()
     : 1.0;
   const modifiedHealAmount = Math.floor(baseHealAmount * healingModifier);
 
-  // FIXED: Get turns from ability params, default to 3
+  // Get turns from ability params, default to 3
   const healingTurns = ability.params.turns || 3;
   const healPerTurn = Math.floor(modifiedHealAmount / healingTurns);
 
@@ -227,6 +234,7 @@ function handleRejuvenationHoT(actor, target, ability, log, systems) {
   );
 
   let playersAffected = 0;
+  let totalPotentialHealing = 0;
 
   for (const potentialTarget of targets) {
     // Skip warlocks if configured to do so (unless it's the actor and they're a warlock)
@@ -251,6 +259,7 @@ function handleRejuvenationHoT(actor, target, ability, log, systems) {
 
     if (success) {
       playersAffected++;
+      totalPotentialHealing += modifiedHealAmount; // Count full potential healing
 
       // Add private message for the recipient
       const privateHealLog = {
@@ -288,6 +297,16 @@ function handleRejuvenationHoT(actor, target, ability, log, systems) {
         turns: healingTurns,
       })
     );
+
+    // NEW: Apply threat for potential healing (healing over time generates threat upfront)
+    applyThreatForAbility(
+      actor,
+      '__multi__',
+      ability,
+      0,
+      totalPotentialHealing,
+      systems
+    );
   } else {
     const noTargetsMessage = messages.getAbilityMessage(
       'abilities.healing',
@@ -314,10 +333,10 @@ function handleRejuvenationHoT(actor, target, ability, log, systems) {
  * @returns {boolean} Whether the ability was successful
  */
 function handleMultiHeal(actor, target, ability, log, systems) {
-  // FIXED: Use ability.params.amount from classes.js configuration
+  // Use ability.params.amount from classes.js configuration
   let healAmount = Number(ability.params.amount) || 0;
 
-  // FIXED: Use proper healing scaling instead of damage modifier
+  // Use proper healing scaling
   const healingModifier = actor.getHealingModifier
     ? actor.getHealingModifier()
     : 1.0;
@@ -342,6 +361,8 @@ function handleMultiHeal(actor, target, ability, log, systems) {
     })
   );
 
+  let totalHealingDone = 0;
+
   for (const potentialTarget of targets) {
     // Skip warlocks if configured to do so (unless it's the actor and they're a warlock)
     if (
@@ -357,9 +378,10 @@ function handleMultiHeal(actor, target, ability, log, systems) {
       healAmount,
       potentialTarget.maxHp - potentialTarget.hp
     );
-    potentialTarget.hp += actualHeal;
-
     if (actualHeal > 0) {
+      potentialTarget.hp += actualHeal;
+      totalHealingDone += actualHeal;
+
       const healMessage = messages.getAbilityMessage(
         'abilities.healing',
         'healingApplied'
@@ -387,6 +409,18 @@ function handleMultiHeal(actor, target, ability, log, systems) {
       };
       log.push(privateHealLog);
     }
+  }
+
+  // NEW: Apply threat for total healing done
+  if (totalHealingDone > 0) {
+    applyThreatForAbility(
+      actor,
+      '__multi__',
+      ability,
+      0,
+      totalHealingDone,
+      systems
+    );
   }
 
   return true;

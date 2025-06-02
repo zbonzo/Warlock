@@ -684,12 +684,14 @@ class GameRoom {
         actor.racialAbility.type === action.racialType
       ) {
         try {
+          // ENHANCED: Execute racial ability with systems parameter
           this.systems.abilityRegistry.executeRacialAbility(
             action.racialType,
             actor,
             target || action.targetId,
             actor.racialAbility,
-            log
+            log,
+            this.systems // Pass all systems including monsterController for threat tracking
           );
         } catch (error) {
           logger.error(
@@ -762,7 +764,7 @@ class GameRoom {
       const ability = actor.unlocked.find((a) => a.type === action.actionType);
       if (!ability) continue;
 
-      // IMPORTANT: Put ability on cooldown BEFORE execution to prevent double-use
+      // Put ability on cooldown BEFORE execution to prevent double-use
       if (ability.cooldown > 0) {
         actor.putAbilityOnCooldown(action.actionType, ability.cooldown);
       }
@@ -801,32 +803,31 @@ class GameRoom {
         continue;
       }
 
-      // Create action announcement log - this shows who used what on whom
+      // Create action announcement log
       const actionLog = {
         type: 'action_announcement',
         public: true,
         attackerId: actor.id,
         targetId: target === '__monster__' ? 'monster' : target.id,
         abilityName: ability.name,
-        // Public message shows the action (visible to people involved)
         message: messages.getEvent('playerAttacks', {
           playerName: actor.name,
           abilityName: ability.name,
           targetName: target === '__monster__' ? 'the Monster' : target.name,
         }),
-        // Private messages are empty since this is just an announcement
         privateMessage: '',
         attackerMessage: '',
       };
       log.push(actionLog);
 
-      // Execute the ability (this will generate additional logs for damage, healing, etc.)
+      // ENHANCED: Execute the ability with systems parameter for threat tracking
       this.systems.abilityRegistry.executeClassAbility(
         action.actionType,
         actor,
         target,
         ability,
-        log
+        log,
+        this.systems // Pass all systems including monsterController for threat tracking
       );
     }
 

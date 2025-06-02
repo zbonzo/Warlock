@@ -8,6 +8,7 @@ const {
   registerAbilitiesByCategory,
   registerAbilitiesByEffectAndTarget,
   registerAbilitiesByCriteria,
+  applyThreatForAbility,
 } = require('./abilityRegistryUtils');
 
 /**
@@ -118,10 +119,58 @@ function handleAttack(actor, target, ability, log, systems) {
     return false;
   }
 
+  // Calculate damage
+  const rawDamage = Number(ability.params.damage) || 0;
+  const modifiedDamage = actor.modifyDamage(rawDamage);
+  let actualDamage = 0;
+
   if (target === '__monster__') {
-    return handleMonsterAttack(actor, ability, log, systems);
+    const success = systems.monsterController.takeDamage(
+      modifiedDamage,
+      actor,
+      log
+    );
+    if (success) {
+      actualDamage = modifiedDamage;
+
+      // Generate warlock threat for attacking monster
+      if (actor.isWarlock) {
+        const randomConversionModifier =
+          config.gameBalance.warlock.conversion.randomModifier;
+        systems.warlockSystem.attemptConversion(
+          actor,
+          null,
+          log,
+          randomConversionModifier
+        );
+      }
+    }
+  } else {
+    // Player target
+    if (!target || !target.isAlive) return false;
+
+    // Apply damage and track actual damage dealt
+    const oldHp = target.hp;
+    systems.combatSystem.applyDamageToPlayer(
+      target,
+      modifiedDamage,
+      actor,
+      log
+    );
+    actualDamage = oldHp - target.hp;
+
+    // Warlocks may attempt to convert on attack
+    if (actor.isWarlock) {
+      systems.warlockSystem.attemptConversion(actor, target, log);
+    }
   }
-  return handlePlayerAttack(actor, target, ability, log, systems);
+
+  // NEW: Apply threat for this action
+  if (actualDamage > 0) {
+    applyThreatForAbility(actor, target, ability, actualDamage, 0, systems);
+  }
+
+  return actualDamage > 0;
 }
 
 /**
@@ -239,13 +288,18 @@ function handleAoeDamage(actor, target, ability, log, systems) {
     })
   );
 
+  let totalDamageDealt = 0;
+
   for (const potentialTarget of targets) {
+    const oldHp = potentialTarget.hp;
     systems.combatSystem.applyDamageToPlayer(
       potentialTarget,
       modifiedDamage,
       actor,
       log
     );
+    const actualDamage = oldHp - potentialTarget.hp;
+    totalDamageDealt += actualDamage;
 
     // Check for warlock conversion with reduced chance for AoE
     const conversionModifier =
@@ -263,6 +317,18 @@ function handleAoeDamage(actor, target, ability, log, systems) {
         conversionModifier
       );
     }
+  }
+
+  // NEW: Apply threat for total AoE damage
+  if (totalDamageDealt > 0) {
+    applyThreatForAbility(
+      actor,
+      '__multi__',
+      ability,
+      totalDamageDealt,
+      0,
+      systems
+    );
   }
 
   return true;
@@ -790,14 +856,11 @@ function handleMultiHitAttack(actor, target, ability, log, systems) {
   // Get hit parameters
   const hits = ability.params.hits || 1;
 
-  // IMPORTANT FIX: For single-target multi-hit abilities like Twin Strike,
-  // use damage parameter directly, not damagePerHit
+  // Use damage parameter for single-target, damagePerHit for multi-target
   let damagePerHit;
   if (ability.params.damagePerHit) {
-    // Multi-target abilities like Arcane Barrage use damagePerHit
     damagePerHit = ability.params.damagePerHit;
   } else {
-    // Single-target multi-hit abilities like Twin Strike use damage for each hit
     damagePerHit = ability.params.damage || 10;
   }
 
@@ -815,23 +878,18 @@ function handleMultiHitAttack(actor, target, ability, log, systems) {
     })
   );
 
-  // Total damage counter
   let totalDamage = 0;
   let hitCount = 0;
 
   // Process each hit
   for (let i = 0; i < hits; i++) {
-    // Calculate hit chance for each hit (if specified)
     const hitChance = ability.params.hitChance || 1.0;
 
-    // Check if hit lands
     if (Math.random() < hitChance) {
       const modifiedDamage = actor.modifyDamage(damagePerHit);
       hitCount++;
 
-      // Apply the damage directly to the target
       if (target === '__monster__') {
-        // For monster target
         const hitSuccess = systems.monsterController.takeDamage(
           modifiedDamage,
           actor,
@@ -841,19 +899,16 @@ function handleMultiHitAttack(actor, target, ability, log, systems) {
           totalDamage += modifiedDamage;
         }
       } else {
-        // For player target - apply damage without additional logging to avoid spam
         const oldHp = target.hp;
         const finalDamage = target.calculateDamageReduction(modifiedDamage);
         target.hp = Math.max(0, target.hp - finalDamage);
         const actualDamage = oldHp - target.hp;
 
-        // Check if target died
         if (target.hp <= 0) {
           target.isAlive = false;
           systems.combatSystem.handlePotentialDeath(target, actor, log);
         }
 
-        // Log individual hit damage
         const hitMessage = messages.getAbilityMessage(
           'abilities.attacks',
           'multiHitIndividual'
@@ -869,7 +924,6 @@ function handleMultiHitAttack(actor, target, ability, log, systems) {
         totalDamage += actualDamage;
       }
     } else {
-      // Log missed hits
       const missMessage = messages.getAbilityMessage(
         'abilities.attacks',
         'multiHitMiss'
@@ -894,6 +948,9 @@ function handleMultiHitAttack(actor, target, ability, log, systems) {
         totalDamage: totalDamage,
       })
     );
+
+    // NEW: Apply threat for total damage dealt
+    applyThreatForAbility(actor, target, ability, totalDamage, 0, systems);
   } else {
     const allMissedMessage = messages.getAbilityMessage(
       'abilities.attacks',

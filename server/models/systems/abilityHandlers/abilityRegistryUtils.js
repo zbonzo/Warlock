@@ -198,10 +198,45 @@ function getAllAbilities() {
   return abilities;
 }
 
+/**
+ * Add this helper function to each ability handler file or create a shared utility
+ * This calculates and applies threat for any ability use
+ */
+function applyThreatForAbility(
+  actor,
+  target,
+  ability,
+  damageDealt = 0,
+  healingDone = 0,
+  systems
+) {
+  // Get the monster controller from systems
+  const monsterController = systems.monsterController;
+
+  if (!monsterController || !monsterController.addThreat) {
+    return; // Threat system not available
+  }
+
+  // Calculate threat components
+  const damageToMonster = target === '__monster__' ? damageDealt : 0;
+  const totalDamageDealt = damageDealt;
+  const actorArmor = actor.getEffectiveArmor();
+
+  // Add threat to the monster controller
+  monsterController.addThreat(
+    actor.id,
+    damageToMonster,
+    totalDamageDealt,
+    healingDone,
+    actorArmor
+  );
+}
+
 module.exports = {
   registerAbilitiesByCategory,
   registerAbilitiesByEffectAndTarget,
   registerAbilitiesByCriteria,
   findAbilitiesByTypePattern,
   getAllAbilities,
+  applyThreatForAbility,
 };

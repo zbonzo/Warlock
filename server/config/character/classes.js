@@ -144,7 +144,7 @@ const classAbilities = {
       category: 'Attack',
       effect: null,
       target: 'Single',
-      params: { damage: 25 },
+      params: { damage: 28 }, // Solid, reliable damage - the baseline
       unlockAt: 1,
       order: 1000,
       cooldown: 0,
@@ -156,7 +156,7 @@ const classAbilities = {
       category: 'Defense',
       effect: 'shielded',
       target: 'Self',
-      params: { armor: 5, duration: 1 },
+      params: { armor: 8, duration: 1 }, // Heavy tank armor
       unlockAt: 2,
       order: 10,
       cooldown: 0,
@@ -169,7 +169,7 @@ const classAbilities = {
       category: 'Heal',
       effect: null,
       target: 'Self',
-      params: { amount: 20 },
+      params: { amount: 35 }, // Field medic training
       unlockAt: 3,
       order: 10000,
       cooldown: 2,
@@ -181,7 +181,7 @@ const classAbilities = {
       category: 'Special',
       effect: 'shielded',
       target: 'Multi',
-      params: { armor: 3, duration: 1 },
+      params: { armor: 4, duration: 1 }, // Strong group protection
       unlockAt: 4,
       order: 50,
       cooldown: 3,
@@ -193,9 +193,9 @@ const classAbilities = {
       type: 'fireball',
       name: 'Fireball',
       category: 'Attack',
-      effect: null,
+      effect: 'poison',
       target: 'Single',
-      params: { damage: 25 },
+      params: { damage: 22, poison: { damage: 22, turns: 1 } },
       unlockAt: 1,
       order: 1010,
       cooldown: 0,
@@ -207,7 +207,7 @@ const classAbilities = {
       category: 'Heal',
       effect: null,
       target: 'Self',
-      params: { amount: 50 },
+      params: { amount: 15 }, // Painful but effective
       unlockAt: 3,
       order: 10000,
       cooldown: 2,
@@ -219,7 +219,7 @@ const classAbilities = {
       category: 'Attack',
       effect: 'poison',
       target: 'Single',
-      params: { damage: 40, poison: { damage: 20, turns: 2 } },
+      params: { damage: 40, poison: { damage: 20, turns: 5 } },
       unlockAt: 2,
       order: 1015,
       cooldown: 2,
@@ -246,7 +246,7 @@ const classAbilities = {
       category: 'Attack',
       effect: null,
       target: 'Single',
-      params: { damage: 75 },
+      params: { damage: 75 }, // High damage but unlocked later
       unlockAt: 3,
       order: 1011,
       cooldown: 0,
@@ -259,7 +259,7 @@ const classAbilities = {
       category: 'Defense',
       effect: 'shielded',
       target: 'Self',
-      params: { armor: 4, duration: 1 },
+      params: { armor: 5, duration: 1 }, // Moderate magical protection
       unlockAt: 2,
       order: 12,
       cooldown: 0,
@@ -272,12 +272,11 @@ const classAbilities = {
       category: 'Attack',
       effect: null,
       target: 'Single',
-      params: { hits: 4, damagePerHit: 7, hitChance: 0.8 },
+      params: { hits: 4, damagePerHit: 6, hitChance: 0.8 }, // 19.2 expected damage - weak but available early
       unlockAt: 1,
       order: 1025,
       cooldown: 0,
-      flavorText:
-        'Unleash a rapid volley of three arcane bolts at a single enemy.',
+      flavorText: 'Unleash a rapid volley of arcane bolts at a single enemy.',
     },
     {
       type: 'meteorShower',
@@ -300,7 +299,7 @@ const classAbilities = {
       category: 'Attack',
       effect: null,
       target: 'Single',
-      params: { damage: 25 },
+      params: { damage: 32 }, // High damage but fragile class
       unlockAt: 1,
       order: 1020,
       cooldown: 0,
@@ -335,15 +334,15 @@ const classAbilities = {
       type: 'deathMark',
       name: 'Death Mark',
       category: 'Special',
-      effect: 'poisonAndInvisible', // New combined effect
+      effect: 'poisonAndInvisible',
       target: 'Single',
       params: {
-        poison: { damage: 35, turns: 3 }, // Higher damage, longer duration
-        selfInvisible: { duration: 1 }, // Make caster invisible
+        poison: { damage: 35, turns: 3 },
+        selfInvisible: { duration: 1 },
       },
       unlockAt: 4,
       order: 140,
-      cooldown: 2, // Add cooldown since it's now more powerful
+      cooldown: 2,
       flavorText:
         'Mark your target for death with a lethal curse, then vanish into the shadows to watch them suffer.',
     },
@@ -355,7 +354,7 @@ const classAbilities = {
       category: 'Attack',
       effect: 'poison',
       target: 'Single',
-      params: { damage: 25, poison: { damage: 10, turns: 2 } },
+      params: { damage: 18, poison: { damage: 12, turns: 2 } }, // Low initial but good poison - 42 total
       unlockAt: 1,
       order: 1030,
       cooldown: 0,
@@ -392,12 +391,12 @@ const classAbilities = {
       type: 'poisonTrap',
       name: 'Poison Trap',
       category: 'Special',
-      effect: 'poisonAndVulnerable', // New combined effect
+      effect: 'poisonAndVulnerable',
       target: 'Multi',
       params: {
         poison: { damage: 15, turns: 4 },
         vulnerable: { damageIncrease: 30, turns: 4 },
-        hitChance: 0.75, // 75% chance to affect each target
+        hitChance: 0.75,
       },
       unlockAt: 4,
       order: 120,
@@ -413,7 +412,7 @@ const classAbilities = {
       category: 'Attack',
       effect: null,
       target: 'Single',
-      params: { damage: 25 },
+      params: { damage: 20 }, // Weakest attack - priest is support focused
       unlockAt: 1,
       order: 1040,
       cooldown: 0,
@@ -425,7 +424,7 @@ const classAbilities = {
       category: 'Heal',
       effect: null,
       target: 'Single',
-      params: { amount: 50 },
+      params: { amount: 65 }, // Good emergency healing
       unlockAt: 2,
       order: 100,
       cooldown: 0,
@@ -438,7 +437,7 @@ const classAbilities = {
       category: 'Heal',
       effect: null,
       target: 'Single',
-      params: { amount: 150 },
+      params: { amount: 180 }, // Powerful dedicated healing
       unlockAt: 3,
       order: 10050,
       cooldown: 2,
@@ -451,7 +450,7 @@ const classAbilities = {
       category: 'Special',
       effect: 'shielded',
       target: 'Multi',
-      params: { armor: 3, duration: 2 },
+      params: { armor: 5, duration: 2 }, // Strong group protection, longer duration
       unlockAt: 4,
       order: 51,
       cooldown: 0,
@@ -466,7 +465,7 @@ const classAbilities = {
       category: 'Attack',
       effect: null,
       target: 'Single',
-      params: { damage: 25 },
+      params: { damage: 24 }, // Moderate damage, utility focused
       unlockAt: 1,
       order: 1050,
       cooldown: 0,
@@ -491,7 +490,7 @@ const classAbilities = {
       category: 'Defense',
       effect: 'shielded',
       target: 'Self',
-      params: { armor: 2, counterDamage: 25, duration: 1 },
+      params: { armor: 3, counterDamage: 25, duration: 1 }, // Light armor but punishes attackers
       unlockAt: 3,
       order: 17,
       cooldown: 3,
@@ -504,7 +503,7 @@ const classAbilities = {
       category: 'Heal',
       effect: 'detect',
       target: 'Self',
-      params: { amount: 20, counterDamage: 50, autoDetect: true },
+      params: { amount: 30, counterDamage: 50, autoDetect: true }, // Better healing for Oracle
       unlockAt: 4,
       order: 2,
       cooldown: 3,
@@ -519,7 +518,7 @@ const classAbilities = {
       category: 'Attack',
       effect: null,
       target: 'Single',
-      params: { damage: 35, selfDamage: 10 },
+      params: { damage: 35, selfDamage: 10 }, // Highest base damage but hurts self
       unlockAt: 1,
       order: 1000,
       cooldown: 0,
@@ -577,7 +576,7 @@ const classAbilities = {
       category: 'Attack',
       effect: null,
       target: 'Single',
-      params: { damage: 25 },
+      params: { damage: 30 }, // High damage, elemental theme
       unlockAt: 1,
       order: 1060,
       cooldown: 0,
@@ -590,7 +589,7 @@ const classAbilities = {
       category: 'Defense',
       effect: 'shielded',
       target: 'Self',
-      params: { armor: 3, duration: 1 },
+      params: { armor: 4, duration: 1 }, // Solid spiritual protection
       unlockAt: 2,
       order: 18,
       cooldown: 0,
@@ -603,7 +602,7 @@ const classAbilities = {
       category: 'Heal',
       effect: null,
       target: 'Single',
-      params: { amount: 100 },
+      params: { amount: 120 }, // Strong but not as powerful as Priest
       unlockAt: 3,
       order: 10080,
       cooldown: 2,
@@ -630,7 +629,7 @@ const classAbilities = {
       category: 'Attack',
       effect: null,
       target: 'Single',
-      params: { damage: 25 },
+      params: { damage: 26 }, // Reliable ranged damage
       unlockAt: 1,
       order: 1070,
       cooldown: 0,
@@ -683,7 +682,7 @@ const classAbilities = {
       category: 'Attack',
       effect: null,
       target: 'Single',
-      params: { damage: 30 },
+      params: { damage: 29 }, // Slightly higher than baseline for precision
       unlockAt: 1,
       order: 1080,
       cooldown: 0,
@@ -721,13 +720,13 @@ const classAbilities = {
       name: 'Control Monster',
       category: 'Special',
       effect: 'monsterControl',
-      target: 'Single', // Target who the monster will attack
+      target: 'Single',
       params: {
-        damageBoost: 2, // 100% more damage
+        damageBoost: 2,
         forcedAttack: true,
       },
       unlockAt: 4,
-      order: 100, // High priority to execute before monster normally acts
+      order: 100,
       cooldown: 4,
       flavorText:
         'Use your knowledge of beast behavior to command the monster, forcing it to attack your chosen target with enhanced ferocity.',
@@ -740,9 +739,9 @@ const classAbilities = {
       category: 'Attack',
       effect: null,
       target: 'Single',
-      params: { damage: 15 },
+      params: { damage: 23 }, // Lower damage but executes very early
       unlockAt: 1,
-      order: 5,
+      order: 5, // Very early execution - can interrupt enemy actions
       cooldown: 0,
       flavorText: 'Lash out with the ferocity of a wild beast, claws bared.',
     },
@@ -752,7 +751,7 @@ const classAbilities = {
       category: 'Defense',
       effect: 'shielded',
       target: 'Self',
-      params: { armor: 2, duration: 1 },
+      params: { armor: 3, duration: 1 }, // Natural but moderate protection
       unlockAt: 2,
       order: 21,
       cooldown: 3,
@@ -762,11 +761,11 @@ const classAbilities = {
       type: 'rejuvenation',
       name: 'Rejuvenation',
       category: 'Heal',
-      effect: 'healingOverTime', // Changed from null to healingOverTime
+      effect: 'healingOverTime',
       target: 'Multi',
       params: {
-        amount: 250, // Total healing over time (will be divided by turns)
-        turns: 3, // Duration in turns
+        amount: 250,
+        turns: 3,
       },
       unlockAt: 3,
       order: 10110,

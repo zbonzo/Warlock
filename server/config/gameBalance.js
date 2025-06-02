@@ -25,10 +25,36 @@ const monster = {
 
   // Monster targeting preferences
   targeting: {
-    preferLowestHp: true,
-    canAttackInvisible: false,
-    fallbackToHighestHp: true,
-    canAttackWarlock: false,
+    preferLowestHp: false, // Disable to use threat system instead
+    useThreatSystem: true, // Enable threat-based targeting
+    canAttackInvisible: false, // Existing setting
+    fallbackToHighestHp: true, // Existing setting
+    canAttackWarlock: false, // Existing setting
+  },
+  threat: {
+    // Core threat system toggle
+    enabled: true,
+
+    // Threat generation formula components
+    // Formula: ((armor × damageToMonster) + totalDamage + healing) × decayRate
+    armorMultiplier: 1.0, // How much armor amplifies threat from monster damage
+    damageMultiplier: 1.0, // Base multiplier for all damage dealt
+    healingMultiplier: 0.8, // How much healing generates threat (80% of damage value)
+
+    // Threat management over time
+    decayRate: 0.25, // 25% threat reduction each round (configurable)
+    monsterDeathReduction: 0.5, // 50% threat reduction when monster dies/respawns
+
+    // Targeting restrictions to prevent feedback loops
+    avoidLastTargetRounds: 1, // Don't target same player for X rounds (configurable)
+
+    // Tiebreaker and fallback behavior
+    enableTiebreaker: true, // Use random selection when multiple players tied for highest threat
+    fallbackToLowestHp: true, // Fall back to lowest HP targeting if no threat exists
+
+    // Debug and tuning options
+    minimumThreatThreshold: 0.1, // Remove threat values below this to keep table clean
+    logThreatChanges: true, // Enable debug logging for threat calculations
   },
 };
 
@@ -346,6 +372,23 @@ function calculateWarlockCount(playerCount) {
 
   return warlockCount;
 }
+function calculateThreatGeneration(
+  damageToMonster = 0,
+  totalDamageDealt = 0,
+  healingDone = 0,
+  playerArmor = 0
+) {
+  const threatConfig = monster.threat;
+
+  if (!threatConfig.enabled) return 0;
+
+  const armorThreat =
+    playerArmor * damageToMonster * threatConfig.armorMultiplier;
+  const damageThreat = totalDamageDealt * threatConfig.damageMultiplier;
+  const healThreat = healingDone * threatConfig.healingMultiplier;
+
+  return armorThreat + damageThreat + healThreat;
+}
 
 module.exports = {
   monster,
@@ -367,4 +410,5 @@ module.exports = {
   calculateConversionChance,
   calculateDamageReduction,
   calculateWarlockCount,
+  calculateThreatGeneration,
 };
