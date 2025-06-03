@@ -544,7 +544,7 @@ const validateAction = (socket, gameCode, actionType, targetId) => {
   }
 
   // Validate target exists
-  if (targetId !== '__monster__') {
+  if (targetId !== config.MONSTER_ID) {
     if (!game.players.has(targetId) || !game.players.get(targetId).isAlive) {
       socket.emit('errorMessage', { message: 'Invalid target.' });
       return false;
@@ -584,7 +584,7 @@ const validateActionWithCooldown = (socket, gameCode, actionType, targetId) => {
   }
 
   // Validate target exists
-  if (targetId !== '__monster__') {
+  if (targetId !== config.MONSTER_ID) {
     if (!game.players.has(targetId) || !game.players.get(targetId).isAlive) {
       socket.emit('errorMessage', { message: 'Invalid target.' });
       return false;

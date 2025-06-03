@@ -148,7 +148,7 @@ function handleInvisibility(actor, target, ability, log, systems) {
  * @returns {boolean} Whether the ability was successful
  */
 function handleShadowstep(actor, target, ability, log, systems) {
-  if (!target || target === '__monster__') {
+  if (!target || target === config.MONSTER_ID) {
     const invalidTargetMessage = messages.getAbilityMessage(
       'abilities.defense',
       'shadowstepInvalidTarget'
@@ -261,5 +261,3 @@ function handleMultiProtection(actor, target, ability, log, systems) {
 }
 
 module.exports = { register };
-
-

@@ -16,7 +16,7 @@ const gameService = require('./services/gameService');
 
 // Initialize Express app and HTTP server
 const app = express();
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT || config.port;
 
 // Middleware
 app.use(cors());

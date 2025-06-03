@@ -35,7 +35,7 @@ class RacialAbilitySystem {
   /**
    * Validate and queue a racial ability action
    * @param {string} actorId - ID of player using the ability
-   * @param {string} targetId - ID of target (player ID or '__monster__')
+   * @param {string} targetId - ID of target (player ID or config.MONSTER_ID)
    * @param {Array} pendingRacialActions - Array of pending racial actions
    * @returns {boolean} Whether the action was successfully queued
    */
@@ -64,7 +64,7 @@ class RacialAbilitySystem {
 
     // Handle target for player-specific abilities
     let finalTargetId = targetId;
-    if (targetId !== '__monster__' && targetId !== actorId) {
+    if (targetId !== config.MONSTER_ID && targetId !== actorId) {
       const targetPlayer = this.players.get(targetId);
 
       // Validate target player exists and is alive
@@ -190,5 +190,3 @@ class RacialAbilitySystem {
 }
 
 module.exports = RacialAbilitySystem;
-
-

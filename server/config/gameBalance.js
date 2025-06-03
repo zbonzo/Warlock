@@ -9,17 +9,17 @@
 const monster = {
   // Base stats for level 1 monster
   baseHp: 100,
-  baseDamage: 25,
+  baseDamage: 1,
   baseAge: 0,
 
   // Enhanced scaling formulas
-  hpPerLevel: 25, // Increased from 50
+  hpPerLevel: 0, // Increased from 50
   useExponentialScaling: true, // New option for exponential scaling
   hpScalingMultiplier: 2, // 150% scaling rate vs players
 
   // Damage scaling with age
   damageScaling: {
-    ageMultiplier: 2, // Damage = baseDamage * (age + ageMultiplier)
+    ageMultiplier: 4, // Damage = baseDamage * (age + ageMultiplier)
     maxAge: null, // null = no age limit
   },
 
@@ -65,7 +65,7 @@ const player = {
   // Armor and damage reduction
   armor: {
     reductionRate: 0.1, // 10% reduction per armor point
-    maxReduction: 0.5, // 90% max damage reduction
+    maxReduction: 0.9, // 90% max damage reduction
     minReduction: 0.0, // 0% min (for negative armor)
   },
 
@@ -97,14 +97,14 @@ const warlock = {
   // Conversion chance calculation
   conversion: {
     baseChance: 0.2, // Reduced from 0.2
-    maxChance: 1.0, // Reduced from 0.5
+    maxChance: 0.3, // Reduced from 0.5
     scalingFactor: 0.3, // Reduced from 0.3
 
     // New corruption control options
     preventLevelUpCorruption: false, // Option to disable corruption on level-ups
     maxCorruptionsPerRound: 1, // Maximum corruptions allowed per round
     maxCorruptionsPerPlayer: 1, // Maximum times a single player can corrupt others per round
-    corruptionCooldown: 0, // Rounds before a player can corrupt again
+    corruptionCooldown: 1, // Rounds before a player can corrupt again
 
     // Modifiers for different scenarios
     aoeModifier: 0.3, // Reduced from 0.5
@@ -125,21 +125,21 @@ const warlock = {
       3: 1,
       4: 1, // 4-7 players = 1 warlock
       5: 1,
-      6: 2,
-      7: 2,
-      8: 2, // 8-11 players = 2 warlocks
-      9: 3,
-      10: 3,
-      11: 3,
-      12: 4, // 12-15 players = 3 warlocks
-      13: 4,
-      14: 4,
-      15: 5,
-      16: 5, // 16-19 players = 4 warlocks
-      17: 5,
-      18: 6,
-      19: 7,
-      20: 7, // 20+ players = 5 warlocks
+      6: 1,
+      7: 1,
+      8: 1, // 8-11 players = 2 warlocks
+      9: 1,
+      10: 1,
+      11: 1,
+      12: 1, // 12-15 players = 3 warlocks
+      13: 1,
+      14: 1,
+      15: 1,
+      16: 1, // 16-19 players = 4 warlocks
+      17: 1,
+      18: 1,
+      19: 1,
+      20: 1, // 20+ players = 5 warlocks
     },
   },
   // Win conditions
@@ -156,7 +156,7 @@ const warlock = {
 const stoneArmor = {
   initialValue: 5, // Starting stone armor value
   degradationPerHit: 1, // Amount lost per hit taken
-  minimumValue: -10, // Most negative armor allowed
+  minimumValue: -3, // Most negative armor allowed
   allowNegative: true, // Can go negative for vulnerability
 };
 

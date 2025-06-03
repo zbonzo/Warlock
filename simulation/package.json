@@ -1,25 +1,15 @@
 {
-  "name": "warlock-simulation",
+  "name": "warlock-simple-simulator",
   "version": "1.0.0",
-  "description": "Warlock game simulation and analysis tools",
-  "main": "index.js",
+  "description": "Simple random Warlock game simulator",
+  "main": "simple-simulator.js",
   "scripts": {
-    "test": "babel-node index.js 10",
-    "sim": "babel-node index.js",
-    "sim:quick": "babel-node index.js 5",
-    "sim:batch": "babel-node index.js 100",
-    "thematic": "babel-node index.js thematic",
-    "detective": "babel-node index.js detective",
-    "compare": "babel-node index.js compare"
+    "test": "node simple-simulator.js 5",
+    "sim": "node simple-simulator.js 10",
+    "batch": "node simple-simulator.js 100"
   },
   "dependencies": {
     "module-alias": "^2.2.3"
-  },
-  "devDependencies": {
-    "@babel/core": "^7.23.0",
-    "@babel/preset-env": "^7.23.0",
-    "@babel/register": "^7.22.0",
-    "babel-plugin-module-resolver": "^5.0.0"
   },
   "engines": {
     "node": ">=14.0.0"

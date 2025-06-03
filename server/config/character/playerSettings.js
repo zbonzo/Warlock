@@ -11,7 +11,7 @@ const playerSettings = {
   // Default player settings
   defaultPlayerName: 'Player',
   baseHp: 250,
-  baseArmor: 1.0,
+  baseArmor: 2.0,
   baseDamageMod: 1.0,
 
   // Reconnection settings

@@ -1,0 +1,593 @@
+/**
+ * @fileoverview Race-specific AI behaviors and racial ability strategies
+ * Each race modifies base strategy behavior with racial considerations
+ */
+
+/**
+ * Artisan (Human) Race Behavior - Strategic use of Adaptability
+ */
+class ArtisanBehavior {
+  constructor() {
+    this.hasUsedAdaptability = false;
+    this.bestAdaptabilityTiming = null;
+  }
+
+  /**
+   * Modify decision based on Artisan racial traits
+   * @param {Object} baseDecision - Base decision from class strategy
+   * @param {Array} availableActions - Available actions
+   * @param {Object} gameState - Current game state
+   * @param {Object} player - Player object
+   * @returns {Object} Modified decision
+   */
+  modifyDecision(baseDecision, availableActions, gameState, player) {
+    // Use Adaptability strategically
+    if (
+      !this.hasUsedAdaptability &&
+      this.shouldUseAdaptability(gameState, player)
+    ) {
+      const adaptability = availableActions.find(
+        (action) => action.abilityType === 'adaptability'
+      );
+      if (adaptability) {
+        this.hasUsedAdaptability = true;
+        return {
+          actionType: 'adaptability',
+          targetId: player.id,
+        };
+      }
+    }
+
+    return baseDecision;
+  }
+
+  /**
+   * Determine if now is a good time to use Adaptability
+   * @param {Object} gameState - Current game state
+   * @param {Object} player - Player object
+   * @returns {boolean} Whether to use Adaptability
+   */
+  shouldUseAdaptability(gameState, player) {
+    // Use early to mid-game when we understand the situation better
+    if (gameState.round < 2 || gameState.round > 6) return false;
+
+    // Don't use if critically threatened
+    if (player.hp <= player.maxHp * 0.3) return false;
+
+    // Use if we've identified Warlocks and need better abilities to deal with them
+    const suspectedWarlocks = this.countSuspectedWarlocks(gameState);
+    if (suspectedWarlocks >= 2) return true;
+
+    // Use if our current abilities aren't well-suited for the current situation
+    if (gameState.round >= 4 && this.hasWeakAbilities(player)) return true;
+
+    return false;
+  }
+
+  /**
+   * Count suspected Warlocks from game events
+   * @param {Object} gameState - Current game state
+   * @returns {number} Number of suspected Warlocks
+   */
+  countSuspectedWarlocks(gameState) {
+    // This would be enhanced with actual game state analysis
+    return Math.floor(gameState.players.size * 0.2); // Rough estimate
+  }
+
+  /**
+   * Check if player has relatively weak abilities for current situation
+   * @param {Object} player - Player object
+   * @returns {boolean} Whether abilities are weak
+   */
+  hasWeakAbilities(player) {
+    // Simple heuristic - could be enhanced with actual ability analysis
+    return player.class === 'Priest' || player.class === 'Oracle';
+  }
+}
+
+/**
+ * Rockhewn (Dwarf) Race Behavior - Leverage Stone Armor defensively
+ */
+class RockhewnBehavior {
+  constructor() {
+    this.armorTracker = 8; // Start with 8 armor
+  }
+
+  modifyDecision(baseDecision, availableActions, gameState, player) {
+    // Track armor degradation
+    this.updateArmorTracking(player);
+
+    // Be more aggressive when armor is high
+    if (this.armorTracker >= 6) {
+      return this.encourageAggression(
+        baseDecision,
+        availableActions,
+        gameState,
+        player
+      );
+    }
+
+    // Be more defensive when armor is low or negative
+    if (this.armorTracker <= 2) {
+      return this.encourageDefense(
+        baseDecision,
+        availableActions,
+        gameState,
+        player
+      );
+    }
+
+    return baseDecision;
+  }
+
+  /**
+   * Update internal armor tracking
+   * @param {Object} player - Player object
+   */
+  updateArmorTracking(player) {
+    // This would be enhanced with actual damage tracking
+    // For now, estimate based on current HP
+    const damagePercent = 1 - player.hp / player.maxHp;
+    this.armorTracker = Math.max(-4, 8 - Math.floor(damagePercent * 10));
+  }
+
+  /**
+   * Encourage aggressive play when armored
+   * @param {Object} baseDecision - Base decision
+   * @param {Array} availableActions - Available actions
+   * @param {Object} gameState - Current game state
+   * @param {Object} player - Player object
+   * @returns {Object} Modified decision
+   */
+  encourageAggression(baseDecision, availableActions, gameState, player) {
+    // Prefer attacking over defending when well-armored
+    if (
+      baseDecision?.actionType?.includes('shield') ||
+      baseDecision?.actionType?.includes('heal')
+    ) {
+      const attackActions = availableActions.filter(
+        (action) => action.ability.category === 'Attack'
+      );
+      if (attackActions.length > 0) {
+        const action = attackActions[0];
+        return {
+          actionType: action.abilityType,
+          targetId: action.targets.includes('__monster__')
+            ? '__monster__'
+            : action.targets[0],
+        };
+      }
+    }
+
+    return baseDecision;
+  }
+
+  /**
+   * Encourage defensive play when vulnerable
+   * @param {Object} baseDecision - Base decision
+   * @param {Array} availableActions - Available actions
+   * @param {Object} gameState - Current game state
+   * @param {Object} player - Player object
+   * @returns {Object} Modified decision
+   */
+  encourageDefense(baseDecision, availableActions, gameState, player) {
+    // Prioritize healing and defensive abilities when armor is low
+    const healActions = availableActions.filter(
+      (action) => action.ability.category === 'Heal'
+    );
+    const defenseActions = availableActions.filter(
+      (action) => action.ability.category === 'Defense'
+    );
+
+    if (player.hp <= player.maxHp * 0.6 && healActions.length > 0) {
+      const action = healActions[0];
+      return {
+        actionType: action.abilityType,
+        targetId: player.id,
+      };
+    }
+
+    if (defenseActions.length > 0) {
+      const action = defenseActions[0];
+      return {
+        actionType: action.abilityType,
+        targetId: player.id,
+      };
+    }
+
+    return baseDecision;
+  }
+}
+
+/**
+ * Crestfallen (Elf) Race Behavior - Use Moonbeam for Warlock detection
+ */
+class CrestfallenBehavior {
+  constructor() {
+    this.moonbeamActive = false;
+    this.detectedWarlocks = new Set();
+  }
+
+  modifyDecision(baseDecision, availableActions, gameState, player) {
+    // Track Moonbeam activation
+    this.moonbeamActive = player.hp <= player.maxHp * 0.5;
+
+    // If Moonbeam is active, slightly prefer staying vulnerable to gather intel
+    if (this.moonbeamActive && player.hp > player.maxHp * 0.2) {
+      return this.moonbeamStrategy(
+        baseDecision,
+        availableActions,
+        gameState,
+        player
+      );
+    }
+
+    // Use detection intel in targeting decisions
+    return this.enhanceTargeting(
+      baseDecision,
+      availableActions,
+      gameState,
+      player
+    );
+  }
+
+  /**
+   * Strategy when Moonbeam is active
+   * @param {Object} baseDecision - Base decision
+   * @param {Array} availableActions - Available actions
+   * @param {Object} gameState - Current game state
+   * @param {Object} player - Player object
+   * @returns {Object} Modified decision
+   */
+  moonbeamStrategy(baseDecision, availableActions, gameState, player) {
+    // Don't heal immediately - stay vulnerable for one more round to potentially detect attackers
+    if (
+      baseDecision?.actionType?.includes('heal') &&
+      player.hp > player.maxHp * 0.25
+    ) {
+      const attackActions = availableActions.filter(
+        (action) => action.ability.category === 'Attack'
+      );
+      if (attackActions.length > 0) {
+        const action = attackActions[0];
+        return {
+          actionType: action.abilityType,
+          targetId: action.targets.includes('__monster__')
+            ? '__monster__'
+            : action.targets[0],
+        };
+      }
+    }
+
+    return baseDecision;
+  }
+
+  /**
+   * Enhance targeting with Moonbeam detection intel
+   * @param {Object} baseDecision - Base decision
+   * @param {Array} availableActions - Available actions
+   * @param {Object} gameState - Current game state
+   * @param {Object} player - Player object
+   * @returns {Object} Modified decision
+   */
+  enhanceTargeting(baseDecision, availableActions, gameState, player) {
+    // If we have detected Warlocks, prioritize them
+    if (this.detectedWarlocks.size > 0 && baseDecision?.actionType) {
+      const action = availableActions.find(
+        (a) => a.abilityType === baseDecision.actionType
+      );
+      if (action && action.ability.category === 'Attack') {
+        for (const warlockId of this.detectedWarlocks) {
+          if (action.targets.includes(warlockId)) {
+            return {
+              actionType: baseDecision.actionType,
+              targetId: warlockId,
+            };
+          }
+        }
+      }
+    }
+
+    return baseDecision;
+  }
+}
+
+/**
+ * Orc Race Behavior - Strategic Blood Rage timing
+ */
+class OrcBehavior {
+  constructor() {
+    this.hasUsedBloodRage = false;
+    this.optimalBloodRageTiming = null;
+  }
+
+  modifyDecision(baseDecision, availableActions, gameState, player) {
+    // Use Blood Rage strategically
+    if (
+      !this.hasUsedBloodRage &&
+      this.shouldUseBloodRage(baseDecision, gameState, player)
+    ) {
+      const bloodRage = availableActions.find(
+        (action) => action.abilityType === 'bloodRage'
+      );
+      if (bloodRage) {
+        this.hasUsedBloodRage = true;
+        return {
+          actionType: 'bloodRage',
+          targetId: player.id,
+        };
+      }
+    }
+
+    return baseDecision;
+  }
+
+  /**
+   * Determine optimal Blood Rage timing
+   * @param {Object} baseDecision - Base decision
+   * @param {Object} gameState - Current game state
+   * @param {Object} player - Player object
+   * @returns {boolean} Whether to use Blood Rage
+   */
+  shouldUseBloodRage(baseDecision, gameState, player) {
+    // Don't use if it would kill us
+    if (player.hp <= 15) return false;
+
+    // Use before a high-damage attack
+    if (
+      baseDecision?.actionType &&
+      this.isHighDamageAttack(baseDecision.actionType)
+    ) {
+      return true;
+    }
+
+    // Use when monster is low HP for finishing blow
+    if (gameState.monster?.hp <= 60) return true;
+
+    // Use when attacking a confirmed Warlock
+    if (
+      baseDecision?.targetId &&
+      this.isSuspectedWarlock(baseDecision.targetId, gameState)
+    ) {
+      return true;
+    }
+
+    return false;
+  }
+
+  /**
+   * Check if ability is high damage
+   * @param {string} abilityType - Ability type
+   * @returns {boolean} Whether ability does high damage
+   */
+  isHighDamageAttack(abilityType) {
+    const highDamageAbilities = [
+      'recklessStrike',
+      'aimedShot',
+      'magicMissile',
+      'pyroblast',
+      'backstab',
+      'twinStrike',
+      'barbedArrow',
+    ];
+    return highDamageAbilities.includes(abilityType);
+  }
+
+  /**
+   * Check if target is suspected Warlock
+   * @param {string} targetId - Target ID
+   * @param {Object} gameState - Current game state
+   * @returns {boolean} Whether target is suspected
+   */
+  isSuspectedWarlock(targetId, gameState) {
+    // This would be enhanced with actual Warlock detection logic
+    return false; // Placeholder
+  }
+}
+
+/**
+ * Kinfolk (Satyr) Race Behavior - Maximize Life Bond healing
+ */
+class KinfolkBehavior {
+  constructor() {
+    this.lifeBondHealing = 0;
+  }
+
+  modifyDecision(baseDecision, availableActions, gameState, player) {
+    // Track Life Bond effectiveness
+    this.trackLifeBondHealing(gameState);
+
+    // Encourage monster survival for more Life Bond healing
+    return this.balanceMonsterHealth(
+      baseDecision,
+      availableActions,
+      gameState,
+      player
+    );
+  }
+
+  /**
+   * Track Life Bond healing effectiveness
+   * @param {Object} gameState - Current game state
+   */
+  trackLifeBondHealing(gameState) {
+    if (gameState.monster?.hp) {
+      this.lifeBondHealing = Math.floor(gameState.monster.hp * 0.1);
+    }
+  }
+
+  /**
+   * Balance monster health for optimal Life Bond healing
+   * @param {Object} baseDecision - Base decision
+   * @param {Array} availableActions - Available actions
+   * @param {Object} gameState - Current game state
+   * @param {Object} player - Player object
+   * @returns {Object} Modified decision
+   */
+  balanceMonsterHealth(baseDecision, availableActions, gameState, player) {
+    // If we're healthy and monster HP is very low, prefer non-monster targets
+    if (player.hp >= player.maxHp * 0.8 && gameState.monster?.hp <= 30) {
+      if (baseDecision?.targetId === '__monster__') {
+        const action = availableActions.find(
+          (a) => a.abilityType === baseDecision.actionType
+        );
+        if (action) {
+          const nonMonsterTargets = action.targets.filter(
+            (t) => t !== '__monster__'
+          );
+          if (nonMonsterTargets.length > 0) {
+            return {
+              actionType: baseDecision.actionType,
+              targetId: nonMonsterTargets[0],
+            };
+          }
+        }
+      }
+    }
+
+    // If we're injured and monster HP is high, slightly prefer healing over attacking
+    if (player.hp <= player.maxHp * 0.6 && gameState.monster?.hp >= 100) {
+      const healActions = availableActions.filter(
+        (action) => action.ability.category === 'Heal'
+      );
+      if (
+        healActions.length > 0 &&
+        !baseDecision?.actionType?.includes('heal')
+      ) {
+        const action = healActions[0];
+        return {
+          actionType: action.abilityType,
+          targetId: player.id,
+        };
+      }
+    }
+
+    return baseDecision;
+  }
+}
+
+/**
+ * Lich (Skeleton) Race Behavior - Preserve Undying ability
+ */
+class LichBehavior {
+  constructor() {
+    this.hasUsedUndying = false;
+    this.riskTolerance = 'high'; // high, medium, low
+  }
+
+  modifyDecision(baseDecision, availableActions, gameState, player) {
+    // Adjust risk tolerance based on Undying availability
+    this.updateRiskTolerance(player);
+
+    // Modify decision based on risk tolerance
+    return this.adjustForRisk(
+      baseDecision,
+      availableActions,
+      gameState,
+      player
+    );
+  }
+
+  /**
+   * Update risk tolerance based on Undying status
+   * @param {Object} player - Player object
+   */
+  updateRiskTolerance(player) {
+    if (!this.hasUsedUndying) {
+      this.riskTolerance = 'high'; // Can afford to be aggressive
+    } else if (player.hp >= player.maxHp * 0.5) {
+      this.riskTolerance = 'medium';
+    } else {
+      this.riskTolerance = 'low'; // Must be very careful
+    }
+  }
+
+  /**
+   * Adjust decision based on current risk tolerance
+   * @param {Object} baseDecision - Base decision
+   * @param {Array} availableActions - Available actions
+   * @param {Object} gameState - Current game state
+   * @param {Object} player - Player object
+   * @returns {Object} Modified decision
+   */
+  adjustForRisk(baseDecision, availableActions, gameState, player) {
+    if (this.riskTolerance === 'low') {
+      // Prioritize healing and defense when Undying is used
+      const healActions = availableActions.filter(
+        (action) => action.ability.category === 'Heal'
+      );
+      const defenseActions = availableActions.filter(
+        (action) => action.ability.category === 'Defense'
+      );
+
+      if (player.hp <= player.maxHp * 0.4 && healActions.length > 0) {
+        const action = healActions[0];
+        return {
+          actionType: action.abilityType,
+          targetId: player.id,
+        };
+      }
+
+      if (defenseActions.length > 0) {
+        const action = defenseActions[0];
+        return {
+          actionType: action.abilityType,
+          targetId: player.id,
+        };
+      }
+    } else if (this.riskTolerance === 'high') {
+      // Be more aggressive when Undying is available
+      const attackActions = availableActions.filter(
+        (action) => action.ability.category === 'Attack'
+      );
+      if (
+        attackActions.length > 0 &&
+        !baseDecision?.actionType?.includes('attack')
+      ) {
+        const action = attackActions[0];
+        return {
+          actionType: action.abilityType,
+          targetId: action.targets.includes('__monster__')
+            ? '__monster__'
+            : action.targets[0],
+        };
+      }
+    }
+
+    return baseDecision;
+  }
+}
+
+/**
+ * Factory function to create race behaviors
+ * @param {string} race - Race name
+ * @returns {Object} Appropriate race behavior instance
+ */
+function createRaceBehavior(race) {
+  switch (race) {
+    case 'Artisan':
+      return new ArtisanBehavior();
+    case 'Rockhewn':
+      return new RockhewnBehavior();
+    case 'Crestfallen':
+      return new CrestfallenBehavior();
+    case 'Orc':
+      return new OrcBehavior();
+    case 'Kinfolk':
+      return new KinfolkBehavior();
+    case 'Lich':
+      return new LichBehavior();
+    default:
+      return null; // No special race behavior
+  }
+}
+
+module.exports = {
+  ArtisanBehavior,
+  RockhewnBehavior,
+  CrestfallenBehavior,
+  OrcBehavior,
+  KinfolkBehavior,
+  LichBehavior,
+  createRaceBehavior,
+};

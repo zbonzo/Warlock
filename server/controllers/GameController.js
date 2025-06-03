@@ -261,7 +261,7 @@ function handlePerformAction(
     }
 
     // TARGET VALIDATION - Check if target is valid
-    if (targetId !== '__monster__') {
+    if (targetId !== config.MONSTER_ID) {
       const targetPlayer = game.getPlayerById(targetId);
       if (!targetPlayer || !targetPlayer.isAlive) {
         socket.emit('errorMessage', {

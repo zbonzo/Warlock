@@ -16,7 +16,7 @@ function handleKeenSenses(actor, target, ability, log, systems) {
   // This ability is currently disabled/commented out in the codebase
   // Uncomment the message in racial.js if you want to re-enable it
 
-  if (!target || target === '__monster__') {
+  if (!target || target === config.MONSTER_ID) {
     const invalidTargetMessage = messages.getAbilityMessage(
       'abilities.racial',
       'keenSensesInvalidTarget'

@@ -218,7 +218,7 @@ function applyThreatForAbility(
   }
 
   // Calculate threat components
-  const damageToMonster = target === '__monster__' ? damageDealt : 0;
+  const damageToMonster = target === config.MONSTER_ID ? damageDealt : 0;
   const totalDamageDealt = damageDealt;
   const actorArmor = actor.getEffectiveArmor();
 
@@ -240,5 +240,3 @@ module.exports = {
   getAllAbilities,
   applyThreatForAbility,
 };
-
-

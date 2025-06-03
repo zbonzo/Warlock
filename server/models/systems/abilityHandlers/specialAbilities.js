@@ -95,7 +95,7 @@ function register(registry) {
  * @returns {boolean} Whether the ability was successful
  */
 function handleDetectionAbility(actor, target, ability, log, systems) {
-  if (!target || target === '__monster__') {
+  if (!target || target === config.MONSTER_ID) {
     const invalidTargetMessage = messages.getAbilityMessage(
       'abilities.special',
       'detectionInvalidTarget'
@@ -150,7 +150,7 @@ function handleStunAbility(actor, target, ability, log, systems) {
   }
 
   // For single-target stun abilities
-  if (!target || target === '__monster__') {
+  if (!target || target === config.MONSTER_ID) {
     const invalidTargetMessage = messages.getAbilityMessage(
       'abilities.special',
       'stunInvalidTarget'
@@ -221,7 +221,7 @@ function handleStunAbility(actor, target, ability, log, systems) {
  * @returns {boolean} Whether the ability was successful
  */
 function handlePrimalRoar(actor, target, ability, log, systems) {
-  if (!target || target === '__monster__') {
+  if (!target || target === config.MONSTER_ID) {
     const invalidTargetMessage = messages.getAbilityMessage(
       'abilities.special',
       'primalRoarInvalidTarget'
@@ -495,7 +495,7 @@ function handleControlMonster(actor, target, ability, log, systems) {
   }
 
   // Check if trying to attack the monster itself
-  if (target === '__monster__') {
+  if (target === config.MONSTER_ID) {
     const invalidTargetMessage = messages.getAbilityMessage(
       'abilities.special',
       'controlMonsterInvalidTarget'
@@ -547,7 +547,7 @@ function handleControlMonster(actor, target, ability, log, systems) {
     boostedDamage,
     {
       name: 'The Monster',
-      id: '__monster__',
+      id: config.MONSTER_ID,
     },
     log
   );
@@ -577,7 +577,7 @@ function handleControlMonster(actor, target, ability, log, systems) {
  * @returns {boolean} Whether the ability was successful
  */
 function handleEyeOfFate(actor, target, ability, log, systems) {
-  if (!target || target === '__monster__') {
+  if (!target || target === config.MONSTER_ID) {
     const invalidTargetMessage = messages.getAbilityMessage(
       'abilities.special',
       'detectionInvalidTarget'
@@ -770,5 +770,3 @@ function handleMultiStun(actor, ability, log, systems) {
 }
 
 module.exports = { register };
-
-

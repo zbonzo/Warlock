@@ -68,7 +68,7 @@ class GameStateUtils {
 
     // Add monster if allowed and alive
     if (includeMonster && monsterRef && monsterRef.hp > 0 && !onlyPlayers) {
-      possibleTargets.push('__monster__');
+      possibleTargets.push(config.MONSTER_ID);
     }
 
     // If no valid targets found, consider alternate options
@@ -86,7 +86,7 @@ class GameStateUtils {
 
       // Last resort: monster if allowed
       if (includeMonster && monsterRef && monsterRef.hp > 0) {
-        return '__monster__';
+        return config.MONSTER_ID;
       }
 
       // No valid targets at all
@@ -406,5 +406,3 @@ class GameStateUtils {
 }
 
 module.exports = GameStateUtils;
-
-

@@ -25,6 +25,7 @@ const defaultConfig = {
   minPlayers: 2,
   gameTimeout: 30 * 60 * 1000, // 30 minutes
   roundTimeout: 60 * 1000, // 1 minute
+  MONSTER_ID: '__monster__',
 
   // Security settings
   actionCooldowns: {
@@ -130,5 +131,3 @@ const config = {
 };
 
 module.exports = config;
-
-

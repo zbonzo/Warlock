@@ -130,7 +130,7 @@ class Player {
     result.success = true;
     result.action = action;
 
-    logger.info(
+    logger.debug(
       `Player ${this.name} successfully submitted action: ${actionType} -> ${targetId}`
     );
     return result;
@@ -175,7 +175,7 @@ class Player {
     }
 
     // Validate target still exists and is valid
-    if (targetId === '__monster__') {
+    if (targetId === config.MONSTER_ID) {
       if (!monster || monster.hp <= 0) {
         result.reason = 'Monster is no longer a valid target';
         this.invalidateAction(result.reason);
@@ -585,14 +585,6 @@ class Player {
 
     // Calculate pure level scaling (removing class modifier influence)
     const levelMultiplier = (this.damageMod || 1.0) / classDamageModifier;
-    console.log(
-      'levelMultiplier: ',
-      levelMultiplier,
-      ' = this.damageMod ',
-      this.damageMod,
-      ' / classDamageModifier ',
-      classDamageModifier
-    );
 
     // Healing scales directly with level progression
     return levelMultiplier;
@@ -912,5 +904,3 @@ class Player {
 }
 
 module.exports = Player;
-
-

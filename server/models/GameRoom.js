@@ -232,7 +232,7 @@ class GameRoom {
 
     // Handle invisibility redirection for player targets
     let finalTargetId = targetId;
-    if (targetId !== '__monster__' && targetId !== actorId) {
+    if (targetId !== config.MONSTER_ID && targetId !== actorId) {
       const targetPlayer = this.players.get(targetId);
       if (targetPlayer && targetPlayer.hasStatusEffect('invisible')) {
         finalTargetId = this.systems.gameStateUtils.getRandomTarget(actorId, {
@@ -267,7 +267,7 @@ class GameRoom {
       options,
     });
 
-    logger.info(
+    logger.debug(
       `Player ${actor.name} submitted action: ${actionType} -> ${finalTargetId}`
     );
     return true;
@@ -297,7 +297,7 @@ class GameRoom {
     }
 
     let finalTargetId = targetId;
-    if (targetId !== '__monster__' && targetId !== actorId) {
+    if (targetId !== config.MONSTER_ID && targetId !== actorId) {
       const targetPlayer = this.players.get(targetId);
       if (!targetPlayer || !targetPlayer.isAlive) return false; // Invalid player target
       if (
@@ -671,11 +671,11 @@ class GameRoom {
       }
 
       const target =
-        action.targetId === '__monster__'
+        action.targetId === config.MONSTER_ID
           ? null
           : this.players.get(action.targetId);
 
-      if (action.targetId !== '__monster__' && !target) {
+      if (action.targetId !== config.MONSTER_ID && !target) {
         continue;
       }
 
@@ -770,11 +770,11 @@ class GameRoom {
       }
 
       const target =
-        action.targetId === '__monster__'
-          ? '__monster__'
+        action.targetId === config.MONSTER_ID
+          ? config.MONSTER_ID
           : this.players.get(action.targetId);
 
-      if (target !== '__monster__' && !target) {
+      if (target !== config.MONSTER_ID && !target) {
         logger.warn(
           `Invalid target ${action.targetId} for action by ${actor.name}`
         );
@@ -783,7 +783,7 @@ class GameRoom {
 
       // Check for invisibility right before executing the ability
       if (
-        target !== '__monster__' &&
+        target !== config.MONSTER_ID &&
         ability.category === 'Attack' &&
         target.hasStatusEffect &&
         target.hasStatusEffect('invisible')
@@ -808,12 +808,13 @@ class GameRoom {
         type: 'action_announcement',
         public: true,
         attackerId: actor.id,
-        targetId: target === '__monster__' ? 'monster' : target.id,
+        targetId: target === config.MONSTER_ID ? 'monster' : target.id,
         abilityName: ability.name,
         message: messages.getEvent('playerAttacks', {
           playerName: actor.name,
           abilityName: ability.name,
-          targetName: target === '__monster__' ? 'the Monster' : target.name,
+          targetName:
+            target === config.MONSTER_ID ? 'the Monster' : target.name,
         }),
         privateMessage: '',
         attackerMessage: '',
@@ -951,5 +952,3 @@ class GameRoom {
 }
 
 module.exports = { GameRoom };
-
-

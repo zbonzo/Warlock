@@ -29,9 +29,7 @@ function createGameTimeout(io, gameCode) {
     logger.info(`Game ${gameCode} timed out after inactivity`);
     // Notify any connected players before deleting
     if (games.has(gameCode)) {
-      io.to(gameCode).emit('gameTimeout', {
-        message: 'Game ended due to inactivity',
-      });
+      io.to(gameCode).emit(messages.getError('gameTimeout'));
     }
     // Clean up the game
     games.delete(gameCode);
@@ -316,9 +314,7 @@ function createGameWithCode(gameCode) {
   // Check if we already have too many games
   const maxGames = config.maxGames || 100;
   if (games.size >= maxGames) {
-    throwGameStateError(
-      'Server is too busy right now. Please try again later.'
-    );
+    throwGameStateError(messages.getError('serverBusy'));
     return null;
   }
 
@@ -347,5 +343,3 @@ module.exports = {
   getGameStats,
   forceCleanupGame,
 };
-
-

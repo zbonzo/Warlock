@@ -102,7 +102,7 @@ function register(registry) {
 function handleAttack(actor, target, ability, log, systems) {
   // If target is a player (not monster) and is invisible, attack should fail
   if (
-    target !== '__monster__' &&
+    target !== config.MONSTER_ID &&
     target.hasStatusEffect &&
     target.hasStatusEffect('invisible')
   ) {
@@ -124,7 +124,7 @@ function handleAttack(actor, target, ability, log, systems) {
   const modifiedDamage = actor.modifyDamage(rawDamage);
   let actualDamage = 0;
 
-  if (target === '__monster__') {
+  if (target === config.MONSTER_ID) {
     const success = systems.monsterController.takeDamage(
       modifiedDamage,
       actor,
@@ -185,7 +185,7 @@ function handleAttack(actor, target, ability, log, systems) {
 function handlePoisonStrike(actor, target, ability, log, systems) {
   // Check if target is invisible
   if (
-    target !== '__monster__' &&
+    target !== config.MONSTER_ID &&
     target.hasStatusEffect &&
     target.hasStatusEffect('invisible')
   ) {
@@ -206,7 +206,7 @@ function handlePoisonStrike(actor, target, ability, log, systems) {
   const attackResult = handleAttack(actor, target, ability, log, systems);
 
   // Then apply poison if attack was successful and target is still alive
-  if (attackResult && target !== '__monster__' && target.isAlive) {
+  if (attackResult && target !== config.MONSTER_ID && target.isAlive) {
     const poisonData = ability.params.poison;
     const modifiedPoisonDamage = Math.floor(
       poisonData.damage * (actor.damageMod || 1.0)
@@ -348,7 +348,7 @@ function handleVulnerabilityStrike(actor, target, ability, log, systems) {
   const attackResult = handleAttack(actor, target, ability, log, systems);
 
   // If attack successful and target is a player, apply vulnerability
-  if (attackResult && target !== '__monster__' && target.isAlive) {
+  if (attackResult && target !== config.MONSTER_ID && target.isAlive) {
     // Get vulnerability parameters
     const vulnerableData = ability.params.vulnerable || {};
     const damageIncrease = vulnerableData.damageIncrease || 50; // Default 50%
@@ -479,7 +479,7 @@ function handleInfernoBlast(actor, target, ability, log, systems) {
  * @returns {boolean} Whether the ability was successful
  */
 function handleDeathMark(actor, target, ability, log, systems) {
-  if (target === '__monster__') {
+  if (target === config.MONSTER_ID) {
     const invalidMessage = messages.getAbilityMessage(
       'abilities.attacks',
       'deathMarkInvalidTarget'
@@ -677,7 +677,7 @@ function handlePoisonTrap(actor, target, ability, log, systems) {
 function handleRecklessStrike(actor, target, ability, log, systems) {
   // Check if target is invisible first
   if (
-    target !== '__monster__' &&
+    target !== config.MONSTER_ID &&
     target.hasStatusEffect &&
     target.hasStatusEffect('invisible')
   ) {
@@ -714,7 +714,7 @@ function handleRecklessStrike(actor, target, ability, log, systems) {
   }
 
   // Now perform the attack
-  if (target === '__monster__') {
+  if (target === config.MONSTER_ID) {
     const rawDamage = Number(ability.params.damage) || 0;
     const modifiedDamage = actor.modifyDamage(rawDamage);
     systems.monsterController.takeDamage(modifiedDamage, actor, log);
@@ -836,7 +836,7 @@ function handlePlayerAttack(actor, target, ability, log, systems) {
 function handleMultiHitAttack(actor, target, ability, log, systems) {
   // If target is invisible, attack fails
   if (
-    target !== '__monster__' &&
+    target !== config.MONSTER_ID &&
     target.hasStatusEffect &&
     target.hasStatusEffect('invisible')
   ) {
@@ -873,7 +873,7 @@ function handleMultiHitAttack(actor, target, ability, log, systems) {
     messages.formatMessage(announceMessage, {
       playerName: actor.name,
       abilityName: ability.name,
-      targetName: target === '__monster__' ? 'the Monster' : target.name,
+      targetName: target === config.MONSTER_ID ? 'the Monster' : target.name,
       hits: hits,
     })
   );
@@ -889,7 +889,7 @@ function handleMultiHitAttack(actor, target, ability, log, systems) {
       const modifiedDamage = actor.modifyDamage(damagePerHit);
       hitCount++;
 
-      if (target === '__monster__') {
+      if (target === config.MONSTER_ID) {
         const hitSuccess = systems.monsterController.takeDamage(
           modifiedDamage,
           actor,
@@ -960,7 +960,7 @@ function handleMultiHitAttack(actor, target, ability, log, systems) {
   }
 
   // Check for warlock conversion on player targets
-  if (target !== '__monster__' && actor.isWarlock && hitCount > 0) {
+  if (target !== config.MONSTER_ID && actor.isWarlock && hitCount > 0) {
     systems.warlockSystem.attemptConversion(actor, target, log);
   }
 
@@ -968,5 +968,3 @@ function handleMultiHitAttack(actor, target, ability, log, systems) {
 }
 
 module.exports = { register };
-
-
