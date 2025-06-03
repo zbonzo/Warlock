@@ -3,7 +3,11 @@
  * Handles game-related socket events and operations
  */
 const gameService = require('@services/gameService');
-const { validatePlayerName } = require('@middleware/validation');
+const {
+  validatePlayerNameSocket,
+  validatePlayerName,
+  suggestValidName,
+} = require('@middleware/validation');
 const { validateGameAction } = require('@shared/gameChecks');
 const logger = require('@utils/logger');
 const config = require('@config');
@@ -20,7 +24,9 @@ const { throwGameStateError } = require('@utils/errorHandler');
  */
 function handleCreateGame(io, socket, playerName) {
   // Validate player name
-  if (!validatePlayerName(socket, playerName)) return false;
+  if (!validatePlayerNameSocket(socket, playerName)) {
+    return; // Error already sent by validation function
+  }
 
   // Generate a unique game code
   const gameCode = gameService.generateGameCode();
@@ -44,6 +50,53 @@ function handleCreateGame(io, socket, playerName) {
   gameService.broadcastPlayerList(io, gameCode);
 
   return true;
+}
+/**
+ * Handle name availability checking with proper error handling
+ * @param {Object} io - Socket.io instance
+ * @param {Object} socket - Client socket
+ * @param {string} gameCode - Game code to check
+ * @param {string} playerName - Player name to validate
+ * @returns {boolean} Success status
+ */
+function handleCheckNameAvailability(io, socket, gameCode, playerName) {
+  try {
+    // Check if game exists first, without throwing errors
+    const game = gameService.games.get(gameCode);
+
+    if (!game) {
+      // Game doesn't exist - send appropriate response
+      socket.emit('nameCheckResponse', {
+        isAvailable: false,
+        error: 'Game not found. Please check the code and try again.',
+        suggestion: null,
+      });
+      return false;
+    }
+
+    // Game exists, proceed with name validation
+    const existingPlayers = Array.from(game.players.values());
+    const validation = validatePlayerName(playerName, existingPlayers);
+
+    socket.emit('nameCheckResponse', {
+      isAvailable: validation.isValid,
+      error: validation.error,
+      suggestion: validation.isValid ? null : suggestValidName(playerName),
+    });
+
+    return true;
+  } catch (error) {
+    // Handle any unexpected errors
+    logger.error(`Error checking name availability: ${error.message}`, error);
+
+    socket.emit('nameCheckResponse', {
+      isAvailable: false,
+      error: 'Unable to check name availability. Please try again.',
+      suggestion: null,
+    });
+
+    return false;
+  }
 }
 
 /**
@@ -762,6 +815,7 @@ function handlePlayAgain(io, socket, gameCode, playerName) {
 module.exports = {
   handleCreateGame,
   handleStartGame,
+  handleCheckNameAvailability,
   handlePerformAction,
   handleRacialAbility,
   handlePlayerNextReady,
@@ -769,5 +823,3 @@ module.exports = {
   handleAdaptabilityReplace,
   handlePlayAgain,
 };
-
-

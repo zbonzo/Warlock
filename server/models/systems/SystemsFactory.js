@@ -74,6 +74,7 @@ class SystemsFactory {
     registerAbilityHandlers(abilityRegistry);
 
     return {
+      players: players,
       gameStateUtils,
       statusEffectManager,
       warlockSystem,
@@ -86,5 +87,3 @@ class SystemsFactory {
 }
 
 module.exports = SystemsFactory;
-
-

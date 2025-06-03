@@ -779,7 +779,7 @@ const classAbilities = {
       category: 'Special',
       effect: 'stunned',
       target: 'Multi',
-      params: { chance: 0.25, duration: 2 },
+      params: { chance: 0.5, duration: 2 },
       unlockAt: 4,
       order: 130,
       cooldown: 5,

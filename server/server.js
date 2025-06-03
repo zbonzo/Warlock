@@ -162,6 +162,21 @@ io.on('connection', (socket) => {
     )
   );
 
+  socket.on(
+    'checkNameAvailability',
+    withSocketErrorHandling(
+      socket,
+      ({ gameCode, playerName }) =>
+        gameController.handleCheckNameAvailability(
+          io,
+          socket,
+          gameCode,
+          playerName
+        ),
+      'Name taken in room'
+    )
+  );
+
   // Player selects their race and class
   socket.on(
     'selectCharacter',
@@ -335,5 +350,3 @@ process.on('uncaughtException', (error) => {
 process.on('unhandledRejection', (reason, promise) => {
   logger.error('Unhandled promise rejection', reason);
 });
-
-

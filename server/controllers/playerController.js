@@ -4,7 +4,7 @@
  * Uses centralized config and messaging systems
  */
 const gameService = require('@services/gameService');
-const { validatePlayerName } = require('@middleware/validation');
+const { validatePlayerNameSocket } = require('@middleware/validation');
 const { validateGameAction } = require('@shared/gameChecks');
 const logger = require('@utils/logger');
 const errorHandler = require('@utils/errorHandler');
@@ -22,8 +22,9 @@ const messages = require('@messages');
 function handlePlayerJoin(io, socket, gameCode, playerName) {
   const game = validateGameAction(socket, gameCode, false, false, false);
 
-  // Validate player name
-  if (!validatePlayerName(socket, playerName)) return false;
+  if (!validatePlayerNameSocket(socket, playerName, gameCode)) {
+    return; // Error already sent by validation function
+  }
 
   // Validate game capacity and player eligibility
   if (!gameService.canPlayerJoinGame(game, socket.id)) return false;
@@ -275,5 +276,3 @@ module.exports = {
   handlePlayerDisconnect,
   handlePlayerReconnection,
 };
-
-

@@ -1,6 +1,6 @@
 /**
- * @fileoverview Fixed HistoryColumn with proper template processing
- * Now correctly processes {attackerName}, {damage}, etc. placeholders
+ * @fileoverview Fixed HistoryColumn with secure ID-based filtering
+ * Now correctly filters events using player IDs instead of exploitable name matching
  */
 import React from 'react';
 import PropTypes from 'prop-types';
@@ -22,7 +22,6 @@ const HistoryColumn = ({
   // Get current player data
   const currentPlayer = players.find((p) => p.id === currentPlayerId);
   const isWarlock = currentPlayer?.isWarlock || false;
-  const playerName = currentPlayer?.name || '';
 
   /**
    * Process template strings with actual values
@@ -142,7 +141,8 @@ const HistoryColumn = ({
   };
 
   /**
-   * Strict filtering for regular players
+   * SECURE: Event filtering using player IDs instead of names
+   * This prevents name-spoofing exploits
    */
   const shouldShowEvent = (event) => {
     // Always show everything for warlocks or admin view
@@ -150,56 +150,85 @@ const HistoryColumn = ({
       return true;
     }
 
-    // Convert event to string for easier processing
-    let eventText = '';
+    // Handle legacy string events
     if (typeof event === 'string') {
-      eventText = event;
-    } else {
-      // Process the message first to get the actual text
-      eventText = getDisplayMessage(event);
+      // Universal messages that everyone should see
+      const universalPhrases = [
+        'The Monster attacks',
+        'The Monster has been defeated',
+        'Another hero has been corrupted',
+        'level up',
+        'Level up',
+        'Game started',
+        'Round',
+        'wandered into the forest', // Disconnection messages
+      ];
+
+      return universalPhrases.some((phrase) => event.includes(phrase));
     }
 
-    if (!eventText) {
+    // SECURE: Use ID-based filtering for structured events
+    if (typeof event === 'object') {
+      // Check if current player is directly involved using IDs
+      const isDirectlyInvolved =
+        event.attackerId === currentPlayerId ||
+        event.targetId === currentPlayerId;
+
+      if (isDirectlyInvolved) {
+        return true;
+      }
+
+      // Universal event types that everyone should see
+      const universalEventTypes = [
+        'monster_attack',
+        'monster_death',
+        'game_start',
+        'round_start',
+        'level_up',
+        'game_end',
+        'player_disconnect',
+        'corruption_announcement', // Public corruption announcements
+        'death_announcement', // Public death announcements
+        'resurrection', // Public resurrection announcements
+      ];
+
+      if (universalEventTypes.includes(event.type)) {
+        return true;
+      }
+
+      // Check for public events flag
+      if (event.public === true) {
+        return true;
+      }
+
+      // Monster-related events (attacks from/to monster)
+      if (
+        event.targetId === '__monster__' ||
+        event.attackerId === '__monster__'
+      ) {
+        return true;
+      }
+
+      // Racial ability activations that should be visible to all
+      if (
+        event.type &&
+        (event.type.includes('stone_resolve') ||
+          event.type.includes('keen_senses') ||
+          event.type === 'racial_ability')
+      ) {
+        return true;
+      }
+
+      // Events with specific visibility rules
+      if (event.category === 'public' || event.visibility === 'all') {
+        return true;
+      }
+
       return false;
     }
 
-    // Check if event involves the current player
-    const involvesPlayer =
-      eventText.includes(playerName) ||
-      eventText.includes('You ') ||
-      eventText.includes(' you ') ||
-      eventText.includes('Your ') ||
-      eventText.includes(' your ');
-
-    // Check if it's a monster event
-    const isMonsterEvent =
-      eventText.includes('Monster') || eventText.includes('monster');
-
-    // Check if it's a corruption event
-    const isCorruptionEvent =
-      eventText.includes('corrupted') ||
-      eventText.includes('Warlock') ||
-      eventText.includes('converted') ||
-      eventText.includes('fallen to darkness');
-
-    // Check if it's a level up event
-    const isLevelUpEvent =
-      eventText.includes('level up') || eventText.includes('Level up');
-
-    // Check if it's a death/resurrection event
-    const isDeathEvent =
-      eventText.includes('died') ||
-      eventText.includes('fallen') ||
-      eventText.includes('Undying') ||
-      eventText.includes('resurrected');
-
-    return (
-      involvesPlayer ||
-      isMonsterEvent ||
-      isCorruptionEvent ||
-      isLevelUpEvent ||
-      isDeathEvent
-    );
+    // Unknown event types - don't show by default
+    return false;
   };
 
   /**
@@ -210,7 +239,7 @@ const HistoryColumn = ({
 
     const message = getDisplayMessage(event);
 
-    // Add perspective classes
+    // Add perspective classes for structured events
     if (typeof event === 'object') {
       if (event.attackerId === currentPlayerId) {
         classes.push('event-you-acted');
@@ -219,9 +248,14 @@ const HistoryColumn = ({
       } else {
         classes.push('event-observer');
       }
+
+      // Add type-based classes
+      if (event.type) {
+        classes.push(`event-${event.type}`);
+      }
     }
 
-    // Add type-based classes
+    // Add content-based classes for legacy support
     if (message.includes('Warlock')) classes.push('warlock-event');
     if (message.includes('attacked') || message.includes('damage'))
       classes.push('attack-event');
@@ -232,6 +266,8 @@ const HistoryColumn = ({
       classes.push('death-event');
     if (message.includes('corrupted')) classes.push('corruption-event');
     if (message.includes('level up')) classes.push('level-event');
+    if (message.includes('wandered into the forest'))
+      classes.push('disconnect-event');
 
     return classes.join(' ');
   };
@@ -313,5 +349,3 @@ HistoryColumn.propTypes = {
 };
 
 export default HistoryColumn;
-
-
