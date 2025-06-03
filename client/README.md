@@ -1,674 +1,471 @@
-# Warlock Game Client
+# Warlock Game Client - Development Guide
 
-A React-based frontend for the multiplayer Warlock game, featuring real-time gameplay, character selection, responsive design, and comprehensive game state management.
+## System Overview
 
-## Architecture Overview
+A React-based frontend for the multiplayer Warlock deduction game, featuring real-time gameplay, character selection, responsive design, and comprehensive game state management. Built with React 19, Socket.IO client, and a modern component architecture.
 
-The client follows a component-based architecture with React, using context for state management and Socket.IO for real-time communication:
+### Core User Journey
+1. **Join/Create**: Enter name, create/join game with code
+2. **Character Select**: Choose race and class combination
+3. **Lobby**: Wait for players, see readiness status
+4. **Game**: Submit actions, view results, progress through rounds
+5. **End**: View results, celebrate, play again
+
+## Architecture Map
 
 ```
 client/src/
-├── components/       # Reusable UI components
-├── contexts/         # React context providers
-├── hooks/           # Custom React hooks
-├── pages/           # Main application screens
-├── services/        # External API services
-├── styles/          # Global styles and themes
-├── utils/           # Utility functions
-└── config/          # Client configuration
+├── 🎯 ENTRY POINTS
+│   ├── index.js                     # App bootstrap
+│   ├── App.js                       # 🔥 Main router + socket management
+│   └── App.test.js                  # Basic app tests
+├── ⚙️ CONFIGURATION
+│   └── config/
+│       └── constants.js             # 🔥 Socket URLs, game phases, icons
+├── 🎨 STYLING & THEMES
+│   ├── index.css                    # Base styles
+│   └── styles/
+│       ├── global.css               # 🔥 CSS variables, theming, utilities
+│       └── App.css                  # App-level styles
+├── 🧠 STATE MANAGEMENT
+│   └── contexts/
+│       ├── AppContext.js            # 🔥 Global game state (screen, players, events)
+│       ├── ConfigContext.js         # 🔥 Server config (races, classes, abilities)
+│       └── ThemeContext.js          # Theme switching (light/dark/colorblind)
+├── 🔌 HOOKS & UTILITIES
+│   ├── hooks/
+│   │   ├── useSocket.js             # 🔥 Socket.IO connection management
+│   │   └── useMediaQuery.js         # Responsive design utility
+│   ├── utils/
+│   │   └── helpers.js               # Common utility functions
+│   └── services/
+│       └── configService.js         # 🔥 Server config API client
+├── 📄 PAGES (Main Screens)
+│   ├── JoinGamePage/                # 🔥 Entry point - create/join games
+│   │   ├── JoinGamePage.jsx         # Main component with name validation
+│   │   ├── JoinGamePage.css         # Enhanced validation styling
+│   │   └── constants.js             # Random names list
+│   ├── CharacterSelectPage/         # 🔥 Race/class selection
+│   │   ├── CharacterSelectPage.jsx  # Character selection with validation
+│   │   ├── CharacterSelectPage.css  # Selection card styling
+│   │   └── constants.js             # Race/class definitions
+│   ├── LobbyPage/                   # Pre-game waiting room
+│   │   ├── LobbyPage.jsx            # Player list, readiness, game start
+│   │   ├── LobbyPage.css            # Lobby styling with progress bars
+│   ├── GamePage/                    # 🔥 Main gameplay interface
+│   │   ├── GamePage.jsx             # 🔥 Game orchestration + responsive layout
+│   │   ├── GamePage.css             # Main game styles + mobile header
+│   │   └── components/              # Game subcomponents
+│   │       ├── ActionColumn.jsx     # 🔥 Ability selection + submission
+│   │       ├── ActionColumn.css     # Action UI styles
+│   │       ├── PlayerColumn.jsx     # Player info display
+│   │       ├── PlayerColumn.css
+│   │       ├── HistoryColumn.jsx    # 🔥 Personalized event log
+│   │       ├── HistoryColumn.css
+│   │       ├── MobileNavigation.jsx # Mobile tab navigation
+│   │       ├── MobileNavigation.css
+│   │       └── index.js             # Component exports
+│   └── EndPage/                     # Game results + celebration
+│       ├── EndPage.jsx              # 🔥 Results display + play again
+│       ├── EndPage.css              # Results styling
+│       └── components/              # End page subcomponents
+│           ├── Confetti.jsx         # Celebration animation
+│           ├── PlayerGroup.jsx      # Team grouping display
+│           └── StatsPanel.jsx       # Game statistics
+├── 🎮 GAME COMPONENTS
+│   └── components/game/
+│       ├── AbilityCard/             # 🔥 Ability display with damage calculation
+│       │   ├── AbilityCard.jsx      # Enhanced ability card with modifiers
+│       │   └── AbilityCard.css      # Ability styling + cooldowns
+│       ├── EventsLog/               # 🔥 Personalized event display
+│       │   ├── EventsLog.jsx        # Player-perspective event filtering
+│       │   └── EventsLog.css        # Event styling with color coding
+│       ├── GameDashboard/           # Game status display
+│       │   ├── GameDashboard.jsx    # Round, players, monster health
+│       │   └── GameDashboard.css    # Dashboard styling
+│       ├── PlayerCard/              # 🔥 Player status display
+│       │   ├── PlayerCard.jsx       # Player info with Warlock corruption
+│       │   ├── PlayerCard.css       # Player card styling + zalgo text
+│       ├── RacialAbilityCard/       # Racial ability display
+│       │   ├── RacialAbilityCard.jsx # Racial ability with usage limits
+│       │   ├── RacialAbilityCard.css
+│       │   └── racialAbilityData.js # Race mappings + utilities
+│       └── TargetSelector/          # 🔥 Target selection with custom avatars
+│           ├── TargetSelector.jsx   # Enhanced target selection + monster avatar
+│           └── TargetSelector.css   # Target styling
+├── 🔧 COMMON COMPONENTS
+│   └── components/common/
+│       ├── ErrorBoundary.jsx        # Error handling wrapper
+│       ├── ErrorBoundary.css
+│       ├── LoadingScreen.jsx        # Loading state display
+│       ├── LoadingScreen.css
+│       ├── ThemeToggle.jsx          # 🔥 Theme switching component
+│       └── ThemeToggle.css
+└── 🪟 MODALS
+    └── components/modals/
+        ├── AdaptabilityModal/       # 🔥 Human racial ability modal
+        │   ├── AdaptabilityModal.jsx # 3-step ability replacement wizard
+        │   ├── AdaptabilityModal.css # Modal styling
+        │   ├── constants.js         # Modal step definitions
+        │   └── components/          # Modal subcomponents
+        ├── BattleResultsModal/      # 🔥 Round results display
+        │   ├── BattleResultsModal.jsx # Battle results with level up
+        │   ├── BattleResultsModal.css
+        │   └── index.js
+        └── GameTutorial/            # Game tutorial system
+            ├── GameTutorialModal.jsx # Multi-step tutorial
+            ├── GameTutorialModal.css
+            ├── constants.js         # Tutorial step content
+            └── components/
+                ├── Tooltip.jsx      # Tooltip utility
+                └── Tooltip.css
 ```
 
-## Core Architecture
+🔥 = Most frequently modified files
 
-### 🚀 Entry Points
+---
 
-#### `App.js`
+## Quick Reference: File Selection Guide
 
-Main application component that:
+### UI/UX Issues
+| Task | Primary Files | Supporting Files |
+|------|---------------|------------------|
+| Theme/styling problems | `styles/global.css` | `contexts/ThemeContext.js` |
+| Responsive design issues | `hooks/useMediaQuery.js` | Component-specific CSS files |
+| Component styling | Component `.css` file | `styles/global.css` |
+| Mobile layout problems | `GamePage/components/MobileNavigation.jsx` | `GamePage/GamePage.css` |
 
-- Wraps the app with context providers (Theme, Config, App)
-- Manages game phase routing (JOIN → CHARACTER_SELECT → LOBBY → GAME → END)
-- Handles socket event listeners and game state updates
-- Provides error boundary and loading states
+### Game Flow & Navigation
+| Task | Primary Files | Supporting Files |
+|------|---------------|------------------|
+| Screen transitions | `App.js` | `contexts/AppContext.js` |
+| Socket connection issues | `hooks/useSocket.js` | `config/constants.js` |
+| Game state management | `contexts/AppContext.js` | `App.js` |
+| Page routing problems | `App.js` | Individual page components |
 
-#### `index.js`
+### Character System & Configuration
+| Task | Primary Files | Supporting Files |
+|------|---------------|------------------|
+| Race/class data loading | `contexts/ConfigContext.js` | `services/configService.js` |
+| Character selection logic | `CharacterSelectPage/CharacterSelectPage.jsx` | `CharacterSelectPage/constants.js` |
+| Ability display issues | `components/game/AbilityCard/AbilityCard.jsx` | `contexts/ConfigContext.js` |
+| Racial abilities | `components/game/RacialAbilityCard/` | `components/modals/AdaptabilityModal/` |
 
-Application bootstrap that renders the App component with React.StrictMode.
+### Gameplay Mechanics
+| Task | Primary Files | Supporting Files |
+|------|---------------|------------------|
+| Action submission | `GamePage/components/ActionColumn.jsx` | `GamePage/GamePage.jsx` |
+| Target selection | `components/game/TargetSelector/TargetSelector.jsx` | `GamePage/components/ActionColumn.jsx` |
+| Event display | `components/game/EventsLog/EventsLog.jsx` | `GamePage/components/HistoryColumn.jsx` |
+| Player status display | `components/game/PlayerCard/PlayerCard.jsx` | `GamePage/components/PlayerColumn.jsx` |
+| Battle results | `components/modals/BattleResultsModal/` | `GamePage/GamePage.jsx` |
 
-### 🎨 Styling & Theming
+### Real-time Features
+| Task | Primary Files | Supporting Files |
+|------|---------------|------------------|
+| Socket event handling | `App.js` | `hooks/useSocket.js` |
+| Real-time updates | `contexts/AppContext.js` | Component event handlers |
+| Connection management | `hooks/useSocket.js` | `config/constants.js` |
+| Reconnection logic | `App.js` | `hooks/useSocket.js` |
 
-#### Global Styles (`styles/`)
+### Validation & Error Handling
+| Task | Primary Files | Supporting Files |
+|------|---------------|------------------|
+| Name validation | `JoinGamePage/JoinGamePage.jsx` | `JoinGamePage/constants.js` |
+| Input validation | Component-specific validation | `utils/helpers.js` |
+| Error display | `components/common/ErrorBoundary.jsx` | Component error states |
+| Form validation | Individual form components | `styles/global.css` |
 
-##### `global.css`
+---
 
-- CSS custom properties for theming
-- Three theme modes: light, dark, colorblind
-- Component base styles (buttons, cards, forms)
-- Responsive breakpoints and utilities
+## Component Deep Dive
 
-##### `App.css`
+### Core Game Flow Components
 
-- Application-level styles
-- Page transition animations
-- Utility classes for common patterns
+**App.js** - The central orchestrator:
+- Manages all context providers (Config, App, Theme)
+- Routes between game phases based on `screen` state
+- Handles all major socket event listeners
+- Provides callbacks for screen transitions
+- Manages reconnection and play-again logic
 
-#### Theme System (`contexts/ThemeContext.js`)
+**GamePage.jsx** - The main gameplay interface:
+- Orchestrates three-column desktop layout vs mobile tabs
+- Manages action submission and validation
+- Handles racial ability activation
+- Coordinates real-time updates between components
+- Implements responsive design patterns
 
-- **Theme Management**: Light, dark, and colorblind themes
-- **Auto Detection**: System preference detection
-- **Persistence**: LocalStorage integration
-- **CSS Variables**: Dynamic theme switching with custom properties
+### State Management System
 
-### 🔧 Configuration & Services
-
-#### Configuration Context (`contexts/ConfigContext.js`)
-
-Provides centralized access to game configuration:
-
-- Race and class data from server
-- Compatibility mappings
-- Racial abilities
-- Helper functions for validation
-
-#### Config Service (`services/configService.js`)
-
-Handles server communication for configuration:
-
-- Caching layer for performance
-- API endpoints for races, classes, abilities
-- Error handling and retry logic
-
-### 🎮 Game State Management
-
-#### App Context (`contexts/AppContext.js`)
-
-Central state management using React useReducer:
-
+**AppContext** - Central game state using useReducer:
 ```javascript
 const state = {
-  screen: 'join', // Current game phase
-  gameCode: '', // Game room code
-  playerName: '', // Player name
-  players: [], // All players in game
-  eventsLog: [], // Game event history
-  monster: {}, // Monster state
-  selectedRace: null, // Character selection
+  screen: 'join',           // Current game phase
+  gameCode: '',             // Game room code  
+  playerName: '',           // Player name
+  players: [],              // All players in game
+  eventsLog: [],            // Game event history
+  monster: {},              // Monster state
+  selectedRace: null,       // Character selection
   selectedClass: null,
+  winner: null,             // Game winner
+  isHost: false            // Host status
 };
 ```
 
-**Key Actions:**
+**ConfigContext** - Server configuration management:
+- Loads races, classes, abilities from server
+- Provides compatibility validation
+- Caches configuration data
+- Offers helper functions for race/class logic
 
-- `setScreen()` - Navigate between game phases
-- `setPlayers()` - Update player list
-- `addEventLog()` - Add new game events
-- `setMonster()` - Update monster state
-- `resetGame()` - Clear state for new game
+**ThemeContext** - Theme system:
+- Supports light, dark, and colorblind themes
+- System preference detection
+- CSS variable updates
+- localStorage persistence
 
-### 🌐 Real-time Communication
+### Game-Specific Components
 
-#### Socket Hook (`hooks/useSocket.js`)
+**AbilityCard** - Enhanced ability display:
+- Shows modified damage values using server's calculation system
+- Displays cooldown information and availability
+- Handles racial vs class ability distinction
+- Provides detailed effect descriptions
 
-Custom hook for Socket.IO management:
+**EventsLog** - Personalized event display:
+- Filters events based on player perspective
+- Shows different messages for attacker vs target vs observer
+- Secure ID-based filtering (prevents name spoofing)
+- Warlock players see unfiltered "full view"
 
-- Connection state tracking
-- Event listener management
-- Automatic reconnection handling
-- Error handling and logging
+**PlayerCard** - Player status with Warlock detection:
+- Visual health bars with color coding
+- Status effects display
+- Zalgo text corruption for Warlocks (to Warlock viewers)
+- Armor and stat information
 
-**Key Features:**
-
-- Prevents multiple socket instances
-- Cleanup on unmount
-- Connection status monitoring
-- Emit/subscribe pattern
-
-### 📱 Responsive Design
-
-#### Media Query Hook (`hooks/useMediaQuery.js`)
-
-Custom hook for responsive design:
-
-- SSR-safe implementation
-- Dynamic breakpoint detection
-- Smooth transitions between layouts
-
-#### Responsive Patterns
-
-- **Desktop**: Three-column grid layout
-- **Mobile**: Tabbed interface with navigation
-- **Breakpoints**: 768px for mobile, 992px for tablet
-
-## Page Components (`pages/`)
-
-### 🚪 JoinGamePage
-
-Entry point where players can create or join games:
-
-**Features:**
-
-- Player name input with random generation
-- Game code validation (4-digit format)
-- Create new game or join existing
-- Reconnection prompt for previous sessions
-- Game tutorial access
-
-**Key Functions:**
-
-```javascript
-onCreateGame(playerName); // Create new game
-onJoinGame(gameCode, name); // Join existing game
-onReconnect(code, name); // Reconnect to previous game
-```
-
-### 🎭 CharacterSelectPage
-
-Character creation interface:
-
-**Features:**
-
-- Race and class selection with visual cards
-- Compatibility validation between race/class
-- Random suggestions for valid combinations
-- Description display for selected options
-- Visual feedback for invalid combinations
-
-**Integration:**
-
-- Uses ConfigContext for race/class data
-- Validates combinations server-side
-- Stores selections in AppContext
-
-### 🏛️ LobbyPage
-
-Pre-game waiting room:
-
-**Features:**
-
-- Player readiness tracking with progress bar
-- Game code sharing with copy functionality
-- Player list with role indicators (host/player)
-- Start game button (host only)
-- Game instructions display
-
-**State Management:**
-
-- Monitors player character selection completion
-- Shows readiness indicators
-- Handles host permissions
-
-### 🎯 GamePage
-
-Main gameplay interface with comprehensive game management:
-
-**Layout:**
-
-- **Desktop**: Three-column layout (Players | Actions | History)
-- **Mobile**: Tabbed interface with navigation
-
-**Key Features:**
-
-- Real-time action submission with validation
-- Racial ability integration
-- Battle results modal
-- Enhanced submission tracking
-- Adaptability modal for Human racial ability
-
-**State Management:**
-
-```javascript
-const [phase, setPhase] = useState('action');
-const [actionType, setActionType] = useState('');
-const [selectedTarget, setSelectedTarget] = useState('');
-const [submitted, setSubmitted] = useState(false);
-```
-
-**Action Validation:**
-
-- Cooldown checking
-- Target availability validation
-- Real-time feedback
-- Server confirmation tracking
-
-### 🏆 EndPage
-
-Game results and statistics:
-
-**Features:**
-
-- Winner announcement with team display
-- Player statistics (survivors, casualties)
-- Complete game history toggle
-- Confetti celebration animation
-- Play again functionality
-
-## Game Components (`components/game/`)
-
-### 🃏 AbilityCard
-
-Enhanced ability display with comprehensive information:
-
-**Features:**
-
-- Cooldown tracking and visualization
-- Category-based styling and icons
-- Racial vs class ability distinction
-- Availability states and validation
-- Rich tooltips with effect descriptions
-
-**Props:**
-
-```javascript
-{
-  ability: Object,        // Ability data
-  selected: boolean,      // Selection state
-  onSelect: Function,     // Selection handler
-  abilityCooldown: number // Remaining cooldown
-}
-```
-
-### 👤 PlayerCard
-
-Player information display with warlock detection:
-
-**Features:**
-
-- Health bar with color coding
-- Status effect indicators
-- Zalgo text for corrupted players (warlocks)
-- Armor and stat display
-- Death overlay
-
-**Special Effects:**
-
-- Warlock text corruption with zalgo characters
-- Animated status effects
-- Real-time health updates
-
-### 🎯 TargetSelector
-
-Enhanced target selection with custom avatars:
-
-**Features:**
-
-- Monster avatar with health-based appearance
-- Player avatars with race/class indicators
+**TargetSelector** - Enhanced target selection:
+- Custom canvas-drawn avatars for players
+- Dynamic monster avatar based on health
+- Race color backgrounds with class emoji indicators
 - Target validation and filtering
-- Visual feedback for selection
-- Accessibility support
 
-**Custom Avatars:**
+### Modal System
 
-- Race color backgrounds
-- Class emoji indicators
-- Player initials overlay
-- Dynamic monster appearance
-
-### 📜 EventsLog
-
-Personalized event history display:
-
-**Features:**
-
-- Player-specific message filtering
-- Template processing for dynamic content
-- Event categorization and styling
-- Warlock view vs normal view
-- Auto-scroll and responsive design
-
-**Message Types:**
-
-- Attack/damage events
-- Healing and support
-- Status effect changes
-- Death and resurrection
-- Warlock activities
-
-### 🎮 GameDashboard
-
-Real-time game status display:
-
-**Features:**
-
-- Current round indicator
-- Player count tracking
-- Monster health visualization
-- Damage preview
-
-## Modal Components (`components/modals/`)
-
-### 🔄 AdaptabilityModal
-
-Complex multi-step modal for Human racial ability:
-
-**Features:**
-
-- Three-step wizard interface
-- Ability selection with filtering
-- Class browsing with icons
-- Server integration for ability replacement
+**AdaptabilityModal** - Multi-step ability replacement:
+- Three-step wizard interface (select ability → select class → select new ability)
+- Server integration for ability data
 - Responsive design with mobile optimization
+- Error handling and validation
 
-**Workflow:**
+**BattleResultsModal** - Round results display:
+- Shows events with enhanced EventsLog
+- Level up notifications with animations
+- Game end detection and winner display
+- Continue/close functionality
 
-1. Select ability to replace
-2. Choose class to take from
-3. Select new ability
+### Responsive Design Patterns
 
-### 📊 BattleResultsModal
+**Desktop Layout** (>768px):
+- Three-column CSS Grid: Players | Actions | History
+- Full character title with health bar
+- Comprehensive ability and target selection
 
-Round results display:
+**Mobile Layout** (≤768px):
+- Tabbed interface with MobileNavigation
+- Fixed header with player info and health
+- Swipe-friendly tab navigation
+- Condensed UI elements
 
-**Features:**
+### Real-time Communication
 
-- Event replay with animations
-- Level up notifications
-- Winner announcements
-- Continue/close actions
-
-### 📚 GameTutorialModal
-
-Interactive game tutorial:
-
-**Features:**
-
-- Multi-step tutorial with navigation
-- Progress indicators
-- Optional image support
-- Responsive design
-
-## Common Components (`components/common/`)
-
-### 🌓 ThemeToggle
-
-Advanced theme switching component:
-
-**Variants:**
-
-- **Simple**: Toggle between light/dark
-- **Dropdown**: All themes with selection
-- **Buttons**: Button group interface
-
-**Features:**
-
-- Smooth transitions
-- Icon indicators
-- Label support
-- Accessibility compliance
-
-### ⚠️ ErrorBoundary
-
-Application error handling:
-
-**Features:**
-
-- Graceful error catching
-- User-friendly error display
-- Technical details toggle
-- Recovery options
-
-### 📊 LoadingScreen
-
-Loading state component:
-
-**Features:**
-
-- Spinner animation
-- Customizable messages
-- Theme integration
-
-## Custom Hooks (`hooks/`)
-
-### 🔌 useSocket
-
-Socket.IO connection management:
-
+**Socket Event Patterns**:
 ```javascript
-const { socket, connected, socketId, emit, on } = useSocket(url);
-```
-
-**Features:**
-
-- Connection state tracking
-- Event listener management
-- Cleanup on unmount
-- Error handling
-
-### 📱 useMediaQuery
-
-Responsive design hook:
-
-```javascript
-const isMobile = useMediaQuery('(max-width: 768px)');
-```
-
-**Features:**
-
-- SSR-safe implementation
-- Dynamic updates
-- Cross-browser compatibility
-
-## Configuration (`config/constants.js`)
-
-### Socket & API URLs
-
-```javascript
-export const SOCKET_URL = /* Environment-based URL detection */;
-export const API_URL = /* API endpoint configuration */;
-```
-
-### Game Constants
-
-```javascript
-export const GAME_PHASES = {
-  JOIN: 'join',
-  CHARACTER_SELECT: 'charSelect',
-  LOBBY: 'lobby',
-  GAME: 'game',
-  END: 'end',
-};
-```
-
-### UI Icons & Assets
-
-```javascript
-export const ICONS = {
-  RACES: { Human: '👩‍🌾', Dwarf: '🧔‍♂️' /* ... */ },
-  CLASSES: { Warrior: '⚔️', Wizard: '🧙' /* ... */ },
-  ABILITIES: { attack: '⚔️', heal: '💚' /* ... */ },
-};
-```
-
-## Key Features
-
-### 🎯 Real-time Gameplay
-
-- **Socket.IO Integration**: Seamless real-time communication
-- **Action Validation**: Client-side validation with server confirmation
-- **State Synchronization**: Automatic state updates across clients
-- **Reconnection Support**: Robust reconnection with session recovery
-
-### 🎨 Advanced UI/UX
-
-- **Theme System**: Light, dark, and colorblind-friendly themes
-- **Responsive Design**: Desktop and mobile optimized layouts
-- **Animations**: Smooth transitions and visual feedback
-- **Accessibility**: WCAG compliant with keyboard navigation
-
-### 🔧 State Management
-
-- **React Context**: Centralized state with useReducer
-- **Persistent Storage**: LocalStorage for user preferences
-- **Cache Management**: Smart caching for configuration data
-- **Error Recovery**: Graceful error handling with recovery options
-
-### 🎮 Game Integration
-
-- **Ability System**: Full ability display with cooldowns and effects
-- **Status Effects**: Visual status effect tracking
-- **Warlock Mechanics**: Special UI for warlock players
-- **Character System**: Complete race/class integration
-
-### 📱 Mobile Experience
-
-- **Tabbed Interface**: Optimized mobile navigation
-- **Touch Interactions**: Touch-friendly controls
-- **Responsive Modals**: Mobile-optimized modal interfaces
-- **Performance**: Optimized for mobile devices
-
-## Development Workflow
-
-### 🛠️ Adding New Features
-
-#### 1. New Game Phases
-
-```javascript
-// 1. Add to constants
-export const GAME_PHASES = {
-  // ... existing phases
-  NEW_PHASE: 'newPhase'
-};
-
-// 2. Create page component
-// pages/NewPhasePage/NewPhasePage.jsx
-
-// 3. Add to App.js routing
-case GAME_PHASES.NEW_PHASE:
-  return <NewPhasePage />;
-```
-
-#### 2. New Abilities
-
-```javascript
-// 1. Add icon to constants
-ICONS.ABILITIES.newAbility = '🆕';
-
-// 2. Update AbilityCard styling
-// 3. Add effect descriptions
-// 4. Test with server integration
-```
-
-#### 3. New UI Components
-
-```javascript
-// 1. Create component with props
-const NewComponent = ({ prop1, prop2, onAction }) => {
-  // Implementation
-};
-
-// 2. Add PropTypes validation
-NewComponent.propTypes = {
-  prop1: PropTypes.string.isRequired,
-  // ...
-};
-
-// 3. Export and document
-```
-
-### 🧪 Testing Integration
-
-The client is designed for easy integration testing:
-
-```javascript
-// Mock socket for testing
-jest.mock('./hooks/useSocket', () => ({
-  __esModule: true,
-  default: () => ({
-    connected: true,
-    emit: jest.fn(),
-    on: jest.fn(() => jest.fn()),
-  }),
-}));
-```
-
-### 🎛️ Configuration
-
-#### Environment Variables
-
-```bash
-REACT_APP_API_URL=http://localhost:3001/api
-REACT_APP_SOCKET_URL=http://localhost:3001
-```
-
-#### Build Configuration
-
-- **Babel**: ES6+ support with module aliases
-- **CSS**: Custom properties for theming
-- **Bundle**: Optimized production builds
-
-## API Integration
-
-### 🔗 Server Communication
-
-#### Socket Events (Client → Server)
-
-```javascript
+// Outgoing events (client → server)
 socket.emit('createGame', { playerName });
 socket.emit('joinGame', { gameCode, playerName });
 socket.emit('selectCharacter', { gameCode, race, className });
 socket.emit('performAction', { gameCode, actionType, targetId });
 socket.emit('useRacialAbility', { gameCode, targetId, abilityType });
-```
 
-#### Socket Events (Server → Client)
-
-```javascript
+// Incoming events (server → client)
 socket.on('gameCreated', ({ gameCode }) => {});
 socket.on('playerList', ({ players }) => {});
 socket.on('gameStarted', (payload) => {});
 socket.on('roundResult', (payload) => {});
-socket.on('errorMessage', ({ message }) => {});
 ```
 
-#### REST Endpoints
+---
 
+## Development Patterns
+
+### Adding New Features
+
+**New Game Phase**:
+1. Add to `GAME_PHASES` in `config/constants.js`
+2. Create page component in `pages/`
+3. Add routing case in `App.js`
+4. Update context actions if needed
+
+**New Modal**:
+1. Create modal component in `components/modals/`
+2. Add modal state to parent component
+3. Implement open/close handlers
+4. Add ESC key and backdrop click handling
+
+**New Game Component**:
+1. Create component in `components/game/`
+2. Follow established prop patterns
+3. Add responsive CSS
+4. Export from appropriate index.js
+
+### Styling Guidelines
+
+**CSS Variables** - All colors use CSS custom properties:
+```css
+:root {
+  --color-primary: #4a2c82;
+  --color-secondary: #ff7b25;
+  --color-accent: #2cb978;
+  --color-danger: #e84855;
+  /* ... */
+}
+```
+
+**Responsive Patterns**:
+- Use `useMediaQuery` hook for conditional rendering
+- Mobile-first CSS with min-width media queries
+- Component-level responsive classes (.hide-on-mobile, .show-on-mobile)
+
+**Animation Standards**:
+- Use CSS transitions for state changes
+- Keyframe animations for complex effects
+- Respect user motion preferences
+- Performance-conscious animations
+
+### State Update Patterns
+
+**Context Updates**:
 ```javascript
-GET /api/config              // Basic configuration
-GET /api/config/races        // Available races
-GET /api/config/classes      // Available classes
-GET /api/config/compatibility // Race-class mappings
-GET /api/config/abilities/:className // Class abilities
+// Use context actions for state changes
+const { setScreen, setPlayers, addEventLog } = useAppContext();
+
+// Batch related updates
+setPlayers(newPlayers);
+addEventLog(newEvent);
+setScreen('game');
 ```
 
-## Performance Considerations
+**Socket Event Handling**:
+```javascript
+useEffect(() => {
+  if (!socket) return;
+  
+  const handleEvent = (data) => {
+    // Process data
+    updateState(data);
+  };
+  
+  socket.on('eventName', handleEvent);
+  return () => socket.off('eventName', handleEvent);
+}, [socket]);
+```
 
-### 🚀 Optimization Strategies
+### Error Handling Patterns
 
-- **Component Memoization**: React.memo for expensive renders
-- **Context Splitting**: Separate contexts for different concerns
-- **Lazy Loading**: Dynamic imports for modals and pages
-- **Image Optimization**: Optimized assets and lazy loading
-- **Bundle Splitting**: Code splitting for better loading
+**Component Level**:
+- Use ErrorBoundary for component trees
+- Implement graceful degradation
+- Show user-friendly error messages
+- Provide recovery actions where possible
 
-### 📊 Monitoring
+**Async Operations**:
+- Handle loading states with LoadingScreen
+- Catch and display network errors
+- Implement retry mechanisms
+- Validate data before using
 
-- **Error Tracking**: Comprehensive error boundaries
-- **Performance Metrics**: Web Vitals integration
-- **Connection Monitoring**: Socket connection status
-- **State Validation**: Runtime state checking
+---
 
-## Browser Support
+## Common Development Scenarios
 
-- **Modern Browsers**: Chrome 88+, Firefox 85+, Safari 14+
-- **Mobile**: iOS Safari 14+, Chrome Mobile 88+
-- **Features**: ES6+, CSS Custom Properties, WebSocket
-- **Fallbacks**: Graceful degradation for older browsers
+### Scenario: "I need to add a new ability type display"
+**Needs**: 
+- `components/game/AbilityCard/AbilityCard.jsx` (display logic)
+- `components/game/AbilityCard/AbilityCard.css` (styling)
+- `config/constants.js` (icon mapping if needed)
 
-## Deployment
+### Scenario: "The mobile layout is broken on the game page"
+**Needs**:
+- `GamePage/GamePage.jsx` (responsive logic)
+- `GamePage/GamePage.css` (mobile styles)
+- `GamePage/components/MobileNavigation.jsx` (tab system)
+- `hooks/useMediaQuery.js` (breakpoint detection)
 
-### 🏗️ Build Process
+### Scenario: "Players can't see the right events in the history"
+**Needs**:
+- `components/game/EventsLog/EventsLog.jsx` (filtering logic)
+- `GamePage/components/HistoryColumn.jsx` (integration)
+- `contexts/AppContext.js` (event state management)
 
+### Scenario: "Themes aren't switching properly"
+**Needs**:
+- `contexts/ThemeContext.js` (theme logic)
+- `styles/global.css` (CSS variables)
+- `components/common/ThemeToggle.jsx` (UI component)
+
+### Scenario: "Socket connection is unstable"
+**Needs**:
+- `hooks/useSocket.js` (connection management)
+- `App.js` (event handling)
+- `config/constants.js` (URL configuration)
+
+### Scenario: "Character selection validation is broken"
+**Needs**:
+- `CharacterSelectPage/CharacterSelectPage.jsx` (selection logic)
+- `contexts/ConfigContext.js` (compatibility data)
+- `services/configService.js` (server communication)
+
+### Scenario: "Battle results modal doesn't show level ups"
+**Needs**:
+- `components/modals/BattleResultsModal/BattleResultsModal.jsx` (modal logic)
+- `GamePage/GamePage.jsx` (modal triggering)
+- `contexts/AppContext.js` (event data management)
+
+---
+
+## Testing & Development
+
+**Local Development**:
 ```bash
-npm run build              # Production build
-npm run test              # Run test suite
-npm run analyze           # Bundle analysis
+npm start           # Development server
+npm run build       # Production build
+npm test            # Run tests
 ```
 
-### 🌐 Production Considerations
+**Key Dependencies**:
+- React 19.1.0 (latest features)
+- Socket.IO Client 4.8.1 (real-time communication)
+- Axios 1.9.0 (HTTP requests)
+- React Testing Library (testing)
 
-- **Static Hosting**: Compatible with CDN deployment
-- **Environment Variables**: Runtime configuration
-- **Error Monitoring**: Integration with error services
-- **Performance**: Optimized for production environments
+**Browser Support**:
+- Modern browsers (Chrome 88+, Firefox 85+, Safari 14+)
+- ES6+ features required
+- CSS Custom Properties support needed
+- WebSocket support required
 
-This client architecture provides a robust, scalable, and maintainable foundation for the Warlock game frontend, with comprehensive integration points for server communication and rich interactive gameplay features.
+**Environment Variables**:
+- `REACT_APP_API_URL`: Server API endpoint
+- `REACT_APP_SOCKET_URL`: Socket.IO server URL
+- `NODE_ENV`: development/production
+
+**Architecture Benefits**:
+- ✅ **Responsive**: Desktop and mobile optimized
+- ✅ **Real-time**: Socket.IO integration throughout
+- ✅ **Themeable**: Comprehensive theming system
+- ✅ **Accessible**: WCAG-compliant design
+- ✅ **Modular**: Component-based architecture
+- ✅ **Performant**: Optimized rendering and state management
