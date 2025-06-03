@@ -1,5 +1,3 @@
-/* GameTutorialModal Component Styles */
-
 .tutorial-overlay {
   position: fixed;
   top: 0;
@@ -20,15 +18,18 @@
 
 .tutorial-modal {
   background-color: var(--color-surface);
-  border-radius: 12px;
-  padding: 30px;
+  color: var(--color-text);
+  border-radius: 16px;
   width: 90%;
   max-width: 600px;
-  max-height: 80vh;
+  height: 80vh;
+  max-height: 700px;
   position: relative;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  box-shadow: var(--shadow-card);
   animation: scaleIn 0.3s ease;
-  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
 .tutorial-overlay.exiting .tutorial-modal {
@@ -38,51 +39,391 @@
 .tutorial-title {
   color: var(--color-primary);
   font-family: var(--font-heading);
-  font-size: 1.8rem;
+  font-size: 2.13rem; /* was 1.6rem */
   text-align: center;
-  margin-bottom: 20px;
+  margin: 0;
+  padding: 20px 20px 15px 20px;
+  border-bottom: 1px solid var(--color-border);
+  flex-shrink: 0;
 }
 
 .tutorial-content {
   font-family: var(--font-body);
-  font-size: 1.1rem;
-  line-height: 1.6;
-  margin-bottom: 30px;
-  color: var(--color-dark);
+  padding: 20px;
+  flex: 1;
+  overflow-y: auto;
+  font-size: 1.33rem; /* was 1rem */
+  line-height: 1.5;
+  color: var(--color-text);
 }
 
-.tutorial-image {
-  margin: 20px 0;
+.tutorial-step-content {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.tutorial-main-content {
+  margin: 0 0 15px 0;
+  font-size: 1.40rem; /* was 1.05rem */
+  text-align: center;
+  color: var(--color-text);
+}
+
+/* Highlights section */
+.tutorial-highlights {
+  background: var(--color-success-light);
+  border-left: 4px solid var(--color-accent);
+  padding: 15px;
+  margin: 15px 0;
+  border-radius: 8px;
+}
+
+.tutorial-highlight {
+  display: flex;
+  align-items: center;
+  margin: 8px 0;
+}
+
+.highlight-icon {
+  font-size: 1.46em; /* was 1.1em */
+  margin-right: 8px;
+}
+
+.highlight-text {
+  font-size: 1.33rem; /* was 1rem */
+  font-weight: 500;
+  color: var(--color-text);
+}
+
+/* Steps section */
+.tutorial-steps {
+  background: var(--color-neutral);
+  padding: 15px;
+  border-radius: 8px;
+  margin: 15px 0;
+  text-align: center;
+  border: 1px solid var(--color-border);
+}
+
+.tutorial-step-item {
+  margin: 8px 0;
+  font-weight: 500;
+  line-height: 1.8;
+  color: var(--color-text);
+  font-size: 1.33rem; /* was 1rem */
+}
+
+/* Tips section */
+.tutorial-tips {
+  background: var(--color-success-light);
+  border-left: 4px solid var(--color-accent);
+  padding: 15px;
+  margin: 15px 0;
+  border-radius: 8px;
+}
+
+.tutorial-tips h4 {
+  margin: 0 0 10px 0;
+  color: var(--color-secondary);
+  font-size: 1.46rem; /* was 1.1rem */
+}
+
+.tutorial-tips ul {
+  margin: 0;
+  padding-left: 18px;
+}
+
+.tutorial-tips li {
+  margin: 6px 0;
+  font-size: 1.27rem; /* was 0.95rem */
+  color: var(--color-text);
+}
+
+/* Formula section */
+.tutorial-formula {
+  background: var(--color-neutral);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  padding: 12px;
+  margin: 15px 0;
+  font-family: monospace;
+  font-size: 1.27rem; /* was 0.95rem */
+  text-align: center;
+  font-weight: bold;
+  color: var(--color-text);
+}
+
+/* Rules section */
+.tutorial-rules {
+  margin: 15px 0;
+}
+
+.tutorial-rules h4 {
+  margin: 0 0 10px 0;
+  color: var(--color-secondary);
+  font-size: 1.46rem; /* was 1.1rem */
+}
+
+.tutorial-rules ul {
+  margin: 0;
+  padding-left: 18px;
+}
+
+.tutorial-rules li {
+  margin: 6px 0;
+  font-size: 1.27rem; /* was 0.95rem */
+  color: var(--color-text);
+}
+
+/* Race and Class cards */
+.tutorial-races,
+.tutorial-classes {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 15px 0;
+}
+
+.tutorial-race-card,
+.tutorial-class-card {
+  background: var(--color-light);
+  border: 2px solid var(--color-border);
+  border-radius: 8px;
+  padding: 12px;
+  transition: all 0.3s ease;
+}
+
+.tutorial-race-card:hover,
+.tutorial-class-card:hover {
+  border-color: var(--color-accent);
+  transform: translateY(-1px);
+}
+
+.race-header,
+.class-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.race-emoji,
+.class-emoji {
+  font-size: 1.46em; /* was 1.1em */
+  margin-right: 8px;
+}
+
+.race-name,
+.class-name {
+  font-weight: bold;
+  color: var(--color-primary);
+  margin-right: 8px;
+}
+
+.race-type,
+.class-type {
+  font-size: 1.13rem; /* was 0.85rem */
+  color: var(--color-secondary);
+  font-weight: 500;
+}
+
+.race-ability,
+.class-desc {
+  font-size: 1.20rem; /* was 0.9rem */
+  color: var(--color-text);
+  line-height: 1.3;
+}
+
+.tutorial-strategy {
+  margin-top: 15px;
+  padding: 12px;
+  background: var(--color-success-light);
+  border-radius: 8px;
+  font-size: 1.27rem; /* was 0.95rem */
+  color: var(--color-text);
+}
+
+/* Detection section */
+.tutorial-tells {
+  margin: 15px 0;
+}
+
+.warlock-tells {
+  background: var(--color-danger-light);
+  border-left: 4px solid var(--color-danger);
+  padding: 15px;
+  margin-bottom: 15px;
+  border-radius: 8px;
+}
+
+.warlock-tells h4 {
+  margin: 0 0 10px 0;
+  color: var(--color-danger);
+  font-size: 1.46rem; /* was 1.1rem */
+}
+
+.warlock-tells ul {
+  margin: 0;
+  padding-left: 18px;
+}
+
+.warlock-tells li {
+  margin: 6px 0;
+  font-size: 1.27rem; /* was 0.95rem */
+  color: var(--color-text);
+}
+
+.detection-methods h4 {
+  margin: 0 0 10px 0;
+  color: var(--color-secondary);
+  font-size: 1.46rem; /* was 1.1rem */
+}
+
+.detection-method {
+  display: flex;
+  align-items: flex-start;
+  margin: 8px 0;
+  gap: 6px;
+}
+
+.method-icon {
+  font-size: 1.33em; /* was 1em */
+}
+
+.method-name {
+  font-weight: bold;
+  color: var(--color-primary);
+  min-width: fit-content;
+}
+
+.method-desc {
+  font-size: 1.20rem; /* was 0.9rem */
+  line-height: 1.3;
+  color: var(--color-text);
+}
+
+/* Strategy tips section */
+.tutorial-strategy-tips {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  margin: 15px 0;
+}
+
+.good-tips {
+  background: var(--color-success-light);
+  border-left: 4px solid var(--color-accent);
+  padding: 15px;
+  border-radius: 8px;
+}
+
+.warlock-tips {
+  background: var(--color-danger-light);
+  border-left: 4px solid var(--color-danger);
+  padding: 15px;
+  border-radius: 8px;
+}
+
+.good-tips h4,
+.warlock-tips h4 {
+  margin: 0 0 10px 0;
+  font-size: 1.46rem; /* was 1.1rem */
+}
+
+.good-tips h4 {
+  color: var(--color-accent);
+}
+
+.warlock-tips h4 {
+  color: var(--color-danger);
+}
+
+.good-tips ul,
+.warlock-tips ul {
+  margin: 0;
+  padding-left: 18px;
+}
+
+.good-tips li,
+.warlock-tips li {
+  margin: 6px 0;
+  font-size: 1.27rem; /* was 0.95rem */
+  color: var(--color-text);
+}
+
+/* Ready section */
+.tutorial-ready {
+  text-align: center;
+  padding: 20px 0;
+}
+
+.ready-icon {
+  font-size: 3rem; /* keeping original size here if icon needs to remain large */
+  margin: 15px 0;
+}
+
+.ready-reminders {
+  background: var(--color-success-light);
+  border-left: 4px solid var(--color-accent);
+  padding: 15px;
+  margin: 15px 0;
+  border-radius: 8px;
+  text-align: left;
+}
+
+.ready-reminders h4 {
+  margin: 0 0 10px 0;
+  color: var(--color-secondary);
+  font-size: 1.46rem; /* was 1.1rem */
   text-align: center;
 }
 
-.tutorial-img {
-  max-width: 100%;
-  max-height: 200px;
-  border-radius: 8px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+.ready-reminders ul {
+  margin: 0;
+  padding-left: 18px;
 }
 
-.tutorial-actions {
+.ready-reminders li {
+  margin: 6px 0;
+  font-size: 1.27rem; /* was 0.95rem */
+  color: var(--color-text);
+}
+
+.ready-message {
+  margin: 20px 0;
+  padding: 15px;
+  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-warlock) 100%);
+  color: var(--color-light);
+  border-radius: 8px;
+  font-size: 1.33rem; /* was 1rem */
+}
+
+/* Navigation */
+.tutorial-navigation {
   display: flex;
   justify-content: space-between;
-  gap: 20px;
+  align-items: center;
+  padding: 15px 20px;
+  background: var(--color-nav-bg);
+  border-top: 1px solid var(--color-border);
+  flex-shrink: 0;
 }
 
 .tutorial-button {
-  padding: 12px 24px;
+  padding: 12px 18px;
   border: none;
-  border-radius: 6px;
+  border-radius: 8px;
   font-family: var(--font-body);
   font-weight: bold;
-  font-size: 16px;
+  font-size: 19px; /* was 14px */
   cursor: pointer;
   transition: all 0.2s ease;
+  min-width: 70px;
 }
 
 .tutorial-button:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-card);
 }
 
 .tutorial-button:active:not(:disabled) {
@@ -96,14 +437,18 @@
 
 .back-button {
   background-color: var(--color-neutral);
-  color: var(--color-dark);
+  color: var(--color-text);
 }
 
 .next-button {
   background-color: var(--color-secondary);
-  color: white;
-  flex-grow: 1;
-  max-width: 200px;
+  color: var(--color-light);
+}
+
+.tutorial-counter {
+  font-weight: bold;
+  color: var(--color-primary);
+  font-size: 1.33rem; /* was 1rem */
 }
 
 .close-button {
@@ -112,8 +457,8 @@
   right: 15px;
   background: none;
   border: none;
-  font-size: 24px;
-  color: var(--color-dark);
+  font-size: 32px; /* was 24px */
+  color: var(--color-text);
   cursor: pointer;
   width: 30px;
   height: 30px;
@@ -125,32 +470,7 @@
 }
 
 .close-button:hover {
-  background-color: rgba(0, 0, 0, 0.1);
-}
-
-.tutorial-progress {
-  display: flex;
-  justify-content: center;
-  margin-bottom: 20px;
-  gap: 8px;
-}
-
-.progress-dot {
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  background-color: var(--color-neutral);
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.progress-dot.active {
-  background-color: var(--color-secondary);
-  transform: scale(1.2);
-}
-
-.progress-dot.completed {
-  background-color: var(--color-primary);
+  background-color: var(--color-hover-bg);
 }
 
 /* Animations */
@@ -197,47 +517,230 @@
 /* Responsive styles */
 @media (max-width: 768px) {
   .tutorial-modal {
-    padding: 20px;
     width: 95%;
+    height: 85vh;
+    max-height: none;
   }
 
   .tutorial-title {
-    font-size: 1.5rem;
-    margin-bottom: 15px;
+    font-size: 1.86rem; /* was 1.4rem */
+    padding: 15px 15px 12px 15px;
   }
 
   .tutorial-content {
-    font-size: 1rem;
-    margin-bottom: 20px;
+    padding: 15px;
+    font-size: 1.26rem; /* was 0.95rem */
+  }
+
+  .tutorial-main-content {
+    font-size: 1.33rem; /* was 1rem */
+  }
+
+  .tutorial-navigation {
+    padding: 12px 15px;
   }
 
   .tutorial-button {
-    padding: 10px 18px;
-    font-size: 14px;
+    padding: 14px 16px;
+    font-size: 19px; /* was 14px */
+    min-width: 65px;
+  }
+
+  .tutorial-counter {
+    font-size: 1.26rem; /* was 0.95rem */
+  }
+
+  .close-button {
+    top: 12px;
+    right: 12px;
+    font-size: 27px; /* was 20px */
+    width: 28px;
+    height: 28px;
+  }
+
+  /* Make cards stack better on mobile */
+  .tutorial-races,
+  .tutorial-classes {
+    gap: 8px;
+  }
+
+  .tutorial-race-card,
+  .tutorial-class-card {
+    padding: 10px;
+  }
+
+  .race-header,
+  .class-header {
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+
+  .race-type,
+  .class-type {
+    flex-basis: 100%;
+    margin-left: 28px;
+    font-size: 1.13rem; /* was 0.85rem */
+  }
+
+  /* Adjust spacing for mobile */
+  .tutorial-highlights,
+  .tutorial-tips,
+  .warlock-tells,
+  .good-tips,
+  .warlock-tips,
+  .ready-reminders {
+    padding: 12px;
+    margin: 12px 0;
+  }
+
+  .tutorial-steps,
+  .tutorial-formula,
+  .tutorial-strategy,
+  .ready-message {
+    padding: 10px;
+    margin: 12px 0;
+  }
+
+  .ready-icon {
+    font-size: 2.7rem; /* was 2.5rem */
+    margin: 12px 0;
+  }
+
+  /* Better text sizing on mobile */
+  .tutorial-tips li,
+  .tutorial-rules li,
+  .warlock-tells li,
+  .good-tips li,
+  .warlock-tips li,
+  .ready-reminders li {
+    font-size: 1.26rem; /* was 0.9rem */
+    margin: 4px 0;
+  }
+
+  .race-ability,
+  .class-desc,
+  .method-desc {
+    font-size: 1.13rem; /* was 0.85rem */
+  }
+
+  .tutorial-formula {
+    font-size: 1.20rem; /* was 0.9rem */
+  }
+
+  .tutorial-strategy {
+    font-size: 1.20rem; /* was 0.9rem */
+  }
+
+  .tutorial-tips h4,
+  .tutorial-rules h4,
+  .warlock-tells h4,
+  .good-tips h4,
+  .warlock-tips h4,
+  .ready-reminders h4 {
+    font-size: 1.40rem; /* was 1.05rem */
   }
 }
 
 @media (max-width: 480px) {
+  .tutorial-modal {
+    width: 98%;
+    height: 90vh;
+  }
+
   .tutorial-title {
-    font-size: 1.3rem;
+    font-size: 1.73rem; /* was 1.3rem */
+    padding: 12px;
   }
 
   .tutorial-content {
-    font-size: 0.9rem;
+    padding: 12px;
+    font-size: 1.20rem; /* was 0.9rem */
   }
 
-  .tutorial-actions {
-    gap: 10px;
+  .tutorial-main-content {
+    font-size: 1.26rem; /* was 0.95rem */
+    margin-bottom: 12px;
+  }
+
+  .tutorial-navigation {
+    padding: 10px 12px;
+    gap: 8px;
   }
 
   .tutorial-button {
-    padding: 8px 16px;
-    font-size: 14px;
+    padding: 12px 14px;
+    font-size: 17px; /* was 13px */
+    min-width: 60px;
   }
 
-  .close-button {
-    top: 10px;
-    right: 10px;
-    font-size: 20px;
+  .tutorial-counter {
+    font-size: 1.20rem; /* was 0.9rem */
+  }
+
+  /* Compact spacing for small screens */
+  .tutorial-highlights,
+  .tutorial-tips,
+  .warlock-tells,
+  .good-tips,
+  .warlock-tips,
+  .ready-reminders,
+  .tutorial-steps,
+  .tutorial-formula,
+  .tutorial-strategy,
+  .ready-message {
+    padding: 10px;
+    margin: 10px 0;
+  }
+
+  .tutorial-races,
+  .tutorial-classes {
+    gap: 6px;
+  }
+
+  .tutorial-race-card,
+  .tutorial-class-card {
+    padding: 8px;
+  }
+
+  .ready-icon {
+    font-size: 2.7rem; /* was 2rem */
+    margin: 10px 0;
+  }
+
+  /* Readable text for very small screens */
+  .tutorial-tips h4,
+  .tutorial-rules h4,
+  .warlock-tells h4,
+  .good-tips h4,
+  .warlock-tips h4,
+  .ready-reminders h4 {
+    font-size: 1.33rem; /* was 1rem */
+    margin-bottom: 8px;
+  }
+
+  .tutorial-tips li,
+  .tutorial-rules li,
+  .warlock-tells li,
+  .good-tips li,
+  .warlock-tips li,
+  .ready-reminders li {
+    font-size: 1.13rem; /* was 0.85rem */
+    line-height: 1.4;
+  }
+
+  .race-ability,
+  .class-desc,
+  .method-desc {
+    font-size: 1.07rem; /* was 0.8rem */
+    line-height: 1.3;
+  }
+
+  .tutorial-formula {
+    font-size: 1.13rem; /* was 0.85rem */
+  }
+
+  .tutorial-strategy,
+  .ready-message {
+    font-size: 1.13rem; /* was 0.85rem */
   }
 }
