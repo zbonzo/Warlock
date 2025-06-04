@@ -677,13 +677,13 @@ class GameRoom {
           message: entry,
           privateMessage: entry,
           attackerMessage: entry,
+          visibleTo: [],
         };
       }
 
-      // If it's an enhanced log object, ensure it has all required properties
-      return {
+      const processed = {
         type: entry.type || 'basic',
-        public: entry.public !== false, // Default to public
+        public: entry.public !== true, // Default to false
         targetId: entry.targetId || null,
         attackerId: entry.attackerId || null,
         message: entry.message || '',
@@ -692,6 +692,18 @@ class GameRoom {
         // Include any additional metadata
         ...entry,
       };
+
+      // Compute visibility list for private events
+      if (processed.public === false) {
+        const visSet = new Set(processed.visibleTo || []);
+        if (processed.attackerId) visSet.add(processed.attackerId);
+        if (processed.targetId) visSet.add(processed.targetId);
+        processed.visibleTo = Array.from(visSet);
+      } else {
+        processed.visibleTo = [];
+      }
+
+      return processed;
     });
   }
 
@@ -973,7 +985,7 @@ class GameRoom {
       // Create action announcement log
       const actionLog = {
         type: 'action_announcement',
-        public: true,
+        public: false,
         attackerId: actor.id,
         targetId:
           target === '__monster__'

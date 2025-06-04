@@ -705,7 +705,7 @@ class Player {
 
       const healLog = {
         type: 'life_bond_healing',
-        public: true,
+        public: false,
         targetId: this.id,
         message: `${this.name}'s Life Bond with the monster heals them for ${actualHeal} HP.`,
         privateMessage: `Your Life Bond with the monster heals you for ${actualHeal} HP.`,

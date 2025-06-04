@@ -76,65 +76,25 @@ const EventsLog = ({ events, currentPlayerId, players = [] }) => {
    * @returns {boolean} Whether event should be shown
    */
   const shouldShowEvent = (event) => {
-    let message = '';
+    console.log('event', event);
+    // Legacy string events are always public
+    // if (typeof event === 'string') return true;
 
-    // Debug which events are being filtered
-    console.log('Checking if should show event:', event.type || 'string event');
+    // Public events are visible to everyone
+    if (event.public !== false) return true;
 
-    // Always show disconnection events - they're part of the story!
-    if (event.type === 'player_disconnect') {
-      console.log('Showing disconnection event');
-      return true;
-    }
-
-    // Make sure defensive abilities are always shown to the player
+    // Explicit visibility list
     if (
-      event.type === 'defense' ||
-      (event.message && event.message.includes('shielded')) ||
-      (event.message && event.message.includes('invisible'))
+      Array.isArray(event.visibleTo) &&
+      event.visibleTo.includes(currentPlayerId)
     ) {
-      console.log('Showing defensive event');
       return true;
     }
 
-    // Get the message text to check
-    if (typeof event === 'string') {
-      message = event;
-    } else {
-      // For new event objects, get the appropriate message for this player
-      message = getPersonalizedMessage(event);
-    }
-
-    // Universal messages that everyone should see
-    const universalPhrases = [
-      'The Monster attacks',
-      'The Monster has been defeated',
-      'Another hero has been corrupted',
-      'activates', // For racial abilities like "Ghost activates Stone Resolve"
-      'level up',
-      'wandered into the forest', // Disconnection message
-    ];
-
-    // Check if it's a universal message
-    if (universalPhrases.some((phrase) => message.includes(phrase))) {
-      return true;
-    }
-
-    // Get player name from players list or use a fallback
-    const currentPlayer = players?.find((p) => p.id === currentPlayerId);
-    const playerName = currentPlayer?.name || '';
-
-    // Show if the player's name appears in the message
-    if (playerName && message.includes(playerName)) {
-      return true;
-    }
-
-    // Show if the message contains "You" (personalized messages)
+    // Fallback to attacker/target based visibility
     if (
-      message.includes('You ') ||
-      message.includes('Your ') ||
-      message.includes('you ') ||
-      message.includes('your ')
+      event.attackerId === currentPlayerId ||
+      event.targetId === currentPlayerId
     ) {
       return true;
     }
@@ -381,5 +341,3 @@ EventsLog.propTypes = {
 };
 
 export default EventsLog;
-
-

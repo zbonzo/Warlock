@@ -251,7 +251,7 @@ class CombatSystem {
 
     const logEvent = {
       type: 'damage',
-      public: true,
+      public: false,
       targetId: target.id,
       targetName: target.name,
       attackerId: attacker.id || 'monster',
@@ -287,7 +287,7 @@ class CombatSystem {
     if (armorDegradationInfo && armorDegradationInfo.degraded) {
       const armorLogEvent = {
         type: 'stone_armor_degradation',
-        public: true,
+        public: false,
         targetId: target.id,
         message: messages.getEvent('dwarfStoneArmor', {
           playerName: target.name,
@@ -329,7 +329,7 @@ class CombatSystem {
 
       const moonbeamLog = {
         type: 'moonbeam_detection',
-        public: true,
+        public: false,
         targetId: target.id,
         attackerId: attacker.id,
         message: revealMessage,
@@ -447,7 +447,7 @@ class CombatSystem {
     if (actualHeal > 0) {
       const healLog = {
         type: 'healing',
-        public: true,
+        public: false,
         targetId: target.id,
         attackerId: healer.id,
         message: `${target.name} is healed for ${actualHeal} HP.`,
@@ -702,7 +702,7 @@ class CombatSystem {
       // Create an anonymous immunity message
       const immunityLog = {
         type: 'immunity',
-        public: true,
+        public: false,
         targetId: target.id,
         attackerId: attacker.id || 'monster',
         message: `${target.name}'s Stone Resolve absorbed all damage from an attack!`,
