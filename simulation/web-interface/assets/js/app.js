@@ -11,7 +11,7 @@ class WarlockReportApp {
     this.dataLoader = new DataLoader();
     this.chartManager = new ChartManager();
     this.reportSelector = new ReportSelector();
-    this.exportManager = new ExportManager();
+    //this.exportManager = new ExportManager();
 
     this.init();
   }
@@ -84,6 +84,10 @@ class WarlockReportApp {
    */
   async loadAvailableReports() {
     try {
+      console.log('attempting to load reports');
+      if (!this.reportSelector.selectElement) {
+        this.reportSelector.init();
+      }
       const reports = await this.reportSelector.loadReports();
       this.populateReportSelector(reports);
 

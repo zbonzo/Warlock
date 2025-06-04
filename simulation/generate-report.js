@@ -57,7 +57,7 @@ function parseArguments(args) {
     verbose: false,
     help: false,
     exportAll: true,
-    reportsDir: './reports',
+    reportsDir: './web-interface/reports',
   };
 
   for (let i = 0; i < args.length; i++) {

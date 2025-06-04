@@ -120,7 +120,7 @@ class ReportSelector {
     // Add report options
     this.reports.forEach((report) => {
       const option = document.createElement('option');
-      option.value = report.filename;
+      option.value = `${report.filename}`;
       option.textContent = this.formatReportName(report);
 
       // Store metadata in data attributes
@@ -251,7 +251,7 @@ class ReportSelector {
    */
   dispatchReportSelected(report) {
     const event = new CustomEvent('reportSelected', {
-      detail: { report, filename: report.filename },
+      detail: { report, filename: `${report.filename}` },
     });
     document.dispatchEvent(event);
   }

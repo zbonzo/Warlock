@@ -62,4 +62,4 @@ build/Release
 .env.production.local
 
 # Simulation Reports
-/simulation/Reports
+/simulation/web-interface/reports
