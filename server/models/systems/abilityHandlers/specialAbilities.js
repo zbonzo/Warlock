@@ -144,13 +144,13 @@ function handleDetectionAbility(actor, target, ability, log, systems) {
  * @returns {boolean} Whether the ability was successful
  */
 function handleStunAbility(actor, target, ability, log, systems) {
-  // For multi-target stun abilities
-  if (ability.target === 'Multi') {
+  // For multi-target stun abilities or when target is "multi"
+  if (ability.target === 'Multi' || target === 'multi') {
     return handleMultiStun(actor, ability, log, systems);
   }
 
   // For single-target stun abilities
-  if (!target || target === config.MONSTER_ID) {
+  if (!target || target === '__monster__' || target === 'multi') {
     const invalidTargetMessage = messages.getAbilityMessage(
       'abilities.special',
       'stunInvalidTarget'
@@ -690,10 +690,13 @@ function handleEyeOfFate(actor, target, ability, log, systems) {
  * @private
  */
 function handleMultiStun(actor, ability, log, systems) {
-  // Get all alive players except actor
+  // Get all alive players except actor (stun abilities typically don't affect the caster)
   const targets = Array.from(systems.players.values()).filter(
     (p) => p.isAlive && p.id !== actor.id
   );
+
+  // Note: AOE stun typically doesn't affect the monster
+  // If a specific ability should stun the monster, it can be handled separately
 
   if (targets.length === 0) {
     const noTargetsMessage = messages.getAbilityMessage(
@@ -745,7 +748,7 @@ function handleMultiStun(actor, ability, log, systems) {
       );
       log.push(
         messages.formatMessage(stunMessage, {
-          targetName: potentialTarget.name,
+          playerName: potentialTarget.name,
           turns: ability.params.duration || stunDefaults.turns,
         })
       );
@@ -768,5 +771,4 @@ function handleMultiStun(actor, ability, log, systems) {
 
   return stunCount > 0;
 }
-
 module.exports = { register };

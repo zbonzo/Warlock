@@ -22,7 +22,7 @@ moduleAlias.addAliases({
 const { GameRoom } = require('../server/models/GameRoom');
 const Player = require('../server/models/Player');
 const config = require('../server/config');
-process.env.LOG_LEVEL = 'INFO';
+process.env.LOG_LEVEL = 'WARN';
 /**
  * Simple AI that just picks random valid actions
  */
@@ -146,7 +146,10 @@ class SimpleGameRoom extends GameRoom {
 
     if (ability.target === 'Self') {
       targets.push(actor.id);
-    } else if (ability.target === 'Single') {
+    } else if (ability.target === 'Single' || ability.target === 'Multi') {
+      // Both Single and Multi abilities target actual players
+      // The difference is in how the server processes them, not in target validation
+
       // Add monster if alive
       if (this.monster && this.monster.hp > 0) {
         targets.push('__monster__');
@@ -166,8 +169,6 @@ class SimpleGameRoom extends GameRoom {
           targets.push(id);
         }
       }
-    } else if (ability.target === 'Multi') {
-      targets.push('__multi__');
     }
 
     return targets;

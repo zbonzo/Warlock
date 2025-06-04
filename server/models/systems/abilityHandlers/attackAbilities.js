@@ -257,12 +257,51 @@ function handleAoeDamage(actor, target, ability, log, systems) {
   const rawDamage = Number(ability.params.damage) || 0;
   const modifiedDamage = actor.modifyDamage(rawDamage);
 
-  // Get potential targets (all alive players except self)
-  const targets = Array.from(systems.players.values()).filter(
-    (p) => p.isAlive && p.id !== actor.id
-  );
+  // Get potential targets based on ability configuration
+  let targets = [];
 
-  if (targets.length === 0) {
+  // For AOE damage, typically hit all players except self, and potentially the monster
+  if (ability.target === 'Multi' || target === 'multi') {
+    // Get all alive players except the caster
+    targets = Array.from(systems.players.values()).filter(
+      (p) => p.isAlive && p.id !== actor.id
+    );
+
+    // Some AOE abilities also hit the monster (check ability config)
+    if (
+      ability.params.includeMonster !== false &&
+      systems.monster &&
+      systems.monster.hp > 0
+    ) {
+      // For monster, we'll handle it separately since it's not a player object
+      const monsterSuccess = systems.monsterController.takeDamage(
+        modifiedDamage,
+        actor,
+        log
+      );
+
+      if (monsterSuccess && actor.isWarlock) {
+        const randomConversionModifier =
+          config.gameBalance.warlock.conversion.randomModifier;
+        systems.warlockSystem.attemptConversion(
+          actor,
+          null,
+          log,
+          randomConversionModifier
+        );
+      }
+    }
+  } else {
+    // Fallback: if not explicitly multi-target, still try to handle it
+    targets = Array.from(systems.players.values()).filter(
+      (p) => p.isAlive && p.id !== actor.id
+    );
+  }
+
+  if (
+    targets.length === 0 &&
+    (ability.params.includeMonster === false || systems.monster.hp <= 0)
+  ) {
     const noTargetsMessage = messages.getAbilityMessage(
       'abilities.attacks',
       'aoeNoTargets'

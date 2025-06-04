@@ -1,4 +1,25 @@
 /**
+ * Helper function to handle multi-target abilities correctly
+ * @param {Object} action - The action to use
+ * @param {Object} gameState - Current game state
+ * @param {string} myId - This player's ID
+ * @returns {Object} Decision with proper targeting
+ */
+function handleMultiTargetAbility(action, gameState, myId) {
+  // For multi-target abilities, just pick the first available target
+  // The server will handle making it affect everyone
+  const validTarget =
+    action.targets.find(
+      (targetId) => targetId !== myId || action.ability.target === 'Self'
+    ) || action.targets[0];
+
+  return {
+    actionType: action.abilityType,
+    targetId: validTarget,
+  };
+}
+
+/**
  * @fileoverview Class-specific AI strategies
  * Each class has its own strategic approach based on its role and abilities
  */
@@ -30,9 +51,16 @@ class WarriorStrategy extends BaseStrategy {
     ) {
       const battleCry = this.findAction(availableActions, 'battleCry');
       if (battleCry) {
+        // For multi-target buffs, target any player (the spell will affect everyone)
+        const targetId = this.prioritizeTarget(
+          battleCry.targets,
+          gameState,
+          myId,
+          'any'
+        );
         return {
           actionType: 'battleCry',
-          targetId: '__multi__',
+          targetId: targetId,
         };
       }
     }
@@ -109,9 +137,16 @@ class PriestStrategy extends BaseStrategy {
     if (this.gameMemory.threatLevel === 'high') {
       const divineShield = this.findAction(availableActions, 'divineShield');
       if (divineShield) {
+        // For multi-target buffs, target any player (the spell will affect everyone)
+        const targetId = this.prioritizeTarget(
+          divineShield.targets,
+          gameState,
+          myId,
+          'any'
+        );
         return {
           actionType: 'divineShield',
-          targetId: '__multi__',
+          targetId: targetId,
         };
       }
     }
@@ -225,9 +260,16 @@ class PyromancerStrategy extends BaseStrategy {
       infernoBlast &&
       (gameState.round >= 5 || this.gameMemory.suspectedWarlocks.size >= 2)
     ) {
+      // For multi-target attacks, target any player (the spell will hit everyone)
+      const targetId = this.prioritizeTarget(
+        infernoBlast.targets,
+        gameState,
+        myId,
+        'any'
+      );
       return {
         actionType: 'infernoBlast',
-        targetId: '__multi__',
+        targetId: targetId,
       };
     }
 
@@ -420,9 +462,16 @@ class WizardStrategy extends BaseStrategy {
       meteorShower &&
       (gameState.round >= 4 || this.getAlivePlayers(gameState).length >= 6)
     ) {
+      // For multi-target attacks, target any player (the spell will hit everyone)
+      const targetId = this.prioritizeTarget(
+        meteorShower.targets,
+        gameState,
+        myId,
+        'any'
+      );
       return {
         actionType: 'meteorShower',
-        targetId: '__multi__',
+        targetId: targetId,
       };
     }
 
@@ -484,9 +533,16 @@ class AlchemistStrategy extends BaseStrategy {
       poisonTrap &&
       (this.gameMemory.suspectedWarlocks.size >= 2 || gameState.round >= 3)
     ) {
+      // For multi-target attacks, target any player (the spell will hit everyone)
+      const targetId = this.prioritizeTarget(
+        poisonTrap.targets,
+        gameState,
+        myId,
+        'any'
+      );
       return {
         actionType: 'poisonTrap',
-        targetId: '__multi__',
+        targetId: targetId,
       };
     }
 
@@ -567,9 +623,16 @@ class ShamanStrategy extends BaseStrategy {
       (this.getAlivePlayers(gameState).length >= 5 ||
         this.gameMemory.suspectedWarlocks.size >= 2)
     ) {
+      // For multi-target attacks, target any player (the spell will hit everyone)
+      const targetId = this.prioritizeTarget(
+        chainLightning.targets,
+        gameState,
+        myId,
+        'any'
+      );
       return {
         actionType: 'chainLightning',
-        targetId: '__multi__',
+        targetId: targetId,
       };
     }
 
@@ -631,9 +694,16 @@ class GunslingerStrategy extends BaseStrategy {
       ricochetRound &&
       (this.getAlivePlayers(gameState).length >= 5 || gameState.round >= 4)
     ) {
+      // For multi-target attacks, target any player (the spell will hit everyone)
+      const targetId = this.prioritizeTarget(
+        ricochetRound.targets,
+        gameState,
+        myId,
+        'any'
+      );
       return {
         actionType: 'ricochetRound',
-        targetId: '__multi__',
+        targetId: targetId,
       };
     }
 
@@ -740,9 +810,16 @@ class DruidStrategy extends BaseStrategy {
     if (injuredCount >= 2) {
       const rejuvenation = this.findAction(availableActions, 'rejuvenation');
       if (rejuvenation) {
+        // For multi-target heals, target any player (the spell will heal everyone)
+        const targetId = this.prioritizeTarget(
+          rejuvenation.targets,
+          gameState,
+          myId,
+          'any'
+        );
         return {
           actionType: 'rejuvenation',
-          targetId: '__multi__',
+          targetId: targetId,
         };
       }
     }
@@ -754,9 +831,16 @@ class DruidStrategy extends BaseStrategy {
       (this.gameMemory.suspectedWarlocks.size >= 2 ||
         this.gameMemory.threatLevel === 'high')
     ) {
+      // For multi-target stuns, target any player (the spell will hit everyone except monster and user)
+      const targetId = this.prioritizeTarget(
+        entangle.targets,
+        gameState,
+        myId,
+        'any'
+      );
       return {
         actionType: 'entangle',
-        targetId: '__multi__',
+        targetId: targetId,
       };
     }
 

@@ -10,6 +10,7 @@ const {
   throwGameStateError,
 } = require('../utils/errorHandler');
 const logger = require('../utils/logger');
+const config = require('@config');
 
 /**
  * Validate and sanitize strings
@@ -525,7 +526,40 @@ const validateHost = (socket, gameCode) => {
 };
 
 /**
- * Validate action type and target
+ * Helper function to check if an ability is AOE based on its configuration
+ * @param {Object} ability - Ability configuration object
+ * @returns {boolean} Whether the ability is AOE
+ */
+function isAOEAbility(ability) {
+  if (!ability) return false;
+
+  // Check multiple indicators that an ability is AOE
+  return (
+    ability.target === 'Multi' ||
+    ability.isAOE === true ||
+    ability.targetType === 'multi' ||
+    ability.category === 'aoe' ||
+    // Check specific ability types that are known to be AOE
+    [
+      'massHeal',
+      'thunderStrike',
+      'earthquake',
+      'massStun',
+      'groupHeal',
+      'meteorShower',
+      'infernoBlast',
+      'chainLightning',
+      'rejuvenation',
+      'battleCry',
+      'divineShield',
+      'entangle',
+      'poisonTrap',
+    ].includes(ability.type)
+  );
+}
+
+/**
+ * FIXED: Validate action type and target - now handles AOE abilities with "multi" target
  * @param {Object} socket - Client socket
  * @param {string} gameCode - Game code
  * @param {string} actionType - Action type
@@ -537,24 +571,42 @@ const validateAction = (socket, gameCode, actionType, targetId) => {
   const player = game.players.get(socket.id);
 
   // Check if action type is valid for this player
-  const validAction = player.unlocked.some((a) => a.type === actionType);
+  const validAction = player.unlocked.find((a) => a.type === actionType);
   if (!validAction) {
     socket.emit('errorMessage', { message: 'Invalid action type.' });
     return false;
   }
 
-  // Validate target exists
-  if (targetId !== config.MONSTER_ID) {
-    if (!game.players.has(targetId) || !game.players.get(targetId).isAlive) {
-      socket.emit('errorMessage', { message: 'Invalid target.' });
+  // NEW: Handle AOE abilities with "multi" target
+  if (targetId === 'multi') {
+    // Check if this is actually an AOE ability
+    if (isAOEAbility(validAction)) {
+      return true; // Valid AOE ability with multi target
+    } else {
+      socket.emit('errorMessage', {
+        message: `${actionType} is not an AOE ability but "multi" target was specified.`,
+      });
       return false;
     }
   }
 
+  // Handle monster target
+  if (targetId === '__monster__') {
+    // Always allow monster targeting (monster existence is checked in GameRoom)
+    return true;
+  }
+
+  // Handle player targets
+  if (!game.players.has(targetId) || !game.players.get(targetId).isAlive) {
+    socket.emit('errorMessage', { message: 'Invalid target.' });
+    return false;
+  }
+
   return true;
 };
+
 /**
- * Validate action with cooldown checks
+ * FIXED: Validate action with cooldown checks - now handles AOE abilities
  * @param {Object} socket - Client socket
  * @param {string} gameCode - Game code
  * @param {string} actionType - Action type
@@ -566,7 +618,7 @@ const validateActionWithCooldown = (socket, gameCode, actionType, targetId) => {
   const player = game.players.get(socket.id);
 
   // Check if action type is valid for this player
-  const validAction = player.unlocked.some((a) => a.type === actionType);
+  const validAction = player.unlocked.find((a) => a.type === actionType);
   if (!validAction) {
     socket.emit('errorMessage', { message: 'Invalid action type.' });
     return false;
@@ -583,12 +635,29 @@ const validateActionWithCooldown = (socket, gameCode, actionType, targetId) => {
     return false;
   }
 
-  // Validate target exists
-  if (targetId !== config.MONSTER_ID) {
-    if (!game.players.has(targetId) || !game.players.get(targetId).isAlive) {
-      socket.emit('errorMessage', { message: 'Invalid target.' });
+  // NEW: Handle AOE abilities with "multi" target
+  if (targetId === 'multi') {
+    // Check if this is actually an AOE ability
+    if (isAOEAbility(validAction)) {
+      return true; // Valid AOE ability with multi target
+    } else {
+      socket.emit('errorMessage', {
+        message: `${actionType} is not an AOE ability but "multi" target was specified.`,
+      });
       return false;
     }
+  }
+
+  // Handle monster target
+  if (targetId === '__monster__') {
+    // Always allow monster targeting (monster existence is checked in GameRoom)
+    return true;
+  }
+
+  // Handle player targets
+  if (!game.players.has(targetId) || !game.players.get(targetId).isAlive) {
+    socket.emit('errorMessage', { message: 'Invalid target.' });
+    return false;
   }
 
   return true;
@@ -640,4 +709,5 @@ module.exports = {
   suggestValidName,
   testInternationalNames,
   validateAction: validateActionWithCooldown, // Replace the old validateAction
+  isAOEAbility, // Export the helper function
 };

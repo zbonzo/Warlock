@@ -324,9 +324,9 @@ function handleRejuvenationHoT(actor, target, ability, log, systems) {
 }
 
 /**
- * FIXED: Multi-target instant healing handler
+ * FIXED: Multi-target instant healing handler - now handles "multi" target
  * @param {Object} actor - Actor using the ability
- * @param {Object|string} target - Initial target (may be ignored for multi-target)
+ * @param {Object|string} target - Initial target ("multi" for AOE)
  * @param {Object} ability - Ability configuration
  * @param {Array} log - Event log to append messages to
  * @param {Object} systems - Game systems
@@ -425,7 +425,4 @@ function handleMultiHeal(actor, target, ability, log, systems) {
 
   return true;
 }
-
 module.exports = { register };
-
-

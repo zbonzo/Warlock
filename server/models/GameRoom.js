@@ -190,7 +190,7 @@ class GameRoom {
   }
 
   /**
-   * Add a player action to the pending actions queue (IMPROVED - no immediate cooldowns)
+   * Add a player action to the pending actions queue (IMPROVED - handles AOE abilities)
    * @param {string} actorId - Player performing the action
    * @param {string} actionType - Type of action
    * @param {string} targetId - Target of the action
@@ -230,18 +230,54 @@ class GameRoom {
       return false;
     }
 
-    // Handle invisibility redirection for player targets
+    // NEW: Handle AOE abilities with "multi" target
     let finalTargetId = targetId;
-    if (targetId !== config.MONSTER_ID && targetId !== actorId) {
-      const targetPlayer = this.players.get(targetId);
-      if (targetPlayer && targetPlayer.hasStatusEffect('invisible')) {
-        finalTargetId = this.systems.gameStateUtils.getRandomTarget(actorId, {
-          excludeIds: [targetId],
-          includeMonster: true,
-          monsterRef: this.systems.monsterController.getState(),
-        });
 
-        if (!finalTargetId) return false; // No valid redirect target
+    if (targetId === 'multi') {
+      // For AOE abilities, keep "multi" as the target
+      // The ability handlers will process this correctly
+      const isAOEAbility =
+        ability.target === 'Multi' ||
+        ability.isAOE === true ||
+        ability.targetType === 'multi' ||
+        [
+          'massHeal',
+          'thunderStrike',
+          'earthquake',
+          'massStun',
+          'groupHeal',
+          'meteorShower',
+          'infernoBlast',
+          'chainLightning',
+          'rejuvenation',
+          'battleCry',
+          'divineShield',
+          'entangle',
+          'poisonTrap',
+        ].includes(ability.type);
+
+      if (!isAOEAbility) {
+        logger.warn(
+          `Player ${actor.name} tried to use non-AOE ability ${actionType} with multi target`
+        );
+        return false;
+      }
+
+      // Keep finalTargetId as "multi" for AOE abilities
+      finalTargetId = 'multi';
+    } else {
+      // Handle invisibility redirection for single-target abilities on player targets
+      if (targetId !== '__monster__' && targetId !== actorId) {
+        const targetPlayer = this.players.get(targetId);
+        if (targetPlayer && targetPlayer.hasStatusEffect('invisible')) {
+          finalTargetId = this.systems.gameStateUtils.getRandomTarget(actorId, {
+            excludeIds: [targetId],
+            includeMonster: true,
+            monsterRef: this.systems.monsterController.getState(),
+          });
+
+          if (!finalTargetId) return false; // No valid redirect target
+        }
       }
     }
 
@@ -267,7 +303,7 @@ class GameRoom {
       options,
     });
 
-    logger.debug(
+    logger.info(
       `Player ${actor.name} submitted action: ${actionType} -> ${finalTargetId}`
     );
     return true;
@@ -706,7 +742,7 @@ class GameRoom {
   }
 
   /**
-   * Process all pending player actions (IMPROVED with proper cooldown timing)
+   * Process all pending player actions (IMPROVED with proper cooldown timing and multi-target handling)
    * @param {Array} log - Event log to append messages to
    */
   processPlayerActions(log) {
@@ -769,21 +805,33 @@ class GameRoom {
         actor.putAbilityOnCooldown(action.actionType, ability.cooldown);
       }
 
-      const target =
-        action.targetId === config.MONSTER_ID
-          ? config.MONSTER_ID
-          : this.players.get(action.targetId);
+      // NEW: Handle "multi" target for AOE abilities
+      let target;
+      let targetName;
 
-      if (target !== config.MONSTER_ID && !target) {
-        logger.warn(
-          `Invalid target ${action.targetId} for action by ${actor.name}`
-        );
-        continue;
+      if (action.targetId === 'multi') {
+        // For AOE abilities, target is handled by the ability handler
+        target = 'multi';
+        targetName = 'multiple targets';
+      } else if (action.targetId === '__monster__') {
+        target = '__monster__';
+        targetName = 'the Monster';
+      } else {
+        // Handle player targets
+        target = this.players.get(action.targetId);
+        if (!target) {
+          logger.warn(
+            `Invalid target ${action.targetId} for action by ${actor.name}`
+          );
+          continue;
+        }
+        targetName = target.name;
       }
 
-      // Check for invisibility right before executing the ability
+      // Check for invisibility right before executing the ability (only for single-target player abilities)
       if (
-        target !== config.MONSTER_ID &&
+        target !== '__monster__' &&
+        target !== 'multi' &&
         ability.category === 'Attack' &&
         target.hasStatusEffect &&
         target.hasStatusEffect('invisible')
@@ -808,13 +856,17 @@ class GameRoom {
         type: 'action_announcement',
         public: true,
         attackerId: actor.id,
-        targetId: target === config.MONSTER_ID ? 'monster' : target.id,
+        targetId:
+          target === '__monster__'
+            ? 'monster'
+            : target === 'multi'
+              ? 'multi'
+              : target.id,
         abilityName: ability.name,
         message: messages.getEvent('playerAttacks', {
           playerName: actor.name,
           abilityName: ability.name,
-          targetName:
-            target === config.MONSTER_ID ? 'the Monster' : target.name,
+          targetName: targetName,
         }),
         privateMessage: '',
         attackerMessage: '',

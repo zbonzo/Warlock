@@ -491,7 +491,17 @@ class StrategicAI {
     );
     if (!action) return false;
 
-    return action.targets.includes(decision.targetId);
+    const isValidTarget = action.targets.includes(decision.targetId);
+
+    // Enhanced debugging for multi-target abilities
+    if (!isValidTarget && action.ability && action.ability.target === 'Multi') {
+      console.warn(`[MULTI-TARGET DEBUG] ${decision.actionType}:`);
+      console.warn(`  Attempted target: ${decision.targetId}`);
+      console.warn(`  Available targets: [${action.targets.join(', ')}]`);
+      console.warn(`  Ability target type: ${action.ability.target}`);
+    }
+
+    return isValidTarget;
   }
 
   /**

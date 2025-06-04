@@ -205,7 +205,7 @@ function handleShadowstep(actor, target, ability, log, systems) {
  * Add threat tracking for multi-target protection abilities
  */
 function handleMultiProtection(actor, target, ability, log, systems) {
-  // Get all alive players
+  // Get all alive players (multi-protection typically affects everyone including the caster)
   const targets = Array.from(systems.players.values()).filter((p) => p.isAlive);
 
   // Get protection defaults from config if needed

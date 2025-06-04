@@ -283,6 +283,11 @@ class BaseStrategy {
    * @returns {string} Best target ID
    */
   prioritizeTarget(targets, gameState, myId, preference = 'monster') {
+    // Validate targets array
+    if (!targets || targets.length === 0) {
+      return null;
+    }
+
     // Always prefer monster if available and preference allows
     if (
       targets.includes('__monster__') &&
@@ -291,14 +296,9 @@ class BaseStrategy {
       return '__monster__';
     }
 
-    // Multi-target abilities
-    if (targets.includes('__multi__')) {
-      return '__multi__';
-    }
-
     // Player targets based on preference
     const playerTargets = targets.filter(
-      (id) => id !== '__monster__' && id !== '__multi__' && id !== myId
+      (id) => id !== '__monster__' && id !== myId
     );
 
     if (playerTargets.length === 0) {
@@ -328,13 +328,52 @@ class BaseStrategy {
         }
         return strongestTarget || playerTargets[0];
 
+      case 'any':
+        // For multi-target abilities, just pick any valid target
+        return playerTargets[0];
+
       default:
         return playerTargets[0];
     }
   }
 
   /**
-   * Calculate expected value of an action
+   * Safely choose a target for an action, with fallback logic
+   * @param {Object} action - Action object with targets array
+   * @param {Object} gameState - Current game state
+   * @param {string} myId - This player's ID
+   * @param {string} preference - Target preference
+   * @returns {string|null} Valid target ID or null
+   */
+  safeTargetSelection(action, gameState, myId, preference = 'monster') {
+    if (!action || !action.targets || action.targets.length === 0) {
+      return null;
+    }
+
+    // Try preferred targeting
+    const preferredTarget = this.prioritizeTarget(
+      action.targets,
+      gameState,
+      myId,
+      preference
+    );
+    if (action.targets.includes(preferredTarget)) {
+      return preferredTarget;
+    }
+
+    // Fallback to first available target
+    return action.targets[0];
+  }
+
+  /**
+   * Check if an action supports multi-targeting
+   * @param {Object} action - Action object
+   * @returns {boolean} Whether action supports __multi__
+   */
+  supportsMultiTarget(action) {
+    return action && action.targets && action.targets.includes('__multi__');
+  }
+  /*
    * @param {Object} action - Action to evaluate
    * @param {string} targetId - Target for the action
    * @param {Object} gameState - Current game state

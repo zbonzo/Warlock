@@ -31,7 +31,7 @@ const {
 } = require('./strategies/strategy-factory');
 
 // Suppress logging for cleaner output
-process.env.LOG_LEVEL = 'DEBUG';
+process.env.LOG_LEVEL = 'WARN';
 
 /**
  * Strategic Game Room that uses intelligent AI
