@@ -217,13 +217,18 @@ const classAbilities = {
       type: 'pyroblast',
       name: 'Pyroblast',
       category: 'Attack',
-      effect: 'poison',
+      effect: 'poison_detect', // or 'burn_detect'
       target: 'Single',
-      params: { damage: 40, poison: { damage: 20, turns: 5 } },
-      unlockAt: 2,
-      order: 1015,
-      cooldown: 2,
-      flavorText: 'Ignite your foe, causing lingering, superheated burns.',
+      params: {
+        damage: 55,
+        poison: { damage: 18, turns: 3 }, // Representing superheated burns
+        detectChance: 1.0,
+      },
+      unlockAt: 3,
+      order: 1100,
+      cooldown: 4,
+      flavorText:
+        'Burn your enemies skin to the bone, causing lingering, superheated burns and revealing any corruption inside.',
     },
     {
       type: 'infernoBlast',
@@ -706,14 +711,18 @@ const classAbilities = {
       type: 'barbedArrow',
       name: 'Barbed Arrow',
       category: 'Attack',
-      effect: 'poison',
+      effect: 'poison_detect', // New combined effect type
       target: 'Single',
-      params: { damage: 50, poison: { damage: 15, turns: 3 } },
+      params: {
+        damage: 50,
+        poison: { damage: 15, turns: 3 },
+        detectChance: 1.0, // 70% chance to detect if target is a Warlock
+      },
       unlockAt: 3,
       order: 1090,
-      cooldown: 2,
+      cooldown: 4,
       flavorText:
-        'Fire an arrow that tears flesh and causes a persistent bleed.',
+        'Fire an arrow that tears flesh, revealing the true nature of the target',
     },
     {
       type: 'controlMonster',

@@ -45,6 +45,8 @@ function register(registry) {
   registry.registerClassAbility('deathMark', handleDeathMark);
   registry.registerClassAbility('poisonTrap', handlePoisonTrap);
   registry.registerClassAbility('multiHitAttack', handleMultiHitAttack);
+  registry.registerClassAbility('barbedArrow', handleBarbedArrow);
+  registry.registerClassAbility('pyroblast', handlePyroblast);
   registry.registerClassAbility(
     'vulnerabilityStrike',
     handleVulnerabilityStrike
@@ -1004,6 +1006,170 @@ function handleMultiHitAttack(actor, target, ability, log, systems) {
   }
 
   return hitCount > 0;
+}
+/**
+ * Generic handler for attack abilities with detection
+ * @param {Object} actor - Actor using the ability
+ * @param {Object|string} target - Target of the ability
+ * @param {Object} ability - Ability configuration
+ * @param {Array} log - Event log to append messages to
+ * @param {Object} systems - Game systems
+ * @param {Function} additionalEffectHandler - Optional function for additional effects (poison, etc.)
+ * @returns {boolean} Whether the ability was successful
+ */
+function handleAttackWithDetection(
+  actor,
+  target,
+  ability,
+  log,
+  systems,
+  additionalEffectHandler = null
+) {
+  // Check if target is invisible
+  if (
+    target !== config.MONSTER_ID &&
+    target.hasStatusEffect &&
+    target.hasStatusEffect('invisible')
+  ) {
+    const invisibleMessage = messages.getAbilityMessage(
+      'abilities.attacks',
+      'attackInvisible'
+    );
+    log.push(
+      messages.formatMessage(invisibleMessage, {
+        attackerName: actor.name,
+        targetName: target.name,
+      })
+    );
+    return false;
+  }
+
+  // First apply regular attack damage
+  const attackResult = handleAttack(actor, target, ability, log, systems);
+
+  // Apply additional effects if attack was successful and target is still alive
+  if (attackResult && target !== config.MONSTER_ID && target.isAlive) {
+    // Apply any additional effects (poison, etc.)
+    if (additionalEffectHandler) {
+      additionalEffectHandler(actor, target, ability, log, systems);
+    }
+
+    // Detection logic - only works on living players
+    if (
+      ability.params.detectChance &&
+      Math.random() < ability.params.detectChance
+    ) {
+      const abilityType = ability.type; // Use ability type for message keys
+
+      if (target.isWarlock) {
+        // Private message to attacker revealing Warlock
+        const privateDetectionLog = {
+          type: `${abilityType}_detection`,
+          public: false,
+          targetId: target.id,
+          attackerId: actor.id,
+          message: '',
+          privateMessage: '',
+          attackerMessage: messages.formatMessage(
+            messages.getAbilityMessage(
+              'abilities.attacks',
+              `${abilityType}DetectSuccess`
+            ),
+            { targetName: target.name }
+          ),
+        };
+        log.push(privateDetectionLog);
+      } else {
+        // Private message confirming target is not a Warlock
+        const privateNoDetectionLog = {
+          type: `${abilityType}_no_detection`,
+          public: false,
+          targetId: target.id,
+          attackerId: actor.id,
+          message: '',
+          privateMessage: '',
+          attackerMessage: messages.formatMessage(
+            messages.getAbilityMessage(
+              'abilities.attacks',
+              `${abilityType}DetectFail`
+            ),
+            { targetName: target.name }
+          ),
+        };
+        log.push(privateNoDetectionLog);
+      }
+    }
+  }
+
+  return attackResult;
+}
+
+/**
+ * Handler for barbed arrow with poison and detection
+ */
+function handleBarbedArrow(actor, target, ability, log, systems) {
+  return handleAttackWithDetection(
+    actor,
+    target,
+    ability,
+    log,
+    systems,
+    // Poison effect handler
+    (actor, target, ability, log, systems) => {
+      const poisonData = ability.params.poison;
+      const modifiedPoisonDamage = Math.floor(
+        poisonData.damage * (actor.damageMod || 1.0)
+      );
+
+      const poisonDefaults = config.getStatusEffectDefaults('poison') || {
+        turns: 3,
+      };
+
+      systems.statusEffectManager.applyEffect(
+        target.id,
+        'poison',
+        {
+          turns: poisonData.turns || poisonDefaults.turns,
+          damage: modifiedPoisonDamage,
+        },
+        log
+      );
+    }
+  );
+}
+
+/**
+ * Handler for pyroblast with burn/poison and detection
+ */
+function handlePyroblast(actor, target, ability, log, systems) {
+  return handleAttackWithDetection(
+    actor,
+    target,
+    ability,
+    log,
+    systems,
+    // Burn/poison effect handler
+    (actor, target, ability, log, systems) => {
+      const burnData = ability.params.poison || ability.params.burn; // Support both naming conventions
+      const modifiedBurnDamage = Math.floor(
+        burnData.damage * (actor.damageMod || 1.0)
+      );
+
+      const poisonDefaults = config.getStatusEffectDefaults('poison') || {
+        turns: 3,
+      };
+
+      systems.statusEffectManager.applyEffect(
+        target.id,
+        'poison', // Use poison effect for burns
+        {
+          turns: burnData.turns || poisonDefaults.turns,
+          damage: modifiedBurnDamage,
+        },
+        log
+      );
+    }
+  );
 }
 
 module.exports = { register };

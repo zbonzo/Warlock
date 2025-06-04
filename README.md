@@ -298,6 +298,16 @@ CMD ["npm", "start"]
 
 ## 🤝 Contributing
 
+## ⚠️ Known Issues & TODOs
+
+### Security & Privacy (CRITICAL - Before Production)
+- [ ] **EventsLog Security**: Current message filtering uses text pattern matching (`message.includes('Your')`) which could leak private detection results. Need proper permission-based event visibility system. See `client/src/components/game/EventsLog/EventsLog.jsx` and server event generation in `models/GameRoom.js`.
+
+### Game Balance & Features
+- [ ] Add more detection abilities across different classes
+- [ ] Implement spectator mode for finished players
+- [ ] Add reconnection improvements for mobile users
+
 ### Development Workflow
 
 1. Fork the repository

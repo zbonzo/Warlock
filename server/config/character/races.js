@@ -97,7 +97,7 @@ const raceAttributes = {
       'Shaman', // Thematic Score: 8 (Nature spirits, primal magic)
     ],
     description:
-      'When wounded (below 50% HP), attacks against you reveal if the attacker is corrupted.',
+      'When wounded (below 80% HP), attacks against you reveal if the attacker is corrupted.',
   },
   Kinfolk: {
     hpModifier: 1.5,
@@ -154,14 +154,14 @@ const racialAbilities = {
     type: 'moonbeam',
     name: 'Moonbeam',
     description:
-      'When wounded (below 50% HP), attacks against you reveal if the attacker is corrupted',
+      'When wounded (below 80% HP), attacks against you reveal if the attacker is corrupted',
     usageLimit: 'passive', // Passive ability, always active when conditions are met
     maxUses: 0,
     cooldown: 0,
     effect: 'moonbeam',
     target: 'Self',
     params: {
-      healthThreshold: 0.5, // Triggers when below 50% HP
+      healthThreshold: 0.8, // Triggers when below 50% HP
     },
   },
 

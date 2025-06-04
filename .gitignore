@@ -60,3 +60,6 @@ build/Release
 .env.development.local
 .env.test.local
 .env.production.local
+
+# Simulation Reports
+/simulation/Reports

@@ -55,6 +55,18 @@ module.exports = {
   recklessStrikeSelfDamage:
     '{playerName} commits to a reckless strike, taking {damage} damage!',
 
+  // Barbed Arrow Detection
+  barbedArrowDetectSuccess:
+    'Your careful aim reveals that {targetName} is corrupted by dark magic!',
+  barbedArrowDetectFail:
+    'Your observation of {targetName} reveals no signs of corruption.',
+
+  // Detection messages for pyroblast
+  pyroblastDetectSuccess:
+    'Your intense flames reveal that {targetName} is corrupted by dark magic!',
+  pyroblastDetectFail:
+    'Your searing heat shows no signs of corruption in {targetName}.',
+
   // Inferno Blast messages
   infernoBlastPoison:
     '{targetName} is poisoned for {damage} damage over {turns} turns.',
@@ -70,5 +82,3 @@ module.exports = {
   abilityFailed:
     '{playerName} tries to use {abilityName}, but something goes wrong!',
 };
-
-
