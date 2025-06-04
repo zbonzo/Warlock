@@ -1,45 +1,46 @@
 #!/usr/bin/env node
 /**
- * @fileoverview CLI script for generating comprehensive game balance reports
+ * @fileoverview Simplified CLI script for generating CSV game balance reports
  * Usage: node generate-report.js [options]
  */
 
 const path = require('path');
-const fs = require('fs');
 const { performance } = require('perf_hooks');
 
-// Import simulation and reporting modules
-const ReportGenerator = require('./reporting/report-generator');
+// Import our new modular components
+const DataCollector = require('./reporting/data-collector');
+const CSVExporter = require('./reporting/csv-exporter');
+const DataAnalyzer = require('./reporting/data-analyzer');
 
-// Import simulation runners based on available modes
+// Import simulation runners
 let simulationRunners = {};
 
 try {
   const { runMultipleGames } = require('./runner');
   simulationRunners.fixed = runMultipleGames;
 } catch (e) {
-  console.warn('Fixed game runner not available');
+  console.warn('⚠️  Fixed game runner not available');
 }
 
 try {
   const { runRandomGameBatch } = require('./random-game-generator');
   simulationRunners.random = runRandomGameBatch;
 } catch (e) {
-  console.warn('Random game runner not available');
+  console.warn('⚠️  Random game runner not available');
 }
 
 try {
   const { runThematicGameBatch } = require('./enhanced-simulation-runner');
   simulationRunners.thematic = runThematicGameBatch;
 } catch (e) {
-  console.warn('Thematic AI runner not available');
+  console.warn('⚠️  Thematic AI runner not available');
 }
 
 try {
   const { runComparisonTest } = require('./test-strategies');
   simulationRunners.comparison = runComparisonTest;
 } catch (e) {
-  console.warn('Strategy comparison runner not available');
+  console.warn('⚠️  Strategy comparison runner not available');
 }
 
 /**
@@ -52,12 +53,11 @@ function parseArguments(args) {
     mode: 'fixed',
     games: 50,
     focus: null,
-    compareAI: false,
-    classes: null,
-    races: null,
     output: null,
     verbose: false,
     help: false,
+    exportAll: true,
+    reportsDir: './reports',
   };
 
   for (let i = 0; i < args.length; i++) {
@@ -84,26 +84,22 @@ function parseArguments(args) {
         config.focus = args[++i];
         break;
 
-      case '--compare-ai':
-        config.compareAI = true;
-        break;
-
-      case '--classes':
-        config.classes = args[++i]?.split(',');
-        break;
-
-      case '--races':
-        config.races = args[++i]?.split(',');
-        break;
-
       case '--output':
       case '-o':
         config.output = args[++i];
         break;
 
+      case '--reports-dir':
+        config.reportsDir = args[++i];
+        break;
+
       case '--verbose':
       case '-v':
         config.verbose = true;
+        break;
+
+      case '--no-export-all':
+        config.exportAll = false;
         break;
 
       default:
@@ -127,11 +123,10 @@ function parseArguments(args) {
  */
 function printUsage() {
   console.log(`
-Warlock Game Balance Report Generator
-====================================
+🎮 Warlock Game Balance Report Generator (CSV Output)
+====================================================
 
-Generate comprehensive HTML reports with interactive visualizations and detailed
-balance analysis from game simulations.
+Generate CSV-based game balance reports for web interface viewing.
 
 USAGE:
   node generate-report.js [options]
@@ -139,65 +134,48 @@ USAGE:
 OPTIONS:
   --games, -g <number>     Number of games to simulate (default: 50)
   --mode, -m <mode>        Simulation mode (default: fixed)
-  --focus, -f <focus>      Analysis focus area
-  --compare-ai             Compare different AI strategies
-  --classes <list>         Comma-separated list of classes to focus on
-  --races <list>           Comma-separated list of races to focus on
-  --output, -o <file>      Output file path (auto-generated if not specified)
+  --focus, -f <focus>      Analysis focus area (balance, races, classes, etc.)
+  --output, -o <file>      Custom output filename (without extension)
+  --reports-dir <dir>      Reports directory (default: ./reports)
   --verbose, -v            Verbose output during generation
+  --no-export-all          Only export focused analysis (not all report types)
   --help, -h               Show this help message
 
 SIMULATION MODES:
-  fixed                    Run fixed 6-player configuration
-  random                   Run random race/class combinations  
-  thematic                 Run with enhanced thematic AI strategies
+  fixed                    Fixed 6-player configuration for baseline testing
+  random                   Random race/class combinations for broad analysis
+  thematic                 Enhanced AI strategies for realistic gameplay
   comparison               Compare multiple AI strategies
 
 FOCUS AREAS:
-  races                    Deep analysis of race balance and performance
-  classes                  Detailed class performance and role analysis
-  abilities                Ability usage and effectiveness analysis
   balance                  Overall game balance assessment
-  warlocks                 Warlock mechanics and corruption analysis
+  races                    Race performance and synergy analysis
+  classes                  Class effectiveness and role analysis
+  gameflow                 Game length and progression patterns
+  recommendations          Balance suggestions and priority fixes
+  all                      Generate all report types (default)
 
 EXAMPLES:
-  # Generate report from 50 thematic AI games
+  # Generate comprehensive analysis from 50 thematic AI games
   node generate-report.js --mode thematic --games 50
 
   # Focus on race balance with random compositions
   node generate-report.js --mode random --focus races --games 100
 
-  # Compare AI strategies with detailed analysis
-  node generate-report.js --compare-ai --games 30
+  # Generate all reports from comparison test
+  node generate-report.js --mode comparison --games 30 --verbose
 
-  # Analyze specific classes with verbose output
-  node generate-report.js --classes Warrior,Pyromancer,Oracle --verbose
-
-  # Generate report for specific races
-  node generate-report.js --races Artisan,Rockhewn,Lich --games 75
+  # Quick balance check
+  node generate-report.js --focus balance --games 25
 
 OUTPUT:
-  • Generates self-contained HTML report with embedded CSS/JS
-  • Interactive charts using Chart.js
-  • Exportable data in CSV/JSON formats
-  • Mobile-responsive design
-  • Print-friendly layouts
+  • CSV files generated in reports/ directory
+  • Timestamped filenames for version tracking
+  • Auto-updated reports-index.json for web interface
+  • Compatible with static HTML viewer
 
-REPORT FEATURES:
-  📊 Executive Summary        High-level balance overview and key metrics
-  ⚖️ Balance Analysis         Win rates, confidence intervals, statistical tests
-  🔥 Ability Performance      Damage, healing, and utility effectiveness
-  🧬 Race Analysis            Racial ability impact and synergy analysis  
-  ⚔️ Class Analysis           Role effectiveness and tier rankings
-  🎮 Game Flow Analysis       Round progression and timing patterns
-  👹 Warlock Analysis         Corruption mechanics and Evil team performance
-  💡 Recommendations          Data-driven balance suggestions with priorities
-  📈 Statistical Details      Sample sizes, confidence levels, significance tests
-  💾 Raw Data Export          Full dataset export in multiple formats
-
-The generated report includes interactive visualizations, expandable sections,
-and comprehensive statistical analysis to help identify balance issues and
-guide development decisions.
+WEB INTERFACE:
+  Open web-interface/index.html in your browser to view reports interactively.
 `);
 }
 
@@ -208,12 +186,14 @@ guide development decisions.
  */
 function validateConfig(config) {
   if (config.games < 1 || config.games > 1000) {
-    console.error('Error: Number of games must be between 1 and 1000');
+    console.error('❌ Error: Number of games must be between 1 and 1000');
     return false;
   }
 
   if (!simulationRunners[config.mode]) {
-    console.error(`Error: Simulation mode '${config.mode}' is not available`);
+    console.error(
+      `❌ Error: Simulation mode '${config.mode}' is not available`
+    );
     console.error(
       'Available modes:',
       Object.keys(simulationRunners).join(', ')
@@ -235,16 +215,12 @@ async function runSimulations(config) {
   console.log(`\n🎮 Starting ${config.mode} simulation...`);
   console.log(`📊 Target: ${config.games} games`);
   if (config.focus) console.log(`🔍 Focus: ${config.focus}`);
-  if (config.classes) console.log(`⚔️ Classes: ${config.classes.join(', ')}`);
-  if (config.races) console.log(`🧬 Races: ${config.races.join(', ')}`);
   console.log('');
 
   let results;
   const options = {
     maxRounds: 50,
     focus: config.focus,
-    classes: config.classes,
-    races: config.races,
     verbose: config.verbose,
   };
 
@@ -270,7 +246,6 @@ async function runSimulations(config) {
       case 'thematic':
         results = await simulationRunners.thematic(config.games, {
           maxRounds: 50,
-          playerConfigs: generatePlayerConfigs(config),
         });
         break;
 
@@ -307,194 +282,132 @@ async function runSimulations(config) {
 }
 
 /**
- * Generate player configurations based on config
- * @param {Object} config - Configuration object
- * @returns {Array} Player configurations
- */
-function generatePlayerConfigs(config) {
-  const defaultConfigs = [
-    { name: 'HolyPriest', race: 'Artisan', class: 'Priest' },
-    { name: 'WiseOracle', race: 'Kinfolk', class: 'Oracle' },
-    { name: 'FuriousBarbarian', race: 'Orc', class: 'Barbarian' },
-    { name: 'ShadowAssassin', race: 'Crestfallen', class: 'Assassin' },
-    { name: 'NobleWarrior', race: 'Rockhewn', class: 'Warrior' },
-    { name: 'BonePyromancer', race: 'Lich', class: 'Pyromancer' },
-  ];
-
-  if (!config.classes && !config.races) {
-    return defaultConfigs;
-  }
-
-  // Filter or customize based on specific classes/races
-  let configs = defaultConfigs;
-
-  if (config.classes) {
-    configs = configs.filter((c) => config.classes.includes(c.class));
-    // Add more if needed
-    config.classes.forEach((className) => {
-      if (!configs.find((c) => c.class === className)) {
-        configs.push({
-          name: `Test${className}`,
-          race: 'Artisan', // Default race
-          class: className,
-        });
-      }
-    });
-  }
-
-  if (config.races) {
-    configs = configs.map((c) => ({
-      ...c,
-      race: config.races.includes(c.race) ? c.race : config.races[0],
-    }));
-  }
-
-  return configs.slice(0, 8); // Limit to reasonable number
-}
-
-/**
- * Process simulation results into report format
+ * Process simulation results into analyzable format
  * @param {Object} simulationResults - Raw simulation results
  * @param {Object} config - Configuration object
  * @returns {Array} Processed results for analysis
  */
 function processResults(simulationResults, config) {
-  // Handle different result formats from different runners
-  let results = [];
+  console.log('\n📋 Processing simulation results...');
 
+  const dataCollector = new DataCollector();
+
+  // Extract results array from different result formats
+  let rawResults = [];
   if (simulationResults.results) {
-    // Standard format from most runners
-    results = simulationResults.results;
+    rawResults = simulationResults.results;
   } else if (Array.isArray(simulationResults)) {
-    // Direct array of results
-    results = simulationResults;
+    rawResults = simulationResults;
   } else if (simulationResults.games) {
-    // Some runners wrap in games property
-    results = simulationResults.games;
+    rawResults = simulationResults.games;
   } else {
-    console.warn('Warning: Unexpected result format, attempting to process...');
-    results = [simulationResults]; // Treat as single result
+    rawResults = [simulationResults];
   }
 
-  // Validate and clean results
-  const validResults = results.filter(
-    (result) => result && result.winner && result.rounds && result.rounds > 0
-  );
-
-  if (validResults.length !== results.length) {
-    console.warn(
-      `Warning: Filtered out ${
-        results.length - validResults.length
-      } invalid results`
-    );
-  }
-
-  if (validResults.length === 0) {
-    throw new Error('No valid simulation results to analyze');
-  }
-
-  if (config.verbose) {
-    console.log(`\n📋 Processing ${validResults.length} valid results`);
-    console.log(`   Winners: ${this.countWinners(validResults)}`);
-    console.log(
-      `   Avg rounds: ${this.calculateAverageRounds(validResults).toFixed(1)}`
-    );
-  }
-
-  return validResults;
-}
-
-/**
- * Count winners in results
- * @param {Array} results - Simulation results
- * @returns {Object} Winner counts
- */
-function countWinners(results) {
-  const counts = { Good: 0, Evil: 0, Draw: 0 };
-  results.forEach((result) => {
-    if (counts.hasOwnProperty(result.winner)) {
-      counts[result.winner]++;
-    }
-  });
-  return `Good: ${counts.Good}, Evil: ${counts.Evil}, Draw: ${counts.Draw}`;
-}
-
-/**
- * Calculate average rounds
- * @param {Array} results - Simulation results
- * @returns {number} Average rounds
- */
-function calculateAverageRounds(results) {
-  if (results.length === 0) return 0;
-  return (
-    results.reduce((sum, result) => sum + (result.rounds || 0), 0) /
-    results.length
-  );
-}
-
-/**
- * Generate the report
- * @param {Array} results - Processed simulation results
- * @param {Object} config - Configuration object
- * @returns {Promise<string>} Report file path
- */
-async function generateReport(results, config) {
-  const startTime = performance.now();
-
-  console.log('\n📝 Generating comprehensive report...');
-
-  const reportGenerator = new ReportGenerator();
-
-  const reportOptions = {
+  // Collect and structure the data
+  const collectedData = dataCollector.collectFromResults(rawResults, {
     gameType: config.mode,
     aiType: config.mode === 'thematic' ? 'strategic' : 'basic',
     focus: config.focus,
-    classes: config.classes,
-    races: config.races,
-  };
+  });
+
+  if (config.verbose) {
+    const summary = dataCollector.getSummary();
+    console.log(`   Games: ${summary.games.total}`);
+    console.log(`   Players: ${summary.players.total}`);
+    console.log(
+      `   Win Distribution: Good ${summary.games.winDistribution.Good}, Evil ${summary.games.winDistribution.Evil}, Draw ${summary.games.winDistribution.Draw}`
+    );
+    console.log(`   Average Rounds: ${summary.games.averageRounds.toFixed(1)}`);
+  }
+
+  return collectedData;
+}
+
+/**
+ * Generate and export CSV reports
+ * @param {Object} collectedData - Processed data from collector
+ * @param {Object} config - Configuration object
+ * @returns {Promise<Object>} Exported file paths
+ */
+async function generateReports(collectedData, config) {
+  const startTime = performance.now();
+
+  console.log('\n📝 Generating CSV reports...');
+
+  const dataAnalyzer = new DataAnalyzer();
+  const csvExporter = new CSVExporter(config.reportsDir);
+
+  // Analyze the collected data
+  const analysis = dataAnalyzer.analyzeResults(collectedData.games, {
+    gameType: collectedData.metadata.gameType,
+    aiType: collectedData.metadata.aiType,
+    focus: config.focus,
+  });
+
+  let exportedFiles = {};
 
   try {
-    const { html, reportId, analysis } = await reportGenerator.generateReport(
-      results,
-      reportOptions
-    );
-
-    // Determine output path
-    let outputPath;
-    if (config.output) {
-      outputPath = config.output;
-      if (!outputPath.endsWith('.html')) {
-        outputPath += '.html';
+    if (config.focus) {
+      // Export only the focused analysis
+      switch (config.focus) {
+        case 'balance':
+          exportedFiles.balance = await csvExporter.exportBalanceReport(
+            analysis
+          );
+          break;
+        case 'races':
+          exportedFiles.race = await csvExporter.exportRaceAnalysis(analysis);
+          break;
+        case 'classes':
+          exportedFiles.class = await csvExporter.exportClassAnalysis(analysis);
+          break;
+        case 'gameflow':
+          exportedFiles.gameflow = await csvExporter.exportGameFlowAnalysis(
+            analysis
+          );
+          break;
+        case 'recommendations':
+          exportedFiles.recommendations =
+            await csvExporter.exportRecommendations(analysis);
+          break;
+        default:
+          console.warn(
+            `Unknown focus area: ${config.focus}, generating all reports`
+          );
+          exportedFiles = await csvExporter.exportComprehensiveAnalysis(
+            analysis,
+            collectedData.games
+          );
       }
+    } else if (config.exportAll) {
+      // Export all report types
+      exportedFiles = await csvExporter.exportComprehensiveAnalysis(
+        analysis,
+        collectedData.games
+      );
     } else {
-      outputPath = await reportGenerator.saveReport(html, reportId);
+      // Export just balance report as default
+      exportedFiles.balance = await csvExporter.exportBalanceReport(analysis);
     }
 
-    // Save the report if custom output path specified
-    if (config.output && config.output !== outputPath) {
-      await fs.promises.writeFile(config.output, html, 'utf8');
-      outputPath = config.output;
-      console.log(`Report saved to custom location: ${outputPath}`);
+    // Also export raw game results for detailed analysis
+    if (collectedData.games.length > 0) {
+      exportedFiles.raw = await csvExporter.exportRawResults(
+        collectedData.games,
+        collectedData.metadata
+      );
     }
 
     const endTime = performance.now();
     const duration = (endTime - startTime) / 1000;
 
     console.log(
-      `\n✅ Report generated successfully in ${duration.toFixed(2)} seconds`
+      `\n✅ Reports generated successfully in ${duration.toFixed(2)} seconds`
     );
-    console.log(`📄 File: ${outputPath}`);
-    console.log(
-      `📊 Analysis: ${analysis.metadata.totalGames} games, ${analysis.balance.balanceRating} balance`
-    );
+    console.log(`📄 Files exported: ${Object.keys(exportedFiles).length}`);
 
-    if (analysis.recommendations.priorityActions.length > 0) {
-      console.log(
-        `⚠️  ${analysis.recommendations.priorityActions.length} high-priority recommendations found`
-      );
-    }
-
-    return outputPath;
+    return { exportedFiles, analysis };
   } catch (error) {
     console.error(`\n❌ Report generation failed: ${error.message}`);
     if (config.verbose) {
@@ -505,56 +418,65 @@ async function generateReport(results, config) {
 }
 
 /**
- * Print summary statistics
- * @param {Array} results - Simulation results
+ * Print summary of generated reports
+ * @param {Object} exportedFiles - Exported file paths
+ * @param {Object} analysis - Analysis results
  * @param {Object} config - Configuration object
  */
-function printSummary(results, config) {
-  console.log('\n📈 SIMULATION SUMMARY');
+function printSummary(exportedFiles, analysis, config) {
+  console.log('\n📈 REPORT GENERATION SUMMARY');
   console.log('═'.repeat(50));
 
-  const winCounts = { Good: 0, Evil: 0, Draw: 0 };
-  let totalRounds = 0;
-  let totalSurvivors = 0;
+  // Analysis overview
+  console.log(`📊 Analysis Overview:`);
+  console.log(`   Games Analyzed: ${analysis.metadata.totalGames}`);
+  console.log(`   Game Type: ${analysis.metadata.gameType}`);
+  console.log(`   AI Type: ${analysis.metadata.aiType}`);
+  console.log(`   Data Quality: ${analysis.metadata.dataQuality}`);
 
-  results.forEach((result) => {
-    if (winCounts.hasOwnProperty(result.winner)) {
-      winCounts[result.winner]++;
-    }
-    totalRounds += result.rounds || 0;
-    totalSurvivors += result.survivors || 0;
+  // Balance summary
+  if (analysis.balance) {
+    console.log(`\n⚖️ Balance Summary:`);
+    console.log(
+      `   Good Win Rate: ${analysis.balance.goodWinRate.toFixed(1)}%`
+    );
+    console.log(
+      `   Evil Win Rate: ${analysis.balance.evilWinRate.toFixed(1)}%`
+    );
+    console.log(`   Balance Rating: ${analysis.balance.balanceRating}`);
+    console.log(
+      `   Average Rounds: ${analysis.balance.averageRounds.toFixed(1)}`
+    );
+  }
+
+  // Exported files
+  console.log(`\n📄 Generated Files:`);
+  Object.entries(exportedFiles).forEach(([type, filepath]) => {
+    const filename = filepath.split('/').pop();
+    console.log(`   ${type.padEnd(15)}: ${filename}`);
   });
 
-  const totalGames = results.length;
-  const goodWinRate = totalGames > 0 ? (winCounts.Good / totalGames) * 100 : 0;
-  const evilWinRate = totalGames > 0 ? (winCounts.Evil / totalGames) * 100 : 0;
-  const avgRounds = totalGames > 0 ? totalRounds / totalGames : 0;
-  const avgSurvivors = totalGames > 0 ? totalSurvivors / totalGames : 0;
+  // Recommendations summary
+  if (analysis.recommendations && analysis.recommendations.priorityActions) {
+    const highPriority = analysis.recommendations.priorityActions.length;
+    const totalRecommendations = analysis.recommendations.detailed?.length || 0;
 
-  console.log(`Mode: ${config.mode.toUpperCase()}`);
-  console.log(`Games: ${totalGames}`);
-  console.log(`Good Team: ${winCounts.Good} wins (${goodWinRate.toFixed(1)}%)`);
-  console.log(`Evil Team: ${winCounts.Evil} wins (${evilWinRate.toFixed(1)}%)`);
-  console.log(
-    `Draws: ${winCounts.Draw} (${
-      totalGames > 0 ? ((winCounts.Draw / totalGames) * 100).toFixed(1) : 0
-    }%)`
-  );
-  console.log(`Avg Rounds: ${avgRounds.toFixed(1)}`);
-  console.log(`Avg Survivors: ${avgSurvivors.toFixed(1)}`);
+    console.log(`\n💡 Recommendations:`);
+    console.log(`   High Priority: ${highPriority}`);
+    console.log(`   Total Issues: ${totalRecommendations}`);
 
-  // Balance assessment
-  const balanceScore = Math.abs(50 - goodWinRate);
-  let balanceRating;
-  if (balanceScore < 5) balanceRating = 'Excellent';
-  else if (balanceScore < 10) balanceRating = 'Good';
-  else if (balanceScore < 15) balanceRating = 'Fair';
-  else balanceRating = 'Poor';
+    if (highPriority > 0) {
+      console.log(`   ⚠️  Critical balance issues detected!`);
+    }
+  }
 
-  console.log(
-    `Balance: ${balanceRating} (${balanceScore.toFixed(1)}% deviation)`
-  );
-  console.log('═'.repeat(50));
+  // Instructions
+  console.log(`\n🌐 Next Steps:`);
+  console.log(`   1. Open web-interface/index.html in your browser`);
+  console.log(`   2. Select the generated report from the dropdown`);
+  console.log(`   3. Explore interactive charts and analysis`);
+
+  console.log('\n' + '═'.repeat(50));
 }
 
 /**
@@ -573,36 +495,31 @@ async function main(args = []) {
     process.exit(1);
   }
 
-  console.log('🎯 Warlock Game Balance Report Generator');
-  console.log('═'.repeat(50));
+  console.log('🎯 Warlock Game Balance Report Generator (CSV Mode)');
+  console.log('═'.repeat(55));
 
   try {
     // Run simulations
     const simulationResults = await runSimulations(config);
 
     // Process results
-    const processedResults = processResults(simulationResults, config);
+    const collectedData = processResults(simulationResults, config);
+
+    // Generate CSV reports
+    const { exportedFiles, analysis } = await generateReports(
+      collectedData,
+      config
+    );
 
     // Print summary
-    printSummary(processedResults, config);
-
-    // Generate report
-    const reportPath = await generateReport(processedResults, config);
+    printSummary(exportedFiles, analysis, config);
 
     // Final success message
     console.log('\n🎉 SUCCESS!');
-    console.log(`📋 Report ready: ${reportPath}`);
+    console.log('📋 CSV reports ready for web interface');
     console.log(
-      '💡 Open the HTML file in your browser to view the interactive report'
+      `💻 View reports: Open web-interface/index.html in your browser`
     );
-
-    if (process.platform === 'darwin') {
-      console.log(`💻 Quick open: open "${reportPath}"`);
-    } else if (process.platform === 'win32') {
-      console.log(`💻 Quick open: start "${reportPath}"`);
-    } else {
-      console.log(`💻 Quick open: xdg-open "${reportPath}"`);
-    }
   } catch (error) {
     console.error('\n💥 FAILED!');
     console.error(`Error: ${error.message}`);
@@ -619,6 +536,7 @@ async function main(args = []) {
       '  • Try reducing the number of games if memory issues occur'
     );
     console.error('  • Use --verbose flag for detailed error information');
+    console.error('  • Ensure reports directory is writable');
 
     process.exit(1);
   }
@@ -632,8 +550,10 @@ async function enhancedMain() {
 
   // Handle special cases
   if (args.length === 0) {
-    console.log('No arguments provided. Generating default report...\n');
-    args.push('--games', '25', '--mode', 'fixed');
+    console.log(
+      'No arguments provided. Generating default balance report...\n'
+    );
+    args.push('--games', '25', '--mode', 'fixed', '--focus', 'balance');
   }
 
   try {
@@ -656,8 +576,8 @@ module.exports = {
   parseArguments,
   validateConfig,
   runSimulations,
-  generateReport,
   processResults,
+  generateReports,
   printSummary,
 };
 

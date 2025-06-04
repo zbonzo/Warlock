@@ -1,14 +1,14 @@
 /**
- * @fileoverview Fixed Combat System with proper Undying timing
- * Ensures Undying resurrection happens AFTER monster attacks, not during damage
+ * @fileoverview Enhanced Combat System with coordination bonuses and comeback mechanics
+ * Includes fixed Undying timing, coordination tracking, and comeback mechanics for good team
  */
 const config = require('@config');
 const logger = require('@utils/logger');
 const messages = require('@messages');
 
 /**
- * CombatSystem handles all combat-related operations with FIXED Undying timing
- * Ensures consistent damage calculation and death processing
+ * Enhanced CombatSystem with coordination bonuses and comeback mechanics
+ * Handles all combat-related operations with new team balance features
  */
 class CombatSystem {
   /**
@@ -34,10 +34,66 @@ class CombatSystem {
     this.racialAbilitySystem = racialAbilitySystem;
     this.warlockSystem = warlockSystem;
     this.gameStateUtils = gameStateUtils;
+
+    // NEW: Track coordination for this round
+    this.coordinationTracker = new Map(); // targetId -> [playerId1, playerId2, ...]
+    this.comebackActive = false;
   }
 
   /**
-   * FIXED: Apply damage to a player with proper armor calculation
+   * NEW: Reset coordination tracking for new round
+   */
+  resetCoordinationTracking() {
+    this.coordinationTracker.clear();
+    this.updateComebackStatus();
+  }
+
+  /**
+   * NEW: Update comeback mechanics status
+   */
+  updateComebackStatus() {
+    const alivePlayers = this.gameStateUtils.getAlivePlayers();
+    const goodPlayers = alivePlayers.filter((p) => !p.isWarlock);
+
+    this.comebackActive = config.gameBalance.shouldActiveComebackMechanics(
+      goodPlayers.length,
+      alivePlayers.length
+    );
+  }
+
+  /**
+   * NEW: Track coordination for damage/healing abilities
+   * @param {string} actorId - ID of player performing action
+   * @param {string} targetId - ID of target
+   */
+  trackCoordination(actorId, targetId) {
+    if (!targetId || targetId === actorId) return;
+
+    if (!this.coordinationTracker.has(targetId)) {
+      this.coordinationTracker.set(targetId, []);
+    }
+
+    const coordinators = this.coordinationTracker.get(targetId);
+    if (!coordinators.includes(actorId)) {
+      coordinators.push(actorId);
+    }
+  }
+
+  /**
+   * NEW: Get coordination count for a target
+   * @param {string} targetId - Target ID
+   * @param {string} excludeActorId - Actor to exclude from count
+   * @returns {number} Number of other players coordinating on this target
+   */
+  getCoordinationCount(targetId, excludeActorId) {
+    if (!this.coordinationTracker.has(targetId)) return 0;
+
+    const coordinators = this.coordinationTracker.get(targetId);
+    return coordinators.filter((id) => id !== excludeActorId).length;
+  }
+
+  /**
+   * ENHANCED: Apply damage to a player with coordination bonuses and comeback mechanics
    * @param {Object} target - Target player
    * @param {number} damageAmount - Amount of damage
    * @param {Object} attacker - Attacker (player or monster)
@@ -59,23 +115,77 @@ class CombatSystem {
       return false; // No damage was dealt
     }
 
+    // NEW: Check if target was recently detected as Warlock
+    let detectionPenaltyDamage = damageAmount;
+    if (target.isWarlock && target.recentlyDetected) {
+      const penalty =
+        config.gameBalance.warlock.corruption.detectionDamagePenalty / 100;
+      detectionPenaltyDamage = Math.floor(damageAmount * (1 + penalty));
+
+      if (detectionPenaltyDamage > damageAmount) {
+        const detectionPenaltyLog = {
+          type: 'detection_penalty',
+          public: false,
+          targetId: target.id,
+          message: '',
+          privateMessage: `Detection penalty increases damage by ${config.gameBalance.warlock.corruption.detectionDamagePenalty}%! (${damageAmount} → ${detectionPenaltyDamage})`,
+          attackerMessage: `${target.name} takes +${config.gameBalance.warlock.corruption.detectionDamagePenalty}% damage from recent detection!`,
+        };
+        log.push(detectionPenaltyLog);
+      }
+    }
+
+    // NEW: Apply coordination bonus if attacker is a player
+    let coordinatedDamage = detectionPenaltyDamage;
+    if (attacker.id && target !== config.MONSTER_ID) {
+      // Track this coordination
+      this.trackCoordination(attacker.id, target.id);
+
+      // Calculate coordination bonus
+      const coordinationCount = this.getCoordinationCount(
+        target.id,
+        attacker.id
+      );
+      if (coordinationCount > 0) {
+        coordinatedDamage = config.gameBalance.calculateCoordinationBonus(
+          detectionPenaltyDamage,
+          coordinationCount,
+          'damage'
+        );
+
+        if (coordinatedDamage > detectionPenaltyDamage) {
+          const coordinationLog = {
+            type: 'coordination_bonus',
+            public: true,
+            targetId: target.id,
+            attackerId: attacker.id,
+            message: `Coordinated attack! ${coordinationCount + 1} players target ${target.name} for +${Math.round((coordinatedDamage / detectionPenaltyDamage - 1) * 100)}% damage!`,
+            privateMessage: '',
+            attackerMessage: '',
+          };
+          log.push(coordinationLog);
+        }
+      }
+    }
+
     // Initialize armor degradation info
     let armorDegradationInfo = null;
 
     // Process Stone Armor degradation for Rockhewn (before damage calculation)
     if (target.race === 'Rockhewn' && target.stoneArmorIntact) {
-      armorDegradationInfo = target.processStoneArmorDegradation(damageAmount);
+      armorDegradationInfo =
+        target.processStoneArmorDegradation(coordinatedDamage);
     }
 
     // STEP 1: Apply vulnerability BEFORE armor calculation
-    let modifiedDamage = damageAmount;
+    let modifiedDamage = coordinatedDamage;
     if (target.isVulnerable && target.vulnerabilityIncrease > 0) {
       const vulnerabilityMultiplier = 1 + target.vulnerabilityIncrease / 100;
       modifiedDamage = Math.floor(modifiedDamage * vulnerabilityMultiplier);
 
       // Log vulnerability effect
       log.push(
-        `${target.name} is VULNERABLE and takes ${target.vulnerabilityIncrease}% more damage! (${damageAmount} → ${modifiedDamage})`
+        `${target.name} is VULNERABLE and takes ${target.vulnerabilityIncrease}% more damage! (${coordinatedDamage} → ${modifiedDamage})`
       );
     }
 
@@ -96,16 +206,33 @@ class CombatSystem {
     }
 
     // STEP 3: Apply armor reduction using FIXED calculation
-    const totalArmor = target.getEffectiveArmor();
+    let effectiveArmor = target.getEffectiveArmor();
+
+    // NEW: Apply comeback mechanics armor bonus for good players
+    if (this.comebackActive && !target.isWarlock) {
+      const armorBonus = config.gameBalance.comebackMechanics.armorIncrease;
+      effectiveArmor += armorBonus;
+
+      const comebackArmorLog = {
+        type: 'comeback_armor',
+        public: false,
+        targetId: target.id,
+        message: '',
+        privateMessage: `Comeback mechanics grant you +${armorBonus} armor!`,
+        attackerMessage: '',
+      };
+      log.push(comebackArmorLog);
+    }
+
     const beforeArmor = modifiedDamage;
     const finalDamage = this.calculateArmorReduction(
       modifiedDamage,
-      totalArmor
+      effectiveArmor
     );
 
     // Calculate reduction percentage for logs
     const reductionPercent =
-      totalArmor > 0
+      effectiveArmor > 0
         ? Math.round(((beforeArmor - finalDamage) / beforeArmor) * 100)
         : 0;
 
@@ -131,24 +258,26 @@ class CombatSystem {
       attackerName: attacker.name || 'The Monster',
       damage: {
         initial: damageAmount,
+        afterDetectionPenalty: detectionPenaltyDamage,
+        afterCoordination: coordinatedDamage,
         afterVulnerability: modifiedDamage,
         final: actualDamage,
         reduction: reductionPercent,
-        armor: totalArmor,
+        armor: effectiveArmor,
         isVulnerable: target.isVulnerable,
       },
       message:
-        totalArmor > 0
+        effectiveArmor > 0
           ? `${target.name} was attacked for ${actualDamage} damage (${damageAmount} reduced by ${reductionPercent}% armor).`
           : `${target.name} was attacked and lost ${actualDamage} health.`,
       privateMessage:
-        totalArmor > 0
-          ? `${attacker.name || 'The Monster'} attacked you for ${actualDamage} damage (${damageAmount} base, reduced by ${reductionPercent}% from your ${totalArmor} armor).`
+        effectiveArmor > 0
+          ? `${attacker.name || 'The Monster'} attacked you for ${actualDamage} damage (${damageAmount} base, reduced by ${reductionPercent}% from your ${effectiveArmor} armor).`
           : `${attacker.name || 'The Monster'} attacked you for ${actualDamage} damage.`,
       attackerMessage: isMonsterAttacker
         ? ''
-        : totalArmor > 0
-          ? `You attacked ${target.name} for ${actualDamage} damage (${damageAmount} base, reduced by ${reductionPercent}% from their ${totalArmor} armor).`
+        : effectiveArmor > 0
+          ? `You attacked ${target.name} for ${actualDamage} damage (${damageAmount} base, reduced by ${reductionPercent}% from their ${effectiveArmor} armor).`
           : `You attacked ${target.name} for ${actualDamage} damage.`,
     };
 
@@ -189,7 +318,11 @@ class CombatSystem {
     }
 
     // Handle Crestfallen Moonbeam detection
-    if (target.race === 'Crestfallen' && target.isMoonbeamActive() && attacker.id) {
+    if (
+      target.race === 'Crestfallen' &&
+      target.isMoonbeamActive() &&
+      attacker.id
+    ) {
       const revealMessage = attacker.isWarlock
         ? `${target.name}'s desperate Moonbeam reveals that ${attacker.name} IS corrupted!`
         : `${target.name}'s Moonbeam reveals that ${attacker.name} is pure.`;
@@ -208,6 +341,13 @@ class CombatSystem {
           : `${target.name}'s Moonbeam confirmed your purity.`,
       };
       log.push(moonbeamLog);
+
+      // NEW: Mark attacker as recently detected if they're a Warlock
+      if (attacker.isWarlock) {
+        attacker.recentlyDetected = true;
+        attacker.detectionTurnsRemaining =
+          config.gameBalance.warlock.corruption.detectionPenaltyDuration || 1;
+      }
     }
 
     // Process potential death
@@ -220,6 +360,178 @@ class CombatSystem {
     this.checkWarlockConversion(target, attacker, log);
 
     return true;
+  }
+
+  /**
+   * NEW: Apply healing with coordination bonuses and comeback mechanics
+   * @param {Object} healer - Player doing the healing
+   * @param {Object} target - Target being healed
+   * @param {number} baseAmount - Base healing amount
+   * @param {Array} log - Event log
+   * @returns {number} Actual amount healed
+   */
+  applyHealing(healer, target, baseAmount, log = []) {
+    if (!target || !target.isAlive || target.hp >= target.maxHp) {
+      return 0;
+    }
+
+    // Check if healing is blocked (e.g., Warlocks can't be healed by others)
+    if (
+      target.isWarlock &&
+      healer.id !== target.id &&
+      config.gameBalance.player.healing.rejectWarlockHealing
+    ) {
+      const blockedLog = {
+        type: 'healing_blocked',
+        public: false,
+        targetId: target.id,
+        attackerId: healer.id,
+        message: '',
+        privateMessage: '',
+        attackerMessage: `Your healing has no effect on ${target.name}.`,
+      };
+      log.push(blockedLog);
+      return 0;
+    }
+
+    // Apply healer's healing modifier
+    const healingMod = healer.getHealingModifier
+      ? healer.getHealingModifier()
+      : 1.0;
+    let modifiedAmount = Math.floor(baseAmount * healingMod);
+
+    // NEW: Apply comeback mechanics bonus for good players
+    if (this.comebackActive && !healer.isWarlock) {
+      modifiedAmount = config.gameBalance.applyComebackBonus(
+        modifiedAmount,
+        'healing',
+        true,
+        true
+      );
+    }
+
+    // NEW: Track coordination for healing
+    if (healer.id !== target.id) {
+      this.trackCoordination(healer.id, target.id);
+
+      // Calculate coordination bonus
+      const coordinationCount = this.getCoordinationCount(target.id, healer.id);
+      if (coordinationCount > 0) {
+        const coordinatedAmount = config.gameBalance.calculateCoordinationBonus(
+          modifiedAmount,
+          coordinationCount,
+          'healing'
+        );
+
+        if (coordinatedAmount > modifiedAmount) {
+          const coordinationLog = {
+            type: 'healing_coordination',
+            public: true,
+            targetId: target.id,
+            attackerId: healer.id,
+            message: `Coordinated healing! ${coordinationCount + 1} players heal ${target.name} for +${Math.round((coordinatedAmount / modifiedAmount - 1) * 100)}% healing!`,
+            privateMessage: '',
+            attackerMessage: '',
+          };
+          log.push(coordinationLog);
+        }
+
+        modifiedAmount = coordinatedAmount;
+      }
+    }
+
+    // Apply the healing
+    const actualHeal = Math.min(modifiedAmount, target.maxHp - target.hp);
+    target.hp += actualHeal;
+
+    if (actualHeal > 0) {
+      const healLog = {
+        type: 'healing',
+        public: true,
+        targetId: target.id,
+        attackerId: healer.id,
+        message: `${target.name} is healed for ${actualHeal} HP.`,
+        privateMessage: `You are healed for ${actualHeal} HP by ${healer.name}.`,
+        attackerMessage: `You heal ${target.name} for ${actualHeal} HP.`,
+      };
+      log.push(healLog);
+    }
+
+    return actualHeal;
+  }
+
+  /**
+   * ENHANCED: Check for warlock conversion with detection penalties
+   * @param {Object} target - Target player
+   * @param {Object} attacker - Attacker (player or monster)
+   * @param {Array} log - Event log to append messages to
+   * @private
+   */
+  checkWarlockConversion(target, attacker, log) {
+    // Only player attackers can cause conversions
+    if (!attacker.id || attacker === target) return;
+
+    // Check if attacker is a warlock
+    if (attacker.isWarlock) {
+      // NEW: Check if attacker was recently detected
+      const recentlyDetected = attacker.recentlyDetected || false;
+
+      // Apply comeback mechanics corruption resistance for good players
+      let resistanceBonus = 0;
+      if (this.comebackActive && !target.isWarlock) {
+        resistanceBonus =
+          config.gameBalance.comebackMechanics.corruptionResistance / 100;
+
+        if (resistanceBonus > 0) {
+          const resistanceLog = {
+            type: 'comeback_resistance',
+            public: false,
+            targetId: target.id,
+            message: '',
+            privateMessage: `Comeback mechanics grant you ${Math.round(resistanceBonus * 100)}% corruption resistance!`,
+            attackerMessage: '',
+          };
+          log.push(resistanceLog);
+        }
+      }
+
+      // Attempt conversion with resistance modifier
+      const resistanceModifier = 1 - resistanceBonus;
+      this.warlockSystem.attemptConversion(
+        attacker,
+        target,
+        log,
+        resistanceModifier,
+        recentlyDetected
+      );
+    }
+  }
+
+  /**
+   * Process detection penalty duration for all players
+   * @param {Array} log - Event log
+   */
+  processDetectionPenalties(log = []) {
+    for (const player of this.players.values()) {
+      if (player.recentlyDetected && player.detectionTurnsRemaining > 0) {
+        player.detectionTurnsRemaining--;
+
+        if (player.detectionTurnsRemaining <= 0) {
+          player.recentlyDetected = false;
+          delete player.detectionTurnsRemaining;
+
+          const recoveryLog = {
+            type: 'detection_penalty_end',
+            public: false,
+            targetId: player.id,
+            message: '',
+            privateMessage: 'Detection penalties have worn off.',
+            attackerMessage: '',
+          };
+          log.push(recoveryLog);
+        }
+      }
+    }
   }
 
   /**
@@ -302,6 +614,11 @@ class CombatSystem {
           attackerMessage: '',
         };
         log.push(revelationLog);
+
+        // NEW: Mark attacker as recently detected
+        attacker.recentlyDetected = true;
+        attacker.detectionTurnsRemaining =
+          config.gameBalance.warlock.corruption.detectionPenaltyDuration || 1;
       }
     }
 
@@ -346,6 +663,11 @@ class CombatSystem {
             attackerMessage: '',
           };
           log.push(sanctuaryRevelationLog);
+
+          // NEW: Mark attacker as recently detected
+          attacker.recentlyDetected = true;
+          attacker.detectionTurnsRemaining =
+            config.gameBalance.warlock.corruption.detectionPenaltyDuration || 1;
         } else {
           log.push(
             `${target.name}'s Sanctuary detects that ${attacker.name} is NOT a Warlock.`
@@ -429,33 +751,72 @@ class CombatSystem {
   }
 
   /**
-   * Check if a warlock conversion should occur
-   * @param {Object} target - Target player
-   * @param {Object} attacker - Attacker (player or monster)
-   * @param {Array} log - Event log to append messages to
-   * @private
-   */
-  checkWarlockConversion(target, attacker, log) {
-    // Only player attackers can cause conversions
-    if (!attacker.id || attacker === target) return;
-
-    // Check if attacker is a warlock
-    if (attacker.isWarlock) {
-      this.warlockSystem.attemptConversion(attacker, target, log);
-    }
-  }
-
-  /**
-   * Apply damage to the monster
+   * Apply damage to the monster with coordination bonuses
    * @param {number} amount - Amount of damage
    * @param {Object} attacker - Attacking player
    * @param {Array} log - Event log to append messages to
    * @returns {boolean} Whether the attack was successful
    */
   applyDamageToMonster(amount, attacker, log = []) {
-    const result = this.monsterController.takeDamage(amount, attacker, log);
+    // NEW: Apply comeback mechanics damage bonus for good players
+    let modifiedAmount = amount;
+    if (this.comebackActive && !attacker.isWarlock) {
+      modifiedAmount = config.gameBalance.applyComebackBonus(
+        amount,
+        'damage',
+        true,
+        true
+      );
 
-    // Monster attacks don't need enhanced logs, just return result
+      if (modifiedAmount > amount) {
+        const comebackLog = {
+          type: 'comeback_damage',
+          public: false,
+          attackerId: attacker.id,
+          message: '',
+          privateMessage: `Comeback mechanics boost your damage by ${Math.round((modifiedAmount / amount - 1) * 100)}%!`,
+          attackerMessage: '',
+        };
+        log.push(comebackLog);
+      }
+    }
+
+    // NEW: Check for coordination bonuses when attacking monster
+    if (config.gameBalance.coordinationBonus.appliesToMonster) {
+      this.trackCoordination(attacker.id, '__monster__');
+
+      const coordinationCount = this.getCoordinationCount(
+        '__monster__',
+        attacker.id
+      );
+      if (coordinationCount > 0) {
+        const coordinatedAmount = config.gameBalance.calculateCoordinationBonus(
+          modifiedAmount,
+          coordinationCount,
+          'damage'
+        );
+
+        if (coordinatedAmount > modifiedAmount) {
+          const coordinationLog = {
+            type: 'monster_coordination',
+            public: true,
+            attackerId: attacker.id,
+            message: `Coordinated assault! ${coordinationCount + 1} players attack the Monster for +${Math.round((coordinatedAmount / modifiedAmount - 1) * 100)}% damage!`,
+            privateMessage: '',
+            attackerMessage: '',
+          };
+          log.push(coordinationLog);
+        }
+
+        modifiedAmount = coordinatedAmount;
+      }
+    }
+
+    const result = this.monsterController.takeDamage(
+      modifiedAmount,
+      attacker,
+      log
+    );
     return result;
   }
 
@@ -524,10 +885,13 @@ class CombatSystem {
         }
       }
     }
+
+    // Update comeback status after deaths are processed
+    this.updateComebackStatus();
   }
 
   /**
-   * Handle area-of-effect (AoE) damage to multiple targets
+   * Handle area-of-effect (AoE) damage to multiple targets with coordination bonuses
    * @param {Object} source - Source of the AoE damage
    * @param {number} baseDamage - Base damage amount
    * @param {Array} targets - Array of target players
@@ -545,9 +909,19 @@ class CombatSystem {
     const affectedTargets = [];
 
     // Modify damage based on source's modifier
-    const modifiedDamage = source.modifyDamage
+    let modifiedDamage = source.modifyDamage
       ? source.modifyDamage(baseDamage)
       : baseDamage;
+
+    // NEW: Apply comeback mechanics damage bonus for good players
+    if (this.comebackActive && !source.isWarlock) {
+      modifiedDamage = config.gameBalance.applyComebackBonus(
+        modifiedDamage,
+        'damage',
+        true,
+        true
+      );
+    }
 
     // Filter targets
     const validTargets = targets.filter((target) => {
@@ -562,11 +936,20 @@ class CombatSystem {
 
       // Check for warlock conversion with reduced chance
       if (source.isWarlock && target.isAlive && !target.isWarlock) {
+        // Apply comeback mechanics corruption resistance
+        let resistanceModifier = 1.0;
+        if (this.comebackActive) {
+          resistanceModifier =
+            1 - config.gameBalance.comebackMechanics.corruptionResistance / 100;
+        }
+
+        const finalConversionChance =
+          warlockConversionChance * resistanceModifier;
         this.warlockSystem.attemptConversion(
           source,
           target,
           log,
-          warlockConversionChance
+          finalConversionChance
         );
       }
 
@@ -577,7 +960,7 @@ class CombatSystem {
   }
 
   /**
-   * Handle multi-target healing
+   * Handle multi-target healing with coordination bonuses
    * @param {Object} source - Source of the healing
    * @param {number} baseAmount - Base healing amount
    * @param {Array} targets - Array of target players
@@ -595,12 +978,6 @@ class CombatSystem {
 
     const affectedTargets = [];
 
-    // Modify healing based on source's modifier
-    const healingMod = source.getHealingModifier
-      ? source.getHealingModifier()
-      : 1.0;
-    const modifiedAmount = Math.floor(baseAmount * healingMod);
-
     // Filter targets
     const validTargets = targets.filter((target) => {
       if (!target || !target.isAlive) return false;
@@ -609,21 +986,13 @@ class CombatSystem {
       return true;
     });
 
-    // Apply healing to each target
+    // Apply healing to each target using the enhanced healing method
     for (const target of validTargets) {
-      const actualHeal = Math.min(modifiedAmount, target.maxHp - target.hp);
-      target.hp += actualHeal;
+      const actualHeal = this.applyHealing(source, target, baseAmount, log);
 
       if (actualHeal > 0) {
-        log.push(
-          messages.getEvent('playerHealed', {
-            playerName: target.name,
-            amount: actualHeal,
-          })
-        );
+        affectedTargets.push(target);
       }
-
-      affectedTargets.push(target);
     }
 
     return affectedTargets;
@@ -653,8 +1022,25 @@ class CombatSystem {
     }
     return false;
   }
+
+  /**
+   * NEW: Get coordination statistics for debugging/analytics
+   * @returns {Object} Coordination statistics
+   */
+  getCoordinationStats() {
+    const stats = {};
+    for (const [targetId, coordinators] of this.coordinationTracker.entries()) {
+      stats[targetId] = {
+        coordinators: coordinators.length,
+        playerIds: coordinators,
+      };
+    }
+    return {
+      coordinationTracker: stats,
+      comebackActive: this.comebackActive,
+      totalCoordinatedTargets: this.coordinationTracker.size,
+    };
+  }
 }
 
 module.exports = CombatSystem;
-
-

@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Warlock Game Balance Reports</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+    <link rel="stylesheet" href="assets/css/main.css" />
+  </head>
+  <body>
+    <div class="container">
+      <!-- Header -->
+      <header class="header">
+        <h1>🎮 Warlock Game Balance Reports</h1>
+        <p class="subtitle">Interactive Analysis Dashboard</p>
+      </header>
+
+      <!-- Report Selection -->
+      <div class="report-selector">
+        <div class="selector-header">
+          <h2>📊 Select Report</h2>
+          <button class="refresh-btn" onclick="refreshReports()">
+            🔄 Refresh
+          </button>
+        </div>
+
+        <div class="selector-controls">
+          <select id="reportSelect" onchange="loadSelectedReport()">
+            <option value="">Select a report...</option>
+          </select>
+
+          <div class="report-info" id="reportInfo" style="display: none">
+            <span class="info-item" id="reportDate"></span>
+            <span class="info-item" id="reportGames"></span>
+            <span class="info-item" id="reportType"></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Loading State -->
+      <div id="loadingState" class="loading-state" style="display: none">
+        <div class="spinner"></div>
+        <p>Loading report data...</p>
+      </div>
+
+      <!-- Error State -->
+      <div id="errorState" class="error-state" style="display: none">
+        <h3>⚠️ Error Loading Report</h3>
+        <p id="errorMessage"></p>
+        <button onclick="hideError()">Dismiss</button>
+      </div>
+
+      <!-- Report Content -->
+      <div id="reportContent" class="report-content" style="display: none">
+        <!-- Navigation Tabs -->
+        <nav class="nav-tabs">
+          <button class="nav-tab active" onclick="showTab('overview')">
+            📋 Overview
+          </button>
+          <button class="nav-tab" onclick="showTab('balance')">
+            ⚖️ Balance
+          </button>
+          <button class="nav-tab" onclick="showTab('races')">🧬 Races</button>
+          <button class="nav-tab" onclick="showTab('classes')">
+            ⚔️ Classes
+          </button>
+          <button class="nav-tab" onclick="showTab('gameflow')">
+            🎮 Game Flow
+          </button>
+          <button class="nav-tab" onclick="showTab('recommendations')">
+            💡 Recommendations
+          </button>
+          <button class="nav-tab" onclick="showTab('data')">📊 Raw Data</button>
+        </nav>
+
+        <!-- Tab Content -->
+        <div class="tab-content">
+          <!-- Overview Tab -->
+          <div id="overview-tab" class="tab-panel active">
+            <h2>Report Overview</h2>
+
+            <div class="summary-grid" id="overviewSummary">
+              <!-- Summary cards will be populated dynamically -->
+            </div>
+
+            <div class="chart-section">
+              <div class="chart-container">
+                <h3>Win Distribution</h3>
+                <canvas id="winDistributionChart"></canvas>
+              </div>
+            </div>
+
+            <div class="insights-section" id="keyInsights">
+              <!-- Key insights will be populated dynamically -->
+            </div>
+          </div>
+
+          <!-- Balance Tab -->
+          <div id="balance-tab" class="tab-panel">
+            <h2>Balance Analysis</h2>
+
+            <div class="balance-metrics" id="balanceMetrics">
+              <!-- Balance metrics will be populated dynamically -->
+            </div>
+
+            <div class="chart-section">
+              <div class="chart-container">
+                <h3>Balance Trends</h3>
+                <canvas id="balanceTrendsChart"></canvas>
+              </div>
+            </div>
+          </div>
+
+          <!-- Races Tab -->
+          <div id="races-tab" class="tab-panel">
+            <h2>Race Analysis</h2>
+
+            <div class="chart-section">
+              <div class="chart-container">
+                <h3>Race Performance Comparison</h3>
+                <canvas id="racePerformanceChart"></canvas>
+              </div>
+            </div>
+
+            <div class="data-table-container">
+              <table id="raceTable" class="data-table">
+                <thead>
+                  <tr>
+                    <th>Race</th>
+                    <th>Win Rate</th>
+                    <th>Survival Rate</th>
+                    <th>Avg Final HP</th>
+                    <th>Sample Size</th>
+                    <th>Tier</th>
+                    <th>Assessment</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <!-- Race data will be populated dynamically -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Classes Tab -->
+          <div id="classes-tab" class="tab-panel">
+            <h2>Class Analysis</h2>
+
+            <div class="chart-section">
+              <div class="chart-container">
+                <h3>Class Performance Radar</h3>
+                <canvas id="classRadarChart"></canvas>
+              </div>
+            </div>
+
+            <div class="data-table-container">
+              <table id="classTable" class="data-table">
+                <thead>
+                  <tr>
+                    <th>Class</th>
+                    <th>Role</th>
+                    <th>Win Rate</th>
+                    <th>Survival Rate</th>
+                    <th>Effectiveness</th>
+                    <th>Sample Size</th>
+                    <th>Tier</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <!-- Class data will be populated dynamically -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Game Flow Tab -->
+          <div id="gameflow-tab" class="tab-panel">
+            <h2>Game Flow Analysis</h2>
+
+            <div class="summary-grid" id="gameflowSummary">
+              <!-- Game flow summary will be populated dynamically -->
+            </div>
+
+            <div class="chart-section">
+              <div class="chart-container">
+                <h3>Game Length Distribution</h3>
+                <canvas id="gameLengthChart"></canvas>
+              </div>
+            </div>
+          </div>
+
+          <!-- Recommendations Tab -->
+          <div id="recommendations-tab" class="tab-panel">
+            <h2>Balance Recommendations</h2>
+
+            <div class="recommendations-summary" id="recommendationsSummary">
+              <!-- Recommendations summary will be populated dynamically -->
+            </div>
+
+            <div class="recommendations-list" id="recommendationsList">
+              <!-- Recommendations will be populated dynamically -->
+            </div>
+
+            <div class="export-section">
+              <h3>Export Options</h3>
+              <button class="export-btn" onclick="exportCurrentReport()">
+                📄 Export Report
+              </button>
+              <button class="export-btn" onclick="exportRecommendations()">
+                💾 Export Recommendations
+              </button>
+              <button class="export-btn" onclick="window.print()">
+                🖨️ Print Report
+              </button>
+            </div>
+          </div>
+
+          <!-- Raw Data Tab -->
+          <div id="data-tab" class="tab-panel">
+            <h2>Raw Data</h2>
+
+            <div class="data-controls">
+              <button class="data-btn" onclick="showRawData()">
+                📊 Show Table
+              </button>
+              <button class="data-btn" onclick="downloadCSV()">
+                💾 Download CSV
+              </button>
+              <input
+                type="search"
+                id="dataSearch"
+                placeholder="Search data..."
+                onkeyup="filterData()"
+              />
+            </div>
+
+            <div class="data-table-container">
+              <table id="rawDataTable" class="data-table">
+                <thead id="rawDataHeaders">
+                  <!-- Headers will be populated dynamically -->
+                </thead>
+                <tbody id="rawDataBody">
+                  <!-- Data will be populated dynamically -->
+                </tbody>
+              </table>
+            </div>
+
+            <div class="data-pagination" id="dataPagination">
+              <!-- Pagination will be added for large datasets -->
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <footer class="footer">
+        <p>&copy; 2025 Warlock Game Balance Analysis System</p>
+        <p>Last updated: <span id="lastUpdated">Loading...</span></p>
+      </footer>
+    </div>
+
+    <!-- Scripts -->
+    <script src="assets/js/data-loader.js"></script>
+    <script src="assets/js/report-selector.js"></script>
+    <!-- <script src="assets/js/chart-manager.js"></script>
+    
+    <script src="assets/js/ui-components.js"></script>
+    <script src="assets/js/export-manager.js"></script>
+    <script src="assets/js/app.js"></script> -->
+  </body>
+</html>

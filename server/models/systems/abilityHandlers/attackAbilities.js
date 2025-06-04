@@ -1,6 +1,6 @@
 /**
- * @fileoverview FIXED Attack-related ability handlers
- * Contains damage-dealing class abilities with proper Blood Rage interaction
+ * @fileoverview FIXED Attack-related ability handlers with proper coordination bonuses
+ * Contains damage-dealing class abilities with coordination bonus integration
  */
 const config = require('@config');
 const messages = require('@messages');
@@ -26,14 +26,15 @@ function register(registry) {
   registerAbilitiesByCategory(
     registry,
     'Attack',
-    (actor, target, ability, log, systems) => {
+    (actor, target, ability, log, systems, coordinationInfo) => {
       return registry.executeClassAbility(
         'attack',
         actor,
         target,
         ability,
         log,
-        systems
+        systems,
+        coordinationInfo
       );
     }
   );
@@ -65,14 +66,15 @@ function register(registry) {
     registry,
     null,
     'Multi',
-    (actor, target, ability, log, systems) => {
+    (actor, target, ability, log, systems, coordinationInfo) => {
       return registry.executeClassAbility(
         'meteorShower',
         actor,
         target,
         ability,
         log,
-        systems
+        systems,
+        coordinationInfo
       );
     },
     ['infernoBlast', 'chainLightning'] // Exclude abilities with specific handlers
@@ -93,15 +95,23 @@ function register(registry) {
 }
 
 /**
- * Handler for generic attack abilities
+ * FIXED: Handler for generic attack abilities with coordination bonuses
  * @param {Object} actor - Actor using the ability
  * @param {Object|string} target - Target of the ability
  * @param {Object} ability - Ability configuration
  * @param {Array} log - Event log to append messages to
  * @param {Object} systems - Game systems
+ * @param {Object} coordinationInfo - Coordination bonus information
  * @returns {boolean} Whether the ability was successful
  */
-function handleAttack(actor, target, ability, log, systems) {
+function handleAttack(
+  actor,
+  target,
+  ability,
+  log,
+  systems,
+  coordinationInfo = {}
+) {
   // If target is a player (not monster) and is invisible, attack should fail
   if (
     target !== config.MONSTER_ID &&
@@ -121,9 +131,56 @@ function handleAttack(actor, target, ability, log, systems) {
     return false;
   }
 
-  // Calculate damage
+  // Calculate base damage
   const rawDamage = Number(ability.params.damage) || 0;
-  const modifiedDamage = actor.modifyDamage(rawDamage);
+
+  // Apply actor's damage modifiers (race, class, level, etc.)
+  let modifiedDamage = actor.modifyDamage(rawDamage);
+
+  // NEW: Apply coordination bonus BEFORE applying damage
+  if (coordinationInfo.coordinatedDamage && coordinationInfo.damageBonus > 0) {
+    const coordinationMultiplier = 1 + coordinationInfo.damageBonus / 100;
+    modifiedDamage = Math.floor(modifiedDamage * coordinationMultiplier);
+
+    // Log coordination bonus application to attacker
+    const coordinationPrivateLog = {
+      type: 'coordination_damage_applied',
+      public: false,
+      attackerId: actor.id,
+      message: '',
+      privateMessage: `Coordination bonus increases your damage by ${coordinationInfo.damageBonus}% (${Math.floor(actor.modifyDamage(rawDamage))} → ${modifiedDamage})!`,
+      attackerMessage: '',
+    };
+    log.push(coordinationPrivateLog);
+  }
+
+  // NEW: Apply comeback mechanics if active
+  const alivePlayers = systems.gameStateUtils.getAlivePlayers();
+  const goodPlayers = alivePlayers.filter((p) => !p.isWarlock);
+  const comebackActive = config.gameBalance.shouldActiveComebackMechanics(
+    goodPlayers.length,
+    alivePlayers.length
+  );
+
+  if (comebackActive && !actor.isWarlock) {
+    const comebackMultiplier =
+      1 + config.gameBalance.comebackMechanics.damageIncrease / 100;
+    const beforeComeback = modifiedDamage;
+    modifiedDamage = Math.floor(modifiedDamage * comebackMultiplier);
+
+    if (modifiedDamage > beforeComeback) {
+      const comebackPrivateLog = {
+        type: 'comeback_damage_applied',
+        public: false,
+        attackerId: actor.id,
+        message: '',
+        privateMessage: `Comeback mechanics boost your damage by ${config.gameBalance.comebackMechanics.damageIncrease}% (${beforeComeback} → ${modifiedDamage})!`,
+        attackerMessage: '',
+      };
+      log.push(comebackPrivateLog);
+    }
+  }
+
   let actualDamage = 0;
 
   if (target === config.MONSTER_ID) {
@@ -176,15 +233,23 @@ function handleAttack(actor, target, ability, log, systems) {
 }
 
 /**
- * Handler for poison strike ability
+ * FIXED: Handler for poison strike ability with coordination bonuses
  * @param {Object} actor - Actor using the ability
  * @param {Object|string} target - Target of the ability
  * @param {Object} ability - Ability configuration
  * @param {Array} log - Event log to append messages to
  * @param {Object} systems - Game systems
+ * @param {Object} coordinationInfo - Coordination bonus information
  * @returns {boolean} Whether the ability was successful
  */
-function handlePoisonStrike(actor, target, ability, log, systems) {
+function handlePoisonStrike(
+  actor,
+  target,
+  ability,
+  log,
+  systems,
+  coordinationInfo = {}
+) {
   // Check if target is invisible
   if (
     target !== config.MONSTER_ID &&
@@ -204,15 +269,33 @@ function handlePoisonStrike(actor, target, ability, log, systems) {
     return false;
   }
 
-  // First apply regular attack damage
-  const attackResult = handleAttack(actor, target, ability, log, systems);
+  // First apply regular attack damage with coordination bonuses
+  const attackResult = handleAttack(
+    actor,
+    target,
+    ability,
+    log,
+    systems,
+    coordinationInfo
+  );
 
   // Then apply poison if attack was successful and target is still alive
   if (attackResult && target !== config.MONSTER_ID && target.isAlive) {
     const poisonData = ability.params.poison;
-    const modifiedPoisonDamage = Math.floor(
+    let modifiedPoisonDamage = Math.floor(
       poisonData.damage * (actor.damageMod || 1.0)
     );
+
+    // NEW: Apply coordination bonus to poison damage as well
+    if (
+      coordinationInfo.coordinatedDamage &&
+      coordinationInfo.damageBonus > 0
+    ) {
+      const coordinationMultiplier = 1 + coordinationInfo.damageBonus / 100;
+      modifiedPoisonDamage = Math.floor(
+        modifiedPoisonDamage * coordinationMultiplier
+      );
+    }
 
     // Get poison effect defaults from config
     const poisonDefaults = config.getStatusEffectDefaults('poison') || {
@@ -247,17 +330,45 @@ function handlePoisonStrike(actor, target, ability, log, systems) {
 }
 
 /**
- * Handler for AoE damage abilities
+ * FIXED: Handler for AoE damage abilities with coordination bonuses
  * @param {Object} actor - Actor using the ability
  * @param {Object|string} target - Target of the ability
  * @param {Object} ability - Ability configuration
  * @param {Array} log - Event log to append messages to
  * @param {Object} systems - Game systems
+ * @param {Object} coordinationInfo - Coordination bonus information
  * @returns {boolean} Whether the ability was successful
  */
-function handleAoeDamage(actor, target, ability, log, systems) {
+function handleAoeDamage(
+  actor,
+  target,
+  ability,
+  log,
+  systems,
+  coordinationInfo = {}
+) {
   const rawDamage = Number(ability.params.damage) || 0;
-  const modifiedDamage = actor.modifyDamage(rawDamage);
+  let modifiedDamage = actor.modifyDamage(rawDamage);
+
+  // NEW: Apply coordination bonus to base damage
+  if (coordinationInfo.coordinatedDamage && coordinationInfo.damageBonus > 0) {
+    const coordinationMultiplier = 1 + coordinationInfo.damageBonus / 100;
+    modifiedDamage = Math.floor(modifiedDamage * coordinationMultiplier);
+  }
+
+  // NEW: Apply comeback mechanics if active
+  const alivePlayers = systems.gameStateUtils.getAlivePlayers();
+  const goodPlayers = alivePlayers.filter((p) => !p.isWarlock);
+  const comebackActive = config.gameBalance.shouldActiveComebackMechanics(
+    goodPlayers.length,
+    alivePlayers.length
+  );
+
+  if (comebackActive && !actor.isWarlock) {
+    const comebackMultiplier =
+      1 + config.gameBalance.comebackMechanics.damageIncrease / 100;
+    modifiedDamage = Math.floor(modifiedDamage * comebackMultiplier);
+  }
 
   // Get potential targets based on ability configuration
   let targets = [];
@@ -376,17 +487,32 @@ function handleAoeDamage(actor, target, ability, log, systems) {
 }
 
 /**
- * Handler for vulnerability-inducing attacks
+ * FIXED: Handler for vulnerability-inducing attacks with coordination bonuses
  * @param {Object} actor - Actor using the ability
  * @param {Object|string} target - Target of the ability
  * @param {Object} ability - Ability configuration
  * @param {Array} log - Event log to append messages to
  * @param {Object} systems - Game systems
+ * @param {Object} coordinationInfo - Coordination bonus information
  * @returns {boolean} Whether the ability was successful
  */
-function handleVulnerabilityStrike(actor, target, ability, log, systems) {
-  // First deal normal damage
-  const attackResult = handleAttack(actor, target, ability, log, systems);
+function handleVulnerabilityStrike(
+  actor,
+  target,
+  ability,
+  log,
+  systems,
+  coordinationInfo = {}
+) {
+  // First deal normal damage with coordination bonuses
+  const attackResult = handleAttack(
+    actor,
+    target,
+    ability,
+    log,
+    systems,
+    coordinationInfo
+  );
 
   // If attack successful and target is a player, apply vulnerability
   if (attackResult && target !== config.MONSTER_ID && target.isAlive) {
@@ -416,18 +542,559 @@ function handleVulnerabilityStrike(actor, target, ability, log, systems) {
 }
 
 /**
- * FIXED: Handler for inferno blast ability - now properly applies Blood Rage
+ * FIXED: Handler for multi-hit attack abilities with coordination bonuses
  * @param {Object} actor - Actor using the ability
  * @param {Object|string} target - Target of the ability
  * @param {Object} ability - Ability configuration
  * @param {Array} log - Event log to append messages to
  * @param {Object} systems - Game systems
+ * @param {Object} coordinationInfo - Coordination bonus information
  * @returns {boolean} Whether the ability was successful
  */
-function handleInfernoBlast(actor, target, ability, log, systems) {
+function handleMultiHitAttack(
+  actor,
+  target,
+  ability,
+  log,
+  systems,
+  coordinationInfo = {}
+) {
+  // If target is invisible, attack fails
+  if (
+    target !== config.MONSTER_ID &&
+    target.hasStatusEffect &&
+    target.hasStatusEffect('invisible')
+  ) {
+    const invisibleMessage = messages.getAbilityMessage(
+      'abilities.attacks',
+      'attackInvisible'
+    );
+    log.push(
+      messages.formatMessage(invisibleMessage, {
+        attackerName: actor.name,
+        targetName: target.name,
+      })
+    );
+    return false;
+  }
+
+  // Get hit parameters
+  const hits = ability.params.hits || 1;
+
+  // Use damage parameter for single-target, damagePerHit for multi-target
+  let damagePerHit;
+  if (ability.params.damagePerHit) {
+    damagePerHit = ability.params.damagePerHit;
+  } else {
+    damagePerHit = ability.params.damage || 10;
+  }
+
+  // Apply actor's damage modifier
+  let modifiedDamagePerHit = actor.modifyDamage(damagePerHit);
+
+  // NEW: Apply coordination bonus
+  if (coordinationInfo.coordinatedDamage && coordinationInfo.damageBonus > 0) {
+    const coordinationMultiplier = 1 + coordinationInfo.damageBonus / 100;
+    modifiedDamagePerHit = Math.floor(
+      modifiedDamagePerHit * coordinationMultiplier
+    );
+  }
+
+  // NEW: Apply comeback mechanics if active
+  const alivePlayers = systems.gameStateUtils.getAlivePlayers();
+  const goodPlayers = alivePlayers.filter((p) => !p.isWarlock);
+  const comebackActive = config.gameBalance.shouldActiveComebackMechanics(
+    goodPlayers.length,
+    alivePlayers.length
+  );
+
+  if (comebackActive && !actor.isWarlock) {
+    const comebackMultiplier =
+      1 + config.gameBalance.comebackMechanics.damageIncrease / 100;
+    modifiedDamagePerHit = Math.floor(
+      modifiedDamagePerHit * comebackMultiplier
+    );
+  }
+
+  // Announce the multi-hit attack
+  const announceMessage = messages.getAbilityMessage(
+    'abilities.attacks',
+    'multiHitAnnounce'
+  );
+  log.push(
+    messages.formatMessage(announceMessage, {
+      playerName: actor.name,
+      abilityName: ability.name,
+      targetName: target === config.MONSTER_ID ? 'the Monster' : target.name,
+      hits: hits,
+    })
+  );
+
+  let totalDamage = 0;
+  let hitCount = 0;
+
+  // Process each hit
+  for (let i = 0; i < hits; i++) {
+    const hitChance = ability.params.hitChance || 1.0;
+
+    if (Math.random() < hitChance) {
+      hitCount++;
+
+      if (target === config.MONSTER_ID) {
+        const hitSuccess = systems.monsterController.takeDamage(
+          modifiedDamagePerHit,
+          actor,
+          []
+        );
+        if (hitSuccess) {
+          totalDamage += modifiedDamagePerHit;
+        }
+      } else {
+        const oldHp = target.hp;
+        const finalDamage =
+          target.calculateDamageReduction(modifiedDamagePerHit);
+        target.hp = Math.max(0, target.hp - finalDamage);
+        const actualDamage = oldHp - target.hp;
+
+        if (target.hp <= 0) {
+          target.isAlive = false;
+          systems.combatSystem.handlePotentialDeath(target, actor, log);
+        }
+
+        const hitMessage = messages.getAbilityMessage(
+          'abilities.attacks',
+          'multiHitIndividual'
+        );
+        log.push(
+          messages.formatMessage(hitMessage, {
+            hitNumber: hitCount,
+            playerName: actor.name,
+            damage: actualDamage,
+            targetName: target.name,
+          })
+        );
+        totalDamage += actualDamage;
+      }
+    } else {
+      const missMessage = messages.getAbilityMessage(
+        'abilities.attacks',
+        'multiHitMiss'
+      );
+      log.push(
+        messages.formatMessage(missMessage, {
+          hitNumber: i + 1,
+        })
+      );
+    }
+  }
+
+  // Log the total damage summary
+  if (hitCount > 0) {
+    const summaryMessage = messages.getAbilityMessage(
+      'abilities.attacks',
+      'multiHitSummary'
+    );
+    log.push(
+      messages.formatMessage(summaryMessage, {
+        hitCount: hitCount,
+        totalDamage: totalDamage,
+      })
+    );
+
+    // NEW: Apply threat for total damage dealt
+    applyThreatForAbility(actor, target, ability, totalDamage, 0, systems);
+  } else {
+    const allMissedMessage = messages.getAbilityMessage(
+      'abilities.attacks',
+      'multiHitMissed'
+    );
+    log.push(allMissedMessage);
+  }
+
+  // Check for warlock conversion on player targets
+  if (target !== config.MONSTER_ID && actor.isWarlock && hitCount > 0) {
+    systems.warlockSystem.attemptConversion(actor, target, log);
+  }
+
+  return hitCount > 0;
+}
+
+/**
+ * FIXED: Handler for Reckless Strike ability (Barbarian) with coordination bonuses
+ * @param {Object} actor - Actor using the ability
+ * @param {Object|string} target - Target of the ability
+ * @param {Object} ability - Ability configuration
+ * @param {Array} log - Event log to append messages to
+ * @param {Object} systems - Game systems
+ * @param {Object} coordinationInfo - Coordination bonus information
+ * @returns {boolean} Whether the ability was successful
+ */
+function handleRecklessStrike(
+  actor,
+  target,
+  ability,
+  log,
+  systems,
+  coordinationInfo = {}
+) {
+  // Check if target is invisible first
+  if (
+    target !== config.MONSTER_ID &&
+    target.hasStatusEffect &&
+    target.hasStatusEffect('invisible')
+  ) {
+    const invisibleMessage = messages.getAbilityMessage(
+      'abilities.attacks',
+      'attackInvisible'
+    );
+    log.push(
+      messages.formatMessage(invisibleMessage, {
+        attackerName: actor.name,
+        targetName: target.name,
+      })
+    );
+    return false;
+  }
+
+  // Apply self-damage BEFORE the attack (to show the commitment)
+  const selfDamage = ability.params.selfDamage || 5;
+  const oldHp = actor.hp;
+  actor.hp = Math.max(1, actor.hp - selfDamage); // Cannot reduce below 1 HP
+  const actualSelfDamage = oldHp - actor.hp;
+
+  if (actualSelfDamage > 0) {
+    const selfDamageMessage = messages.getAbilityMessage(
+      'abilities.attacks',
+      'recklessStrikeSelfDamage'
+    );
+    log.push(
+      messages.formatMessage(selfDamageMessage, {
+        playerName: actor.name,
+        damage: actualSelfDamage,
+      })
+    );
+  }
+
+  // Now perform the attack with coordination bonuses
   const rawDamage = Number(ability.params.damage) || 0;
-  // FIXED: Use actor.modifyDamage which includes Blood Rage effects
-  const modifiedDamage = actor.modifyDamage(rawDamage);
+  let modifiedDamage = actor.modifyDamage(rawDamage);
+
+  // NEW: Apply coordination bonus
+  if (coordinationInfo.coordinatedDamage && coordinationInfo.damageBonus > 0) {
+    const coordinationMultiplier = 1 + coordinationInfo.damageBonus / 100;
+    modifiedDamage = Math.floor(modifiedDamage * coordinationMultiplier);
+  }
+
+  // NEW: Apply comeback mechanics if active
+  const alivePlayers = systems.gameStateUtils.getAlivePlayers();
+  const goodPlayers = alivePlayers.filter((p) => !p.isWarlock);
+  const comebackActive = config.gameBalance.shouldActiveComebackMechanics(
+    goodPlayers.length,
+    alivePlayers.length
+  );
+
+  if (comebackActive && !actor.isWarlock) {
+    const comebackMultiplier =
+      1 + config.gameBalance.comebackMechanics.damageIncrease / 100;
+    modifiedDamage = Math.floor(modifiedDamage * comebackMultiplier);
+  }
+
+  if (target === config.MONSTER_ID) {
+    systems.monsterController.takeDamage(modifiedDamage, actor, log);
+
+    // Warlocks generate "threat" attacking monster
+    if (actor.isWarlock) {
+      const randomConversionModifier =
+        config.gameBalance.warlock.conversion.randomModifier;
+      systems.warlockSystem.attemptConversion(
+        actor,
+        null,
+        log,
+        randomConversionModifier
+      );
+    }
+  } else {
+    // Player target
+    if (!target || !target.isAlive) return false;
+
+    systems.combatSystem.applyDamageToPlayer(
+      target,
+      modifiedDamage,
+      actor,
+      log
+    );
+
+    // Warlocks may attempt to convert on attack
+    if (actor.isWarlock) {
+      systems.warlockSystem.attemptConversion(actor, target, log);
+    }
+  }
+
+  return true;
+}
+
+/**
+ * Generic handler for attack abilities with detection and coordination bonuses
+ * @param {Object} actor - Actor using the ability
+ * @param {Object|string} target - Target of the ability
+ * @param {Object} ability - Ability configuration
+ * @param {Array} log - Event log to append messages to
+ * @param {Object} systems - Game systems
+ * @param {Object} coordinationInfo - Coordination bonus information
+ * @param {Function} additionalEffectHandler - Optional function for additional effects (poison, etc.)
+ * @returns {boolean} Whether the ability was successful
+ */
+function handleAttackWithDetection(
+  actor,
+  target,
+  ability,
+  log,
+  systems,
+  coordinationInfo = {},
+  additionalEffectHandler = null
+) {
+  // Check if target is invisible
+  if (
+    target !== config.MONSTER_ID &&
+    target.hasStatusEffect &&
+    target.hasStatusEffect('invisible')
+  ) {
+    const invisibleMessage = messages.getAbilityMessage(
+      'abilities.attacks',
+      'attackInvisible'
+    );
+    log.push(
+      messages.formatMessage(invisibleMessage, {
+        attackerName: actor.name,
+        targetName: target.name,
+      })
+    );
+    return false;
+  }
+
+  // First apply regular attack damage with coordination bonuses
+  const attackResult = handleAttack(
+    actor,
+    target,
+    ability,
+    log,
+    systems,
+    coordinationInfo
+  );
+
+  // Apply additional effects if attack was successful and target is still alive
+  if (attackResult && target !== config.MONSTER_ID && target.isAlive) {
+    // Apply any additional effects (poison, etc.)
+    if (additionalEffectHandler) {
+      additionalEffectHandler(
+        actor,
+        target,
+        ability,
+        log,
+        systems,
+        coordinationInfo
+      );
+    }
+
+    // Detection logic - only works on living players
+    if (
+      ability.params.detectChance &&
+      Math.random() < ability.params.detectChance
+    ) {
+      const abilityType = ability.type; // Use ability type for message keys
+
+      if (target.isWarlock) {
+        // Mark warlock as detected for penalties
+        systems.warlockSystem.markWarlockDetected(target.id, log);
+
+        // Private message to attacker revealing Warlock
+        const privateDetectionLog = {
+          type: `${abilityType}_detection`,
+          public: false,
+          targetId: target.id,
+          attackerId: actor.id,
+          message: '',
+          privateMessage: '',
+          attackerMessage: messages.formatMessage(
+            messages.getAbilityMessage(
+              'abilities.attacks',
+              `${abilityType}DetectSuccess`
+            ),
+            { targetName: target.name }
+          ),
+        };
+        log.push(privateDetectionLog);
+      } else {
+        // Private message confirming target is not a Warlock
+        const privateNoDetectionLog = {
+          type: `${abilityType}_no_detection`,
+          public: false,
+          targetId: target.id,
+          attackerId: actor.id,
+          message: '',
+          privateMessage: '',
+          attackerMessage: messages.formatMessage(
+            messages.getAbilityMessage(
+              'abilities.attacks',
+              `${abilityType}DetectFail`
+            ),
+            { targetName: target.name }
+          ),
+        };
+        log.push(privateNoDetectionLog);
+      }
+    }
+  }
+
+  return attackResult;
+}
+
+/**
+ * Handler for barbed arrow with poison and detection (with coordination bonuses)
+ */
+function handleBarbedArrow(
+  actor,
+  target,
+  ability,
+  log,
+  systems,
+  coordinationInfo = {}
+) {
+  return handleAttackWithDetection(
+    actor,
+    target,
+    ability,
+    log,
+    systems,
+    coordinationInfo,
+    // Poison effect handler
+    (actor, target, ability, log, systems, coordinationInfo) => {
+      const poisonData = ability.params.poison;
+      let modifiedPoisonDamage = Math.floor(
+        poisonData.damage * (actor.damageMod || 1.0)
+      );
+
+      // Apply coordination bonus to poison as well
+      if (
+        coordinationInfo.coordinatedDamage &&
+        coordinationInfo.damageBonus > 0
+      ) {
+        const coordinationMultiplier = 1 + coordinationInfo.damageBonus / 100;
+        modifiedPoisonDamage = Math.floor(
+          modifiedPoisonDamage * coordinationMultiplier
+        );
+      }
+
+      const poisonDefaults = config.getStatusEffectDefaults('poison') || {
+        turns: 3,
+      };
+
+      systems.statusEffectManager.applyEffect(
+        target.id,
+        'poison',
+        {
+          turns: poisonData.turns || poisonDefaults.turns,
+          damage: modifiedPoisonDamage,
+        },
+        log
+      );
+    }
+  );
+}
+
+/**
+ * Handler for pyroblast with burn/poison and detection (with coordination bonuses)
+ */
+function handlePyroblast(
+  actor,
+  target,
+  ability,
+  log,
+  systems,
+  coordinationInfo = {}
+) {
+  return handleAttackWithDetection(
+    actor,
+    target,
+    ability,
+    log,
+    systems,
+    coordinationInfo,
+    // Burn/poison effect handler
+    (actor, target, ability, log, systems, coordinationInfo) => {
+      const burnData = ability.params.poison || ability.params.burn; // Support both naming conventions
+      let modifiedBurnDamage = Math.floor(
+        burnData.damage * (actor.damageMod || 1.0)
+      );
+
+      // Apply coordination bonus to burn damage as well
+      if (
+        coordinationInfo.coordinatedDamage &&
+        coordinationInfo.damageBonus > 0
+      ) {
+        const coordinationMultiplier = 1 + coordinationInfo.damageBonus / 100;
+        modifiedBurnDamage = Math.floor(
+          modifiedBurnDamage * coordinationMultiplier
+        );
+      }
+
+      const poisonDefaults = config.getStatusEffectDefaults('poison') || {
+        turns: 3,
+      };
+
+      systems.statusEffectManager.applyEffect(
+        target.id,
+        'poison', // Use poison effect for burns
+        {
+          turns: burnData.turns || poisonDefaults.turns,
+          damage: modifiedBurnDamage,
+        },
+        log
+      );
+    }
+  );
+}
+
+/**
+ * FIXED: Handler for inferno blast ability with coordination bonuses
+ * @param {Object} actor - Actor using the ability
+ * @param {Object|string} target - Target of the ability
+ * @param {Object} ability - Ability configuration
+ * @param {Array} log - Event log to append messages to
+ * @param {Object} systems - Game systems
+ * @param {Object} coordinationInfo - Coordination bonus information
+ * @returns {boolean} Whether the ability was successful
+ */
+function handleInfernoBlast(
+  actor,
+  target,
+  ability,
+  log,
+  systems,
+  coordinationInfo = {}
+) {
+  const rawDamage = Number(ability.params.damage) || 0;
+  let modifiedDamage = actor.modifyDamage(rawDamage);
+
+  // NEW: Apply coordination bonus
+  if (coordinationInfo.coordinatedDamage && coordinationInfo.damageBonus > 0) {
+    const coordinationMultiplier = 1 + coordinationInfo.damageBonus / 100;
+    modifiedDamage = Math.floor(modifiedDamage * coordinationMultiplier);
+  }
+
+  // NEW: Apply comeback mechanics if active
+  const alivePlayers = systems.gameStateUtils.getAlivePlayers();
+  const goodPlayers = alivePlayers.filter((p) => !p.isWarlock);
+  const comebackActive = config.gameBalance.shouldActiveComebackMechanics(
+    goodPlayers.length,
+    alivePlayers.length
+  );
+
+  if (comebackActive && !actor.isWarlock) {
+    const comebackMultiplier =
+      1 + config.gameBalance.comebackMechanics.damageIncrease / 100;
+    modifiedDamage = Math.floor(modifiedDamage * comebackMultiplier);
+  }
 
   // Get potential targets (all alive players except self)
   const targets = Array.from(systems.players.values()).filter(
@@ -467,7 +1134,7 @@ function handleInfernoBlast(actor, target, ability, log, systems) {
   };
 
   for (const potentialTarget of targets) {
-    // Apply direct damage (already modified with Blood Rage)
+    // Apply direct damage
     systems.combatSystem.applyDamageToPlayer(
       potentialTarget,
       modifiedDamage,
@@ -478,10 +1145,20 @@ function handleInfernoBlast(actor, target, ability, log, systems) {
     // Apply poison if target is still alive
     if (potentialTarget.isAlive && ability.effect === 'poison') {
       const poisonData = ability.params.poison || {};
-      // FIXED: Also apply damage modifier to poison damage
-      const modifiedPoisonDamage = Math.floor(
+      let modifiedPoisonDamage = Math.floor(
         (poisonData.damage || poisonDefaults.damage) * (actor.damageMod || 1.0)
       );
+
+      // Apply coordination bonus to poison damage as well
+      if (
+        coordinationInfo.coordinatedDamage &&
+        coordinationInfo.damageBonus > 0
+      ) {
+        const coordinationMultiplier = 1 + coordinationInfo.damageBonus / 100;
+        modifiedPoisonDamage = Math.floor(
+          modifiedPoisonDamage * coordinationMultiplier
+        );
+      }
 
       systems.statusEffectManager.applyEffect(
         potentialTarget.id,
@@ -511,15 +1188,16 @@ function handleInfernoBlast(actor, target, ability, log, systems) {
 }
 
 /**
- * Handler for death mark ability
- * @param {Object} actor - Actor using the ability
- * @param {Object|string} target - Target of the ability
- * @param {Object} ability - Ability configuration
- * @param {Array} log - Event log to append messages to
- * @param {Object} systems - Game systems
- * @returns {boolean} Whether the ability was successful
+ * Handler for death mark ability (no coordination bonus needed - special ability)
  */
-function handleDeathMark(actor, target, ability, log, systems) {
+function handleDeathMark(
+  actor,
+  target,
+  ability,
+  log,
+  systems,
+  coordinationInfo = {}
+) {
   if (target === config.MONSTER_ID) {
     const invalidMessage = messages.getAbilityMessage(
       'abilities.attacks',
@@ -585,15 +1263,16 @@ function handleDeathMark(actor, target, ability, log, systems) {
 }
 
 /**
- * Handler for poison trap ability
- * @param {Object} actor - Actor using the ability
- * @param {Object|string} target - Target of the ability
- * @param {Object} ability - Ability configuration
- * @param {Array} log - Event log to append messages to
- * @param {Object} systems - Game systems
- * @returns {boolean} Whether the ability was successful
+ * Handler for poison trap ability (AOE - coordination would be weird here)
  */
-function handlePoisonTrap(actor, target, ability, log, systems) {
+function handlePoisonTrap(
+  actor,
+  target,
+  ability,
+  log,
+  systems,
+  coordinationInfo = {}
+) {
   // Get all alive players except actor
   const targets = Array.from(systems.players.values()).filter(
     (p) => p.isAlive && p.id !== actor.id
@@ -704,472 +1383,6 @@ function handlePoisonTrap(actor, target, ability, log, systems) {
   }
 
   return true;
-}
-
-/**
- * Handler for Reckless Strike ability (Barbarian) - FIXED
- * @param {Object} actor - Actor using the ability
- * @param {Object|string} target - Target of the ability
- * @param {Object} ability - Ability configuration
- * @param {Array} log - Event log to append messages to
- * @param {Object} systems - Game systems
- * @returns {boolean} Whether the ability was successful
- */
-function handleRecklessStrike(actor, target, ability, log, systems) {
-  // Check if target is invisible first
-  if (
-    target !== config.MONSTER_ID &&
-    target.hasStatusEffect &&
-    target.hasStatusEffect('invisible')
-  ) {
-    const invisibleMessage = messages.getAbilityMessage(
-      'abilities.attacks',
-      'attackInvisible'
-    );
-    log.push(
-      messages.formatMessage(invisibleMessage, {
-        attackerName: actor.name,
-        targetName: target.name,
-      })
-    );
-    return false;
-  }
-
-  // Apply self-damage BEFORE the attack (to show the commitment)
-  const selfDamage = ability.params.selfDamage || 5;
-  const oldHp = actor.hp;
-  actor.hp = Math.max(1, actor.hp - selfDamage); // Cannot reduce below 1 HP
-  const actualSelfDamage = oldHp - actor.hp;
-
-  if (actualSelfDamage > 0) {
-    const selfDamageMessage = messages.getAbilityMessage(
-      'abilities.attacks',
-      'recklessStrikeSelfDamage'
-    );
-    log.push(
-      messages.formatMessage(selfDamageMessage, {
-        playerName: actor.name,
-        damage: actualSelfDamage,
-      })
-    );
-  }
-
-  // Now perform the attack
-  if (target === config.MONSTER_ID) {
-    const rawDamage = Number(ability.params.damage) || 0;
-    const modifiedDamage = actor.modifyDamage(rawDamage);
-    systems.monsterController.takeDamage(modifiedDamage, actor, log);
-
-    // Warlocks generate "threat" attacking monster
-    if (actor.isWarlock) {
-      const randomConversionModifier =
-        config.gameBalance.warlock.conversion.randomModifier;
-      systems.warlockSystem.attemptConversion(
-        actor,
-        null,
-        log,
-        randomConversionModifier
-      );
-    }
-  } else {
-    // Player target
-    if (!target || !target.isAlive) return false;
-
-    const rawDamage = Number(ability.params.damage) || 0;
-    const modifiedDamage = actor.modifyDamage(rawDamage);
-
-    systems.combatSystem.applyDamageToPlayer(
-      target,
-      modifiedDamage,
-      actor,
-      log
-    );
-
-    // Warlocks may attempt to convert on attack
-    if (actor.isWarlock) {
-      systems.warlockSystem.attemptConversion(actor, target, log);
-    }
-  }
-
-  return true;
-}
-
-/**
- * Helper for handling attacks on the monster
- * @param {Object} actor - Actor using the ability
- * @param {Object} ability - Ability configuration
- * @param {Array} log - Event log to append messages to
- * @param {Object} systems - Game systems
- * @returns {boolean} Whether the ability was successful
- * @private
- */
-function handleMonsterAttack(actor, ability, log, systems) {
-  const rawDamage = Number(ability.params.damage) || 0;
-  const modifiedDamage = actor.modifyDamage(rawDamage);
-  systems.monsterController.takeDamage(modifiedDamage, actor, log);
-
-  // Warlocks generate "threat" attacking monster
-  if (actor.isWarlock) {
-    const randomConversionModifier =
-      config.gameBalance.warlock.conversion.randomModifier;
-    systems.warlockSystem.attemptConversion(
-      actor,
-      null,
-      log,
-      randomConversionModifier
-    );
-  }
-
-  return true;
-}
-
-/**
- * Helper for handling attacks on players
- * @param {Object} actor - Actor using the ability
- * @param {Object} target - Target player
- * @param {Object} ability - Ability configuration
- * @param {Array} log - Event log to append messages to
- * @param {Object} systems - Game systems
- * @returns {boolean} Whether the ability was successful
- * @private
- */
-function handlePlayerAttack(actor, target, ability, log, systems) {
-  if (!target || !target.isAlive) return false;
-
-  const rawDamage = Number(ability.params.damage) || 0;
-  const modifiedDamage = actor.modifyDamage(rawDamage);
-
-  // Check if this is a Keen Senses attack
-  const isKeenSensesAttack =
-    actor.racialEffects &&
-    actor.racialEffects.keenSensesActiveOnNextAttack === target.id;
-
-  systems.combatSystem.applyDamageToPlayer(
-    target,
-    modifiedDamage,
-    actor,
-    log,
-    isKeenSensesAttack
-  );
-
-  // Clear the Keen Senses flag after use
-  if (isKeenSensesAttack) {
-    delete actor.racialEffects.keenSensesActiveOnNextAttack;
-  }
-
-  // Warlocks may attempt to convert on attack
-  if (actor.isWarlock) {
-    systems.warlockSystem.attemptConversion(actor, target, log);
-  }
-
-  return true;
-}
-
-/**
- * FIXED: Handler for multi-hit attack abilities (both single and multi-target)
- * @param {Object} actor - Actor using the ability
- * @param {Object|string} target - Target of the ability
- * @param {Object} ability - Ability configuration
- * @param {Array} log - Event log to append messages to
- * @param {Object} systems - Game systems
- * @returns {boolean} Whether the ability was successful
- */
-function handleMultiHitAttack(actor, target, ability, log, systems) {
-  // If target is invisible, attack fails
-  if (
-    target !== config.MONSTER_ID &&
-    target.hasStatusEffect &&
-    target.hasStatusEffect('invisible')
-  ) {
-    const invisibleMessage = messages.getAbilityMessage(
-      'abilities.attacks',
-      'attackInvisible'
-    );
-    log.push(
-      messages.formatMessage(invisibleMessage, {
-        attackerName: actor.name,
-        targetName: target.name,
-      })
-    );
-    return false;
-  }
-
-  // Get hit parameters
-  const hits = ability.params.hits || 1;
-
-  // Use damage parameter for single-target, damagePerHit for multi-target
-  let damagePerHit;
-  if (ability.params.damagePerHit) {
-    damagePerHit = ability.params.damagePerHit;
-  } else {
-    damagePerHit = ability.params.damage || 10;
-  }
-
-  // Announce the multi-hit attack
-  const announceMessage = messages.getAbilityMessage(
-    'abilities.attacks',
-    'multiHitAnnounce'
-  );
-  log.push(
-    messages.formatMessage(announceMessage, {
-      playerName: actor.name,
-      abilityName: ability.name,
-      targetName: target === config.MONSTER_ID ? 'the Monster' : target.name,
-      hits: hits,
-    })
-  );
-
-  let totalDamage = 0;
-  let hitCount = 0;
-
-  // Process each hit
-  for (let i = 0; i < hits; i++) {
-    const hitChance = ability.params.hitChance || 1.0;
-
-    if (Math.random() < hitChance) {
-      const modifiedDamage = actor.modifyDamage(damagePerHit);
-      hitCount++;
-
-      if (target === config.MONSTER_ID) {
-        const hitSuccess = systems.monsterController.takeDamage(
-          modifiedDamage,
-          actor,
-          []
-        );
-        if (hitSuccess) {
-          totalDamage += modifiedDamage;
-        }
-      } else {
-        const oldHp = target.hp;
-        const finalDamage = target.calculateDamageReduction(modifiedDamage);
-        target.hp = Math.max(0, target.hp - finalDamage);
-        const actualDamage = oldHp - target.hp;
-
-        if (target.hp <= 0) {
-          target.isAlive = false;
-          systems.combatSystem.handlePotentialDeath(target, actor, log);
-        }
-
-        const hitMessage = messages.getAbilityMessage(
-          'abilities.attacks',
-          'multiHitIndividual'
-        );
-        log.push(
-          messages.formatMessage(hitMessage, {
-            hitNumber: hitCount,
-            playerName: actor.name,
-            damage: actualDamage,
-            targetName: target.name,
-          })
-        );
-        totalDamage += actualDamage;
-      }
-    } else {
-      const missMessage = messages.getAbilityMessage(
-        'abilities.attacks',
-        'multiHitMiss'
-      );
-      log.push(
-        messages.formatMessage(missMessage, {
-          hitNumber: i + 1,
-        })
-      );
-    }
-  }
-
-  // Log the total damage summary
-  if (hitCount > 0) {
-    const summaryMessage = messages.getAbilityMessage(
-      'abilities.attacks',
-      'multiHitSummary'
-    );
-    log.push(
-      messages.formatMessage(summaryMessage, {
-        hitCount: hitCount,
-        totalDamage: totalDamage,
-      })
-    );
-
-    // NEW: Apply threat for total damage dealt
-    applyThreatForAbility(actor, target, ability, totalDamage, 0, systems);
-  } else {
-    const allMissedMessage = messages.getAbilityMessage(
-      'abilities.attacks',
-      'multiHitMissed'
-    );
-    log.push(allMissedMessage);
-  }
-
-  // Check for warlock conversion on player targets
-  if (target !== config.MONSTER_ID && actor.isWarlock && hitCount > 0) {
-    systems.warlockSystem.attemptConversion(actor, target, log);
-  }
-
-  return hitCount > 0;
-}
-/**
- * Generic handler for attack abilities with detection
- * @param {Object} actor - Actor using the ability
- * @param {Object|string} target - Target of the ability
- * @param {Object} ability - Ability configuration
- * @param {Array} log - Event log to append messages to
- * @param {Object} systems - Game systems
- * @param {Function} additionalEffectHandler - Optional function for additional effects (poison, etc.)
- * @returns {boolean} Whether the ability was successful
- */
-function handleAttackWithDetection(
-  actor,
-  target,
-  ability,
-  log,
-  systems,
-  additionalEffectHandler = null
-) {
-  // Check if target is invisible
-  if (
-    target !== config.MONSTER_ID &&
-    target.hasStatusEffect &&
-    target.hasStatusEffect('invisible')
-  ) {
-    const invisibleMessage = messages.getAbilityMessage(
-      'abilities.attacks',
-      'attackInvisible'
-    );
-    log.push(
-      messages.formatMessage(invisibleMessage, {
-        attackerName: actor.name,
-        targetName: target.name,
-      })
-    );
-    return false;
-  }
-
-  // First apply regular attack damage
-  const attackResult = handleAttack(actor, target, ability, log, systems);
-
-  // Apply additional effects if attack was successful and target is still alive
-  if (attackResult && target !== config.MONSTER_ID && target.isAlive) {
-    // Apply any additional effects (poison, etc.)
-    if (additionalEffectHandler) {
-      additionalEffectHandler(actor, target, ability, log, systems);
-    }
-
-    // Detection logic - only works on living players
-    if (
-      ability.params.detectChance &&
-      Math.random() < ability.params.detectChance
-    ) {
-      const abilityType = ability.type; // Use ability type for message keys
-
-      if (target.isWarlock) {
-        // Private message to attacker revealing Warlock
-        const privateDetectionLog = {
-          type: `${abilityType}_detection`,
-          public: false,
-          targetId: target.id,
-          attackerId: actor.id,
-          message: '',
-          privateMessage: '',
-          attackerMessage: messages.formatMessage(
-            messages.getAbilityMessage(
-              'abilities.attacks',
-              `${abilityType}DetectSuccess`
-            ),
-            { targetName: target.name }
-          ),
-        };
-        log.push(privateDetectionLog);
-      } else {
-        // Private message confirming target is not a Warlock
-        const privateNoDetectionLog = {
-          type: `${abilityType}_no_detection`,
-          public: false,
-          targetId: target.id,
-          attackerId: actor.id,
-          message: '',
-          privateMessage: '',
-          attackerMessage: messages.formatMessage(
-            messages.getAbilityMessage(
-              'abilities.attacks',
-              `${abilityType}DetectFail`
-            ),
-            { targetName: target.name }
-          ),
-        };
-        log.push(privateNoDetectionLog);
-      }
-    }
-  }
-
-  return attackResult;
-}
-
-/**
- * Handler for barbed arrow with poison and detection
- */
-function handleBarbedArrow(actor, target, ability, log, systems) {
-  return handleAttackWithDetection(
-    actor,
-    target,
-    ability,
-    log,
-    systems,
-    // Poison effect handler
-    (actor, target, ability, log, systems) => {
-      const poisonData = ability.params.poison;
-      const modifiedPoisonDamage = Math.floor(
-        poisonData.damage * (actor.damageMod || 1.0)
-      );
-
-      const poisonDefaults = config.getStatusEffectDefaults('poison') || {
-        turns: 3,
-      };
-
-      systems.statusEffectManager.applyEffect(
-        target.id,
-        'poison',
-        {
-          turns: poisonData.turns || poisonDefaults.turns,
-          damage: modifiedPoisonDamage,
-        },
-        log
-      );
-    }
-  );
-}
-
-/**
- * Handler for pyroblast with burn/poison and detection
- */
-function handlePyroblast(actor, target, ability, log, systems) {
-  return handleAttackWithDetection(
-    actor,
-    target,
-    ability,
-    log,
-    systems,
-    // Burn/poison effect handler
-    (actor, target, ability, log, systems) => {
-      const burnData = ability.params.poison || ability.params.burn; // Support both naming conventions
-      const modifiedBurnDamage = Math.floor(
-        burnData.damage * (actor.damageMod || 1.0)
-      );
-
-      const poisonDefaults = config.getStatusEffectDefaults('poison') || {
-        turns: 3,
-      };
-
-      systems.statusEffectManager.applyEffect(
-        target.id,
-        'poison', // Use poison effect for burns
-        {
-          turns: burnData.turns || poisonDefaults.turns,
-          damage: modifiedBurnDamage,
-        },
-        log
-      );
-    }
-  );
 }
 
 module.exports = { register };

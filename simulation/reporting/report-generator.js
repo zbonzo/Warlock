@@ -507,6 +507,7 @@ class ReportGenerator {
             initializeSectionCharts(sectionId);
         }
 
+
         // Initialize charts for a specific section
         function initializeSectionCharts(sectionId) {
             const section = document.getElementById(sectionId);
@@ -1610,7 +1611,7 @@ class ReportGenerator {
    */
   assembleReport(reportId, sections, charts, analysis) {
     const template = this.reportTemplate
-      .replace('{{REPORT_TITLE}}', `Warlock Game Balance Report`)
+      .replace('/{{REPORT_TITLE}}/g', `Warlock Game Balance Report`)
       .replace(
         '{{REPORT_SUBTITLE}}',
         `Comprehensive Analysis • ${

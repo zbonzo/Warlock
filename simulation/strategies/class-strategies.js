@@ -237,7 +237,7 @@ class OracleStrategy extends BaseStrategy {
 }
 
 /**
- * Pyromancer Strategy - High damage, careful positioning
+ * Pyromancer Strategy - High damage, careful positioning, detection capabilities
  */
 class PyromancerStrategy extends BaseStrategy {
   makeDecision(availableActions, gameState, player) {
@@ -250,6 +250,22 @@ class PyromancerStrategy extends BaseStrategy {
         return {
           actionType: 'cauterize',
           targetId: myId,
+        };
+      }
+    }
+
+    // NEW: Use Pyroblast for detection on suspected Warlocks
+    const pyroblast = this.findAction(availableActions, 'pyroblast');
+    if (pyroblast && this.gameMemory.suspectedWarlocks.size > 0) {
+      const suspiciousTarget = this.getMostSuspiciousTarget(gameState, myId);
+      if (suspiciousTarget && pyroblast.targets.includes(suspiciousTarget)) {
+        // Prioritize detection over regular targeting
+        console.log(
+          `    ${player.name} using Pyroblast for Warlock detection on ${suspiciousTarget}`
+        );
+        return {
+          actionType: 'pyroblast',
+          targetId: suspiciousTarget,
         };
       }
     }
@@ -273,8 +289,7 @@ class PyromancerStrategy extends BaseStrategy {
       };
     }
 
-    // Use Pyroblast for sustained damage on key targets
-    const pyroblast = this.findAction(availableActions, 'pyroblast');
+    // Use Pyroblast for sustained damage (if not used for detection above)
     if (pyroblast) {
       const targetId = this.prioritizeTarget(
         pyroblast.targets,
@@ -306,7 +321,6 @@ class PyromancerStrategy extends BaseStrategy {
     return null;
   }
 }
-
 /**
  * Assassin Strategy - Stealth and precise strikes
  */
@@ -727,7 +741,7 @@ class GunslingerStrategy extends BaseStrategy {
 }
 
 /**
- * Tracker Strategy - Control Monster against Warlocks, precision shots
+ * Tracker Strategy - Control Monster against Warlocks, precision shots, detection
  */
 class TrackerStrategy extends BaseStrategy {
   makeDecision(availableActions, gameState, player) {
@@ -748,6 +762,22 @@ class TrackerStrategy extends BaseStrategy {
       }
     }
 
+    // NEW: Use Barbed Arrow for detection on suspected Warlocks
+    const barbedArrow = this.findAction(availableActions, 'barbedArrow');
+    if (barbedArrow && this.gameMemory.suspectedWarlocks.size > 0) {
+      const suspiciousTarget = this.getMostSuspiciousTarget(gameState, myId);
+      if (suspiciousTarget && barbedArrow.targets.includes(suspiciousTarget)) {
+        // Prioritize detection over regular damage
+        console.log(
+          `    ${player.name} using Barbed Arrow for Warlock detection on ${suspiciousTarget}`
+        );
+        return {
+          actionType: 'barbedArrow',
+          targetId: suspiciousTarget,
+        };
+      }
+    }
+
     // Use Camouflage when threatened
     if (player.hp <= player.maxHp * 0.5) {
       const camouflage = this.findAction(availableActions, 'camouflage');
@@ -759,8 +789,7 @@ class TrackerStrategy extends BaseStrategy {
       }
     }
 
-    // Barbed Arrow for sustained damage
-    const barbedArrow = this.findAction(availableActions, 'barbedArrow');
+    // Barbed Arrow for sustained damage (if not used for detection above)
     if (barbedArrow) {
       const targetId = this.prioritizeTarget(
         barbedArrow.targets,

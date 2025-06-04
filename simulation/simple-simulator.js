@@ -379,7 +379,7 @@ function generateRandomPlayers(playerCount = 6) {
  * @returns {Promise<Object>} Game result
  */
 async function runRandomGame(options = {}) {
-  const { minPlayers = 3, maxPlayers = 8, maxRounds = 50 } = options;
+  const { minPlayers = 6, maxPlayers = 14, maxRounds = 100 } = options;
 
   const playerCount =
     Math.floor(Math.random() * (maxPlayers - minPlayers + 1)) + minPlayers;

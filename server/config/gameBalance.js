@@ -1,6 +1,6 @@
 /**
- * @fileoverview Updated game balance configuration with monster scaling fixes
- * Centralized balance settings for monster, player, and warlock mechanics
+ * @fileoverview Enhanced game balance configuration with new coordination and comeback mechanics
+ * Centralized balance settings for monster, player, warlock mechanics, and new team balance features
  */
 
 /**
@@ -91,14 +91,26 @@ const player = {
 };
 
 /**
- * Enhanced warlock conversion mechanics with corruption control
+ * NEW: Coordination bonus system for team tactics
+ */
+const coordinationBonus = {
+  enabled: true, // Enable/disable coordination bonuses
+  damageBonus: 10, // +10% damage per additional player targeting same enemy
+  healingBonus: 10, // +10% healing per additional player healing same target
+  appliesToMonster: true, // Whether bonuses work when attacking monster
+  maxBonusTargets: 5, // Maximum number of coordinating players that provide bonus
+  announceCoordination: true, // Whether to announce coordination in battle log
+};
+
+/**
+ * Enhanced warlock conversion mechanics with corruption control and detection penalties
  */
 const warlock = {
   // Conversion chance calculation
   conversion: {
-    baseChance: 0.2, // Reduced from 0.2
-    maxChance: 0.3, // Reduced from 0.5
-    scalingFactor: 0.3, // Reduced from 0.3
+    baseChance: 0.2, // Base conversion chance
+    maxChance: 0.3, // Maximum conversion chance
+    scalingFactor: 0.3, // How much warlock count affects chance
 
     // New corruption control options
     preventLevelUpCorruption: false, // Option to disable corruption on level-ups
@@ -111,6 +123,15 @@ const warlock = {
     randomModifier: 0.3, // Reduced from 0.5
     untargetedModifier: 0.3, // Reduced from 0.5
   },
+
+  // NEW: Warlock detection penalties
+  corruption: {
+    canCorruptWhenDetected: false, // Can't corrupt same turn as detected
+    detectionDamagePenalty: 15, // +15% damage when detected this turn
+    corruptionIsPublic: true, // Corruption messages are private by default
+    detectionPenaltyDuration: 1, // How many turns the detection penalty lasts
+  },
+
   scaling: {
     enabled: true, // Enable/disable warlock scaling
     playersPerWarlock: 4, // How many players per additional warlock (4 = every 4 players adds 1 warlock)
@@ -148,6 +169,19 @@ const warlock = {
     allPlayersWarlocks: 'Evil', // Evil wins if only warlocks remain
     majorityThreshold: 0.5, // Warlocks are "winning" if > 50% of alive players
   },
+};
+
+/**
+ * NEW: Comeback mechanics for good team when losing
+ */
+const comebackMechanics = {
+  enabled: true, // Enable/disable comeback mechanics
+  threshold: 25, // Activates when ≤25% of good players remaining
+  damageIncrease: 25, // +25% damage for remaining good players
+  healingIncrease: 25, // +25% healing for remaining good players
+  armorIncrease: 1.0, // +1 armor for remaining good players
+  corruptionResistance: 15, // 15% resistance to corruption attempts
+  announceActivation: true, // Whether to announce when comeback mechanics activate
 };
 
 /**
@@ -233,18 +267,20 @@ function calculateMonsterDamage(age) {
 }
 
 /**
- * Helper function to calculate warlock conversion chance with limits
+ * Helper function to calculate warlock conversion chance with limits and detection penalties
  * @param {number} warlockCount - Number of warlocks
  * @param {number} totalPlayers - Total alive players
  * @param {number} modifier - Conversion modifier (default 1.0)
  * @param {Object} limitChecks - Object with corruption limit information
+ * @param {boolean} recentlyDetected - Whether the warlock was recently detected
  * @returns {number} Conversion chance (0.0 to 1.0)
  */
 function calculateConversionChance(
   warlockCount,
   totalPlayers,
   modifier = 1.0,
-  limitChecks = {}
+  limitChecks = {},
+  recentlyDetected = false
 ) {
   // Check corruption limits first
   if (
@@ -253,6 +289,11 @@ function calculateConversionChance(
     limitChecks.playerOnCooldown
   ) {
     return 0.0; // No conversion possible
+  }
+
+  // Check if corruption is blocked by recent detection
+  if (recentlyDetected && !warlock.corruption.canCorruptWhenDetected) {
+    return 0.0; // Cannot corrupt when recently detected
   }
 
   const baseChance = warlock.conversion.baseChance;
@@ -282,6 +323,86 @@ function calculateDamageReduction(armor) {
     player.armor.maxReduction,
     armor * player.armor.reductionRate
   );
+}
+
+/**
+ * NEW: Calculate coordination bonus for damage/healing
+ * @param {number} baseAmount - Base damage or healing amount
+ * @param {number} coordinatingPlayers - Number of other players targeting same target
+ * @param {string} type - 'damage' or 'healing'
+ * @returns {number} Modified amount with coordination bonus
+ */
+function calculateCoordinationBonus(
+  baseAmount,
+  coordinatingPlayers,
+  type = 'damage'
+) {
+  if (!coordinationBonus.enabled || coordinatingPlayers <= 0) {
+    return baseAmount;
+  }
+
+  const maxCoordinators = Math.min(
+    coordinatingPlayers,
+    coordinationBonus.maxBonusTargets - 1
+  );
+  let bonusPercent = 0;
+
+  if (type === 'healing') {
+    bonusPercent = coordinationBonus.healingBonus;
+  } else {
+    bonusPercent = coordinationBonus.damageBonus;
+  }
+
+  const totalBonus = maxCoordinators * bonusPercent;
+  return Math.floor(baseAmount * (1 + totalBonus / 100));
+}
+
+/**
+ * NEW: Check if comeback mechanics should be active
+ * @param {number} goodPlayersRemaining - Number of good players still alive
+ * @param {number} totalPlayersRemaining - Total players still alive
+ * @returns {boolean} Whether comeback mechanics are active
+ */
+function shouldActiveComebackMechanics(
+  goodPlayersRemaining,
+  totalPlayersRemaining
+) {
+  if (!comebackMechanics.enabled || totalPlayersRemaining === 0) {
+    return false;
+  }
+
+  const goodPlayerPercent =
+    (goodPlayersRemaining / totalPlayersRemaining) * 100;
+  return goodPlayerPercent <= comebackMechanics.threshold;
+}
+
+/**
+ * NEW: Apply comeback bonuses to damage/healing/armor
+ * @param {number} baseAmount - Base amount
+ * @param {string} type - 'damage', 'healing', or 'armor'
+ * @param {boolean} isGoodPlayer - Whether the player is good (not warlock)
+ * @param {boolean} comebackActive - Whether comeback mechanics are active
+ * @returns {number} Modified amount with comeback bonus
+ */
+function applyComebackBonus(baseAmount, type, isGoodPlayer, comebackActive) {
+  if (!comebackActive || !isGoodPlayer) {
+    return baseAmount;
+  }
+
+  switch (type) {
+    case 'damage':
+      return Math.floor(
+        baseAmount * (1 + comebackMechanics.damageIncrease / 100)
+      );
+    case 'healing':
+      return Math.floor(
+        baseAmount * (1 + comebackMechanics.healingIncrease / 100)
+      );
+    case 'armor':
+      return baseAmount + comebackMechanics.armorIncrease;
+    default:
+      return baseAmount;
+  }
 }
 
 /**
@@ -327,6 +448,7 @@ function calculateStats(race, className) {
     damageMod: damageModifier,
   };
 }
+
 /**
  * Calculate the number of warlocks needed based on player count
  * @param {number} playerCount - Total number of players in the game
@@ -375,6 +497,7 @@ function calculateWarlockCount(playerCount) {
 
   return warlockCount;
 }
+
 function calculateThreatGeneration(
   damageToMonster = 0,
   totalDamageDealt = 0,
@@ -397,6 +520,8 @@ module.exports = {
   monster,
   player,
   warlock,
+  coordinationBonus,
+  comebackMechanics,
   stoneArmor,
   combat,
   gameCode,
@@ -414,4 +539,7 @@ module.exports = {
   calculateDamageReduction,
   calculateWarlockCount,
   calculateThreatGeneration,
+  calculateCoordinationBonus,
+  shouldActiveComebackMechanics,
+  applyComebackBonus,
 };

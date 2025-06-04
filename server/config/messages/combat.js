@@ -1,6 +1,6 @@
 /**
- * @fileoverview Combat system messages
- * Messages for damage, death, resurrection, armor, and combat mechanics
+ * @fileoverview Enhanced combat system messages with coordination and comeback mechanics
+ * Messages for damage, death, resurrection, armor, and new team balance features
  */
 
 module.exports = {
@@ -27,6 +27,59 @@ module.exports = {
     damageStruck: '{targetName} is struck for {damage} damage!',
   },
 
+  // NEW: Coordination bonus messages
+  coordination: {
+    damageBonus:
+      'Coordinated attack! {playerCount} players target {targetName} for +{bonusPercent}% damage!',
+    healingBonus:
+      'Coordinated healing! {playerCount} healers restore {targetName} for +{bonusPercent}% healing!',
+    monsterAssault:
+      'Coordinated assault! {playerCount} players attack the Monster for +{bonusPercent}% damage!',
+    teamworkAnnouncement:
+      'Teamwork makes the dream work! Coordination bonus activated.',
+    coordinationFailed:
+      'Attack coordination failed - players targeted different enemies.',
+    healingCoordination:
+      'Multiple healers focus their efforts on {targetName}!',
+  },
+
+  // NEW: Comeback mechanics messages
+  comeback: {
+    activated:
+      '🔥 COMEBACK MECHANICS ACTIVATED! 🔥 The remaining {goodPlayerCount} good players fight with desperate strength!',
+    damageBonus:
+      'Desperate resolve grants {playerName} +{bonusPercent}% damage!',
+    healingBonus:
+      "Survival instincts boost {playerName}'s healing by +{bonusPercent}%!",
+    armorBonus: 'Determination grants {playerName} +{armorBonus} armor!',
+    corruptionResistance:
+      '{playerName} resists corruption with {resistancePercent}% resistance!',
+    lastStand: 'The final heroes make their last stand against the darkness!',
+    hopeDies:
+      'With the fall of {playerName}, hope fades from the remaining heroes...',
+    hopeRenewed: 'Against all odds, the tide may yet turn!',
+  },
+
+  // NEW: Detection penalty messages
+  detection: {
+    penaltyApplied:
+      '{warlockName} has been exposed! They take +{penaltyPercent}% damage and cannot corrupt others this turn.',
+    penaltyActive:
+      '{warlockName} suffers from recent detection - taking increased damage!',
+    corruptionBlocked:
+      'Your recent exposure prevents you from corrupting others.',
+    penaltyExpired: 'The detection penalties have worn off.',
+    warlockWeakened: 'The exposed Warlock {warlockName} appears vulnerable!',
+
+    // Private messages for detected warlocks
+    privateDetectionPenalty:
+      "You've been detected! You take +{penaltyPercent}% damage and cannot corrupt others this turn.",
+    privatePenaltyWarning:
+      'Your corruption exposure makes you vulnerable to attacks!',
+    privateCorruptionBlocked:
+      'Your recent detection prevents you from corrupting others this turn.',
+  },
+
   // Death and resurrection messages
   death: {
     playerDies: '{playerName} has fallen!',
@@ -37,6 +90,13 @@ module.exports = {
     // Death by specific causes
     deathByPoison: '{playerName} succumbs to poison.',
     deathByEffects: '{playerName} is overcome by magical effects.',
+
+    // NEW: Death with comeback context
+    heroicSacrifice:
+      '{playerName} falls heroically, inspiring the remaining good players!',
+    warlockEliminated: 'The Warlock {playerName} has been eliminated!',
+    lastHeroDies:
+      "With {playerName}'s death, the last light of hope is extinguished...",
   },
 
   resurrection: {
@@ -48,6 +108,12 @@ module.exports = {
     // Specific resurrection abilities
     undyingActivated: '{playerName} avoided death through Undying!',
     resurrectionByAbility: '{playerName} avoided death through {abilityName}!',
+
+    // NEW: Comeback-themed resurrection
+    hopefulReturn:
+      '{playerName} returns to continue the fight against darkness!',
+    undyingWill:
+      'Undying determination brings {playerName} back to the battle!',
   },
 
   // Armor and protection messages
@@ -62,6 +128,12 @@ module.exports = {
     // General armor messages
     armorAbsorbs: "{playerName}'s armor absorbs some of the damage!",
     armorReducesDamage: 'Armor reduces the damage to {playerName}!',
+
+    // NEW: Comeback armor bonuses
+    comebackArmor:
+      'Desperate determination grants {playerName} additional armor!',
+    lastStandProtection:
+      "The final heroes' resolve manifests as protective energy!",
   },
 
   // Counter-attack messages
@@ -87,6 +159,12 @@ module.exports = {
 
     genericCounter: '{defenderName} strikes back at {attackerName}!',
     counterDamage: 'A counter-attack deals {damage} damage to {attackerName}!',
+
+    // NEW: Detection-based counter attacks
+    detectionCounterAttack:
+      "{defenderName}'s detection ability strikes back at the exposed Warlock {attackerName}!",
+    truthRevealed:
+      'The truth is revealed, and {attackerName} pays the price for their deception!',
   },
 
   // Immunity and special defense messages
@@ -100,6 +178,11 @@ module.exports = {
 
     generalImmunity: '{playerName} is immune to the attack!',
     damageNegated: 'The damage to {playerName} is completely negated!',
+
+    // NEW: Comeback-related immunities
+    desperateResolve:
+      "{playerName}'s desperate resolve protects them from harm!",
+    lastHopeShield: 'The last hope of good protects {playerName} from evil!',
   },
 
   // Unstoppable Rage messages
@@ -109,6 +192,10 @@ module.exports = {
     rageEnded:
       "{playerName}'s Unstoppable Rage ends, causing {damage} exhaustion damage!",
     rageFading: "{playerName}'s rage is fading...",
+
+    // NEW: Rage with comeback mechanics
+    rageBoosted: "{playerName}'s rage is amplified by desperate circumstances!",
+    finalRage: "In their darkest hour, {playerName}'s rage burns brightest!",
   },
 
   // Moonbeam detection (Crestfallen racial)
@@ -122,6 +209,11 @@ module.exports = {
       'Your Moonbeam confirmed that {attackerName} is not a Warlock.',
     moonbeamExposed: "{targetName}'s Moonbeam exposed your corruption!",
     moonbeamConfirmedPurity: "{targetName}'s Moonbeam confirmed your purity.",
+
+    // NEW: Enhanced moonbeam messages
+    moonbeamDesperate:
+      "In desperation, {targetName}'s Moonbeam pierces through deception!",
+    truthRevealed: 'The moonlight reveals the truth about {attackerName}!',
   },
 
   // Life Bond (Kinfolk racial)
@@ -130,9 +222,42 @@ module.exports = {
       "{playerName}'s Life Bond with the monster heals them for {amount} HP.",
     healingPrivate:
       'Your Life Bond with the monster heals you for {amount} HP.',
+
+    // NEW: Life Bond with comeback mechanics
+    bondStrengthened:
+      "{playerName}'s Life Bond grows stronger in desperate times!",
+    naturalHealing: 'Nature itself aids {playerName} in their time of need!',
   },
 
-  // Private combat messages
+  // NEW: Team coordination status messages
+  teamwork: {
+    coordinationBuilding: 'Players are coordinating their efforts...',
+    teamworkBonus: 'Teamwork grants significant bonuses to damage and healing!',
+    communicationKey:
+      'Communication and timing are essential for maximum coordination!',
+    isolatedPlayer:
+      '{playerName} acts alone while others coordinate their efforts.',
+    perfectCoordination:
+      'Perfect coordination! All players target the same enemy!',
+    healingChain:
+      'A chain of healing magic flows through the coordinated healers!',
+  },
+
+  // NEW: Warlock detection and corruption interaction messages
+  warlockInteraction: {
+    corruptionResisted:
+      '{targetName} resists corruption with {resistancePercent}% resistance from comeback mechanics!',
+    detectedWarlockWeakened:
+      'The recently detected Warlock {warlockName} appears more vulnerable!',
+    corruptionFailed:
+      "{warlockName}'s corruption attempt fails against {targetName}'s resolve!",
+    detectionPreventsCorruption:
+      '{warlockName} cannot corrupt others while suffering from detection penalties!',
+    lastHopeResistance:
+      'The last hopes of good grant strong resistance to corruption!',
+  },
+
+  // Private combat messages (enhanced)
   private: {
     youAttacked:
       'You attacked {targetName} for {damage} damage (initial {initialDamage}, reduced by {reduction}% from armor).',
@@ -145,7 +270,38 @@ module.exports = {
     // Simple damage messages (no armor)
     youAttackedSimple: 'You attacked {targetName} for {damage} damage.',
     youWereAttackedSimple: '{attackerName} attacked you for {damage} damage.',
+
+    // NEW: Private coordination messages
+    youCoordinated:
+      'Your coordinated attack with {playerCount} others deals bonus damage!',
+    coordinationReceived:
+      'You benefit from coordinated healing by {playerCount} allies!',
+
+    // NEW: Private comeback messages
+    yourComebackBonuses:
+      'Comeback mechanics grant you: +{damageBonus}% damage, +{healingBonus}% healing, +{armorBonus} armor!',
+    yourCorruptionResistance:
+      'Your desperate situation grants {resistancePercent}% corruption resistance!',
+
+    // NEW: Private detection messages
+    yourDetectionPenalty:
+      'Being detected applies: +{penaltyPercent}% damage taken, corruption blocked this turn.',
+    yourDetectionRecovery:
+      'Detection penalties have worn off - you can corrupt again!',
+  },
+
+  // NEW: Game state transition messages
+  gameState: {
+    comebackActivated:
+      'The tide of battle shifts - the remaining good players fight with renewed vigor!',
+    comebackDeactivated:
+      'The immediate crisis passes, but vigilance remains...',
+    coordrationImproved: 'Team coordination is improving!',
+    coordinationBroken:
+      'Team coordination falters as players act independently.',
+    finalStand: 'This may be the final stand of good against evil!',
+    hopefulTurn: 'The momentum shifts - perhaps there is hope yet!',
+    darknessRising: 'Darkness spreads as the Warlocks gain the upper hand...',
+    balanceShifts: 'The balance of power shifts dramatically!',
   },
 };
-
-

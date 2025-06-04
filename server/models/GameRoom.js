@@ -742,10 +742,92 @@ class GameRoom {
   }
 
   /**
+   * NEW: Analyze pending actions to calculate coordination bonuses
+   * This must happen BEFORE actions are executed
+   * @returns {Map} Map of targetId -> coordination info
+   */
+  analyzeCoordination() {
+    const coordinationMap = new Map();
+
+    // Group actions by target
+    const actionsByTarget = new Map();
+
+    for (const action of this.pendingActions) {
+      const actor = this.players.get(action.actorId);
+      if (!actor || !actor.isAlive) continue;
+
+      const ability = actor.unlocked.find((a) => a.type === action.actionType);
+      if (!ability) continue;
+
+      // Determine if this is a damage or healing ability
+      const isDamageAbility =
+        ability.category === 'Attack' || ability.params.damage > 0;
+      const isHealingAbility =
+        ability.category === 'Heal' || ability.params.amount > 0;
+
+      if (!isDamageAbility && !isHealingAbility) continue;
+
+      const targetId = action.targetId;
+
+      if (!actionsByTarget.has(targetId)) {
+        actionsByTarget.set(targetId, {
+          damageActions: [],
+          healingActions: [],
+        });
+      }
+
+      const targetActions = actionsByTarget.get(targetId);
+
+      if (isDamageAbility) {
+        targetActions.damageActions.push({
+          actorId: action.actorId,
+          actionType: action.actionType,
+          ability: ability,
+          actor: actor,
+        });
+      } else if (isHealingAbility) {
+        targetActions.healingActions.push({
+          actorId: action.actorId,
+          actionType: action.actionType,
+          ability: ability,
+          actor: actor,
+        });
+      }
+    }
+
+    // Calculate coordination bonuses for each target
+    for (const [targetId, actions] of actionsByTarget.entries()) {
+      const damageCount = actions.damageActions.length;
+      const healingCount = actions.healingActions.length;
+
+      coordinationMap.set(targetId, {
+        damageActions: actions.damageActions,
+        healingActions: actions.healingActions,
+        damageBonus:
+          damageCount > 1
+            ? (damageCount - 1) *
+              config.gameBalance.coordinationBonus.damageBonus
+            : 0,
+        healingBonus:
+          healingCount > 1
+            ? (healingCount - 1) *
+              config.gameBalance.coordinationBonus.healingBonus
+            : 0,
+        coordinatedDamage: damageCount > 1,
+        coordinatedHealing: healingCount > 1,
+      });
+    }
+
+    return coordinationMap;
+  }
+  /**
    * Process all pending player actions (IMPROVED with proper cooldown timing and multi-target handling)
    * @param {Array} log - Event log to append messages to
    */
   processPlayerActions(log) {
+    // NEW: Analyze coordination BEFORE executing any actions
+    const coordinationMap = this.analyzeCoordination();
+
     // Sort actions by their order value (lower numbers first)
     this.pendingActions.sort((a, b) => {
       const actor1 = this.players.get(a.actorId);
@@ -771,6 +853,43 @@ class GameRoom {
 
       return order1 - order2;
     });
+
+    // Log coordination announcements first
+    for (const [targetId, coordination] of coordinationMap.entries()) {
+      if (coordination.coordinatedDamage) {
+        const targetName =
+          targetId === '__monster__'
+            ? 'the Monster'
+            : this.players.get(targetId)?.name || 'Unknown';
+        const playerCount = coordination.damageActions.length;
+
+        const coordinationLog = {
+          type: 'coordination_announcement',
+          public: true,
+          message: `Coordinated attack! ${playerCount} players target ${targetName} for +${coordination.damageBonus}% damage!`,
+          privateMessage: '',
+          attackerMessage: '',
+        };
+        log.push(coordinationLog);
+      }
+
+      if (coordination.coordinatedHealing) {
+        const targetName =
+          targetId === '__monster__'
+            ? 'the Monster'
+            : this.players.get(targetId)?.name || 'Unknown';
+        const playerCount = coordination.healingActions.length;
+
+        const coordinationLog = {
+          type: 'coordination_healing_announcement',
+          public: true,
+          message: `Coordinated healing! ${playerCount} players heal ${targetName} for +${coordination.healingBonus}% healing!`,
+          privateMessage: '',
+          attackerMessage: '',
+        };
+        log.push(coordinationLog);
+      }
+    }
 
     // Process actions in the sorted order
     for (const action of this.pendingActions) {
@@ -873,14 +992,23 @@ class GameRoom {
       };
       log.push(actionLog);
 
-      // ENHANCED: Execute the ability with systems parameter for threat tracking
+      // NEW: Pass coordination info to ability execution
+      const coordinationInfo = coordinationMap.get(action.targetId) || {
+        damageBonus: 0,
+        healingBonus: 0,
+        coordinatedDamage: false,
+        coordinatedHealing: false,
+      };
+
+      // ENHANCED: Execute the ability with coordination info
       this.systems.abilityRegistry.executeClassAbility(
         action.actionType,
         actor,
         target,
         ability,
         log,
-        this.systems // Pass all systems including monsterController for threat tracking
+        this.systems, // Pass all systems including monsterController for threat tracking
+        coordinationInfo // NEW: Pass coordination information
       );
     }
 

@@ -369,12 +369,14 @@ class StrategicAI {
    * @returns {Object} Modified decision
    */
   enhanceDetection(decision, availableActions, gameState, player) {
-    // Use detection abilities more aggressively
+    // Updated detection filter to include new abilities
     const detectionActions = availableActions.filter(
       (a) =>
-        a.ability.effect === 'detect' ||
-        a.abilityType.includes('eye') ||
-        a.abilityType.includes('sanctuary')
+        a.ability.effect === 'detect' || // Generic detection effect
+        a.abilityType.includes('eye') || // Oracle: Eye of Fate
+        a.abilityType.includes('sanctuary') || // Oracle: Sanctuary of Truth
+        a.abilityType === 'barbedArrow' || // Tracker: Barbed Arrow (NEW)
+        a.abilityType === 'pyroblast' // Pyromancer: Pyroblast (NEW)
     );
 
     if (detectionActions.length > 0 && Math.random() < 0.4) {

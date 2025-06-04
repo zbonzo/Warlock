@@ -1,6 +1,6 @@
 /**
  * Constants for the GameTutorialModal component
- * Updated with new game mechanics and mobile-optimized content
+ * Updated with new game mechanics, balance features, and mobile-optimized content
  */
 
 /**
@@ -50,6 +50,52 @@ export const TUTORIAL_STEPS = [
       'Monster NEVER targets Warlocks',
       'Except when Tracker uses Control Monster',
       'Threat decays 25% each round',
+    ],
+  },
+  {
+    title: '🤝 Coordination Bonuses',
+    content: 'Team up for extra damage and healing!',
+    type: 'coordination',
+    highlights: [
+      {
+        icon: '⚔️',
+        text: '+10% damage per teammate targeting same enemy',
+      },
+      {
+        icon: '💚',
+        text: '+10% healing per teammate healing same target',
+      },
+    ],
+    tips: [
+      'Coordinate attacks on monsters for massive damage',
+      'Multiple healers can save dying teammates',
+      'Works on monster attacks too!',
+      'Communication is key for timing',
+    ],
+  },
+  {
+    title: '🔄 Comeback Mechanics',
+    content: 'Good team gets stronger when losing!',
+    type: 'comeback',
+    highlights: [
+      {
+        icon: '⚡',
+        text: 'Activates when ≤25% good players remain',
+      },
+      {
+        icon: '💪',
+        text: '+25% damage and healing for survivors',
+      },
+      {
+        icon: '🛡️',
+        text: '+1 armor and corruption resistance',
+      },
+    ],
+    tips: [
+      'Never give up - the game can turn around!',
+      'Survivors become much harder to kill',
+      'Focus on detection when buffed',
+      'Coordinate remaining good players',
     ],
   },
   {
@@ -189,6 +235,8 @@ export const TUTORIAL_STEPS = [
       "Healing doesn't work on them",
       'They know too much',
       'They can corrupt others',
+      'Take +15% damage when detected',
+      "Can't corrupt same turn as detected",
     ],
     methods: [
       {
@@ -201,7 +249,21 @@ export const TUTORIAL_STEPS = [
         name: 'Moonbeam',
         desc: 'Auto-detects attackers when wounded',
       },
-      { icon: '✨', name: 'Sanctuary', desc: 'Punishes Warlock attackers' },
+      {
+        icon: '✨',
+        name: 'Sanctuary',
+        desc: 'Punishes Warlock attackers',
+      },
+      {
+        icon: '🏹',
+        name: 'Barbed Arrow',
+        desc: 'Tracker ability that can reveal corruption',
+      },
+      {
+        icon: '🔥',
+        name: 'Pyroblast',
+        desc: 'Pyromancer ability that burns away lies',
+      },
     ],
   },
   {
@@ -211,14 +273,43 @@ export const TUTORIAL_STEPS = [
     goodTips: [
       'Monitor who monster avoids',
       'Track healing patterns',
-      'Coordinate threat management',
+      'Coordinate attacks for damage bonuses',
       'Save detection for strong suspects',
+      'Use comeback mechanics when losing',
+      'Detected Warlocks are vulnerable',
     ],
     warlockTips: [
       'Generate some threat to avoid suspicion',
       "Don't reveal hidden knowledge",
       'Help early, corrupt later',
+      'Avoid detection - you take +15% damage',
+      "Can't corrupt when detected",
       'Time conversions carefully',
+    ],
+  },
+  {
+    title: '⚖️ Detection Consequences',
+    content: 'Being detected as a Warlock has serious consequences:',
+    type: 'consequences',
+    highlights: [
+      {
+        icon: '💥',
+        text: 'Take +15% damage for the rest of the turn',
+      },
+      {
+        icon: '🚫',
+        text: 'Cannot corrupt others same turn as detected',
+      },
+      {
+        icon: '👁️',
+        text: 'Detection messages are private by default',
+      },
+    ],
+    tips: [
+      'Detected Warlocks become priority targets',
+      'Plan corruption attempts carefully',
+      'Detection timing matters strategically',
+      'Use team coordination against detected Warlocks',
     ],
   },
   {
@@ -228,7 +319,9 @@ export const TUTORIAL_STEPS = [
     reminders: [
       'Threat system - not lowest HP',
       'Monster avoids Warlocks',
-      'Use your archetype strengths',
+      'Coordinate attacks for bonuses',
+      'Comeback mechanics help losing teams',
+      'Detection weakens Warlocks',
       'Watch, learn, adapt',
     ],
   },
