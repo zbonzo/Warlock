@@ -117,7 +117,7 @@ function handlePlayerDisconnect(io, socket) {
 
   // Find any game this player was in
   let gameFound = false;
-  let playerName = 'Unknown Player';
+  let playerName = config.player.defaultPlayerName;
   let gameCode = null;
 
   for (const [code, game] of gameService.games.entries()) {
@@ -125,7 +125,7 @@ function handlePlayerDisconnect(io, socket) {
       gameFound = true;
       gameCode = code;
       const player = game.players.get(socket.id);
-      playerName = player ? player.name : 'Unknown Player';
+      playerName = player ? player.name : config.player.defaultPlayerName;
 
       const wasHost = socket.id === game.hostId;
       const wasAlive = player ? player.isAlive : false;

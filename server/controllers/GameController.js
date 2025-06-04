@@ -68,7 +68,7 @@ function handleCheckNameAvailability(io, socket, gameCode, playerName) {
       // Game doesn't exist - send appropriate response
       socket.emit('nameCheckResponse', {
         isAvailable: false,
-        error: 'Game not found. Please check the code and try again.',
+        error: messages.errors.gameNotFound,
         suggestion: null,
       });
       return false;
@@ -205,28 +205,28 @@ function handlePerformAction(
     // Get the player
     const player = game.getPlayerBySocketId(socket.id);
     if (!player) {
-      socket.emit('errorMessage', { message: 'Player not found in game' });
+      socket.emit('errorMessage', { message: messages.errors.playerNotFound });
       return false;
     }
 
     // Validate player is alive
     if (!player.isAlive) {
       socket.emit('errorMessage', {
-        message: 'Dead players cannot perform actions',
+        message: messages.errors.playerDead,
       });
       return false;
     }
 
     // Validate game is in correct state for actions
     if (!game.started) {
-      socket.emit('errorMessage', { message: 'Game has not started yet' });
+      socket.emit('errorMessage', { message: messages.errors.gameNotStarted });
       return false;
     }
 
     // Allow actions if game is in action phase OR if it's started but phase isn't explicitly set to results
     if (game.phase === 'results') {
       socket.emit('errorMessage', {
-        message: 'Cannot perform actions while viewing results',
+        message: messages.errors.invalidAction,
       });
       return false;
     }

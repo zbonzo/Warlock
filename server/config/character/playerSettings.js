@@ -9,7 +9,7 @@
  */
 const playerSettings = {
   // Default player settings
-  defaultPlayerName: 'Player',
+  defaultPlayerName: 'The Unknown Hero',
   baseHp: 250,
   baseArmor: 2.0,
   baseDamageMod: 1.0,
