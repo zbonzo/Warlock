@@ -9,7 +9,7 @@
 const monster = {
   // Base stats for level 1 monster
   baseHp: 100,
-  baseDamage: 1,
+  baseDamage: 10,
   baseAge: 0,
 
   // Enhanced scaling formulas
@@ -19,7 +19,7 @@ const monster = {
 
   // Damage scaling with age
   damageScaling: {
-    ageMultiplier: 4, // Damage = baseDamage * (age + ageMultiplier)
+    ageMultiplier: 1, // Damage = baseDamage * (age + ageMultiplier)
     maxAge: null, // null = no age limit
   },
 
