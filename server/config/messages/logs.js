@@ -27,12 +27,17 @@ module.exports = {
       'Player {playerName} timed out or left game {gameCode}',
     PlayerAttemptingPlayAgain:
       'Player {playerName} is attempting to play again in game {oldGameCode}',
+
+    // MOVED FROM DEBUG: Player actions that should be visible at info level
+    PlayerSubmittedActionInGameRoom:
+      'Player {playerName} submitted action: {actionType} -> {targetId}',
     PlayerPerformedAction:
       'Player {playerName} ({socketId}) performed {actionType} on {targetId} in game {gameCode}',
     ActionSubmissionProgress:
       'Action submission progress: {submittedCount}/{totalCount} players submitted in game {gameCode}',
     AllActionsSubmitted:
       'All actions submitted, processing round for game {gameCode}',
+
     PlayerSelectedAdaptabilityAbility:
       'Player {playerName} selected ability {abilityName} from {className}',
     PlayerUsedRacialAbility:
@@ -89,15 +94,13 @@ module.exports = {
 
   // Debug-level logs are for detailed, verbose information useful for development.
   debug: {
-    // Player Action Lifecycle
+    // Player Action Lifecycle - these are very detailed and should stay in debug
     PlayerActionSubmitAttempt:
       'Player action submission attempt by {playerName}: {status}',
     PlayerActionSubmittedSuccessfully:
       'Player {playerName} successfully submitted action: {actionType} -> {targetId}',
     PlayerActionInvalidated: 'Invalidating action for {playerName}: {reason}',
     PlayerActionSubmissionCleared: 'Cleared action submission for {playerName}',
-    PlayerActionSubmittedInGameRoom:
-      'Player {playerName} submitted action in GameRoom: {actionType} -> {targetId}',
     ActionSubmissionFailedInGameRoom:
       'Action submission failed for {playerName} in GameRoom: {reason}',
 

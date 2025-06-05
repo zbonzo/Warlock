@@ -4,7 +4,7 @@
  */
 const fs = require('fs');
 const path = require('path');
-const serverLogMessages = require('../config/messages/logs.js');
+const serverLogMessages = require('@config/messages/logs.js');
 
 // STRETCH GOAL: Placeholder for an APM/Analytics client
 // const apmClient = require('./apm-client');

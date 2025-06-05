@@ -1,382 +1,350 @@
-# Warlock Game Balance Reporting System
+# Warlock Game Simulation & Balance Analysis System
 
-A comprehensive analytics and reporting system that generates detailed HTML reports with interactive visualizations for Warlock game balance analysis.
+## System Overview
 
-## 🚀 Quick Start
+A comprehensive game balance analysis system that runs automated simulations of the Warlock multiplayer deduction game and generates detailed reports with interactive visualizations. The system supports multiple AI strategies, extensive data collection, and both CSV and HTML report generation.
 
-```bash
-# Generate a quick report with default settings
-npm run report:quick
+### Core Workflow
 
-# Generate comprehensive thematic AI report
-npm run report:deep
+1. **Simulation**: Run automated games with configurable AI types and player compositions
+2. **Data Collection**: Gather detailed metrics on races, classes, game flow, and balance
+3. **Analysis**: Process results through statistical analysis engines
+4. **Reporting**: Generate interactive CSV/HTML reports for web viewing
+5. **Visualization**: Create charts and interactive dashboards
 
-# Focus on race balance analysis
-npm run report:races
-
-# Compare AI strategies
-npm run report:compare
-```
-
-## 📊 Features
-
-### Interactive HTML Reports
-
-- **Self-contained** - No external dependencies, works offline
-- **Mobile responsive** - Optimized for desktop and mobile viewing
-- **Print-friendly** - Clean layouts for PDF export
-- **Interactive charts** - Built with Chart.js for rich visualizations
-
-### Advanced Analytics
-
-- **Statistical significance testing** - Confidence intervals and sample size analysis
-- **Balance recommendations** - Data-driven suggestions with priority levels
-- **Comprehensive metrics** - Win rates, survival analysis, performance tiers
-- **Correlation analysis** - Identify relationships between game mechanics
-
-### Multiple Report Sections
-
-1. **📋 Executive Summary** - High-level overview and key findings
-2. **⚖️ Balance Analysis** - Win rate analysis and statistical significance
-3. **🔥 Ability Performance** - Damage, healing, and utility effectiveness
-4. **🧬 Race Analysis** - Racial ability impact and performance rankings
-5. **⚔️ Class Analysis** - Role effectiveness and class tier rankings
-6. **🎮 Game Flow** - Round progression and timing analysis
-7. **👹 Warlock Analysis** - Corruption mechanics and Evil team performance
-8. **💡 Recommendations** - Prioritized balance suggestions
-9. **💾 Raw Data** - Full dataset export and statistical details
-
-## 🛠️ Installation
-
-```bash
-# Install dependencies
-npm install
-
-# Create reports directory
-npm run setup
-
-# Test the system
-npm run test:report
-```
-
-## 📝 Usage
-
-### Basic Commands
-
-```bash
-# Generate default report
-node generate-report.js
-
-# Specify number of games and mode
-node generate-report.js --games 100 --mode thematic
-
-# Focus on specific analysis
-node generate-report.js --focus races --games 50
-
-# Generate with custom output
-node generate-report.js --output my-analysis.html
-```
-
-### Command Line Options
-
-| Option          | Description                       | Example                           |
-| --------------- | --------------------------------- | --------------------------------- |
-| `--games, -g`   | Number of games to simulate       | `--games 100`                     |
-| `--mode, -m`    | Simulation mode                   | `--mode thematic`                 |
-| `--focus, -f`   | Analysis focus area               | `--focus races`                   |
-| `--classes`     | Specific classes to analyze       | `--classes Warrior,Priest,Oracle` |
-| `--races`       | Specific races to analyze         | `--races Artisan,Rockhewn,Lich`   |
-| `--output, -o`  | Custom output file path           | `--output balance-report.html`    |
-| `--verbose, -v` | Detailed output during generation | `--verbose`                       |
-| `--compare-ai`  | Compare different AI strategies   | `--compare-ai`                    |
-| `--help, -h`    | Show help information             | `--help`                          |
-
-### Simulation Modes
-
-| Mode         | Description                    | AI Type   | Use Case                    |
-| ------------ | ------------------------------ | --------- | --------------------------- |
-| `fixed`      | Fixed 6-player configuration   | Basic     | Baseline testing            |
-| `random`     | Random race/class combinations | Basic     | Broad balance assessment    |
-| `thematic`   | Enhanced AI strategies         | Strategic | Realistic gameplay analysis |
-| `comparison` | Compare multiple AI types      | Mixed     | AI effectiveness evaluation |
-
-### Focus Areas
-
-| Focus       | Description                     | Key Metrics                                |
-| ----------- | ------------------------------- | ------------------------------------------ |
-| `races`     | Race balance and synergy        | Win rates, racial ability impact           |
-| `classes`   | Class performance and roles     | Role effectiveness, tier rankings          |
-| `abilities` | Ability usage and effectiveness | Damage/healing output, cooldown analysis   |
-| `balance`   | Overall game balance            | Win distribution, statistical significance |
-| `warlocks`  | Warlock mechanics               | Corruption rates, Evil team performance    |
-
-## 📊 Report Sections Explained
-
-### Executive Summary
-
-- **Key metrics at a glance** - Balance score, win rates, critical issues
-- **Priority recommendations** - High-impact fixes with rationale
-- **Data reliability assessment** - Sample size and confidence levels
-
-### Balance Analysis
-
-- **Win rate distribution** - Good vs Evil team performance
-- **Confidence intervals** - Statistical uncertainty bounds
-- **Game length patterns** - Round distribution and variance
-- **Balance rating** - Overall assessment (Excellent/Good/Fair/Poor)
-
-### Race Analysis
-
-- **Performance rankings** - Tier-based race effectiveness
-- **Racial ability impact** - How traits affect gameplay
-- **Team size effects** - Performance across different game sizes
-- **Synergy analysis** - Race-class combination effectiveness
-
-### Class Analysis
-
-- **Role effectiveness** - Tank/DPS/Healer/Utility performance
-- **Multi-dimensional radar** - Win rate, survival, effectiveness metrics
-- **Class synergy** - How classes work together
-- **Tier rankings** - S/A/B/C/D performance tiers
-
-### Recommendations
-
-- **Priority levels** - High/Medium/Low impact classifications
-- **Specific suggestions** - Actionable balance changes
-- **Rationale** - Data-driven reasoning for each recommendation
-- **Confidence levels** - Statistical backing for suggestions
-
-## 🎨 Visualization Types
-
-### Interactive Charts
-
-- **📊 Bar Charts** - Race/class performance comparisons
-- **🥧 Pie Charts** - Win distribution and team composition
-- **📈 Line Charts** - Game flow and progression analysis
-- **🕸️ Radar Charts** - Multi-dimensional performance metrics
-- **📍 Scatter Plots** - Correlation and survival analysis
-- **🔥 Heatmaps** - Ability effectiveness matrices
-
-### Chart Features
-
-- **Hover tooltips** - Detailed information on data points
-- **Export functionality** - Download charts as PNG images
-- **Responsive design** - Adapts to screen size
-- **Print optimization** - Clean layouts for PDF export
-
-## 📁 File Structure
+## Architecture Map
 
 ```
 simulation/
-├── reporting/
-│   ├── data-analyzer.js          # Core statistical analysis
-│   ├── chart-builder.js          # Chart.js visualization builder
-│   ├── report-generator.js       # Main HTML report generator
-│   └── templates/
-│       └── report-template.html  # Base HTML template
-├── reports/                      # Generated reports (auto-created)
-│   └── warlock-report-*.html    # Timestamped report files
-├── generate-report.js            # CLI interface
-├── package.json                  # Dependencies and scripts
-└── README-reporting.md          # This documentation
+├── 🎯 ENTRY POINTS
+│   ├── generate-report.js          # 🔥 Main CLI for generating CSV reports
+│   ├── test-runner.js              # Quick mock data generator for testing
+│   ├── diagnose-simulation.js      # Diagnostic tool for troubleshooting
+│   └── setup.js                    # Initial setup script
+├── ⚙️ SIMULATION ENGINES
+│   ├── simple-simulator.js         # 🔥 Basic random AI simulator
+│   ├── enhanced-simulation-runner.js # 🔥 Strategic AI with thematic teams
+│   ├── random-game-generator.js    # Configurable random game generation
+│   ├── runner.js                   # Fixed 6-player baseline testing
+│   └── test-strategies.js          # 🔥 AI strategy comparison framework
+├── 🤖 AI STRATEGIES
+│   ├── strategies/
+│   │   ├── strategy-factory.js     # 🔥 Combines class + race strategies
+│   │   ├── base-strategy.js        # Abstract base for all AI strategies
+│   │   ├── class-strategies.js     # 🔥 12 class-specific AI behaviors
+│   │   └── race-strategies.js      # 🔥 6 race-specific AI modifications
+├── 📊 REPORTING SYSTEM
+│   ├── reporting/
+│   │   ├── data-collector.js       # 🔥 Processes raw results into structured data
+│   │   ├── data-analyzer.js        # 🔥 Statistical analysis engine
+│   │   ├── csv-exporter.js         # 🔥 Exports analysis to CSV format
+│   │   ├── chart-builder.js        # Chart.js visualization builder
+│   │   └── report-generator.js     # HTML report generator (unused in current flow)
+├── 🌐 WEB INTERFACE
+│   ├── web-interface/
+│   │   ├── index.html              # 🔥 Main dashboard for viewing reports
+│   │   ├── assets/
+│   │   │   ├── css/main.css        # 🔥 Modern responsive styling
+│   │   │   └── js/
+│   │   │       ├── app.js          # 🔥 Main application controller
+│   │   │       ├── data-loader.js  # CSV loading and parsing
+│   │   │       ├── chart-manager.js # Chart.js integration
+│   │   │       ├── report-selector.js # Report dropdown management
+│   │   │       ├── export-manager.js # Data export utilities
+│   │   │       └── ui-components.js # Reusable UI components
+│   │   └── reports/                # 🔥 Generated CSV reports directory
+├── 📝 CONFIGURATION
+│   ├── package.json                # Dependencies and npm scripts
+│   ├── .babelrc                    # Babel config for server imports
+│   └── module-alias.js             # Path aliases for server imports
+└── 📚 DOCUMENTATION
+    ├── README.md                   # 🔥 This comprehensive guide
+    └── README-reporting.md         # Detailed reporting system docs
 ```
 
-## 🔧 Configuration
-
-### Environment Variables
-
-```bash
-# Default simulation settings
-export WARLOCK_DEFAULT_GAMES=50
-export WARLOCK_DEFAULT_MODE=thematic
-export WARLOCK_REPORTS_DIR=./reports
-
-# Chart appearance
-export WARLOCK_CHART_THEME=blue
-export WARLOCK_CHART_ANIMATION=true
-```
-
-### Custom Player Configurations
-
-```javascript
-// For thematic mode with specific setups
-const customConfig = [
-  { name: 'TankWarrior', race: 'Rockhewn', class: 'Warrior' },
-  { name: 'HealerPriest', race: 'Artisan', class: 'Priest' },
-  { name: 'DPSPyromancer', race: 'Lich', class: 'Pyromancer' },
-  // ... more configurations
-];
-```
-
-## 📈 Understanding the Analytics
-
-### Statistical Significance
-
-- **Sample size requirements** - Minimum 30 games for reliable results
-- **Confidence intervals** - 95% confidence level calculations
-- **Margin of error** - Statistical uncertainty bounds
-- **Reliability scores** - Data quality assessment
-
-### Balance Metrics
-
-- **Balance score** - Deviation from ideal 50/50 win rate
-- **Win rate analysis** - Team performance with confidence intervals
-- **Performance tiers** - S/A/B/C/D rankings based on effectiveness
-- **Correlation analysis** - Relationships between game mechanics
-
-### Recommendation Priority
-
-- **High Priority** - Critical imbalances requiring immediate attention
-- **Medium Priority** - Noticeable issues that should be addressed
-- **Low Priority** - Minor tweaks for optimization
-
-## 🚨 Troubleshooting
-
-### Common Issues
-
-**"No valid simulation results"**
-
-```bash
-# Check simulation dependencies
-npm install
-# Verify game runner is available
-node -e "console.log(require('./runner'))"
-```
-
-**"Chart.js not loading"**
-
-- Reports are self-contained but require JavaScript enabled
-- Try opening in a different browser
-- Check browser console for errors
-
-**"Memory issues with large datasets"**
-
-```bash
-# Reduce game count
-node generate-report.js --games 25
-
-# Use more efficient mode
-node generate-report.js --mode fixed
-```
-
-**"Report generation fails"**
-
-```bash
-# Use verbose mode for debugging
-node generate-report.js --verbose
-
-# Check reports directory permissions
-mkdir -p reports && chmod 755 reports
-```
-
-### Performance Optimization
-
-**For large datasets (>500 games):**
-
-- Use `--mode fixed` for faster simulation
-- Consider batch processing multiple smaller reports
-- Ensure sufficient system memory (4GB+ recommended)
-
-**For detailed analysis:**
-
-- Use `--mode thematic` for realistic AI behavior
-- Focus analysis with `--focus` parameter
-- Generate reports incrementally for iterative development
-
-## 🔄 Integration with Development Workflow
-
-### Continuous Integration
-
-```yaml
-# Example GitHub Actions workflow
-- name: Generate Balance Report
-  run: |
-    npm install
-    npm run report:quick
-    # Upload report as artifact
-```
-
-### Pre-commit Hooks
-
-```bash
-# Generate quick report before major changes
-npm run test:report
-```
-
-### Development Cycles
-
-1. **Make balance changes** to game configuration
-2. **Run focused analysis** on affected areas
-3. **Review recommendations** and statistical significance
-4. **Iterate based on data** until balanced
-
-## 📚 Advanced Usage
-
-### Custom Analysis Scripts
-
-```javascript
-const ReportGenerator = require('./reporting/report-generator');
-const DataAnalyzer = require('./reporting/data-analyzer');
-
-// Custom analysis workflow
-const analyzer = new DataAnalyzer();
-const results = await runCustomSimulation();
-const analysis = analyzer.analyzeResults(results, {
-  focus: 'custom-metric',
-  confidenceLevel: 0.99,
-});
-```
-
-### Batch Report Generation
-
-```bash
-# Generate multiple focused reports
-for focus in races classes abilities balance warlocks; do
-  node generate-report.js --focus $focus --games 50 --output ${focus}-analysis.html
-done
-```
-
-### Data Export and External Analysis
-
-```javascript
-// Export raw data for external tools
-const data = processResults(simulationResults);
-exportToCSV(data, 'simulation-data.csv');
-exportToJSON(analysis, 'analysis-summary.json');
-```
-
-## 🤝 Contributing
-
-### Adding New Analytics
-
-1. **Extend DataAnalyzer** - Add new analysis methods
-2. **Update ChartBuilder** - Create visualization for new metrics
-3. **Modify ReportGenerator** - Add new sections to HTML template
-4. **Update CLI** - Add command line options for new features
-
-### Testing Reports
-
-```bash
-# Test with minimal dataset
-npm run test:report
-
-# Validate HTML output
-npm run lint:html
-
-# Check chart functionality
-npm run test:charts
-```
-
-## 📄 License
-
-MIT License - see LICENSE file for details.
-
-## 🆘 Support
-
-- **Issues**: Report bugs and feature requests on GitHub
-- **Documentation**: Check the wiki for detailed guides
-- **Community**: Join the Discord for development discussions
+🔥 = Most frequently modified files
 
 ---
 
-_Generate comprehensive, data-driven balance reports to perfect your Warlock game! 🎮📊_
+## Quick Reference: File Selection Guide
+
+### Running Simulations
+
+| Task                     | Primary Files                   | Supporting Files                                           |
+| ------------------------ | ------------------------------- | ---------------------------------------------------------- |
+| Generate balance reports | `generate-report.js`            | `reporting/data-collector.js`, `reporting/csv-exporter.js` |
+| Test AI strategies       | `test-strategies.js`            | `strategies/strategy-factory.js`, all strategy files       |
+| Quick mock data          | `test-runner.js`                | N/A (standalone)                                           |
+| Run specific scenarios   | `enhanced-simulation-runner.js` | `strategies/` directory                                    |
+| Baseline testing         | `runner.js`                     | `simple-simulator.js`                                      |
+| Diagnose issues          | `diagnose-simulation.js`        | N/A (diagnostic)                                           |
+
+### AI Development
+
+| Task                  | Primary Files                    | Supporting Files                |
+| --------------------- | -------------------------------- | ------------------------------- |
+| Modify class behavior | `strategies/class-strategies.js` | `strategies/base-strategy.js`   |
+| Modify race behavior  | `strategies/race-strategies.js`  | `strategies/base-strategy.js`   |
+| Create new AI type    | `strategies/strategy-factory.js` | All strategy files              |
+| Test AI effectiveness | `test-strategies.js`             | `enhanced-simulation-runner.js` |
+
+### Report Generation & Analysis
+
+| Task                      | Primary Files                 | Supporting Files              |
+| ------------------------- | ----------------------------- | ----------------------------- |
+| Modify analysis metrics   | `reporting/data-analyzer.js`  | `reporting/data-collector.js` |
+| Change CSV export format  | `reporting/csv-exporter.js`   | `reporting/data-analyzer.js`  |
+| Add new report types      | `generate-report.js`          | `reporting/` directory        |
+| Customize data collection | `reporting/data-collector.js` | Simulation engines            |
+
+### Web Interface
+
+| Task                | Primary Files                                                   | Supporting Files                 |
+| ------------------- | --------------------------------------------------------------- | -------------------------------- |
+| Modify dashboard UI | `web-interface/index.html`, `web-interface/assets/css/main.css` | All JS files                     |
+| Add new chart types | `web-interface/assets/js/chart-manager.js`                      | `web-interface/assets/js/app.js` |
+| Fix data loading    | `web-interface/assets/js/data-loader.js`                        | `web-interface/assets/js/app.js` |
+| Add export options  | `web-interface/assets/js/export-manager.js`                     | `web-interface/assets/js/app.js` |
+
+### Configuration & Setup
+
+| Task                  | Primary Files                 | Supporting Files     |
+| --------------------- | ----------------------------- | -------------------- |
+| Install/setup system  | `setup.js`, `package.json`    | N/A                  |
+| Fix module imports    | `.babelrc`, `module-alias.js` | All simulation files |
+| Configure npm scripts | `package.json`                | N/A                  |
+
+---
+
+## Human Guide: Understanding the System
+
+### Simulation Flow
+
+**Data Flow**: Raw game results → Data Collector → Statistical Analyzer → CSV Exporter → Web Interface
+
+**AI Types Available**:
+
+- **Random AI**: Makes completely random decisions (baseline)
+- **Strategic AI**: Class-specific intelligent decision making
+- **Thematic AI**: Strategic + race behaviors + realistic team compositions
+- **Hybrid AI**: Mix of random and strategic for comparison testing
+
+### Key Components Deep Dive
+
+**Data Collector (`reporting/data-collector.js`)**:
+
+- Processes raw simulation results into structured format
+- Extracts game-level, player-level, and event-level data
+- Calculates derived metrics (performance scores, team composition analysis)
+- Validates data quality and completeness
+
+**Statistical Analyzer (`reporting/data-analyzer.js`)**:
+
+- Performs comprehensive statistical analysis
+- Calculates win rates, confidence intervals, balance scores
+- Generates race/class performance rankings with tier assignments
+- Produces actionable balance recommendations with priority levels
+
+**CSV Exporter (`reporting/csv-exporter.js`)**:
+
+- Exports analysis to multiple CSV report types:
+  - Balance reports (overall game balance metrics)
+  - Race analysis (race performance and synergy)
+  - Class analysis (class effectiveness by role)
+  - Game flow analysis (round distribution and patterns)
+  - Recommendations (prioritized balance suggestions)
+  - Raw results (complete game data)
+
+**Strategic AI System**:
+
+- **Base Strategy**: Common game state analysis and utility methods
+- **Class Strategies**: 12 class-specific behaviors (Warrior tanks, Priest heals, etc.)
+- **Race Strategies**: 6 race-specific modifications (Orc blood rage timing, etc.)
+- **Strategy Factory**: Combines class + race into complete AI personalities
+
+### Report Types & Metrics
+
+**Balance Analysis**:
+
+- Good vs Evil win rates with confidence intervals
+- Balance score (deviation from ideal 50/50)
+- Game length variance and survivor rates
+- Statistical significance assessment
+
+**Race Performance**:
+
+- Win rates and survival rates by race
+- Performance as Warlock vs Good player
+- Tier rankings (S/A/B/C/D)
+- Racial ability impact analysis
+
+**Class Performance**:
+
+- Effectiveness by role (Tank/DPS/Healer/Utility)
+- Multi-dimensional performance metrics
+- Class synergy analysis
+- Meta health assessment
+
+**Game Flow**:
+
+- Round length distribution and outcomes
+- Quick vs long game patterns
+- Corruption timing analysis
+- Monster effectiveness scaling
+
+### Web Interface Features
+
+**Interactive Dashboard**:
+
+- Report selector with metadata display
+- Tabbed interface for different analysis types
+- Responsive design for desktop and mobile
+- Real-time chart generation with Chart.js
+
+**Data Visualization**:
+
+- Win distribution pie charts
+- Race performance bar charts
+- Class effectiveness radar charts
+- Game length trend lines
+- All charts exportable as PNG
+
+**Export Capabilities**:
+
+- CSV data export
+- PDF report generation
+- Individual chart image export
+- Print-optimized layouts
+
+### Development Patterns
+
+**Adding New Simulation Types**:
+
+1. Create new simulation runner in root directory
+2. Ensure it outputs results in standard format
+3. Add to `generate-report.js` command options
+4. Update web interface to handle new report type
+
+**Modifying AI Behavior**:
+
+1. **Class changes**: Edit specific class in `strategies/class-strategies.js`
+2. **Race changes**: Edit specific race in `strategies/race-strategies.js`
+3. **New strategy types**: Extend `strategies/base-strategy.js`
+4. **Testing**: Use `test-strategies.js` for comparison analysis
+
+**Adding New Metrics**:
+
+1. Update `reporting/data-collector.js` to collect new data
+2. Add analysis logic to `reporting/data-analyzer.js`
+3. Modify CSV export in `reporting/csv-exporter.js`
+4. Update web interface to display new metrics
+
+**Troubleshooting**:
+
+- **Import errors**: Check `.babelrc` and `module-alias.js` configuration
+- **Simulation crashes**: Use `diagnose-simulation.js` for systematic debugging
+- **Missing reports**: Verify `web-interface/reports/` directory exists and is writable
+- **Chart issues**: Check Chart.js loading and canvas element availability
+
+### Common Commands
+
+```bash
+# Quick test with mock data
+npm run test:report
+node test-runner.js 25
+
+# Generate comprehensive analysis
+npm run report:deep
+node generate-report.js --mode thematic --games 100 --verbose
+
+# Focus on specific analysis
+npm run report:races
+node generate-report.js --focus races --games 75
+
+# Compare AI strategies
+node test-strategies.js comparison 30
+
+# Setup system
+npm run setup
+node setup.js
+
+# Diagnose issues
+node diagnose-simulation.js
+```
+
+### File Dependencies
+
+**Core Dependencies**:
+
+- `module-alias`: Enables server code imports
+- `papaparse`: CSV parsing in web interface
+- Chart.js: Data visualization
+- Babel: ES6+ transpilation for server imports
+
+**Import Chain**:
+
+```
+generate-report.js
+├── reporting/data-collector.js
+├── reporting/data-analyzer.js
+├── reporting/csv-exporter.js
+├── enhanced-simulation-runner.js
+│   ├── strategies/strategy-factory.js
+│   │   ├── strategies/class-strategies.js
+│   │   │   └── strategies/base-strategy.js
+│   │   └── strategies/race-strategies.js
+│   └── simple-simulator.js
+│       └── ../server/models/GameRoom.js (via module alias)
+└── web-interface/ (for output)
+```
+
+### Error Patterns & Solutions
+
+**"Module not found" errors**:
+
+- Check server code exists in `../server/` directory
+- Verify `.babelrc` and module aliases are correct
+- Run `npm install` to ensure dependencies
+
+**"No valid simulation results"**:
+
+- Usually indicates server integration issues
+- Use `test-runner.js` to generate mock data as workaround
+- Check `diagnose-simulation.js` output for specific problems
+
+**Web interface not loading reports**:
+
+- Verify CSV files exist in `web-interface/reports/`
+- Check `reports-index.json` is valid
+- Ensure web server can access files (no CORS issues)
+
+**Charts not displaying**:
+
+- Verify Chart.js is loaded
+- Check canvas elements exist with correct IDs
+- Ensure data format matches expected chart input
+
+---
+
+## Testing & Development Workflow
+
+**Quick Development Cycle**:
+
+1. `node test-runner.js 25` - Generate mock data
+2. Open `web-interface/index.html` - View in browser
+3. Iterate on analysis or UI changes
+4. Test with real simulation when stable
+
+**Full Testing Cycle**:
+
+1. `node test-strategies.js comparison 20` - Test AI effectiveness
+2. `node generate-report.js --mode thematic --games 50` - Generate comprehensive report
+3. Review reports in web interface
+4. Iterate on balance or AI improvements
+
+**Production Analysis**:
+
+1. `npm run report:deep` - Generate large-scale analysis
+2. Review all report types for insights
+3. Export recommendations for game balance team
+4. Archive reports with timestamp for tracking changes
