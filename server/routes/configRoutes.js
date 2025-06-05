@@ -11,7 +11,7 @@ const config = require('@config');
  * Returns basic configuration information
  */
 router.get('/', (req, res) => {
-  logger.info('Config API: Basic configuration requested');
+  logger.debug('ConfigApiRequest', { path: '/', type: 'basic' });
 
   // Return only what the client needs from the main config
   res.json({
@@ -124,5 +124,3 @@ router.get('/warlock-scaling', (req, res) => {
 });
 
 module.exports = router;
-
-

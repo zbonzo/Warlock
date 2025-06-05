@@ -58,7 +58,10 @@ class RacialAbilitySystem {
       !actor.racialAbility ||
       !this.abilityRegistry?.hasRacialAbility(actor.racialAbility.type)
     ) {
-      logger.warn(`Unknown racial ability type: ${actor.racialAbility?.type}`);
+      logger.warn('UnknownRacialAbilityType', {
+        racialAbilityType: actor.racialAbility?.type,
+        actorId,
+      });
       return false;
     }
 

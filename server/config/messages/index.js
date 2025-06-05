@@ -22,6 +22,7 @@ const monsterMessages = require('./monster');
 // Import player and UI messages
 const playerMessages = require('./player');
 const uiMessages = require('./ui');
+const serverMessages = require('./logs');
 
 /**
  * Combined message configuration
@@ -52,6 +53,7 @@ const messages = {
   // Player and UI messages
   player: playerMessages,
   ui: uiMessages,
+  serverLogMessages: serverMessages,
 };
 
 /**
@@ -159,5 +161,3 @@ module.exports = {
   getEvent,
   getAbilityMessage,
 };
-
-

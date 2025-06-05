@@ -26,7 +26,7 @@ function createGameTimeout(io, gameCode) {
   }
 
   const timerId = setTimeout(() => {
-    logger.info(`Game ${gameCode} timed out after inactivity`);
+    logger.info('GameTimedOut', { gameCode });
     // Notify any connected players before deleting
     if (games.has(gameCode)) {
       io.to(gameCode).emit(messages.getError('gameTimeout'));
@@ -162,7 +162,7 @@ function processGameRound(io, gameCode) {
 
   // Check if game is over
   if (result.winner) {
-    logger.info(`Game ${gameCode} ended. Winner: ${result.winner}`);
+    logger.info('GameEnded', { gameCode, winner: result.winner });
     // Clean up the game
     clearTimeout(gameTimers.get(gameCode));
     gameTimers.delete(gameCode);

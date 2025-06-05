@@ -42,7 +42,7 @@ const validateGameCode = (code) => {
  */
 const validateGame = (socket, gameCode) => {
   if (!validateGameCode(gameCode)) {
-    logger.warn(`Invalid game code format: ${gameCode} from ${socket.id}`);
+    logger.warn('InvalidGameCodeFormat', { gameCode, socketId: socket.id });
     throwValidationError(
       'Invalid game code format. Please enter a 4-digit code.'
     );
@@ -50,7 +50,7 @@ const validateGame = (socket, gameCode) => {
 
   const game = games.get(gameCode);
   if (!game) {
-    logger.info(`Game not found: ${gameCode} from ${socket.id}`);
+    logger.info('GameNotFoundValidation', { gameCode, socketId: socket.id });
     throwNotFoundError('Game not found. Check the code and try again.');
   }
   return true;

@@ -15,25 +15,23 @@
     "report:balance": "node generate-report.js --focus balance --games 50",
     "report:compare": "node generate-report.js --compare-ai --games 50",
     "test:report": "node generate-report.js --games 5 --verbose",
-    "clean": "rm -rf reports/*.html",
-    "setup": "mkdir -p reports && mkdir -p reporting/templates",
-    "demo": "node generate-report.js --games 30 --mode thematic --output demo-report.html",
-    "help": "node generate-report.js --help"
+    "clean": "rm -rf reports/*.csv",
+    "setup": "mkdir -p web-interface/reports && mkdir -p reporting/templates",
+    "demo": "node generate-report.js --games 30 --mode thematic",
+    "help": "node generate-report.js --help",
+    "install:deps": "npm install"
   },
   "keywords": [
     "game-balance",
     "analytics",
     "reporting",
     "data-visualization",
-    "chart.js",
-    "html-reports",
     "warlock-game",
     "simulation-analysis"
   ],
-  "author": "Warlock Game Development Team",
+  "author": "Zachery Bonzo",
   "license": "MIT",
   "dependencies": {
-    "chart.js": "^3.9.1",
     "module-alias": "^2.2.3"
   },
   "devDependencies": {
@@ -43,64 +41,15 @@
   "engines": {
     "node": ">=14.0.0"
   },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/your-repo/warlock-game"
-  },
-  "bugs": {
-    "url": "https://github.com/your-repo/warlock-game/issues"
-  },
-  "homepage": "https://github.com/your-repo/warlock-game#readme",
   "directories": {
     "lib": "./reporting",
     "test": "./test",
     "doc": "./docs"
   },
-  "files": [
-    "reporting/",
-    "generate-report.js",
-    "README-reporting.md"
-  ],
   "config": {
     "defaultGames": 50,
     "defaultMode": "thematic",
-    "reportsDir": "./reports",
-    "maxGames": 1000,
-    "chartColors": [
-      "#3B82F6",
-      "#EF4444",
-      "#10B981",
-      "#F59E0B",
-      "#8B5CF6",
-      "#EC4899"
-    ]
-  },
-  "reporting": {
-    "features": [
-      "Interactive HTML reports",
-      "Chart.js visualizations",
-      "Statistical significance testing",
-      "Balance recommendations",
-      "CSV/JSON data export",
-      "Mobile-responsive design",
-      "Print-friendly layouts"
-    ],
-    "supportedModes": [
-      "fixed",
-      "random",
-      "thematic",
-      "comparison"
-    ],
-    "analysisTypes": [
-      "executive-summary",
-      "balance-analysis",
-      "ability-performance",
-      "race-analysis",
-      "class-analysis",
-      "game-flow",
-      "warlock-analysis",
-      "recommendations",
-      "raw-data"
-    ]
+    "reportsDir": "./web-interface/reports",
+    "maxGames": 1000
   }
 }

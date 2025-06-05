@@ -11,7 +11,7 @@ class WarlockReportApp {
     this.dataLoader = new DataLoader();
     this.chartManager = new ChartManager();
     this.reportSelector = new ReportSelector();
-    //this.exportManager = new ExportManager();
+    this.exportManager = new ExportManager();
 
     this.init();
   }

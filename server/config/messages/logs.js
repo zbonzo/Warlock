@@ -2,7 +2,7 @@
  * @fileoverview Centralized log messages for structured logging.
  * Maps event keys to human-readable message templates.
  */
-export default {
+module.exports = {
   // Info-level logs are for normal application flow and key events.
   info: {
     ServerStarted: 'Game server running on port {port}',

@@ -123,12 +123,12 @@ const socketRateLimiter = {
 
 // Start the server
 server.listen(PORT, '0.0.0.0', () => {
-  logger.info(`Game server running on port ${PORT}`);
+  logger.info('ServerStarted', { port: PORT });
 });
 
 // Socket.IO Event Handlers
 io.on('connection', (socket) => {
-  logger.info(`Player connected: ${socket.id}`);
+  logger.info('PlayerConnected', { socketId: socket.id });
 
   // Host creates a new game
   socket.on(

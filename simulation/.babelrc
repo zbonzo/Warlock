@@ -16,6 +16,7 @@
         "root": ["../server"],
         "alias": {
           "@config": "../server/config",
+          "@config/messages": "../server/config/messages",
           "@models": "../server/models",
           "@utils": "../server/utils",
           "@controllers": "../server/controllers",

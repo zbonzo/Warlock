@@ -2,9 +2,9 @@
  * @fileoverview Logging utility for structured, consistent log formatting.
  * Outputs human-readable messages to console and structured JSON to a log file.
  */
-import fs from 'fs'; // Import the Node.js file system module
-import path from 'path'; // Import path module for constructing file paths
-import serverLogMessages from '../config/messages/logs'; // Adjust path if necessary
+const fs = require('fs');
+const path = require('path');
+const serverLogMessages = require('../config/messages/logs.js');
 
 // STRETCH GOAL: Placeholder for an APM/Analytics client
 // const apmClient = require('./apm-client');
@@ -80,16 +80,17 @@ function getFormattedMessage(level, eventKey, context = {}) {
  * Writes the structured log entry to a file.
  * @param {object} logEntry - The structured JSON log object.
  * @private
+ * TODO: Commented until I can find a better way to handle all the file writing
  */
 function writeLogToFile(logEntry) {
-  const logString = JSON.stringify(logEntry) + '\n'; // Add newline for each entry
+  /*const logString = JSON.stringify(logEntry) + '\n'; // Add newline for each entry
   fs.appendFile(LOG_FILE_PATH, logString, (err) => {
     if (err) {
       // Fallback to console if file logging fails
       console.error('Failed to write log to file:', err);
       console.error('Original log entry:', logString);
     }
-  });
+  });*/
 }
 
 /**
