@@ -300,8 +300,8 @@ CMD ["npm", "start"]
 
 ## ⚠️ Known Issues & TODOs
 
-### Security & Privacy (CRITICAL - Before Production)
-- [ ] **EventsLog Security**: Current message filtering uses text pattern matching (`message.includes('Your')`) which could leak private detection results. Need proper permission-based event visibility system. See `client/src/components/game/EventsLog/EventsLog.jsx` and server event generation in `models/GameRoom.js`.
+- [ ] Remove hardcoded strings and config values
+- [ ] Implement grafana stack
 
 ### Game Balance & Features
 - [ ] Add more detection abilities across different classes

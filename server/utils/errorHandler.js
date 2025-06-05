@@ -1,11 +1,12 @@
 /**
- * @fileoverview Error handling utilities
- * Centralizes error creation, handling, and propagation
+ * @fileoverview Error handling and APM utilities.
+ * Centralizes error creation, handling, and performance monitoring.
  */
+const { performance } = require('perf_hooks');
 const logger = require('./logger');
 
 /**
- * Error types
+ * Error types.
  * @enum {string}
  */
 const ErrorTypes = {
@@ -17,102 +18,115 @@ const ErrorTypes = {
 };
 
 /**
- * Create a standardized error object
- * @param {string} type - Error type from ErrorTypes
- * @param {string} message - User-friendly error message
- * @param {Object} details - Additional details (optional)
- * @returns {Object} Standardized error object
+ * Create a standardized error object.
+ * @param {string} type - Error type from ErrorTypes.
+ * @param {string} message - User-friendly error message.
+ * @param {Object} details - Additional details (optional).
+ * @returns {Error} A standard Error object with extra properties.
  */
 function createError(type, message, details = {}) {
-  return {
-    type,
-    message,
-    details,
-    timestamp: new Date().toISOString(),
-  };
+  const error = new Error(message);
+  error.type = type;
+  error.details = details;
+  error.timestamp = new Date().toISOString();
+  return error;
 }
 
 /**
- * Handle errors in socket-based functions
- * @param {Object} socket - Socket.IO socket
- * @param {Function} fn - Function to execute
- * @param {string} actionName - Name of the action for logging
- * @returns {Function} Wrapped function with error handling
+ * A decorator for socket functions that adds error handling and performance monitoring.
+ * @param {Object} socket - Socket.IO socket.
+ * @param {Function} fn - The async function to execute.
+ * @param {string} actionName - A unique name for the action (e.g., 'player:joinGame').
+ * @returns {Function} Wrapped function with error handling and APM.
  */
 function withSocketErrorHandling(socket, fn, actionName) {
   return async (...args) => {
+    const startTime = performance.now();
     try {
-      return await fn(...args);
+      const result = await fn(...args);
+      const duration = performance.now() - startTime;
+      logger.info('SocketActionSuccess', {
+        action: actionName,
+        socketId: socket.id,
+        playerId: socket.playerId, // Assuming playerId is attached to the socket
+        durationMs: parseFloat(duration.toFixed(2)),
+      });
+      return result;
     } catch (error) {
-      handleSocketError(socket, error, actionName);
+      const duration = performance.now() - startTime;
+      handleSocketError(socket, error, actionName, duration);
       return false;
     }
   };
 }
 
 /**
- * Handle socket errors consistently
- * @param {Object} socket - Socket.IO socket
- * @param {Error} error - The error that occurred
- * @param {string} actionName - Name of the action for logging
+ * Handle socket errors consistently.
+ * @param {Object} socket - Socket.IO socket.
+ * @param {Error} error - The error that occurred.
+ * @param {string} actionName - Name of the action for logging.
+ * @param {number} duration - The duration of the action before it failed.
  */
-function handleSocketError(socket, error, actionName) {
-  // Determine if this is one of our known error types
-  const isKnownError = error.type && Object.values(ErrorTypes).includes(error.type);
-  
-  // Log the error with appropriate severity
+function handleSocketError(socket, error, actionName, duration) {
+  const isKnownError =
+    error.type && Object.values(ErrorTypes).includes(error.type);
+
+  const errorContext = {
+    action: actionName,
+    socketId: socket.id,
+    playerId: socket.playerId,
+    durationMs: parseFloat(duration.toFixed(2)),
+    error: {
+      message: error.message,
+      type: error.type,
+      details: error.details,
+      stack: error.stack, // Include stack for unexpected errors
+    },
+  };
+
   if (isKnownError) {
-    logger.warn(`${actionName} error: ${error.message}`, { errorDetails: error.details });
+    logger.warn('SocketActionKnownError', errorContext);
   } else {
-    logger.error(`Unexpected ${actionName} error: ${error.message}`, error);
+    // Ensure `type` and `message` are set for unexpected errors
+    errorContext.error.type = ErrorTypes.SERVER;
+    errorContext.error.message =
+      error.message || 'An unexpected error occurred.';
+    logger.error('SocketActionUnexpectedError', errorContext);
   }
-  
-  // Send appropriate error message to client
+
   try {
-    socket.emit('errorMessage', { 
-      message: error.message || `An error occurred during ${actionName}. Please try again.`,
-      code: error.type || ErrorTypes.SERVER
+    socket.emit('errorMessage', {
+      message:
+        error.message ||
+        `An error occurred during ${actionName}. Please try again.`,
+      code: error.type || ErrorTypes.SERVER,
     });
   } catch (emitError) {
-    logger.error(`Failed to send error message: ${emitError.message}`);
+    logger.error('FailedToSendErrorMessage', {
+      originalAction: actionName,
+      emitError: { message: emitError.message, stack: emitError.stack },
+    });
   }
 }
 
 /**
- * Throw a validation error
- * @param {string} message - User-friendly error message
- * @param {Object} details - Validation details (optional)
+ * Throw a validation error.
+ * @param {string} message - User-friendly error message.
+ * @param {Object} details - Validation details (optional).
  */
 function throwValidationError(message, details = {}) {
-  const error = createError(ErrorTypes.VALIDATION, message, details);
-  throw error;
+  throw createError(ErrorTypes.VALIDATION, message, details);
 }
 
-/**
- * Throw a game state error
- * @param {string} message - User-friendly error message
- */
+// ... (other throw functions remain the same)
 function throwGameStateError(message) {
-  const error = createError(ErrorTypes.GAME_STATE, message);
-  throw error;
+  throw createError(ErrorTypes.GAME_STATE, message);
 }
-
-/**
- * Throw a permission error
- * @param {string} message - User-friendly error message
- */
 function throwPermissionError(message) {
-  const error = createError(ErrorTypes.PERMISSION, message);
-  throw error;
+  throw createError(ErrorTypes.PERMISSION, message);
 }
-
-/**
- * Throw a not found error
- * @param {string} message - User-friendly error message
- */
 function throwNotFoundError(message) {
-  const error = createError(ErrorTypes.NOT_FOUND, message);
-  throw error;
+  throw createError(ErrorTypes.NOT_FOUND, message);
 }
 
 module.exports = {
@@ -123,6 +137,5 @@ module.exports = {
   throwValidationError,
   throwGameStateError,
   throwPermissionError,
-  throwNotFoundError
+  throwNotFoundError,
 };
-

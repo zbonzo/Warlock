@@ -124,9 +124,12 @@ class GameRoom {
       p.maxHp = 80;
       p.armor = 0;
       p.damageMod = 1.0;
-      logger.warn(
-        `Invalid race/class combination: ${race}/${cls} for player ${p.name}`
-      );
+      logger.warn('InvalidRaceClassCombination', {
+        race,
+        className: cls,
+        playerName: p.name,
+        playerId: p.id,
+      });
     }
 
     p.hp = p.maxHp; // Set current HP to max HP
@@ -138,17 +141,19 @@ class GameRoom {
 
       // Special setup for Stone Armor (Rockhewn)
       if (race === 'Rockhewn') {
-        logger.debug(
-          `Rockhewn ${p.name} starts with Stone Armor: ${p.stoneArmorValue} armor`
-        );
-        logger.debug(`Total effective armor: ${p.getEffectiveArmor()}`);
+        logger.debug('RockhewnStoneArmorStart', {
+          playerName: p.name,
+          armorValue: p.stoneArmorValue,
+        });
+        logger.debug('TotalEffectiveArmor', {
+          playerName: p.name,
+          effectiveArmor: p.getEffectiveArmor(),
+        });
       }
 
       // Double-check Undying for Lich - ensure it's properly set up
       if (race === 'Lich') {
-        logger.debug(`=== Lich SETUP for ${p.name} ===`);
-        logger.debug(`Racial ability:`, racialAbility);
-        logger.debug(`Player racial effects after setup:`, p.racialEffects);
+        logger.debug('LichSetupStart', { playerName: p.name });
 
         // Double-check that Undying is properly set up
         if (
@@ -156,7 +161,7 @@ class GameRoom {
           !p.racialEffects.resurrect ||
           !p.racialEffects.resurrect.active
         ) {
-          logger.warn(`UNDYING SETUP FAILED for ${p.name}, fixing...`);
+          logger.warn('UndyingSetupFailed', { playerName: p.name });
           p.racialEffects = p.racialEffects || {};
           p.racialEffects.resurrect = {
             resurrectedHp: racialAbility.params?.resurrectedHp || 1,
@@ -218,15 +223,17 @@ class GameRoom {
 
     // Check if ability is on cooldown
     if (actor.isAbilityOnCooldown(actionType)) {
-      logger.debug(
-        `Player ${actor.name} tried to use ${actionType} but it's on cooldown for ${actor.getAbilityCooldown(actionType)} more turns`
-      );
+      logger.debug('AbilityOnCooldownAttempt', {
+        playerName: actor.name,
+        actionType,
+        cooldown: actor.getAbilityCooldown(actionType),
+      });
       return false; // Ability is on cooldown
     }
 
     // Check if our registry knows this ability type
     if (!this.systems.abilityRegistry.hasClassAbility(actionType)) {
-      logger.warn(`Unknown ability type: ${actionType}`);
+      logger.warn('UnknownAbilityType', { actionType, playerName: actor.name });
       return false;
     }
 
@@ -257,9 +264,10 @@ class GameRoom {
         ].includes(ability.type);
 
       if (!isAOEAbility) {
-        logger.warn(
-          `Player ${actor.name} tried to use non-AOE ability ${actionType} with multi target`
-        );
+        logger.warn('NonAoeAbilityWithMultiTarget', {
+          playerName: actor.name,
+          actionType,
+        });
         return false;
       }
 
@@ -289,9 +297,10 @@ class GameRoom {
     );
 
     if (!submissionResult.success) {
-      logger.debug(
-        `Action submission failed for ${actor.name}: ${submissionResult.reason}`
-      );
+      logger.debug('ActionSubmissionFailedInGameRoom', {
+        playerName: actor.name,
+        reason: submissionResult.reason,
+      });
       return false;
     }
 
@@ -303,9 +312,11 @@ class GameRoom {
       options,
     });
 
-    logger.info(
-      `Player ${actor.name} submitted action: ${actionType} -> ${finalTargetId}`
-    );
+    logger.info('PlayerSubmittedActionInGameRoom', {
+      playerName: actor.name,
+      actionType,
+      targetId: finalTargetId,
+    });
     return true;
   }
 
@@ -328,7 +339,10 @@ class GameRoom {
       !actor.racialAbility ||
       !this.systems.abilityRegistry.hasRacialAbility(actor.racialAbility.type)
     ) {
-      logger.warn(`Unknown racial ability type: ${actor.racialAbility?.type}`);
+      logger.warn('UnknownRacialAbilityTypeInGameRoom', {
+        racialAbilityType: actor.racialAbility?.type,
+        playerName: actor.name,
+      });
       return false;
     }
 
@@ -422,9 +436,10 @@ class GameRoom {
       }
 
       if (newlyUnlocked.length > 0) {
-        logger.info(
-          `Player ${player.name} unlocked abilities: ${newlyUnlocked.join(', ')}`
-        );
+        logger.info('PlayerUnlockedAbilities', {
+          playerName: player.name,
+          abilities: newlyUnlocked,
+        });
       }
     }
   }
@@ -619,14 +634,6 @@ class GameRoom {
 
     // Reset phase to action for next round BEFORE returning results
     this.phase = 'action';
-
-    // LOG THE EVENTS FOR FRONTEND TEAM
-    logger.debug('=== EVENTS LOG FOR FRONTEND ===');
-    logger.debug(`Game: ${this.code}, Round: ${this.round}`);
-    logger.debug(
-      JSON.stringify(processedLog.slice(0, 5), null, 2) + '... and more'
-    );
-    logger.debug('=== END EVENTS LOG ===');
 
     return {
       eventsLog: processedLog,

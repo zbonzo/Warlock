@@ -39,7 +39,11 @@ function handlePlayerJoin(io, socket, gameCode, playerName) {
 
   // Join socket to game room and update clients
   socket.join(gameCode);
-  logger.info(`Player ${sanitizedName} joined game ${gameCode}`);
+  logger.info('PlayerJoinedGame', {
+    playerName: sanitizedName,
+    gameCode,
+    socketId: socket.id,
+  });
   gameService.refreshGameTimeout(io, gameCode);
   gameService.broadcastPlayerList(io, gameCode);
 
@@ -69,10 +73,12 @@ function handleSelectCharacter(io, socket, gameCode, race, className) {
 
   // Set player class
   game.setPlayerClass(socket.id, race, className);
-  logger.info(
-    `Player ${socket.id} selected ${race} ${className} in game ${gameCode}`
-  );
-
+  logger.info('PlayerSelectedCharacter', {
+    socketId: socket.id,
+    race,
+    className,
+    gameCode,
+  });
   // Broadcast updated player list
   gameService.broadcastPlayerList(io, gameCode);
 
@@ -113,7 +119,12 @@ function validateCharacterSelection(race, className) {
  * @param {Object} socket - Client socket
  */
 function handlePlayerDisconnect(io, socket) {
-  logger.info(`Player disconnected: ${socket.id}`);
+  logger.info('PlayerSelectedCharacter', {
+    socketId: socket.id,
+    race,
+    className,
+    gameCode,
+  });
 
   // Find any game this player was in
   let gameFound = false;

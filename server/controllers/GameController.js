@@ -38,7 +38,7 @@ function handleCreateGame(io, socket, playerName) {
   // Add this socket as a player (host) in the new game
   game.addPlayer(socket.id, playerName);
   socket.join(gameCode);
-  logger.info(`Game created with code ${gameCode} by ${playerName}`);
+  logger.info('GameCreated', { gameCode, playerName });
 
   // Create timeout for the new game
   gameService.createGameTimeout(io, gameCode);
@@ -87,7 +87,11 @@ function handleCheckNameAvailability(io, socket, gameCode, playerName) {
     return true;
   } catch (error) {
     // Handle any unexpected errors
-    logger.error(`Error checking name availability: ${error.message}`, error);
+    logger.error('NameAvailabilityCheckError', {
+      gameCode,
+      playerName,
+      error: { message: error.message, stack: error.stack },
+    });
 
     socket.emit('nameCheckResponse', {
       isAvailable: false,
@@ -140,10 +144,7 @@ function handleStartGame(io, socket, gameCode) {
   const warlockCount = assignedWarlocks.length;
   const playerCount = game.players.size;
 
-  logger.info(
-    `Game ${gameCode} started with ${warlockCount} warlocks for ${playerCount} players`
-  );
-
+  logger.info('GameStarted', { gameCode, warlockCount, playerCount });
   // Create appropriate start message based on warlock count
   let warlockMessage;
   if (warlockCount === 1) {
@@ -300,9 +301,13 @@ function handlePerformAction(
       // Mark player as having submitted an action (this is now handled in Player.submitAction)
       player.actionSubmissionTime = Date.now();
 
-      logger.info(
-        `Player ${player.name} (${socket.id}) performed ${actionType} on ${targetId} in game ${gameCode}`
-      );
+      logger.info('PlayerPerformedAction', {
+        playerName: player.name,
+        socketId: socket.id,
+        actionType,
+        targetId,
+        gameCode,
+      });
 
       // Broadcast updated player list with submission status
       io.to(gameCode).emit('playerList', { players: game.getPlayersInfo() });
@@ -313,15 +318,15 @@ function handlePerformAction(
         (p) => p.hasSubmittedAction && p.actionValidationState === 'valid'
       );
 
-      logger.info(
-        `Action submission progress: ${submittedPlayers.length}/${alivePlayers.length} players submitted in game ${gameCode}`
-      );
+      logger.info('ActionSubmissionProgress', {
+        submittedCount: submittedPlayers.length,
+        totalCount: alivePlayers.length,
+        gameCode,
+      });
 
       // If all actions submitted, process the round
       if (game.allActionsSubmitted()) {
-        logger.info(
-          `All actions submitted, processing round for game ${gameCode}`
-        );
+        logger.info('AllActionsSubmitted', { gameCode });
 
         // Small delay to ensure UI updates
         setTimeout(() => {
@@ -378,9 +383,11 @@ function handleRacialAbility(io, socket, gameCode, targetId, abilityType) {
 
   // Special handling for Artisan Adaptability
   if (abilityType === 'adaptability' && player.race === 'Artisan') {
-    logger.debug(
-      `Player ${player.name} (${socket.id}) is using Artisan Adaptability`
-    );
+    logger.debug('PlayerUsingAdaptability', {
+      playerName: player.name,
+      socketId: socket.id,
+      gameCode,
+    });
 
     // First check if they have uses left
     if (player.racialUsesLeft <= 0) {
@@ -502,10 +509,12 @@ function handleAdaptabilityReplace(
     return false;
   }
 
-  logger.debug(
-    `Player ${player.name} trying to replace ${oldAbilityType} with ${newAbilityType} from ${newClassName} at level ${level}`
-  );
-
+  logger.info('PlayerSelectedAdaptabilityAbility', {
+    playerName,
+    abilityName: ability.name,
+    className,
+    gameCode,
+  });
   // Find the old ability
   const oldAbilityIndex = player.abilities.findIndex(
     (a) => a.type === oldAbilityType
@@ -720,7 +729,7 @@ function handlePlayAgain(io, socket, gameCode, playerName) {
 
     if (existingGame) {
       // Game already exists, join it directly (bypass normal validation)
-      logger.info(`${playerName} joining existing replay game ${gameCode}`);
+      logger.info('PlayerAttemptingPlayAgain', { playerName, oldGameCode });
 
       // Check if game is full
       if (existingGame.players.size >= (config.maxPlayers || 20)) {
@@ -803,7 +812,10 @@ function handlePlayAgain(io, socket, gameCode, playerName) {
       return true;
     }
   } catch (error) {
-    logger.error(`Error in handlePlayAgain for game ${gameCode}:`, error);
+    logger.error('PlayerNextReadyError', {
+      gameCode,
+      error: { message: error.message, stack: error.stack },
+    });
     socket.emit('errorMessage', {
       message: 'Failed to start new game. Please try again.',
       type: 'server_error',
