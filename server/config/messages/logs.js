@@ -5,10 +5,28 @@
 module.exports = {
   // Info-level logs are for normal application flow and key events.
   info: {
+    WarlockAssignmentStart:
+      'Assigning {requiredWarlocks} warlocks for {alivePlayerCount} players',
+    WarlockAssignedPreferred:
+      'Assigned preferred player {warlockName} ({warlockId}) as warlock',
+    WarlockAssignedRandom:
+      'Randomly assigned player {warlockName} ({warlockId}) as warlock',
+    WarlockAssignmentComplete:
+      'Successfully assigned {assignedCount} initial warlocks',
+    WarlockCorruptionSuccess:
+      '{actorName} successfully corrupted {targetName} (chance: {finalChance}%)',
     ServerStarted: 'Game server running on port {port}',
     PlayerConnected: 'Player connected: {socketId}',
     PlayerDisconnected: 'Player disconnected: {socketId}',
     ConfigApiRequest: 'Config API: Basic configuration requested',
+    PlayerRemovedFromGame:
+      'Player {playerName} immediately removed from game {gameCode} with disconnect message: {message}',
+    PlayerNotInAnyGame:
+      'Disconnected player {socketId} was not in any active games',
+    HostReassignedAfterDisconnect:
+      'Host {oldHostName} disconnected from game {gameCode}, reassigning to {newHostName} ({newHostId})',
+    PlayerDisconnectTriggeredRoundProcessing:
+      'Player {playerName} disconnect triggered round processing for game {gameCode}',
 
     // Game Flow
     GameCreated: 'Game created with code {gameCode} by {playerName}',
@@ -88,6 +106,12 @@ module.exports = {
 
     // NEW: GameController.js audit items
     AdaptabilityUseFailed: 'Failed to use Adaptability for player {playerName}',
+
+    // Validation warnings
+    NonHostActionAttempt:
+      'Non-host action attempt: {socketId} in game {gameCode}',
+    InvalidPlayerNameValidation:
+      'Invalid player name: "{playerName}" from {socketId}: {error}',
   },
 
   // Error-level logs are for critical failures that break functionality.
@@ -153,17 +177,13 @@ module.exports = {
     WarlockRoundTrackingReset:
       'Resetting warlock corruption tracking for new round.',
     WarlockDetectionPenaltiesExpired:
-      'Detection penalties expired for {count} players',
+      'Detection penalties expired for {count} players: {playerIds}',
     WarlockCorruptionCooldownsExpired:
-      'Corruption cooldowns expired for {count} players',
-    WarlockDetected:
-      'Marked warlock {warlockName} as detected with {penaltyTurns} turn penalty',
+      'Corruption cooldowns expired for {count} players: {playerIds}',
     WarlockCorruptionRecorded:
       'Recorded corruption by {actorId}. Round: {roundCount}, Player: {playerCount}, Cooldown: {cooldownTurns}',
     WarlockCountIncreased: 'Warlock count increased to {count}',
     WarlockCountDecreased: 'Warlock count decreased to {count}',
-    WarlockCorruptionAttemptDetails:
-      'Warlock {actorName} attempts to corrupt {targetName} (Base: {baseChance}, Mod: {modifier}, Final: {finalChance})',
 
     // Debugging Separators
     EventsLogSeparator: '--- Events Log Separator ({type}) ---',
@@ -189,5 +209,33 @@ module.exports = {
     BloodFrenzyDamageIncrease:
       'Blood Frenzy: {playerName} missing {missingHpPercent}% HP, damage increased by {damageIncreasePercent}%',
     UndyingSetup: 'UNDYING SETUP: {playerName} now has Undying effect:',
+
+    // International name testing
+    InternationalNameTestStart: 'Testing international name support',
+    InternationalNameTestResult:
+      'Name test: "{name}" - Valid: {isValid}, Error: {error}',
+
+    PlayerDeathCheck: 'Death check for {playerName}: Race={race}, HP={hp}',
+    ProcessingPendingDeath:
+      'Processing pending death for {playerName}: Race={race}, HasRacialEffects={hasRacialEffects}',
+    UndyingTriggered:
+      'Undying triggered: Resurrecting {playerName} after all attacks',
+    UndyingSuccess:
+      'Undying success: {playerName} resurrected to {resurrectedHp} HP after monster attacks',
+    PlayerDeathFinal: 'Death final: {playerName} has died permanently',
+    UndyingSetupNeeded:
+      'Undying not properly set for {playerName}, setting it up now',
+    UndyingSetupComplete:
+      'Fixed Undying effect for {playerName}: {racialEffects}',
+
+    WarlockDetected:
+      'Marked warlock {warlockName} as detected with {penaltyTurns} turn penalty',
+    WarlockCorruptionBlocked: 'Corruption blocked for {actorName}: {reason}',
+    WarlockLevelUpCorruptionPrevented:
+      'Level-up corruption prevented by configuration',
+    WarlockCorruptionAttemptDetails:
+      'Warlock {actorName} attempts to corrupt {targetName} (Base: {baseChance}%, Mod: {modifier}, Final: {finalChance}%)',
+    WarlockDetectionPenaltyApplied:
+      'Applied detection penalty to {warlockName} from {detectionSource}',
   },
 };

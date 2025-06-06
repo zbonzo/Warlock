@@ -24,6 +24,7 @@ const { throwGameStateError } = require('@utils/errorHandler');
  */
 function handleCreateGame(io, socket, playerName) {
   // Validate player name
+
   if (!validatePlayerNameSocket(socket, playerName)) {
     return; // Error already sent by validation function
   }

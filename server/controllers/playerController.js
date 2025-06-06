@@ -33,7 +33,7 @@ function handlePlayerJoin(io, socket, gameCode, playerName) {
   const sanitizedName = playerName || config.player.defaultPlayerName;
   const success = game.addPlayer(socket.id, sanitizedName);
   if (!success) {
-    errorHandler.throwGameStateError(messages.getError('joinFailed'));
+    errorHandler.throwGameStateError(messages.getError('couldNotJoinGame'));
     return false;
   }
 
@@ -119,11 +119,8 @@ function validateCharacterSelection(race, className) {
  * @param {Object} socket - Client socket
  */
 function handlePlayerDisconnect(io, socket) {
-  logger.info('PlayerSelectedCharacter', {
+  logger.info('PlayerDisconnected', {
     socketId: socket.id,
-    race,
-    className,
-    gameCode,
   });
 
   // Find any game this player was in
@@ -182,15 +179,20 @@ function handlePlayerDisconnect(io, socket) {
       // Broadcast updated player list
       gameService.broadcastPlayerList(io, gameCode);
 
-      logger.info(
-        `Player ${playerName} immediately removed from game ${gameCode} with message: ${disconnectMessage}`
-      );
+      logger.info('PlayerRemovedFromGame', {
+        playerName,
+        gameCode,
+        socketId: socket.id,
+        message: disconnectMessage,
+      });
       break;
     }
   }
 
   if (!gameFound) {
-    logger.info(`Disconnected player ${socket.id} was not in any active games`);
+    logger.info('PlayerNotInAnyGame', {
+      socketId: socket.id,
+    });
   }
 }
 
@@ -217,13 +219,22 @@ function getThematicDisconnectMessage(playerName) {
 function handleHostReassignment(io, game, gameCode, playerName, wasHost) {
   if (wasHost && game.players.size > 0) {
     const newHostId = Array.from(game.players.keys())[0];
+    const newHostPlayer = game.players.get(newHostId);
+    const newHostName = newHostPlayer
+      ? newHostPlayer.name
+      : config.player.defaultPlayerName;
     game.hostId = newHostId;
 
-    logger.info(`Host ${playerName} disconnected, reassigning to ${gameCode}`);
+    logger.info('HostReassignedAfterDisconnect', {
+      oldHostName: playerName,
+      newHostName,
+      gameCode,
+      newHostId,
+    });
 
     // Use centralized messaging for host change - FAIL HARD if not available
     const hostChangeMessage = messages.getEvent('hostChanged', {
-      playerName,
+      playerName: newHostName,
     });
 
     io.to(gameCode).emit('hostChanged', {
@@ -251,9 +262,10 @@ function handleGameProgressionAfterDisconnect(io, game, gameCode, playerName) {
 
     // Check if all remaining players have submitted actions
     if (game.allActionsSubmitted()) {
-      logger.info(
-        `Player disconnect triggered round processing for game ${gameCode}`
-      );
+      logger.info('PlayerDisconnectTriggeredRoundProcessing', {
+        gameCode,
+        playerName,
+      });
       // Small delay to ensure UI updates
       setTimeout(() => {
         gameService.processGameRound(io, gameCode);

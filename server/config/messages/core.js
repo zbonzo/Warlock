@@ -15,6 +15,27 @@ const errors = {
   gameNotStarted: 'Game has not started yet.',
   gameTimeout: 'Game ended due to inactivity.',
 
+  playerNameRequired: 'Name is required',
+  playerNameTooShort: 'Name must be at least 2 characters long',
+  playerNameTooLong: 'Name must be 20 characters or less',
+  playerNameNoLettersNumbers: 'Name must contain at least one letter or number',
+  playerNameInvalidChars:
+    "Name can only contain letters (including accented), numbers, spaces, hyphens (-), and apostrophes (').",
+  playerNameUnsafeChars: 'Name contains unsafe characters',
+  playerNameWhitespace: 'Name cannot start or end with spaces',
+  playerNameMultipleSpaces: 'Name cannot contain multiple consecutive spaces',
+  playerNameOnlyPunctuation: 'Name must contain at least one letter or number',
+  playerNameReserved:
+    '"{playerName}" is a reserved game term. Please choose a different name.',
+  playerNameProblematicTerms:
+    'Name contains problematic terms. Please choose a different name.',
+  playerNameTaken:
+    'The name "{playerName}" is already taken. Please choose a different name.',
+
+  // Action validation errors
+  actionNotAOE:
+    '{actionType} is not an AOE ability but "multi" target was specified.',
+
   // Player validation errors
   playerNotFound: 'Player not found in this game.',
   playerExists: 'You are already in this game.',

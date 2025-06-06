@@ -154,6 +154,8 @@ module.exports = {
   monster: messages.monster,
   player: messages.player,
   ui: messages.ui,
+  serverLogMessages: messages.serverLogMessages,
+  winConditions: messages.winConditions,
   formatMessage,
   getMessage,
   getError,

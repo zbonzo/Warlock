@@ -128,8 +128,23 @@ class CombatSystem {
           public: false,
           targetId: target.id,
           message: '',
-          privateMessage: `Detection penalty increases damage by ${config.gameBalance.warlock.corruption.detectionDamagePenalty}%! (${damageAmount} → ${detectionPenaltyDamage})`,
-          attackerMessage: `${target.name} takes +${config.gameBalance.warlock.corruption.detectionDamagePenalty}% damage from recent detection!`,
+          privateMessage: messages.formatMessage(
+            messages.privateMessages.warlockDetectionPenaltyDamage,
+            {
+              penalty:
+                config.gameBalance.warlock.corruption.detectionDamagePenalty,
+              oldDamage: damageAmount,
+              newDamage: detectionPenaltyDamage,
+            }
+          ),
+          attackerMessage: messages.formatMessage(
+            messages.events.warlockDetectionPenaltyAttacker,
+            {
+              targetName: target.name,
+              penalty:
+                config.gameBalance.warlock.corruption.detectionDamagePenalty,
+            }
+          ),
         };
         log.push(detectionPenaltyLog);
       }
@@ -159,7 +174,16 @@ class CombatSystem {
             public: true,
             targetId: target.id,
             attackerId: attacker.id,
-            message: `Coordinated attack! ${coordinationCount + 1} players target ${target.name} for +${Math.round((coordinatedDamage / detectionPenaltyDamage - 1) * 100)}% damage!`,
+            message: messages.formatMessage(
+              messages.events.coordinatedAttackDamage,
+              {
+                playerCount: coordinationCount + 1,
+                targetName: target.name,
+                bonusPercent: Math.round(
+                  (coordinatedDamage / detectionPenaltyDamage - 1) * 100
+                ),
+              }
+            ),
             privateMessage: '',
             attackerMessage: '',
           };
@@ -185,7 +209,12 @@ class CombatSystem {
 
       // Log vulnerability effect
       log.push(
-        `${target.name} is VULNERABLE and takes ${target.vulnerabilityIncrease}% more damage! (${coordinatedDamage} → ${modifiedDamage})`
+        messages.formatMessage(messages.events.vulnerableDamageTaken, {
+          targetName: target.name,
+          increasePercent: target.vulnerabilityIncrease,
+          oldDamage: coordinatedDamage,
+          newDamage: modifiedDamage,
+        })
       );
     }
 
@@ -201,7 +230,12 @@ class CombatSystem {
       modifiedDamage = Math.floor(modifiedDamage * (1 - damageResistance));
 
       log.push(
-        `${target.name}'s Unstoppable Rage reduces damage by ${Math.round(damageResistance * 100)}%! (${beforeRage} → ${modifiedDamage})`
+        messages.formatMessage(messages.events.unstoppableRageReduction, {
+          targetName: target.name,
+          reductionPercent: Math.round(damageResistance * 100),
+          oldDamage: beforeRage,
+          newDamage: modifiedDamage,
+        })
       );
     }
 
@@ -218,7 +252,10 @@ class CombatSystem {
         public: false,
         targetId: target.id,
         message: '',
-        privateMessage: `Comeback mechanics grant you +${armorBonus} armor!`,
+        privateMessage: messages.formatMessage(
+          messages.privateMessages.comebackArmorBonus,
+          { armorBonus }
+        ),
         attackerMessage: '',
       };
       log.push(comebackArmorLog);
@@ -268,17 +305,49 @@ class CombatSystem {
       },
       message:
         effectiveArmor > 0
-          ? `${target.name} was attacked for ${actualDamage} damage (${damageAmount} reduced by ${reductionPercent}% armor).`
-          : `${target.name} was attacked and lost ${actualDamage} health.`,
+          ? messages.formatMessage(messages.events.playerAttackedWithArmor, {
+              targetName: target.name,
+              actualDamage,
+              damageAmount,
+              reductionPercent,
+            })
+          : messages.formatMessage(messages.events.playerAttackedNoArmor, {
+              targetName: target.name,
+              actualDamage,
+            }),
       privateMessage:
         effectiveArmor > 0
-          ? `${attacker.name || 'The Monster'} attacked you for ${actualDamage} damage (${damageAmount} base, reduced by ${reductionPercent}% from your ${effectiveArmor} armor).`
-          : `${attacker.name || 'The Monster'} attacked you for ${actualDamage} damage.`,
+          ? messages.formatMessage(messages.privateMessages.attackedWithArmor, {
+              attackerName: attacker.name || 'The Monster',
+              actualDamage,
+              damageAmount,
+              reductionPercent,
+              effectiveArmor,
+            })
+          : messages.formatMessage(messages.privateMessages.attackedNoArmor, {
+              attackerName: attacker.name || 'The Monster',
+              actualDamage,
+            }),
       attackerMessage: isMonsterAttacker
         ? ''
         : effectiveArmor > 0
-          ? `You attacked ${target.name} for ${actualDamage} damage (${damageAmount} base, reduced by ${reductionPercent}% from their ${effectiveArmor} armor).`
-          : `You attacked ${target.name} for ${actualDamage} damage.`,
+          ? messages.formatMessage(
+              messages.player.combat.attackedTargetWithArmor,
+              {
+                targetName: target.name,
+                actualDamage,
+                damageAmount,
+                reductionPercent,
+                effectiveArmor,
+              }
+            )
+          : messages.formatMessage(
+              messages.player.combat.attackedTargetNoArmor,
+              {
+                targetName: target.name,
+                actualDamage,
+              }
+            ),
     };
 
     log.push(logEvent);
@@ -289,23 +358,39 @@ class CombatSystem {
         type: 'stone_armor_degradation',
         public: false,
         targetId: target.id,
-        message: messages.getEvent('dwarfStoneArmor', {
+        message: messages.formatMessage(messages.events.dwarfStoneArmor, {
           playerName: target.name,
           oldValue: armorDegradationInfo.oldValue,
           newValue: armorDegradationInfo.newArmorValue,
         }),
-        privateMessage: `Your Stone Armor degrades from ${armorDegradationInfo.oldValue} to ${armorDegradationInfo.newArmorValue}!`,
-        attackerMessage: `${target.name}'s Stone Armor weakens from your attack!`,
+        privateMessage: messages.formatMessage(
+          messages.privateMessages.stoneArmorDegraded,
+          {
+            oldValue: armorDegradationInfo.oldValue,
+            newValue: armorDegradationInfo.newArmorValue,
+          }
+        ),
+        attackerMessage: messages.formatMessage(
+          messages.player.combat.stoneArmorWeakenedAttacker,
+          { targetName: target.name }
+        ),
       };
 
       if (
         armorDegradationInfo.destroyed &&
         armorDegradationInfo.newArmorValue <= 0
       ) {
-        armorLogEvent.message = messages.getEvent('stoneArmorDestroyed', {
-          playerName: target.name,
-        });
-        armorLogEvent.privateMessage = `Your Stone Armor is destroyed! You now take ${Math.abs(armorDegradationInfo.newArmorValue) * 10}% more damage!`;
+        armorLogEvent.message = messages.formatMessage(
+          messages.events.stoneArmorDestroyed,
+          { playerName: target.name }
+        );
+        armorLogEvent.privateMessage = messages.formatMessage(
+          messages.privateMessages.stoneArmorDestroyed,
+          {
+            damageIncreasePercent:
+              Math.abs(armorDegradationInfo.newArmorValue) * 10,
+          }
+        );
       }
 
       log.push(armorLogEvent);
@@ -324,8 +409,14 @@ class CombatSystem {
       attacker.id
     ) {
       const revealMessage = attacker.isWarlock
-        ? `${target.name}'s desperate Moonbeam reveals that ${attacker.name} IS corrupted!`
-        : `${target.name}'s Moonbeam reveals that ${attacker.name} is pure.`;
+        ? messages.formatMessage(messages.events.moonbeamRevealsCorrupted, {
+            targetName: target.name,
+            attackerName: attacker.name,
+          })
+        : messages.formatMessage(messages.events.moonbeamRevealsPure, {
+            targetName: target.name,
+            attackerName: attacker.name,
+          });
 
       const moonbeamLog = {
         type: 'moonbeam_detection',
@@ -334,11 +425,23 @@ class CombatSystem {
         attackerId: attacker.id,
         message: revealMessage,
         privateMessage: attacker.isWarlock
-          ? `Your Moonbeam detected that ${attacker.name} is a Warlock!`
-          : `Your Moonbeam confirmed that ${attacker.name} is not a Warlock.`,
+          ? messages.formatMessage(
+              messages.privateMessages.moonbeamDetectedWarlock,
+              { attackerName: attacker.name }
+            )
+          : messages.formatMessage(
+              messages.privateMessages.moonbeamConfirmedPure,
+              { attackerName: attacker.name }
+            ),
         attackerMessage: attacker.isWarlock
-          ? `${target.name}'s Moonbeam exposed your corruption!`
-          : `${target.name}'s Moonbeam confirmed your purity.`,
+          ? messages.formatMessage(
+              messages.player.combat.moonbeamExposedCorruption,
+              { targetName: target.name }
+            )
+          : messages.formatMessage(
+              messages.player.combat.moonbeamConfirmedPurityAttacker,
+              { targetName: target.name }
+            ),
       };
       log.push(moonbeamLog);
 
@@ -388,7 +491,10 @@ class CombatSystem {
         attackerId: healer.id,
         message: '',
         privateMessage: '',
-        attackerMessage: `Your healing has no effect on ${target.name}.`,
+        attackerMessage: messages.formatMessage(
+          messages.player.combat.healingBlockedTarget,
+          { targetName: target.name }
+        ),
       };
       log.push(blockedLog);
       return 0;
@@ -402,12 +508,32 @@ class CombatSystem {
 
     // NEW: Apply comeback mechanics bonus for good players
     if (this.comebackActive && !healer.isWarlock) {
+      const beforeComeback = modifiedAmount;
       modifiedAmount = config.gameBalance.applyComebackBonus(
         modifiedAmount,
         'healing',
         true,
         true
       );
+
+      if (modifiedAmount > beforeComeback) {
+        const comebackHealingLog = {
+          type: 'comeback_healing',
+          public: false,
+          attackerId: healer.id,
+          message: '',
+          privateMessage: messages.formatMessage(
+            messages.privateMessages.comebackHealingBonus,
+            {
+              bonusPercent: Math.round(
+                (modifiedAmount / beforeComeback - 1) * 100
+              ),
+            }
+          ),
+          attackerMessage: '',
+        };
+        log.push(comebackHealingLog);
+      }
     }
 
     // NEW: Track coordination for healing
@@ -429,7 +555,16 @@ class CombatSystem {
             public: true,
             targetId: target.id,
             attackerId: healer.id,
-            message: `Coordinated healing! ${coordinationCount + 1} players heal ${target.name} for +${Math.round((coordinatedAmount / modifiedAmount - 1) * 100)}% healing!`,
+            message: messages.formatMessage(
+              messages.events.coordinatedHealing,
+              {
+                playerCount: coordinationCount + 1,
+                targetName: target.name,
+                bonusPercent: Math.round(
+                  (coordinatedAmount / modifiedAmount - 1) * 100
+                ),
+              }
+            ),
             privateMessage: '',
             attackerMessage: '',
           };
@@ -450,9 +585,24 @@ class CombatSystem {
         public: false,
         targetId: target.id,
         attackerId: healer.id,
-        message: `${target.name} is healed for ${actualHeal} HP.`,
-        privateMessage: `You are healed for ${actualHeal} HP by ${healer.name}.`,
-        attackerMessage: `You heal ${target.name} for ${actualHeal} HP.`,
+        message: messages.formatMessage(messages.events.playerHealed, {
+          targetName: target.name,
+          amount: actualHeal,
+        }),
+        privateMessage: messages.formatMessage(
+          messages.privateMessages.healedByPlayer,
+          {
+            actualHeal,
+            healerName: healer.name,
+          }
+        ),
+        attackerMessage: messages.formatMessage(
+          messages.player.combat.healedTarget,
+          {
+            targetName: target.name,
+            actualHeal,
+          }
+        ),
       };
       log.push(healLog);
     }
@@ -488,7 +638,12 @@ class CombatSystem {
             public: false,
             targetId: target.id,
             message: '',
-            privateMessage: `Comeback mechanics grant you ${Math.round(resistanceBonus * 100)}% corruption resistance!`,
+            privateMessage: messages.formatMessage(
+              messages.privateMessages.comebackCorruptionResistance,
+              {
+                resistancePercent: Math.round(resistanceBonus * 100),
+              }
+            ),
             attackerMessage: '',
           };
           log.push(resistanceLog);
@@ -525,7 +680,7 @@ class CombatSystem {
             public: false,
             targetId: player.id,
             message: '',
-            privateMessage: 'Detection penalties have worn off.',
+            privateMessage: messages.privateMessages.detectionPenaltyEnded,
             attackerMessage: '',
           };
           log.push(recoveryLog);
@@ -582,7 +737,11 @@ class CombatSystem {
 
       if (actualCounterDamage > 0) {
         log.push(
-          `${target.name}'s vengeful spirits strike back at ${attacker.name} for ${actualCounterDamage} damage!`
+          messages.formatMessage(messages.events.spiritGuardCounter, {
+            targetName: target.name,
+            attackerName: attacker.name,
+            damage: actualCounterDamage,
+          })
         );
 
         // Private message to attacker
@@ -591,7 +750,13 @@ class CombatSystem {
           public: false,
           targetId: attacker.id,
           message: '',
-          privateMessage: `${target.name}'s Spirit Guard strikes you for ${actualCounterDamage} damage!`,
+          privateMessage: messages.formatMessage(
+            messages.privateMessages.spiritGuardStrikesYou,
+            {
+              targetName: target.name,
+              damage: actualCounterDamage,
+            }
+          ),
           attackerMessage: '',
         };
         log.push(counterLog);
@@ -602,7 +767,11 @@ class CombatSystem {
         target.classEffects.spiritGuard.revealsWarlocks &&
         attacker.isWarlock
       ) {
-        log.push(`The spirits reveal that ${attacker.name} IS a Warlock!`);
+        log.push(
+          messages.formatMessage(messages.events.spiritsRevealWarlock, {
+            attackerName: attacker.name,
+          })
+        );
 
         // Private message to Oracle
         const revelationLog = {
@@ -610,7 +779,10 @@ class CombatSystem {
           public: false,
           targetId: target.id,
           message: '',
-          privateMessage: `Your spirits reveal that ${attacker.name} is a Warlock!`,
+          privateMessage: messages.formatMessage(
+            messages.privateMessages.yourSpiritsRevealWarlock,
+            { attackerName: attacker.name }
+          ),
           attackerMessage: '',
         };
         log.push(revelationLog);
@@ -640,7 +812,11 @@ class CombatSystem {
           const actualCounterDamage = oldAttackerHp - attacker.hp;
 
           log.push(
-            `${target.name}'s Sanctuary reveals and punishes the Warlock ${attacker.name} for ${actualCounterDamage} damage!`
+            messages.formatMessage(messages.events.sanctuaryPunishesWarlock, {
+              targetName: target.name,
+              attackerName: attacker.name,
+              damage: actualCounterDamage,
+            })
           );
 
           // Private messages
@@ -649,7 +825,13 @@ class CombatSystem {
             public: false,
             targetId: attacker.id,
             message: '',
-            privateMessage: `${target.name}'s Sanctuary detects your corruption and punishes you for ${actualCounterDamage} damage!`,
+            privateMessage: messages.formatMessage(
+              messages.combat.counterAttack.sanctuaryCounterPrivate,
+              {
+                targetName: target.name,
+                damage: actualCounterDamage,
+              }
+            ),
             attackerMessage: '',
           };
           log.push(sanctuaryCounterLog);
@@ -659,7 +841,10 @@ class CombatSystem {
             public: false,
             targetId: target.id,
             message: '',
-            privateMessage: `Your Sanctuary detects that ${attacker.name} is a Warlock and punishes them!`,
+            privateMessage: messages.formatMessage(
+              messages.combat.counterAttack.sanctuaryReveal,
+              { attackerName: attacker.name }
+            ),
             attackerMessage: '',
           };
           log.push(sanctuaryRevelationLog);
@@ -670,7 +855,13 @@ class CombatSystem {
             config.gameBalance.warlock.corruption.detectionPenaltyDuration || 1;
         } else {
           log.push(
-            `${target.name}'s Sanctuary detects that ${attacker.name} is NOT a Warlock.`
+            messages.formatMessage(
+              messages.combat.counterAttack.sanctuaryNoWarlock,
+              {
+                targetName: target.name,
+                attackerName: attacker.name,
+              }
+            )
           );
 
           // Private message to Oracle
@@ -679,7 +870,10 @@ class CombatSystem {
             public: false,
             targetId: target.id,
             message: '',
-            privateMessage: `Your Sanctuary confirms that ${attacker.name} is not a Warlock.`,
+            privateMessage: messages.formatMessage(
+              messages.combat.counterAttack.sanctuaryNoWarlockPrivate,
+              { attackerName: attacker.name }
+            ),
             attackerMessage: '',
           };
           log.push(sanctuaryNoWarlockLog);
@@ -705,10 +899,20 @@ class CombatSystem {
         public: false,
         targetId: target.id,
         attackerId: attacker.id || 'monster',
-        message: `${target.name}'s Stone Resolve absorbed all damage from an attack!`,
-        privateMessage: `Your Stone Resolve absorbed all damage from ${attacker.name || 'The Monster'}!`,
+        message: messages.formatMessage(messages.events.stoneResolveAbsorbed, {
+          targetName: target.name,
+        }),
+        privateMessage: messages.formatMessage(
+          messages.privateMessages.yourStoneResolveAbsorbed,
+          {
+            attackerName: attacker.name || 'The Monster',
+          }
+        ),
         attackerMessage: attacker.id
-          ? `${target.name}'s Stone Resolve absorbed all your damage!`
+          ? messages.formatMessage(
+              messages.player.combat.stoneResolveAbsorbedYourDamage,
+              { targetName: target.name }
+            )
           : '',
       };
       log.push(immunityLog);
@@ -728,8 +932,11 @@ class CombatSystem {
    * @private
    */
   handlePotentialDeath(target, attacker, log) {
-    logger.debug(`=== DEATH CHECK for ${target.name} ===`);
-    logger.debug(`Race: ${target.race}, HP: ${target.hp}`);
+    logger.debug('PlayerDeathCheck', {
+      playerName: target.name,
+      race: target.race,
+      hp: target.hp,
+    });
 
     // FIXED: Don't resurrect immediately - just mark for pending death
     // Undying will be checked during processPendingDeaths() AFTER monster attacks
@@ -741,11 +948,19 @@ class CombatSystem {
       public: true,
       targetId: target.id,
       attackerId: attacker.id || 'monster',
-      message: messages.getEvent('playerDies', {
+      message: messages.formatMessage(messages.events.playerDies, {
         playerName: target.name,
       }),
-      privateMessage: `You were killed by ${attacker.name || 'The Monster'}.`,
-      attackerMessage: `You killed ${target.name}.`,
+      privateMessage: messages.formatMessage(
+        messages.privateMessages.killedBy,
+        {
+          attackerName: attacker.name || 'The Monster',
+        }
+      ),
+      attackerMessage: messages.formatMessage(
+        messages.player.combat.youKilledTarget,
+        { targetName: target.name }
+      ),
     };
     log.push(deathLog);
   }
@@ -761,6 +976,7 @@ class CombatSystem {
     // NEW: Apply comeback mechanics damage bonus for good players
     let modifiedAmount = amount;
     if (this.comebackActive && !attacker.isWarlock) {
+      const beforeComeback = amount;
       modifiedAmount = config.gameBalance.applyComebackBonus(
         amount,
         'damage',
@@ -768,13 +984,20 @@ class CombatSystem {
         true
       );
 
-      if (modifiedAmount > amount) {
+      if (modifiedAmount > beforeComeback) {
         const comebackLog = {
           type: 'comeback_damage',
           public: false,
           attackerId: attacker.id,
           message: '',
-          privateMessage: `Comeback mechanics boost your damage by ${Math.round((modifiedAmount / amount - 1) * 100)}%!`,
+          privateMessage: messages.formatMessage(
+            messages.privateMessages.comebackDamageBonus,
+            {
+              bonusPercent: Math.round(
+                (modifiedAmount / beforeComeback - 1) * 100
+              ),
+            }
+          ),
           attackerMessage: '',
         };
         log.push(comebackLog);
@@ -801,7 +1024,15 @@ class CombatSystem {
             type: 'monster_coordination',
             public: true,
             attackerId: attacker.id,
-            message: `Coordinated assault! ${coordinationCount + 1} players attack the Monster for +${Math.round((coordinatedAmount / modifiedAmount - 1) * 100)}% damage!`,
+            message: messages.formatMessage(
+              messages.events.coordinatedMonsterAssault,
+              {
+                playerCount: coordinationCount + 1,
+                bonusPercent: Math.round(
+                  (coordinatedAmount / modifiedAmount - 1) * 100
+                ),
+              }
+            ),
             privateMessage: '',
             attackerMessage: '',
           };
@@ -827,9 +1058,11 @@ class CombatSystem {
   processPendingDeaths(log = []) {
     for (const player of this.players.values()) {
       if (player.pendingDeath) {
-        logger.debug(`=== PROCESSING PENDING DEATH for ${player.name} ===`);
-        logger.debug(`Race: ${player.race}`);
-        logger.debug(`Has racial effects:`, player.racialEffects);
+        logger.debug('ProcessingPendingDeath', {
+          playerName: player.name,
+          race: player.race,
+          hasRacialEffects: !!player.racialEffects,
+        });
 
         // FIXED: Check if player has Undying effect - THIS IS WHERE RESURRECTION HAPPENS
         if (
@@ -838,9 +1071,9 @@ class CombatSystem {
           player.racialEffects.resurrect &&
           player.racialEffects.resurrect.active
         ) {
-          logger.debug(
-            `UNDYING TRIGGERED: Resurrecting ${player.name} AFTER all attacks!`
-          );
+          logger.debug('UndyingTriggered', {
+            playerName: player.name,
+          });
 
           // Resurrect the player
           const resurrectedHp =
@@ -853,9 +1086,14 @@ class CombatSystem {
             type: 'resurrect',
             public: true,
             targetId: player.id,
-            message: `${player.name} refuses to stay down! Undying ability activated.`,
-            privateMessage: 'Your Undying ability saved you from death!',
-            attackerMessage: `${player.name} avoided death through Undying.`,
+            message: messages.formatMessage(messages.events.undyingActivated, {
+              playerName: player.name,
+            }),
+            privateMessage: messages.privateMessages.undyingSavedYou,
+            attackerMessage: messages.formatMessage(
+              messages.player.combat.targetAvoidedDeathUndying,
+              { playerName: player.name }
+            ),
           };
           log.push(resurrectLog);
 
@@ -867,9 +1105,10 @@ class CombatSystem {
           delete player.pendingDeath;
           delete player.deathAttacker;
 
-          logger.debug(
-            `UNDYING SUCCESS: ${player.name} resurrected to ${resurrectedHp} HP AFTER monster attacks`
-          );
+          logger.debug('UndyingSuccess', {
+            playerName: player.name,
+            resurrectedHp,
+          });
         } else {
           // Player actually dies permanently
           player.isAlive = false;
@@ -881,7 +1120,9 @@ class CombatSystem {
           delete player.pendingDeath;
           delete player.deathAttacker;
 
-          logger.debug(`DEATH FINAL: ${player.name} has died permanently`);
+          logger.debug('PlayerDeathFinal', {
+            playerName: player.name,
+          });
         }
       }
     }
@@ -1009,15 +1250,18 @@ class CombatSystem {
       player.race === 'Lich' &&
       (!player.racialEffects || !player.racialEffects.resurrect)
     ) {
-      logger.debug(
-        `Undying not properly set for ${player.name}, setting it up now`
-      );
+      logger.debug('UndyingSetupNeeded', {
+        playerName: player.name,
+      });
       player.racialEffects = player.racialEffects || {};
       player.racialEffects.resurrect = {
         resurrectedHp: 1, // Default value if params not available
         active: true,
       };
-      logger.debug(`Fixed Undying effect:`, player.racialEffects);
+      logger.debug('UndyingSetupComplete', {
+        playerName: player.name,
+        racialEffects: player.racialEffects,
+      });
       return true;
     }
     return false;

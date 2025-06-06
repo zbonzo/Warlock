@@ -40,7 +40,7 @@ class WarlockSystem {
     this.playerCorruptions.clear();
     // Clear detection penalties that have expired
     this.processDetectionPenalties();
-    logger.debug(`Reset corruption tracking for new round`);
+    logger.debug('WarlockRoundTrackingReset', {});
   }
 
   /**
@@ -69,9 +69,10 @@ class WarlockSystem {
     }
 
     if (expiredDetections.length > 0) {
-      logger.debug(
-        `Detection penalties expired for ${expiredDetections.length} players`
-      );
+      logger.debug('WarlockDetectionPenaltiesExpired', {
+        count: expiredDetections.length,
+        playerIds: expiredDetections,
+      });
     }
   }
 
@@ -91,9 +92,10 @@ class WarlockSystem {
     }
 
     if (expiredCooldowns.length > 0) {
-      logger.debug(
-        `Corruption cooldowns expired for ${expiredCooldowns.length} players`
-      );
+      logger.debug('WarlockCorruptionCooldownsExpired', {
+        count: expiredCooldowns.length,
+        playerIds: expiredCooldowns,
+      });
     }
   }
 
@@ -115,9 +117,10 @@ class WarlockSystem {
     this.detectionPenalties.set(warlockId, warlock.detectionTurnsRemaining);
     this.detectedWarlocks.add(warlockId);
 
-    logger.debug(
-      `Marked ${warlock.name} as detected with ${warlock.detectionTurnsRemaining} turn penalty`
-    );
+    logger.debug('WarlockDetected', {
+      warlockName: warlock.name,
+      penaltyTurns: warlock.detectionTurnsRemaining,
+    });
 
     // Add private notification to the warlock about penalties
     const penaltyLog = {
@@ -125,7 +128,13 @@ class WarlockSystem {
       public: false,
       targetId: warlockId,
       message: '',
-      privateMessage: `You've been detected! You take +${config.gameBalance.warlock.corruption.detectionDamagePenalty}% damage and cannot corrupt others this turn.`,
+      privateMessage: messages.formatMessage(
+        messages.warlock.private.privateDetectionPenalty,
+        {
+          penaltyPercent:
+            config.gameBalance.warlock.corruption.detectionDamagePenalty,
+        }
+      ),
       attackerMessage: '',
     };
     log.push(penaltyLog);
@@ -156,7 +165,7 @@ class WarlockSystem {
       !conversionConfig.canCorruptWhenDetected
     ) {
       result.allowed = false;
-      result.reason = 'Cannot corrupt same turn as detected';
+      result.reason = messages.errors.warlockDetectionBlocked;
       result.recentlyDetected = true;
       return result;
     }
@@ -165,7 +174,10 @@ class WarlockSystem {
     const maxPerRound = conversionConfig.maxCorruptionsPerRound || 999;
     if (this.roundCorruptions >= maxPerRound) {
       result.allowed = false;
-      result.reason = `Round corruption limit reached (${maxPerRound})`;
+      result.reason = messages.formatMessage(
+        messages.errors.warlockRoundLimitReached,
+        { maxPerRound }
+      );
       result.roundLimitReached = true;
       return result;
     }
@@ -175,7 +187,10 @@ class WarlockSystem {
     const playerCorruptions = this.playerCorruptions.get(actorId) || 0;
     if (playerCorruptions >= maxPerPlayer) {
       result.allowed = false;
-      result.reason = `Player corruption limit reached (${maxPerPlayer})`;
+      result.reason = messages.formatMessage(
+        messages.errors.warlockPlayerLimitReached,
+        { maxPerPlayer }
+      );
       result.playerLimitReached = true;
       return result;
     }
@@ -184,7 +199,10 @@ class WarlockSystem {
     if (this.corruptionCooldowns.has(actorId)) {
       const remainingCooldown = this.corruptionCooldowns.get(actorId);
       result.allowed = false;
-      result.reason = `Player on corruption cooldown (${remainingCooldown} rounds remaining)`;
+      result.reason = messages.formatMessage(
+        messages.errors.warlockCorruptionCooldown,
+        { remainingCooldown }
+      );
       result.playerOnCooldown = true;
       return result;
     }
@@ -210,9 +228,12 @@ class WarlockSystem {
       config.gameBalance.warlock.conversion.corruptionCooldown || 2;
     this.corruptionCooldowns.set(actorId, cooldown);
 
-    logger.debug(
-      `Recorded corruption by ${actorId}. Round: ${this.roundCorruptions}, Player: ${playerCorruptions + 1}, Cooldown: ${cooldown}`
-    );
+    logger.debug('WarlockCorruptionRecorded', {
+      actorId,
+      roundCount: this.roundCorruptions,
+      playerCount: playerCorruptions + 1,
+      cooldownTurns: cooldown,
+    });
   }
 
   /**
@@ -230,9 +251,10 @@ class WarlockSystem {
     const requiredWarlocks =
       config.gameBalance.calculateWarlockCount(alivePlayerCount);
 
-    logger.info(
-      `Assigning ${requiredWarlocks} warlocks for ${alivePlayerCount} players`
-    );
+    logger.info('WarlockAssignmentStart', {
+      requiredWarlocks,
+      alivePlayerCount,
+    });
 
     const assignedWarlocks = [];
     const availablePlayerIds = [...playerIds];
@@ -251,7 +273,10 @@ class WarlockSystem {
           const index = availablePlayerIds.indexOf(preferredId);
           availablePlayerIds.splice(index, 1);
 
-          logger.info(`Assigned preferred player ${warlock.name} as warlock`);
+          logger.info('WarlockAssignedPreferred', {
+            warlockName: warlock.name,
+            warlockId: preferredId,
+          });
         }
       }
     }
@@ -269,7 +294,10 @@ class WarlockSystem {
         warlock.isWarlock = true;
         assignedWarlocks.push(warlock);
 
-        logger.info(`Randomly assigned player ${warlock.name} as warlock`);
+        logger.info('WarlockAssignedRandom', {
+          warlockName: warlock.name,
+          warlockId: chosenId,
+        });
       }
 
       // Remove from available list
@@ -279,7 +307,9 @@ class WarlockSystem {
     // Update warlock count
     this.numWarlocks = assignedWarlocks.length;
 
-    logger.info(`Successfully assigned ${this.numWarlocks} initial warlocks`);
+    logger.info('WarlockAssignmentComplete', {
+      assignedCount: this.numWarlocks,
+    });
     return assignedWarlocks;
   }
 
@@ -315,7 +345,9 @@ class WarlockSystem {
    */
   incrementWarlockCount() {
     this.numWarlocks++;
-    logger.debug(`Warlock count increased to ${this.numWarlocks}`);
+    logger.debug('WarlockCountIncreased', {
+      count: this.numWarlocks,
+    });
   }
 
   /**
@@ -325,7 +357,9 @@ class WarlockSystem {
   decrementWarlockCount() {
     if (this.numWarlocks > 0) {
       this.numWarlocks--;
-      logger.debug(`Warlock count decreased to ${this.numWarlocks}`);
+      logger.debug('WarlockCountDecreased', {
+        count: this.numWarlocks,
+      });
     }
     return this.numWarlocks;
   }
@@ -394,16 +428,16 @@ class WarlockSystem {
           public: false,
           attackerId: actor.id,
           message: '',
-          privateMessage:
-            'Your recent detection prevents you from corrupting others this turn.',
+          privateMessage: messages.warlock.private.privateCorruptionBlocked,
           attackerMessage: '',
         };
         log.push(blockedLog);
       }
 
-      logger.debug(
-        `Corruption blocked for ${actor.name}: ${limitCheck.reason}`
-      );
+      logger.debug('WarlockCorruptionBlocked', {
+        actorName: actor.name,
+        reason: limitCheck.reason,
+      });
       return false;
     }
 
@@ -451,7 +485,12 @@ class WarlockSystem {
           public: false,
           targetId: target.id,
           message: '',
-          privateMessage: `Comeback mechanics grant you ${Math.round(resistanceReduction * 100)}% corruption resistance!`,
+          privateMessage: messages.formatMessage(
+            messages.warlock.resistance.comebackResistance,
+            {
+              resistancePercent: Math.round(resistanceReduction * 100),
+            }
+          ),
           attackerMessage: '',
         };
         log.push(resistanceLog);
@@ -460,7 +499,7 @@ class WarlockSystem {
 
     // Check for level-up corruption prevention
     if (conversionSettings.preventLevelUpCorruption && rateModifier === 0) {
-      logger.debug(`Level-up corruption prevented by configuration`);
+      logger.debug('WarlockLevelUpCorruptionPrevented', {});
       return false;
     }
 
@@ -493,15 +532,21 @@ class WarlockSystem {
       };
       log.push(conversionLog);
 
-      logger.info(
-        `${actor.name} successfully corrupted ${target.name} (chance: ${Math.round(finalChance * 100)}%)`
-      );
+      logger.info('WarlockCorruptionSuccess', {
+        actorName: actor.name,
+        targetName: target.name,
+        finalChance: Math.round(finalChance * 100),
+      });
       return true;
     }
 
-    logger.debug(
-      `Corruption attempt failed: ${actor.name} -> ${target.name} (chance: ${Math.round(finalChance * 100)}%)`
-    );
+    logger.debug('WarlockCorruptionAttemptDetails', {
+      actorName: actor.name,
+      targetName: target.name,
+      baseChance: Math.round(baseChance * 100),
+      modifier: rateModifier,
+      finalChance: Math.round(finalChance * 100),
+    });
     return false;
   }
 
@@ -649,9 +694,10 @@ class WarlockSystem {
     // Use the detection marking method
     this.markWarlockDetected(warlockId, log);
 
-    logger.debug(
-      `Applied detection penalty to ${warlock.name} from ${detectionSource}`
-    );
+    logger.debug('WarlockDetectionPenaltyApplied', {
+      warlockName: warlock.name,
+      detectionSource,
+    });
   }
 
   /**

@@ -87,6 +87,8 @@ function handleSocketError(socket, error, actionName, duration) {
   if (isKnownError) {
     logger.warn('SocketActionKnownError', errorContext);
   } else {
+    console.error('FULL ERROR DETAILS:', error);
+    console.error('STACK TRACE:', error.stack);
     // Ensure `type` and `message` are set for unexpected errors
     errorContext.error.type = ErrorTypes.SERVER;
     errorContext.error.message =
