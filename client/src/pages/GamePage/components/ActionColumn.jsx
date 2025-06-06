@@ -173,163 +173,188 @@ const ActionColumn = ({
             </div>
           )}
 
-          {/* Enhanced waiting for others view with detailed submission tracking */}
-          {me.isAlive && submitted && !needsRevalidation() && (
-            <div className="submit-message card">
-              <h3 className="section-title">Action submitted</h3>
-
-              {/* Show current submission status */}
-              <div className="submission-status">
-                <p>Waiting for other players to take their actions...</p>
-                <ActionSubmissionTracker players={validPlayers} />
+          {/* Stunned player view */}
+          {me.isAlive && me.statusEffects?.stunned && (
+            <div className="stunned-message card">
+              <h3 className="section-title warning">Stunned</h3>
+              <div className="stun-icon">
+                <span className="turn-counter">
+                  {me.statusEffects.stunned.turns}
+                </span>
+                😵
               </div>
-
-              <div className="waiting-spinner"></div>
+              <p>You are stunned and cannot act this turn.</p>
             </div>
           )}
+
+          {/* Enhanced waiting for others view with detailed submission tracking */}
+          {me.isAlive &&
+            !me.statusEffects?.stunned &&
+            submitted &&
+            !needsRevalidation() && (
+              <div className="submit-message card">
+                <h3 className="section-title">Action submitted</h3>
+
+                {/* Show current submission status */}
+                <div className="submission-status">
+                  <p>Waiting for other players to take their actions...</p>
+                  <ActionSubmissionTracker players={validPlayers} />
+                </div>
+
+                <div className="waiting-spinner"></div>
+              </div>
+            )}
 
           {/* Invalid action warning and reset option */}
-          {me.isAlive && submitted && needsRevalidation() && (
-            <div className="invalid-action-warning card">
-              <h3 className="section-title danger">Action needs updating</h3>
+          {me.isAlive &&
+            !me.statusEffects?.stunned &&
+            submitted &&
+            needsRevalidation() && (
+              <div className="invalid-action-warning card">
+                <h3 className="section-title danger">Action needs updating</h3>
 
-              <div className="validation-warning">
-                <p
-                  style={{ color: 'var(--color-danger)', marginBottom: '10px' }}
-                >
-                  ⚠️ Your submitted action is no longer valid.
-                  {me?.submissionStatus?.action?.invalidationReason && (
-                    <span>
-                      {' '}
-                      Reason: {me.submissionStatus.action.invalidationReason}
-                    </span>
-                  )}
-                </p>
-                <p style={{ marginBottom: '15px' }}>
-                  Please select a new action and target.
-                </p>
-              </div>
+                <div className="validation-warning">
+                  <p
+                    style={{
+                      color: 'var(--color-danger)',
+                      marginBottom: '10px',
+                    }}
+                  >
+                    ⚠️ Your submitted action is no longer valid.
+                    {me?.submissionStatus?.action?.invalidationReason && (
+                      <span>
+                        {' '}
+                        Reason: {me.submissionStatus.action.invalidationReason}
+                      </span>
+                    )}
+                  </p>
+                  <p style={{ marginBottom: '15px' }}>
+                    Please select a new action and target.
+                  </p>
+                </div>
 
-              <div className="submission-status">
-                <ActionSubmissionTracker players={validPlayers} />
+                <div className="submission-status">
+                  <ActionSubmissionTracker players={validPlayers} />
+                </div>
               </div>
-            </div>
-          )}
+            )}
 
           {/* Action selection view */}
-          {me.isAlive && (!submitted || needsRevalidation()) && (
-            <div className="action-selection">
-              {/* Racial ability */}
-              {me.racialAbility && (
-                <div className="racial-ability-container">
-                  <h3 className="section-title secondary">Racial Ability</h3>
-                  <RacialAbilityCard
-                    ability={me.racialAbility}
-                    usesLeft={me.racialUsesLeft}
-                    cooldown={me.racialCooldown}
-                    disabled={false}
-                    onUse={() => onRacialAbilityUse(me.racialAbility.type)}
-                  />
-                </div>
-              )}
-
-              {/* Class abilities with enhanced cooldown display */}
-              <h3 className="section-title secondary">Your Abilities</h3>
-
-              <div className="ability-list">
-                {unlocked.map((ability) => {
-                  const cooldown = me.abilityCooldowns?.[ability.type] || 0;
-                  return (
-                    <AbilityCard
-                      key={ability.type}
-                      ability={ability}
-                      selected={actionType === ability.type}
-                      onSelect={onSetActionType}
-                      abilityCooldown={cooldown}
-                      player={me}
+          {me.isAlive &&
+            !me.statusEffects?.stunned &&
+            (!submitted || needsRevalidation()) && (
+              <div className="action-selection">
+                {/* Racial ability */}
+                {me.racialAbility && (
+                  <div className="racial-ability-container">
+                    <h3 className="section-title secondary">Racial Ability</h3>
+                    <RacialAbilityCard
+                      ability={me.racialAbility}
+                      usesLeft={me.racialUsesLeft}
+                      cooldown={me.racialCooldown}
+                      disabled={false}
+                      onUse={() => onRacialAbilityUse(me.racialAbility.type)}
                     />
-                  );
-                })}
-              </div>
+                  </div>
+                )}
 
-              {/* Enhanced validation message */}
-              {actionType && selectedTarget && (
-                <div className="selection-validation">
-                  {isCurrentSelectionValid() ? (
-                    <div className="validation-success">
-                      ✓ Ready to submit action
-                    </div>
-                  ) : (
-                    <div className="validation-error">
-                      {!actionType ? '• Select an ability' : ''}
-                      {!selectedTarget ? '• Select a target' : ''}
-                      {actionType && me.abilityCooldowns?.[actionType] > 0
-                        ? `• Ability on cooldown (${me.abilityCooldowns[actionType]} turns)`
-                        : ''}
-                      {selectedTarget === '__monster__' &&
-                      (!monster || monster.hp <= 0)
-                        ? '• Monster is no longer a valid target'
-                        : ''}
-                      {selectedTarget !== '__monster__' &&
-                      selectedTarget &&
-                      !alivePlayers.find((p) => p.id === selectedTarget)
-                        ? '• Selected player is no longer alive'
-                        : ''}
-                    </div>
-                  )}
+                {/* Class abilities with enhanced cooldown display */}
+                <h3 className="section-title secondary">Your Abilities</h3>
+
+                <div className="ability-list">
+                  {unlocked.map((ability) => {
+                    const cooldown = me.abilityCooldowns?.[ability.type] || 0;
+                    return (
+                      <AbilityCard
+                        key={ability.type}
+                        ability={ability}
+                        selected={actionType === ability.type}
+                        onSelect={onSetActionType}
+                        abilityCooldown={cooldown}
+                        player={me}
+                      />
+                    );
+                  })}
                 </div>
-              )}
 
-              {/* Racial enhancement indicators */}
-              {(bloodRageActive || keenSensesActive) && (
-                <div
-                  className={`racial-enhancement ${bloodRageActive ? 'blood-rage' : ''} ${keenSensesActive ? 'keen-senses' : ''}`}
+                {/* Enhanced validation message */}
+                {actionType && selectedTarget && (
+                  <div className="selection-validation">
+                    {isCurrentSelectionValid() ? (
+                      <div className="validation-success">
+                        ✓ Ready to submit action
+                      </div>
+                    ) : (
+                      <div className="validation-error">
+                        {!actionType ? '• Select an ability' : ''}
+                        {!selectedTarget ? '• Select a target' : ''}
+                        {actionType && me.abilityCooldowns?.[actionType] > 0
+                          ? `• Ability on cooldown (${me.abilityCooldowns[actionType]} turns)`
+                          : ''}
+                        {selectedTarget === '__monster__' &&
+                        (!monster || monster.hp <= 0)
+                          ? '• Monster is no longer a valid target'
+                          : ''}
+                        {selectedTarget !== '__monster__' &&
+                        selectedTarget &&
+                        !alivePlayers.find((p) => p.id === selectedTarget)
+                          ? '• Selected player is no longer alive'
+                          : ''}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Racial enhancement indicators */}
+                {(bloodRageActive || keenSensesActive) && (
+                  <div
+                    className={`racial-enhancement ${bloodRageActive ? 'blood-rage' : ''} ${keenSensesActive ? 'keen-senses' : ''}`}
+                  >
+                    {bloodRageActive && (
+                      <div className="enhancement-badge blood-rage-badge">
+                        <span className="enhancement-icon">💢</span>
+                        <span className="enhancement-text">
+                          Blood Rage Active
+                        </span>
+                      </div>
+                    )}
+
+                    {keenSensesActive && (
+                      <div className="enhancement-badge keen-senses-badge">
+                        <span className="enhancement-icon">👁️</span>
+                        <span className="enhancement-text">
+                          Keen Senses Active
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Target selector */}
+                <TargetSelector
+                  alivePlayers={alivePlayers}
+                  monster={monster}
+                  currentPlayerId={me.id}
+                  selectedTarget={selectedTarget}
+                  onSelectTarget={onSelectTarget}
+                  disableMonster={keenSensesActive}
+                />
+
+                {/* Enhanced submit button with better validation */}
+                <button
+                  className="button action-button"
+                  onClick={handleSubmitAction}
+                  disabled={!isCurrentSelectionValid()}
+                  title={
+                    !isCurrentSelectionValid()
+                      ? 'Please select a valid ability (not on cooldown) and target'
+                      : 'Submit your action'
+                  }
                 >
-                  {bloodRageActive && (
-                    <div className="enhancement-badge blood-rage-badge">
-                      <span className="enhancement-icon">💢</span>
-                      <span className="enhancement-text">
-                        Blood Rage Active
-                      </span>
-                    </div>
-                  )}
-
-                  {keenSensesActive && (
-                    <div className="enhancement-badge keen-senses-badge">
-                      <span className="enhancement-icon">👁️</span>
-                      <span className="enhancement-text">
-                        Keen Senses Active
-                      </span>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* Target selector */}
-              <TargetSelector
-                alivePlayers={alivePlayers}
-                monster={monster}
-                currentPlayerId={me.id}
-                selectedTarget={selectedTarget}
-                onSelectTarget={onSelectTarget}
-                disableMonster={keenSensesActive}
-              />
-
-              {/* Enhanced submit button with better validation */}
-              <button
-                className="button action-button"
-                onClick={handleSubmitAction}
-                disabled={!isCurrentSelectionValid()}
-                title={
-                  !isCurrentSelectionValid()
-                    ? 'Please select a valid ability (not on cooldown) and target'
-                    : 'Submit your action'
-                }
-              >
-                {needsRevalidation() ? 'Update Action' : 'Submit Action'}
-              </button>
-            </div>
-          )}
+                  {needsRevalidation() ? 'Update Action' : 'Submit Action'}
+                </button>
+              </div>
+            )}
         </div>
       ) : (
         <div className="results-phase">
@@ -498,5 +523,3 @@ ActionColumn.propTypes = {
 };
 
 export default ActionColumn;
-
-

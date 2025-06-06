@@ -102,7 +102,8 @@
 
 /* Message displays */
 .submit-message,
-.dead-message {
+.dead-message,
+.stunned-message {
   text-align: center;
   padding: 30px;
   background-color: var(--color-surface);
@@ -116,6 +117,24 @@
   font-size: 48px;
   margin: 20px 0;
   opacity: 0.7;
+}
+
+.stun-icon {
+  position: relative;
+  font-size: 48px;
+  margin: 20px 0;
+  opacity: 0.7;
+}
+
+.turn-counter {
+  position: absolute;
+  top: -10px;
+  right: -10px;
+  background-color: var(--color-danger);
+  color: #fff;
+  border-radius: 50%;
+  padding: 2px 6px;
+  font-size: 14px;
 }
 
 .waiting-spinner {
@@ -284,11 +303,17 @@
   }
 
   .submit-message,
-  .dead-message {
+  .dead-message,
+  .stunned-message {
     padding: 20px;
   }
 
   .skull-icon {
+    font-size: 36px;
+    margin: 15px 0;
+  }
+
+  .stun-icon {
     font-size: 36px;
     margin: 15px 0;
   }
