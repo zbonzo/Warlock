@@ -1,3 +1,4 @@
+// client/src/components/game/DamageEffects/DamageEffects.jsx
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAppContext } from '../../../contexts/AppContext';
 import './DamageEffects.css';
