@@ -42,7 +42,7 @@ const EventsLog = ({ events, currentPlayerId, players = [] }) => {
 
   const getPersonalizedMessage = (event) => {
     // Debug what type of event we're processing
-    console.log('Processing event type:', event.type);
+    // console.log('Processing event type:', event.type);
 
     // Handle legacy string events
     if (typeof event === 'string') {
@@ -54,15 +54,15 @@ const EventsLog = ({ events, currentPlayerId, players = [] }) => {
     if (event.attackerId === currentPlayerId) {
       // Player is the attacker/actor
       message = event.attackerMessage || event.message;
-      console.log('Using attacker message:', message);
+      //console.log('Using attacker message:', message);
     } else if (event.targetId === currentPlayerId) {
       // Player is the target
       message = event.privateMessage || event.message;
-      console.log('Using target message:', message);
+      //console.log('Using target message:', message);
     } else {
       // Player is observing
       message = event.message || '';
-      console.log('Using observer message:', message);
+      //console.log('Using observer message:', message);
     }
 
     // Process and return the message
@@ -76,7 +76,6 @@ const EventsLog = ({ events, currentPlayerId, players = [] }) => {
    * @returns {boolean} Whether event should be shown
    */
   const shouldShowEvent = (event) => {
-    console.log('event', event);
     // Legacy string events are always public
     // if (typeof event === 'string') return true;
 

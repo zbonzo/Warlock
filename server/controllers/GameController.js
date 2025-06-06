@@ -509,12 +509,6 @@ function handleAdaptabilityReplace(
     return false;
   }
 
-  logger.info('PlayerSelectedAdaptabilityAbility', {
-    playerName,
-    abilityName: ability.name,
-    className,
-    gameCode,
-  });
   // Find the old ability
   const oldAbilityIndex = player.abilities.findIndex(
     (a) => a.type === oldAbilityType
@@ -557,6 +551,13 @@ function handleAdaptabilityReplace(
 
   // Create a deep copy to avoid reference issues
   const newAbility = JSON.parse(JSON.stringify(newAbilityTemplate));
+
+  logger.info('PlayerSelectedAdaptabilityAbility', {
+    playerName: player.name,
+    abilityName: newAbilityTemplate.name,
+    className: newClassName,
+    gameCode,
+  });
 
   // Replace in both arrays
   player.abilities[oldAbilityIndex] = newAbility;

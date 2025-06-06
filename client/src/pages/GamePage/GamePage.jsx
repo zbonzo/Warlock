@@ -20,7 +20,7 @@ import AdaptabilityModal from '@components/modals/AdaptabilityModal';
 import BattleResultsModal from '@components/modals/BattleResultsModal';
 import useMediaQuery from '@hooks/useMediaQuery';
 import './GamePage.css';
-
+import DamageEffects from '@components/game/DamageEffects/DamageEffects';
 /**
  * GamePage component handles the main game UI and orchestrates game flow
  * Enhanced with better action validation and submission tracking
@@ -759,6 +759,11 @@ const GamePage = ({
           showAllEvents={false}
         />
       </div>
+      <DamageEffects
+        eventsLog={eventsLog}
+        playerName={me?.name || ''}
+        playerId={me?.id || ''}
+      />
     </div>
   );
 };
@@ -778,5 +783,3 @@ GamePage.propTypes = {
 };
 
 export default GamePage;
-
-
