@@ -260,12 +260,22 @@ function handlePoisonStrike(
       'abilities.attacks',
       'attackInvisible'
     );
-    log.push(
-      messages.formatMessage(invisibleMessage, {
+    const invisibleLog = {
+      type: 'attack_invisible',
+      public: false,
+      attackerId: actor.id,
+      targetId: target.id,
+      message: '',
+      privateMessage: messages.formatMessage(invisibleMessage, {
         attackerName: actor.name,
         targetName: target.name,
-      })
-    );
+      }),
+      attackerMessage: messages.formatMessage(invisibleMessage, {
+        attackerName: actor.name,
+        targetName: target.name,
+      }),
+    };
+    log.push(invisibleLog);
     return false;
   }
 
@@ -569,12 +579,22 @@ function handleMultiHitAttack(
       'abilities.attacks',
       'attackInvisible'
     );
-    log.push(
-      messages.formatMessage(invisibleMessage, {
+    const invisibleLog = {
+      type: 'attack_invisible',
+      public: false,
+      attackerId: actor.id,
+      targetId: target.id,
+      message: '',
+      privateMessage: messages.formatMessage(invisibleMessage, {
         attackerName: actor.name,
         targetName: target.name,
-      })
-    );
+      }),
+      attackerMessage: messages.formatMessage(invisibleMessage, {
+        attackerName: actor.name,
+        targetName: target.name,
+      }),
+    };
+    log.push(invisibleLog);
     return false;
   }
 
@@ -621,14 +641,27 @@ function handleMultiHitAttack(
     'abilities.attacks',
     'multiHitAnnounce'
   );
-  log.push(
-    messages.formatMessage(announceMessage, {
+
+  const announceLog = {
+    type: 'multi_hit_announce',
+    public: false,
+    attackerId: actor.id,
+    targetId: target === config.MONSTER_ID ? config.MONSTER_ID : target.id,
+    message: '',
+    privateMessage: messages.formatMessage(announceMessage, {
       playerName: actor.name,
       abilityName: ability.name,
       targetName: target === config.MONSTER_ID ? 'the Monster' : target.name,
       hits: hits,
-    })
-  );
+    }),
+    attackerMessage: messages.formatMessage(announceMessage, {
+      playerName: actor.name,
+      abilityName: ability.name,
+      targetName: target === config.MONSTER_ID ? 'the Monster' : target.name,
+      hits: hits,
+    }),
+  };
+  log.push(announceLog);
 
   let totalDamage = 0;
   let hitCount = 0;
@@ -665,14 +698,27 @@ function handleMultiHitAttack(
           'abilities.attacks',
           'multiHitIndividual'
         );
-        log.push(
-          messages.formatMessage(hitMessage, {
+
+        const hitLog = {
+          type: 'multi_hit_hit',
+          public: false,
+          attackerId: actor.id,
+          targetId: target.id,
+          message: '',
+          privateMessage: messages.formatMessage(hitMessage, {
             hitNumber: hitCount,
             playerName: actor.name,
             damage: actualDamage,
             targetName: target.name,
-          })
-        );
+          }),
+          attackerMessage: messages.formatMessage(hitMessage, {
+            hitNumber: hitCount,
+            playerName: actor.name,
+            damage: actualDamage,
+            targetName: target.name,
+          }),
+        };
+        log.push(hitLog);
         totalDamage += actualDamage;
       }
     } else {
@@ -680,11 +726,20 @@ function handleMultiHitAttack(
         'abilities.attacks',
         'multiHitMiss'
       );
-      log.push(
-        messages.formatMessage(missMessage, {
+      const missLog = {
+        type: 'multi_hit_miss',
+        public: false,
+        attackerId: actor.id,
+        targetId: target === config.MONSTER_ID ? config.MONSTER_ID : target.id,
+        message: '',
+        privateMessage: messages.formatMessage(missMessage, {
           hitNumber: i + 1,
-        })
-      );
+        }),
+        attackerMessage: messages.formatMessage(missMessage, {
+          hitNumber: i + 1,
+        }),
+      };
+      log.push(missLog);
     }
   }
 
@@ -694,12 +749,23 @@ function handleMultiHitAttack(
       'abilities.attacks',
       'multiHitSummary'
     );
-    log.push(
-      messages.formatMessage(summaryMessage, {
+
+    const summaryLog = {
+      type: 'multi_hit_summary',
+      public: false,
+      attackerId: actor.id,
+      targetId: target === config.MONSTER_ID ? config.MONSTER_ID : target.id,
+      message: '',
+      privateMessage: messages.formatMessage(summaryMessage, {
         hitCount: hitCount,
         totalDamage: totalDamage,
-      })
-    );
+      }),
+      attackerMessage: messages.formatMessage(summaryMessage, {
+        hitCount: hitCount,
+        totalDamage: totalDamage,
+      }),
+    };
+    log.push(summaryLog);
 
     // NEW: Apply threat for total damage dealt
     applyThreatForAbility(actor, target, ability, totalDamage, 0, systems);
@@ -708,7 +774,16 @@ function handleMultiHitAttack(
       'abilities.attacks',
       'multiHitMissed'
     );
-    log.push(allMissedMessage);
+    const missedLog = {
+      type: 'multi_hit_missed',
+      public: false,
+      attackerId: actor.id,
+      targetId: target === config.MONSTER_ID ? config.MONSTER_ID : target.id,
+      message: '',
+      privateMessage: allMissedMessage,
+      attackerMessage: allMissedMessage,
+    };
+    log.push(missedLog);
   }
 
   // Check for warlock conversion on player targets
