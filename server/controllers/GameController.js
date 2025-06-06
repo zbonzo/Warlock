@@ -188,6 +188,25 @@ function handleStartGame(io, socket, gameCode) {
     },
   });
 
+  // Send initial corruption event privately to assigned warlocks
+  const initialCorruptionEvent = {
+    type: 'corruption',
+    public: false,
+    message: '',
+    privateMessage: messages.getAbilityMessage(
+      'warlock',
+      'private.youWereCorrupted'
+    ),
+    attackerMessage: '',
+    moveToEnd: false,
+  };
+
+  assignedWarlocks.forEach((w) => {
+    io.to(w.id).emit('privateEvent', {
+      events: [{ ...initialCorruptionEvent, targetId: w.id }],
+    });
+  });
+
   return true;
 }
 

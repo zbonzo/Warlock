@@ -204,6 +204,12 @@ function AppContent() {
       alert(message);
     });
 
+    const unsubscribePrivateEvent = on('privateEvent', ({ events }) => {
+      if (events && events.length > 0) {
+        addEventLog({ turn: 0, events });
+      }
+    });
+
     // Return cleanup function to remove listeners
     return () => {
       unsubscribeGameCreated();
@@ -211,6 +217,7 @@ function AppContent() {
       unsubscribeGameStarted();
       unsubscribeRoundResult();
       unsubscribeErrorMessage();
+      unsubscribePrivateEvent();
       unsubscribeGameReconnected();
       unsubscribePlayerJoined();
     };
@@ -404,5 +411,3 @@ function AppContent() {
 }
 
 export default App;
-
-
