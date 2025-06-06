@@ -3,6 +3,8 @@
  * Maps ability types to their handler functions with enhanced parameter support
  */
 const logger = require('@utils/logger');
+const config = require('@config');
+const messages = require('@messages');
 
 /**
  * AbilityRegistry manages the mapping of ability types to their handler functions
@@ -89,8 +91,159 @@ class AbilityRegistry {
     }
 
     try {
-      // FIXED: Pass coordination info to the handler
-      return handler(actor, target, ability, log, systems, coordinationInfo);
+      const variance = config.gameBalance.abilityVariance;
+
+      const critChance = variance.critChance || 0;
+      const failChance = variance.failChance || 0;
+      const ultraFailChance = variance.ultraFailChance || 0;
+      const critMultiplier = variance.critMultiplier || 1.5;
+
+      const roll = Math.random();
+
+      let finalTarget = target;
+      let outcome = 'normal';
+
+      if (roll < ultraFailChance) {
+        outcome = 'ultraFail';
+      } else if (roll < ultraFailChance + failChance) {
+        outcome = 'fail';
+      } else if (roll < ultraFailChance + failChance + critChance) {
+        outcome = 'crit';
+      }
+
+      const categoryMap = {
+        Attack: 'attacks',
+        Heal: 'healing',
+        Defense: 'defense',
+        Special: 'special',
+      };
+      const categoryKey = categoryMap[ability.category] || 'attacks';
+
+      if (outcome === 'fail') {
+        const failMsg = messages.getAbilityMessage(
+          `abilities.${categoryKey}`,
+          categoryKey === 'healing'
+            ? 'healingFailed'
+            : categoryKey === 'defense'
+            ? 'defenseFailed'
+            : categoryKey === 'special'
+            ? 'specialAbilityFailed'
+            : 'abilityFailed'
+        );
+        log.push({
+          type: 'ability_fail',
+          public: false,
+          attackerId: actor.id,
+          message: '',
+          privateMessage: messages.formatMessage(failMsg, {
+            playerName: actor.name,
+            abilityName: ability.name,
+          }),
+          attackerMessage: '',
+        });
+        return false;
+      }
+
+      if (outcome === 'ultraFail') {
+        const newTargetId = systems.gameStateUtils.getRandomTarget({
+          actorId: actor.id,
+          excludeIds: [actor.id],
+          includeMonster: true,
+          monsterRef: systems.monsterController.getState(),
+        });
+        if (newTargetId) {
+          finalTarget =
+            newTargetId === config.MONSTER_ID
+              ? config.MONSTER_ID
+              : systems.players.get(newTargetId);
+
+          // Overwrite the announcement log to show new target
+          const last = log[log.length - 1];
+          if (last && last.type === 'action_announcement') {
+            const targetName =
+              finalTarget === config.MONSTER_ID
+                ? 'the Monster'
+                : finalTarget === 'multi'
+                ? 'multiple targets'
+                : finalTarget.name;
+            last.targetId = finalTarget.id || 'monster';
+            last.message = messages.getEvent('playerAttacks', {
+              playerName: actor.name,
+              abilityName: ability.name,
+              targetName,
+            });
+          }
+
+          log.push({
+            type: 'ability_ultra_fail',
+            public: false,
+            attackerId: actor.id,
+            message: '',
+            privateMessage: `ULTRA FAIL! Your ${ability.name} hit ${
+              finalTarget === config.MONSTER_ID
+                ? 'the Monster'
+                : finalTarget.name
+            } instead!`,
+            attackerMessage: '',
+          });
+        }
+      }
+
+      if (outcome === 'crit' || outcome === 'ultraFail') {
+        actor.tempCritMultiplier = critMultiplier;
+        const critMsg = messages.getAbilityMessage(
+          `abilities.${categoryKey}`,
+          'abilityCrit'
+        );
+        const tn =
+          finalTarget === config.MONSTER_ID
+            ? 'the Monster'
+            : finalTarget === 'multi'
+            ? 'multiple targets'
+            : finalTarget.name;
+        log.push({
+          type: 'ability_crit',
+          public: true,
+          attackerId: actor.id,
+          targetId: finalTarget.id || finalTarget,
+          message: messages.formatMessage(critMsg, {
+            playerName: actor.name,
+            abilityName: ability.name,
+            targetName: tn,
+            amount:
+              ability.params.amount ||
+              ability.params.damage ||
+              ability.params.armor ||
+              '',
+          }),
+          privateMessage: '',
+          attackerMessage: '',
+        });
+      }
+
+      // Copy ability if defense crit modifies armor
+      let abilityCopy = ability;
+      if (
+        (outcome === 'crit' || outcome === 'ultraFail') &&
+        ability.category === 'Defense' &&
+        ability.params?.armor
+      ) {
+        abilityCopy = {
+          ...ability,
+          params: {
+            ...ability.params,
+            armor: Math.floor(ability.params.armor * critMultiplier),
+          },
+        };
+      }
+
+      const result = handler(actor, finalTarget, abilityCopy, log, systems, {
+        ...coordinationInfo,
+      });
+
+      if (actor.tempCritMultiplier) delete actor.tempCritMultiplier;
+
+      return result;
     } catch (error) {
       logger.error(`Error executing class ability ${abilityType}:`, error);
 
@@ -135,7 +288,96 @@ class AbilityRegistry {
     }
 
     try {
-      return handler(actor, target, racialAbility, log, systems);
+      const variance = config.gameBalance.abilityVariance;
+
+      const critChance = variance.critChance || 0;
+      const failChance = variance.failChance || 0;
+      const ultraFailChance = variance.ultraFailChance || 0;
+      const critMultiplier = variance.critMultiplier || 1.5;
+
+      const roll = Math.random();
+
+      let finalTarget = target;
+      let outcome = 'normal';
+
+      if (roll < ultraFailChance) {
+        outcome = 'ultraFail';
+      } else if (roll < ultraFailChance + failChance) {
+        outcome = 'fail';
+      } else if (roll < ultraFailChance + failChance + critChance) {
+        outcome = 'crit';
+      }
+
+      if (outcome === 'fail') {
+        const failMsg = messages.getAbilityMessage(
+          'abilities.racial',
+          'racialAbilityFailed'
+        );
+        log.push({
+          type: 'racial_ability_fail',
+          public: false,
+          attackerId: actor.id,
+          message: '',
+          privateMessage: messages.formatMessage(failMsg, {
+            playerName: actor.name,
+          }),
+          attackerMessage: '',
+        });
+        return false;
+      }
+
+      if (outcome === 'ultraFail') {
+        const newTargetId = systems.gameStateUtils.getRandomTarget({
+          actorId: actor.id,
+          excludeIds: [actor.id],
+          includeMonster: true,
+          monsterRef: systems.monsterController.getState(),
+        });
+        if (newTargetId) {
+          finalTarget =
+            newTargetId === config.MONSTER_ID
+              ? config.MONSTER_ID
+              : systems.players.get(newTargetId);
+          log.push({
+            type: 'racial_ability_ultra_fail',
+            public: false,
+            attackerId: actor.id,
+            message: '',
+            privateMessage: `ULTRA FAIL! Your racial ability hit ${
+              finalTarget === config.MONSTER_ID
+                ? 'the Monster'
+                : finalTarget.name
+            } instead!`,
+            attackerMessage: '',
+          });
+        }
+      }
+
+      if (outcome === 'crit' || outcome === 'ultraFail') {
+        actor.tempCritMultiplier = critMultiplier;
+        const critMsg = messages.getAbilityMessage(
+          'abilities.racial',
+          'racialAbilityCrit'
+        );
+        if (critMsg) {
+          log.push({
+            type: 'racial_ability_crit',
+            public: true,
+            attackerId: actor.id,
+            message: messages.formatMessage(critMsg, {
+              playerName: actor.name,
+            }),
+            privateMessage: '',
+            attackerMessage: '',
+          });
+        }
+      }
+
+      const result = handler(actor, finalTarget, racialAbility, log, systems);
+
+      if (actor.tempCritMultiplier) delete actor.tempCritMultiplier;
+
+      return result;
     } catch (error) {
       logger.error(`Error executing racial ability ${abilityType}:`, error);
 

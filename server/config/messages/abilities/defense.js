@@ -31,6 +31,8 @@ module.exports = {
   // Generic defense messages
   defenseActivated: '{playerName} activates {abilityName}.',
   defenseFailed: '{playerName} tries to use {abilityName}, but it fails.',
+  abilityCrit:
+    '{playerName} fortifies {targetName} with a potent {abilityName}!',
+  abilityUltraFail:
+    '{playerName} fumbles {abilityName}, accidentally shielding {targetName} instead!',
 };
-
-

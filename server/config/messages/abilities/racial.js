@@ -33,6 +33,8 @@ module.exports = {
   racialAbilityUsed: '{playerName} uses their racial ability.',
   racialAbilityFailed:
     '{playerName} tries to use their racial ability, but it fails.',
+  racialAbilityCrit:
+    '{playerName} unleashes the full power of their racial ability!',
+  racialAbilityUltraFail:
+    "{playerName}'s racial ability backfires on {targetName}!",
 };
-
-

@@ -434,7 +434,12 @@ class MonsterController {
    * @param {Array} log - Event log to append messages to
    * @returns {boolean} Whether the attack was successful
    */
-  takeDamage(amount, attacker, log = []) {
+  takeDamage(amount, attacker, log = [], options = {}) {
+    const multiplier =
+      attacker?.tempCritMultiplier || options.critMultiplier || 1;
+    if (multiplier !== 1) {
+      amount = Math.floor(amount * multiplier);
+    }
     if (this.monster.hp <= 0) {
       log.push(
         messages.getEvent('monsterAlreadyDefeated', {
@@ -582,5 +587,3 @@ class MonsterController {
 }
 
 module.exports = MonsterController;
-
-

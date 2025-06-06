@@ -106,10 +106,16 @@ class CombatSystem {
     damageAmount,
     attacker,
     log = [],
-    isKeenSensesAttack = false
+    isKeenSensesAttack = false,
+    options = {}
   ) {
     if (!target || !target.isAlive) return false;
 
+    const critMultiplier =
+      attacker?.tempCritMultiplier || options.critMultiplier || 1;
+    if (critMultiplier !== 1) {
+      damageAmount = Math.floor(damageAmount * critMultiplier);
+    }
     // Check for immunity effects first
     if (this.checkImmunityEffects(target, attacker, log)) {
       return false; // No damage was dealt
@@ -473,9 +479,11 @@ class CombatSystem {
    * @param {Array} log - Event log
    * @returns {number} Actual amount healed
    */
-  applyHealing(healer, target, baseAmount, log = []) {
-    if (!target || !target.isAlive || target.hp >= target.maxHp) {
-      return 0;
+  applyHealing(healer, target, baseAmount, log = [], options = {}) {
+    const critMultiplier =
+      healer?.tempCritMultiplier || options.critMultiplier || 1;
+    if (critMultiplier !== 1) {
+      baseAmount = Math.floor(baseAmount * critMultiplier);
     }
 
     // Check if healing is blocked (e.g., Warlocks can't be healed by others)
@@ -972,7 +980,12 @@ class CombatSystem {
    * @param {Array} log - Event log to append messages to
    * @returns {boolean} Whether the attack was successful
    */
-  applyDamageToMonster(amount, attacker, log = []) {
+  applyDamageToMonster(amount, attacker, log = [], options = {}) {
+    const critMultiplier =
+      attacker?.tempCritMultiplier || options.critMultiplier || 1;
+    if (critMultiplier !== 1) {
+      amount = Math.floor(amount * critMultiplier);
+    }
     // NEW: Apply comeback mechanics damage bonus for good players
     let modifiedAmount = amount;
     if (this.comebackActive && !attacker.isWarlock) {
@@ -1229,8 +1242,7 @@ class CombatSystem {
 
     // Apply healing to each target using the enhanced healing method
     for (const target of validTargets) {
-      const actualHeal = this.applyHealing(source, target, baseAmount, log);
-
+      const actualHeal = this.applyHealing(source, target, baseAmount, log, {});
       if (actualHeal > 0) {
         affectedTargets.push(target);
       }

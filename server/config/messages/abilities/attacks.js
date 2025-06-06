@@ -81,4 +81,7 @@ module.exports = {
   abilityUsed: '{playerName} uses {abilityName}.',
   abilityFailed:
     '{playerName} tries to use {abilityName}, but something goes wrong!',
+  abilityCrit: '{playerName} lands a critical {abilityName} on {targetName}!',
+  abilityUltraFail:
+    '{playerName} loses control of {abilityName}, striking {targetName} by mistake!',
 };

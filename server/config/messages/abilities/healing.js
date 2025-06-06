@@ -47,6 +47,8 @@ module.exports = {
   healingFailed:
     '{playerName} tries to use {abilityName}, but the healing fails.',
   healingUsed: '{playerName} uses {abilityName}.',
+  abilityCrit:
+    '{playerName} channels a critical {abilityName}, restoring {amount} health to {targetName}!',
+  abilityUltraFail:
+    "{playerName}'s {abilityName} wildly heals {targetName} instead!",
 };
-
-

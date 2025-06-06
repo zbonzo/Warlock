@@ -98,6 +98,7 @@ module.exports = {
   specialAbilityUsed: '{playerName} uses {abilityName}.',
   specialAbilityFailed:
     '{playerName} tries to use {abilityName}, but it fails.',
+  abilityCrit: '{playerName} masterfully uses {abilityName} on {targetName}!',
+  abilityUltraFail:
+    "{playerName}'s {abilityName} goes haywire and hits {targetName}!",
 };
-
-

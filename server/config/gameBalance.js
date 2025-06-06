@@ -217,6 +217,16 @@ const combat = {
 };
 
 /**
+ * Critical/failure chance configuration
+ */
+const abilityVariance = {
+  critChance: 0.05, // 5% chance to critically succeed
+  failChance: 0.05, // 5% chance to completely fail
+  ultraFailChance: 0.01, // 1% chance to target a random entity instead
+  critMultiplier: 1.5, // 150% effect multiplier on crit/ultra fail
+};
+
+/**
  * Game code generation
  */
 const gameCode = {
@@ -524,6 +534,7 @@ module.exports = {
   comebackMechanics,
   stoneArmor,
   combat,
+  abilityVariance,
   gameCode,
   rateLimiting,
   armor: player.armor,
