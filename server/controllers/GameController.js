@@ -38,7 +38,12 @@ function handleCreateGame(io, socket, playerName) {
   // Add this socket as a player (host) in the new game
   game.addPlayer(socket.id, playerName);
   socket.join(gameCode);
-  logger.info('GameCreated', { gameCode, playerName });
+  logger.info(
+    messages.formatMessage(messages.serverLogMessages.info.GameCreated, {
+      gameCode,
+      playerName,
+    })
+  );
 
   // Create timeout for the new game
   gameService.createGameTimeout(io, gameCode);
@@ -51,6 +56,7 @@ function handleCreateGame(io, socket, playerName) {
 
   return true;
 }
+
 /**
  * Handle name availability checking with proper error handling
  * @param {Object} io - Socket.io instance
@@ -87,15 +93,17 @@ function handleCheckNameAvailability(io, socket, gameCode, playerName) {
     return true;
   } catch (error) {
     // Handle any unexpected errors
-    logger.error('NameAvailabilityCheckError', {
-      gameCode,
-      playerName,
-      error: { message: error.message, stack: error.stack },
-    });
+    logger.error(
+      messages.formatMessage(
+        messages.serverLogMessages.error.NameAvailabilityCheckError,
+        { gameCode, playerName }
+      ),
+      error
+    );
 
     socket.emit('nameCheckResponse', {
       isAvailable: false,
-      error: 'Unable to check name availability. Please try again.',
+      error: messages.getError('nameCheckUnavailable'),
       suggestion: null,
     });
 
@@ -144,11 +152,18 @@ function handleStartGame(io, socket, gameCode) {
   const warlockCount = assignedWarlocks.length;
   const playerCount = game.players.size;
 
-  logger.info('GameStarted', { gameCode, warlockCount, playerCount });
+  logger.info(
+    messages.formatMessage(messages.serverLogMessages.info.GameStarted, {
+      gameCode,
+      warlockCount,
+      playerCount,
+    })
+  );
+
   // Create appropriate start message based on warlock count
   let warlockMessage;
   if (warlockCount === 1) {
-    warlockMessage = 'A Warlock has been chosen and walks among you.';
+    warlockMessage = messages.getEvent('warlockChosenSingle');
   } else {
     warlockMessage = messages.formatMessage(
       messages.getAbilityMessage('warlock', 'scaling.multipleWarlocksAssigned'),
@@ -198,7 +213,7 @@ function handlePerformAction(
     const game = validateGameAction(socket, gameCode, true, false);
     if (!game) {
       socket.emit('errorMessage', {
-        message: 'Game not found or invalid state',
+        message: messages.getError('gameOrStateInvalid'),
       });
       return false;
     }
@@ -236,7 +251,14 @@ function handlePerformAction(
     if (player.isAbilityOnCooldown(actionType)) {
       const remainingCooldown = player.getAbilityCooldown(actionType);
       socket.emit('errorMessage', {
-        message: `Ability "${actionType}" is on cooldown for ${remainingCooldown} more turn${remainingCooldown !== 1 ? 's' : ''}`,
+        message: messages.formatMessage(
+          messages.getError('abilityOnCooldownPlural'),
+          {
+            abilityName: actionType,
+            turns: remainingCooldown,
+            s: remainingCooldown !== 1 ? 's' : '',
+          }
+        ),
         type: 'cooldown_error',
         abilityType: actionType,
         remainingTurns: remainingCooldown,
@@ -249,12 +271,18 @@ function handlePerformAction(
       const hasAbility = player.unlocked.some((a) => a.type === actionType);
       if (!hasAbility) {
         socket.emit('errorMessage', {
-          message: `You don't have the ability "${actionType}"`,
+          message: messages.formatMessage(
+            messages.getError('abilityNotFoundForPlayer'),
+            { abilityName: actionType }
+          ),
           type: 'ability_not_found',
         });
       } else {
         socket.emit('errorMessage', {
-          message: `Cannot use ability "${actionType}" right now`,
+          message: messages.formatMessage(
+            messages.getError('abilityUnavailableNow'),
+            { abilityName: actionType }
+          ),
           type: 'ability_unavailable',
         });
       }
@@ -266,7 +294,7 @@ function handlePerformAction(
       const targetPlayer = game.getPlayerById(targetId);
       if (!targetPlayer || !targetPlayer.isAlive) {
         socket.emit('errorMessage', {
-          message: 'Selected target is no longer alive or valid',
+          message: messages.getError('targetInvalidOrDead'),
           type: 'invalid_target',
         });
         return false;
@@ -275,7 +303,7 @@ function handlePerformAction(
       // Validate monster is alive (if applicable)
       if (game.monster && game.monster.hp <= 0) {
         socket.emit('errorMessage', {
-          message: 'Monster is no longer a valid target',
+          message: messages.getError('monsterInvalidTarget'),
           type: 'invalid_target',
         });
         return false;
@@ -285,7 +313,7 @@ function handlePerformAction(
     // Check if player has already submitted an action
     if (player.hasSubmittedAction) {
       socket.emit('errorMessage', {
-        message: 'You have already submitted an action for this round',
+        message: messages.getError('actionAlreadySubmitted'),
         type: 'already_submitted',
       });
       return false;
@@ -301,13 +329,18 @@ function handlePerformAction(
       // Mark player as having submitted an action (this is now handled in Player.submitAction)
       player.actionSubmissionTime = Date.now();
 
-      logger.info('PlayerPerformedAction', {
-        playerName: player.name,
-        socketId: socket.id,
-        actionType,
-        targetId,
-        gameCode,
-      });
+      logger.info(
+        messages.formatMessage(
+          messages.serverLogMessages.info.PlayerPerformedAction,
+          {
+            playerName: player.name,
+            socketId: socket.id,
+            actionType,
+            targetId,
+            gameCode,
+          }
+        )
+      );
 
       // Broadcast updated player list with submission status
       io.to(gameCode).emit('playerList', { players: game.getPlayersInfo() });
@@ -318,15 +351,25 @@ function handlePerformAction(
         (p) => p.hasSubmittedAction && p.actionValidationState === 'valid'
       );
 
-      logger.info('ActionSubmissionProgress', {
-        submittedCount: submittedPlayers.length,
-        totalCount: alivePlayers.length,
-        gameCode,
-      });
+      logger.info(
+        messages.formatMessage(
+          messages.serverLogMessages.info.ActionSubmissionProgress,
+          {
+            submittedCount: submittedPlayers.length,
+            totalCount: alivePlayers.length,
+            gameCode,
+          }
+        )
+      );
 
       // If all actions submitted, process the round
       if (game.allActionsSubmitted()) {
-        logger.info('AllActionsSubmitted', { gameCode });
+        logger.info(
+          messages.formatMessage(
+            messages.serverLogMessages.info.AllActionsSubmitted,
+            { gameCode }
+          )
+        );
 
         // Small delay to ensure UI updates
         setTimeout(() => {
@@ -338,7 +381,7 @@ function handlePerformAction(
       socket.emit('actionSubmitted', {
         actionType,
         targetId,
-        message: 'Action submitted successfully',
+        message: messages.getSuccess('actionSubmitted'),
         submissionProgress: {
           submitted: submittedPlayers.length,
           total: alivePlayers.length,
@@ -346,16 +389,22 @@ function handlePerformAction(
       });
     } else {
       socket.emit('errorMessage', {
-        message: 'Failed to submit action. Please try again.',
+        message: messages.getError('actionSubmitFailed'),
         type: 'submission_failed',
       });
     }
 
     return success;
   } catch (error) {
-    logger.error(`Error in handlePerformAction for game ${gameCode}:`, error);
+    logger.error(
+      messages.formatMessage(
+        messages.serverLogMessages.error.HandlePerformActionError,
+        { gameCode, errorDetails: error.message }
+      ),
+      error
+    );
     socket.emit('errorMessage', {
-      message: 'An error occurred while processing your action',
+      message: messages.getError('actionProcessingError'),
       type: 'server_error',
     });
     return false;
@@ -383,15 +432,25 @@ function handleRacialAbility(io, socket, gameCode, targetId, abilityType) {
 
   // Special handling for Artisan Adaptability
   if (abilityType === 'adaptability' && player.race === 'Artisan') {
-    logger.debug('PlayerUsingAdaptability', {
-      playerName: player.name,
-      socketId: socket.id,
-      gameCode,
-    });
+    logger.debug(
+      messages.formatMessage(
+        messages.serverLogMessages.debug.PlayerUsedAdaptability,
+        {
+          playerName: player.name,
+          socketId: socket.id,
+          gameCode,
+        }
+      )
+    );
 
     // First check if they have uses left
     if (player.racialUsesLeft <= 0) {
-      logger.debug(`Player ${player.name} has no Adaptability uses left`);
+      logger.debug(
+        messages.formatMessage(
+          messages.serverLogMessages.debug.AdaptabilityNoUsesLeft,
+          { playerName: player.name }
+        )
+      );
       socket.emit('racialAbilityUsed', {
         success: false,
         message: messages.getError('noUsesLeft', {
@@ -445,7 +504,12 @@ function handleRacialAbility(io, socket, gameCode, targetId, abilityType) {
         message: messages.success.adaptabilityTriggered,
       });
     } else {
-      logger.warn(`Failed to use Adaptability for player ${player.name}`);
+      logger.warn(
+        messages.formatMessage(
+          messages.serverLogMessages.warn.AdaptabilityUseFailed,
+          { playerName: player.name }
+        )
+      );
       socket.emit('racialAbilityUsed', {
         success: false,
         message: messages.errors.adaptabilityFailed,
@@ -515,7 +579,10 @@ function handleAdaptabilityReplace(
   );
   if (oldAbilityIndex === -1) {
     logger.error(
-      `Old ability ${oldAbilityType} not found for player ${player.name}`
+      messages.formatMessage(
+        messages.serverLogMessages.error.AdaptabilityOldAbilityNotFound,
+        { oldAbilityType, playerName: player.name }
+      )
     );
     socket.emit('adaptabilityComplete', {
       success: false,
@@ -527,7 +594,12 @@ function handleAdaptabilityReplace(
   // Find the new ability in the target class
   const targetClassAbilities = config.classAbilities[newClassName];
   if (!targetClassAbilities) {
-    logger.error(`Class ${newClassName} not found in abilities config`);
+    logger.error(
+      messages.formatMessage(
+        messages.serverLogMessages.error.AdaptabilityClassNotFound,
+        { className: newClassName }
+      )
+    );
     socket.emit('adaptabilityComplete', {
       success: false,
       message: messages.getError('invalidClass'),
@@ -540,7 +612,10 @@ function handleAdaptabilityReplace(
   );
   if (!newAbilityTemplate) {
     logger.error(
-      `Ability ${newAbilityType} at level ${level} not found for class ${newClassName}`
+      messages.formatMessage(
+        messages.serverLogMessages.error.AdaptabilityNewAbilityNotFound,
+        { newAbilityType, level, className: newClassName }
+      )
     );
     socket.emit('adaptabilityComplete', {
       success: false,
@@ -552,12 +627,16 @@ function handleAdaptabilityReplace(
   // Create a deep copy to avoid reference issues
   const newAbility = JSON.parse(JSON.stringify(newAbilityTemplate));
 
-  logger.info('PlayerSelectedAdaptabilityAbility', {
-    playerName: player.name,
-    abilityName: newAbilityTemplate.name,
-    className: newClassName,
-    gameCode,
-  });
+  logger.info(
+    messages.formatMessage(
+      messages.serverLogMessages.info.PlayerSelectedAdaptabilityAbility,
+      {
+        playerName: player.name,
+        abilityName: newAbilityTemplate.name,
+        className: newClassName,
+      }
+    )
+  );
 
   // Replace in both arrays
   player.abilities[oldAbilityIndex] = newAbility;
@@ -571,7 +650,10 @@ function handleAdaptabilityReplace(
   }
 
   logger.info(
-    `Successfully replaced ${oldAbilityType} with ${newAbilityType} for player ${player.name}`
+    messages.formatMessage(
+      messages.serverLogMessages.info.AdaptabilitySuccess,
+      { oldAbilityType, newAbilityType, playerName: player.name }
+    )
   );
 
   // Update clients
@@ -600,7 +682,12 @@ function handleGetClassAbilities(io, socket, gameCode, className, level) {
   const game = validateGameAction(socket, gameCode, true, false);
   gameService.refreshGameTimeout(io, gameCode);
 
-  logger.debug(`Getting ${className} abilities for level ${level}`);
+  logger.debug(
+    messages.formatMessage(messages.serverLogMessages.debug.GetClassAbilities, {
+      className,
+      level,
+    })
+  );
 
   try {
     // Find abilities for the requested class and level
@@ -612,7 +699,10 @@ function handleGetClassAbilities(io, socket, gameCode, className, level) {
       .filter((ability) => ability.unlockAt === parseInt(level, 10));
 
     logger.debug(
-      `Found ${matchingAbilities.length} abilities for ${className} at level ${level}`
+      messages.formatMessage(
+        messages.serverLogMessages.debug.FoundClassAbilities,
+        { count: matchingAbilities.length, className, level }
+      )
     );
 
     // Send the response with the matching abilities
@@ -625,7 +715,13 @@ function handleGetClassAbilities(io, socket, gameCode, className, level) {
 
     return true;
   } catch (error) {
-    logger.error(`Error getting abilities: ${error.message}`, error);
+    logger.error(
+      messages.formatMessage(
+        messages.serverLogMessages.error.GetClassAbilitiesError,
+        { errorMessage: error.message }
+      ),
+      error
+    );
     socket.emit('classAbilitiesResponse', {
       success: false,
       abilities: [],
@@ -646,7 +742,10 @@ function handleGetClassAbilities(io, socket, gameCode, className, level) {
  */
 function handlePlayerNextReady(io, socket, gameCode) {
   logger.info(
-    `Player ${socket.id} clicked ready for next round in game ${gameCode}`
+    messages.formatMessage(
+      messages.serverLogMessages.info.PlayerReadyNextRound,
+      { socketId: socket.id, gameCode }
+    )
   );
 
   try {
@@ -659,13 +758,21 @@ function handlePlayerNextReady(io, socket, gameCode) {
     // Initialize the set if missing
     if (!game.nextReady) {
       game.nextReady = new Set();
-      logger.debug(`Initialized nextReady set for game ${gameCode}`);
+      logger.debug(
+        messages.formatMessage(
+          messages.serverLogMessages.debug.NextReadySetInitialized,
+          { gameCode }
+        )
+      );
     }
 
     // Check if player already marked ready
     if (game.nextReady.has(socket.id)) {
       logger.debug(
-        `Player ${socket.id} already marked ready for game ${gameCode}`
+        messages.formatMessage(
+          messages.serverLogMessages.debug.PlayerAlreadyMarkedReady,
+          { socketId: socket.id, gameCode }
+        )
       );
       return false; // Already marked ready
     }
@@ -687,12 +794,23 @@ function handlePlayerNextReady(io, socket, gameCode) {
       // Resume game
       io.to(gameCode).emit('resumeGame');
       game.nextReady.clear();
-      logger.info(`Game ${gameCode}: Resuming next round by majority vote`);
+      logger.info(
+        messages.formatMessage(
+          messages.serverLogMessages.info.ResumeByMajority,
+          { gameCode }
+        )
+      );
     }
 
     return true;
   } catch (error) {
-    logger.error(`Error in handlePlayerNextReady: ${error.message}`, error);
+    logger.error(
+      messages.formatMessage(
+        messages.serverLogMessages.error.PlayerNextReadyError,
+        { gameCode, errorDetails: error.message }
+      ),
+      error
+    );
     return false;
   }
 }
@@ -710,7 +828,7 @@ function handlePlayAgain(io, socket, gameCode, playerName) {
     // Validate inputs
     if (!gameCode || !playerName) {
       socket.emit('errorMessage', {
-        message: 'Missing game code or player name.',
+        message: messages.getError('missingGameCodeOrPlayerName'),
         type: 'validation_error',
       });
       return false;
@@ -719,7 +837,7 @@ function handlePlayAgain(io, socket, gameCode, playerName) {
     // Basic player name validation (simplified)
     if (!playerName || playerName.length < 1 || playerName.length > 20) {
       socket.emit('errorMessage', {
-        message: 'Invalid player name. Please use 1-20 characters.',
+        message: messages.getError('invalidPlayerNameLength'),
         type: 'validation_error',
       });
       return false;
@@ -730,12 +848,20 @@ function handlePlayAgain(io, socket, gameCode, playerName) {
 
     if (existingGame) {
       // Game already exists, join it directly (bypass normal validation)
-      logger.info('PlayerAttemptingPlayAgain', { playerName, oldGameCode });
+      logger.info(
+        messages.formatMessage(
+          messages.serverLogMessages.info.PlayerAttemptingPlayAgain,
+          { playerName, oldGameCode: gameCode }
+        )
+      );
 
       // Check if game is full
       if (existingGame.players.size >= (config.maxPlayers || 20)) {
         socket.emit('errorMessage', {
-          message: `Game is full (${config.maxPlayers || 20} players max).`,
+          message: messages.formatMessage(
+            messages.getError('gameFullWithCount'),
+            { maxPlayers: config.maxPlayers || 20 }
+          ),
           type: 'game_full',
         });
         return false;
@@ -744,7 +870,7 @@ function handlePlayAgain(io, socket, gameCode, playerName) {
       // Check if player is already in this game
       if (existingGame.players.has(socket.id)) {
         socket.emit('errorMessage', {
-          message: 'You are already in this game.',
+          message: messages.getError('alreadyInThisGame'),
           type: 'already_joined',
         });
         return false;
@@ -754,7 +880,7 @@ function handlePlayAgain(io, socket, gameCode, playerName) {
       const success = existingGame.addPlayer(socket.id, playerName);
       if (!success) {
         socket.emit('errorMessage', {
-          message: 'Could not join game.',
+          message: messages.getError('couldNotJoinGame'),
           type: 'join_failed',
         });
         return false;
@@ -769,19 +895,27 @@ function handlePlayAgain(io, socket, gameCode, playerName) {
       socket.emit('playerJoined', {
         gameCode,
         playerName,
-        message: `Successfully joined replay game ${gameCode}`,
+        message: messages.formatMessage(
+          messages.getSuccess('joinedReplayGame'),
+          { gameCode }
+        ),
       });
 
       return true;
     } else {
       // Game doesn't exist, create it and become host
-      logger.info(`${playerName} creating replay game ${gameCode}`);
+      logger.info(
+        messages.formatMessage(
+          messages.serverLogMessages.info.CreatingReplayGame,
+          { playerName, gameCode }
+        )
+      );
 
       // Create the game with the specific code
       const game = gameService.createGameWithCode(gameCode);
       if (!game) {
         socket.emit('errorMessage', {
-          message: 'Failed to create game. Server may be busy.',
+          message: messages.getError('createGameFailedServerBusy'),
           type: 'creation_failed',
         });
         return false;
@@ -793,7 +927,7 @@ function handlePlayAgain(io, socket, gameCode, playerName) {
         // Clean up the game if we can't add the player
         gameService.games.delete(gameCode);
         socket.emit('errorMessage', {
-          message: 'Failed to join created game.',
+          message: messages.getError('joinCreatedGameFailed'),
           type: 'creation_failed',
         });
         return false;
@@ -813,12 +947,15 @@ function handlePlayAgain(io, socket, gameCode, playerName) {
       return true;
     }
   } catch (error) {
-    logger.error('PlayerNextReadyError', {
-      gameCode,
-      error: { message: error.message, stack: error.stack },
-    });
+    logger.error(
+      messages.formatMessage(
+        messages.serverLogMessages.error.PlayerNextReadyError,
+        { gameCode, errorDetails: error.message }
+      ),
+      error
+    );
     socket.emit('errorMessage', {
-      message: 'Failed to start new game. Please try again.',
+      message: messages.getError('startNewGameFailed'),
       type: 'server_error',
     });
     return false;

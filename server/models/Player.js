@@ -72,15 +72,27 @@ class Player {
 
     // Check if player is alive
     if (!this.isAlive) {
-      result.reason = 'Dead players cannot perform actions';
-      logger.debug(`Player ${this.name} tried to submit action while dead`);
+      result.reason = messages.getError('playerDeadCannotAct');
+      logger.debug(
+        messages.formatMessage(
+          messages.serverLogMessages.debug.DeadPlayerActionAttempt,
+          { playerName: this.name }
+        )
+      );
       return result;
     }
 
     // Check if already submitted an action this round
     if (this.hasSubmittedAction) {
-      result.reason = 'Action already submitted this round';
-      logger.debug(`Player ${this.name} tried to submit multiple actions`);
+      result.reason = messages.getError(
+        'playerActionAlreadySubmittedThisRound'
+      );
+      logger.debug(
+        messages.formatMessage(
+          messages.serverLogMessages.debug.MultipleActionsAttempt,
+          { playerName: this.name }
+        )
+      );
       return result;
     }
 
@@ -89,9 +101,15 @@ class Player {
       (ability) => ability.type === actionType
     );
     if (!selectedAbility) {
-      result.reason = `Ability '${actionType}' is not available`;
+      result.reason = messages.formatMessage(
+        messages.getError('playerAbilityNotAvailable'),
+        { abilityName: actionType }
+      );
       logger.debug(
-        `Player ${this.name} tried to use unavailable ability: ${actionType}`
+        messages.formatMessage(
+          messages.serverLogMessages.debug.UnavailableAbilityAttempt,
+          { playerName: this.name, abilityType: actionType }
+        )
       );
       return result;
     }
@@ -99,16 +117,22 @@ class Player {
     // Check if ability is on cooldown
     const cooldown = this.getAbilityCooldown(actionType);
     if (cooldown > 0) {
-      result.reason = `Ability '${selectedAbility.name}' is on cooldown for ${cooldown} more turns`;
+      result.reason = messages.formatMessage(
+        messages.getError('playerAbilityOnCooldownDetailed'),
+        { abilityName: selectedAbility.name, turns: cooldown }
+      );
       logger.debug(
-        `Player ${this.name} tried to use ${actionType} but it's on cooldown (${cooldown} turns)`
+        messages.formatMessage(
+          messages.serverLogMessages.debug.AbilityOnCooldownAttempt,
+          { playerName: this.name, actionType, cooldown }
+        )
       );
       return result;
     }
 
     // Validate target (basic validation - more detailed validation happens during processing)
     if (!targetId) {
-      result.reason = 'No target specified';
+      result.reason = messages.getError('playerNoTargetSpecified');
       return result;
     }
 
@@ -131,7 +155,10 @@ class Player {
     result.action = action;
 
     logger.debug(
-      `Player ${this.name} successfully submitted action: ${actionType} -> ${targetId}`
+      messages.formatMessage(
+        messages.serverLogMessages.debug.PlayerActionSubmittedSuccessfully,
+        { playerName: this.name, actionType, targetId }
+      )
     );
     return result;
   }
@@ -149,7 +176,7 @@ class Player {
     };
 
     if (!this.hasSubmittedAction || !this.submittedAction) {
-      result.reason = 'No action submitted';
+      result.reason = messages.getError('playerNoActionSubmittedForValidation');
       this.actionValidationState = 'none';
       return result;
     }
@@ -161,7 +188,10 @@ class Player {
       (ability) => ability.type === actionType
     );
     if (!selectedAbility) {
-      result.reason = `Ability '${actionType}' is no longer available`;
+      result.reason = messages.formatMessage(
+        messages.getError('playerAbilityNoLongerAvailable'),
+        { abilityName: actionType }
+      );
       this.invalidateAction(result.reason);
       return result;
     }
@@ -169,7 +199,10 @@ class Player {
     // Re-check cooldown status
     const cooldown = this.getAbilityCooldown(actionType);
     if (cooldown > 0) {
-      result.reason = `Ability '${selectedAbility.name}' is now on cooldown (${cooldown} turns)`;
+      result.reason = messages.formatMessage(
+        messages.getError('playerAbilityNowOnCooldown'),
+        { abilityName: selectedAbility.name, turns: cooldown }
+      );
       this.invalidateAction(result.reason);
       return result;
     }
@@ -177,14 +210,14 @@ class Player {
     // Validate target still exists and is valid
     if (targetId === config.MONSTER_ID) {
       if (!monster || monster.hp <= 0) {
-        result.reason = 'Monster is no longer a valid target';
+        result.reason = messages.getError('playerMonsterInvalidTarget');
         this.invalidateAction(result.reason);
         return result;
       }
     } else {
       const targetPlayer = alivePlayers.find((p) => p.id === targetId);
       if (!targetPlayer || !targetPlayer.isAlive) {
-        result.reason = 'Player target is no longer alive or valid';
+        result.reason = messages.getError('playerTargetInvalidOrDead');
         this.invalidateAction(result.reason);
         return result;
       }
@@ -200,7 +233,12 @@ class Player {
    * @param {string} reason - Reason for invalidation
    */
   invalidateAction(reason) {
-    logger.debug(`Invalidating action for ${this.name}: ${reason}`);
+    logger.debug(
+      messages.formatMessage(
+        messages.serverLogMessages.debug.PlayerActionInvalidated,
+        { playerName: this.name, reason }
+      )
+    );
 
     if (this.submittedAction) {
       this.submittedAction.isValid = false;
@@ -223,7 +261,12 @@ class Player {
     this.actionValidationState = 'none';
     this.isReady = false;
 
-    logger.debug(`Cleared action submission for ${this.name}`);
+    logger.debug(
+      messages.formatMessage(
+        messages.serverLogMessages.debug.PlayerActionSubmissionCleared,
+        { playerName: this.name }
+      )
+    );
   }
 
   /**
@@ -349,7 +392,14 @@ class Player {
       this.abilityCooldowns[abilityType] = cooldownTurns + 1;
 
       logger.debug(
-        `${this.name}: ${abilityType} on cooldown for ${this.abilityCooldowns[abilityType]} turns`
+        messages.formatMessage(
+          messages.serverLogMessages.debug.PlayerAbilityOnCooldown,
+          {
+            playerName: this.name,
+            abilityType,
+            turnsRemaining: this.abilityCooldowns[abilityType],
+          }
+        )
       );
     }
   }
@@ -391,7 +441,10 @@ class Player {
 
     if (expiredCooldowns.length > 0) {
       logger.debug(
-        `${this.name}: Cooldowns expired for ${expiredCooldowns.join(', ')}`
+        messages.formatMessage(
+          messages.serverLogMessages.debug.PlayerCooldownsExpired,
+          { playerName: this.name, abilityNames: expiredCooldowns.join(', ') }
+        )
       );
     }
   }
@@ -440,7 +493,10 @@ class Player {
       config.gameBalance.stoneArmor.degradationPerHit || 1;
 
     logger.debug(
-      `${this.name}'s Stone Armor degrades from ${oldValue} to ${this.stoneArmorValue}`
+      messages.formatMessage(
+        messages.serverLogMessages.debug.StoneArmorDegradation,
+        { playerName: this.name, oldValue, newValue: this.stoneArmorValue }
+      )
     );
 
     // Check if stone armor is completely destroyed
@@ -522,7 +578,14 @@ class Player {
       // Debug log for testing
       if (missingHpPercent > 0) {
         logger.debug(
-          `Blood Frenzy: ${this.name} missing ${Math.round(missingHpPercent * 100)}% HP, damage increased by ${Math.round(damageIncrease * 100)}%`
+          messages.formatMessage(
+            messages.serverLogMessages.debug.BloodFrenzyDamageIncrease,
+            {
+              playerName: this.name,
+              missingHpPercent: Math.round(missingHpPercent * 100),
+              damageIncreasePercent: Math.round(damageIncrease * 100),
+            }
+          )
         );
       }
     }
@@ -565,8 +628,14 @@ class Player {
       showModified: baseDamage !== modifiedDamage,
       displayText:
         baseDamage === modifiedDamage
-          ? `${baseDamage} damage`
-          : `${modifiedDamage} damage (${baseDamage} base × ${this.damageMod?.toFixed(1) || 1.0})`,
+          ? messages.formatMessage(messages.ui.abilityDamageSimple, {
+              damage: baseDamage,
+            })
+          : messages.formatMessage(messages.ui.abilityDamageModified, {
+              modifiedDamage,
+              baseDamage,
+              modifier: this.damageMod?.toFixed(1) || 1.0,
+            }),
     };
   }
 
@@ -663,7 +732,9 @@ class Player {
       };
 
       logger.debug(
-        `UNDYING SETUP: ${this.name} now has Undying effect:`,
+        messages.formatMessage(messages.serverLogMessages.debug.UndyingSetup, {
+          playerName: this.name,
+        }),
         this.racialEffects.resurrect
       );
     } else if (abilityData.type === 'stoneArmor') {
@@ -707,8 +778,14 @@ class Player {
         type: 'life_bond_healing',
         public: false,
         targetId: this.id,
-        message: `${this.name}'s Life Bond with the monster heals them for ${actualHeal} HP.`,
-        privateMessage: `Your Life Bond with the monster heals you for ${actualHeal} HP.`,
+        message: messages.formatMessage(
+          messages.getEvent('kinfolkLifebondPublic'),
+          { playerName: this.name, healAmount: actualHeal }
+        ),
+        privateMessage: messages.formatMessage(
+          messages.privateMessages.kinfolkLifebondPrivate,
+          { healAmount: actualHeal }
+        ),
         attackerMessage: '',
       };
       log.push(healLog);
@@ -825,7 +902,10 @@ class Player {
         return {
           type: 'rage_ended',
           damage: actualDamage,
-          message: `${this.name}'s Unstoppable Rage ends, causing ${actualDamage} exhaustion damage!`,
+          message: messages.formatMessage(
+            messages.getEvent('unstoppableRageEnded'),
+            { playerName: this.name, actualDamage }
+          ),
         };
       }
     }
@@ -838,7 +918,10 @@ class Player {
         delete this.classEffects.spiritGuard;
         return {
           type: 'spirit_guard_ended',
-          message: `${this.name}'s Spirit Guard fades away.`,
+          message: messages.formatMessage(
+            messages.getEvent('spiritGuardFaded'),
+            { playerName: this.name }
+          ),
         };
       }
     }
@@ -851,7 +934,9 @@ class Player {
         delete this.classEffects.sanctuaryOfTruth;
         return {
           type: 'sanctuary_ended',
-          message: `${this.name}'s Sanctuary of Truth fades away.`,
+          message: messages.formatMessage(messages.getEvent('sanctuaryFaded'), {
+            playerName: this.name,
+          }),
         };
       }
     }

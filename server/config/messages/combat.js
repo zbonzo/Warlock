@@ -1,5 +1,5 @@
 /**
- * @fileoverview Enhanced combat system messages with coordination and comeback mechanics
+ * @fileoverview Enhanced combat system messages with coordination and comeback mechanics (updated with audit findings)
  * Messages for damage, death, resurrection, armor, and new team balance features
  */
 
@@ -288,6 +288,24 @@ module.exports = {
       'Being detected applies: +{penaltyPercent}% damage taken, corruption blocked this turn.',
     yourDetectionRecovery:
       'Detection penalties have worn off - you can corrupt again!',
+
+    // NEW: CombatSystem.js audit items - Player messages
+    attackedWithArmor:
+      '{attackerName} attacked you for {actualDamage} damage ({damageAmount} base, reduced by {reductionPercent}% from your {effectiveArmor} armor).',
+    attackedNoArmor: '{attackerName} attacked you for {actualDamage} damage.',
+    healedByPlayer: 'You are healed for {actualHeal} HP by {healerName}.',
+    stoneArmorWeakenedAttacker:
+      "{targetName}'s Stone Armor weakens from your attack!",
+    moonbeamExposedCorruption:
+      "{targetName}'s Moonbeam exposed your corruption!",
+    moonbeamConfirmedPurityAttacker:
+      "{targetName}'s Moonbeam confirmed your purity.",
+    healingBlockedTarget: 'Your healing has no effect on {targetName}.',
+    healedTarget: 'You heal {targetName} for {actualHeal} HP.',
+    youKilledTarget: 'You killed {targetName}.',
+    targetAvoidedDeathUndying: '{playerName} avoided death through Undying.',
+    stoneResolveAbsorbedYourDamage:
+      "{targetName}'s Stone Resolve absorbed all your damage!",
   },
 
   // NEW: Game state transition messages

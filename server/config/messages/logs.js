@@ -1,5 +1,5 @@
 /**
- * @fileoverview Centralized log messages for structured logging.
+ * @fileoverview Centralized log messages for structured logging (updated with audit findings)
  * Maps event keys to human-readable message templates.
  */
 module.exports = {
@@ -45,6 +45,17 @@ module.exports = {
 
     // Socket Action Success (from errorHandler)
     SocketActionSuccess: 'Socket action succeeded: {action}',
+
+    // NEW: GameController.js audit items
+    ForceCleanedGame:
+      'Force cleaned up game {gameCode} (had game: {hasGame}, had timer: {hasTimer})',
+    ReplayGameCreatedWithCode: 'Created replay game with code {gameCode}',
+    PlayerReadyNextRound:
+      'Player {socketId} clicked ready for next round in game {gameCode}',
+    ResumeByMajority: 'Game {gameCode}: Resuming next round by majority vote',
+    CreatingReplayGame: '{playerName} creating replay game {gameCode}',
+    AdaptabilitySuccess:
+      'Successfully replaced {oldAbilityType} with {newAbilityType} for player {playerName}',
   },
 
   // Warn-level logs indicate potential issues that don't break functionality.
@@ -74,13 +85,17 @@ module.exports = {
     // Socket Action Known Errors (from errorHandler)
     SocketActionKnownError:
       'A known error occurred during socket action: {action}',
+
+    // NEW: GameController.js audit items
+    AdaptabilityUseFailed: 'Failed to use Adaptability for player {playerName}',
   },
 
   // Error-level logs are for critical failures that break functionality.
   error: {
     NameAvailabilityCheckError:
       'Error checking name availability for player {playerName} in game {gameCode}',
-    PlayerNextReadyError: 'Error in handlePlayerNextReady for game {gameCode}',
+    PlayerNextReadyError:
+      'Error in handlePlayerNextReady for game {gameCode}: {errorDetails}',
     PlayAgainError: 'Error in handlePlayAgain for game {oldGameCode}',
     PlayerDisconnectError:
       'Error during player disconnect for socket {socketId}',
@@ -90,6 +105,17 @@ module.exports = {
     // Socket Action Unexpected Errors (from errorHandler)
     SocketActionUnexpectedError:
       'An unexpected error occurred during socket action: {action}',
+
+    // NEW: GameController.js audit items
+    HandlePerformActionError:
+      'Error in handlePerformAction for game {gameCode}: {errorDetails}',
+    AdaptabilityOldAbilityNotFound:
+      'Old ability {oldAbilityType} not found for player {playerName}',
+    AdaptabilityClassNotFound:
+      'Class {className} not found in abilities config',
+    AdaptabilityNewAbilityNotFound:
+      'Ability {newAbilityType} at level {level} not found for class {className}',
+    GetClassAbilitiesError: 'Error getting abilities: {errorMessage}',
   },
 
   // Debug-level logs are for detailed, verbose information useful for development.
@@ -141,5 +167,27 @@ module.exports = {
 
     // Debugging Separators
     EventsLogSeparator: '--- Events Log Separator ({type}) ---',
+
+    // NEW: GameController.js audit items
+    AdaptabilityNoUsesLeft: 'Player {playerName} has no Adaptability uses left',
+    NextReadySetInitialized: 'Initialized nextReady set for game {gameCode}',
+    PlayerAlreadyMarkedReady:
+      'Player {socketId} already marked ready for game {gameCode}',
+    GetClassAbilities: 'Getting {className} abilities for level {level}',
+    FoundClassAbilities:
+      'Found {count} abilities for {className} at level {level}',
+
+    // NEW: Player.js audit items
+    DeadPlayerActionAttempt:
+      'Player {playerName} tried to submit action while dead',
+    MultipleActionsAttempt:
+      'Player {playerName} tried to submit multiple actions',
+    UnavailableAbilityAttempt:
+      'Player {playerName} tried to use unavailable ability: {abilityType}',
+    StoneArmorDegradation:
+      "{playerName}'s Stone Armor degrades from {oldValue} to {newValue}",
+    BloodFrenzyDamageIncrease:
+      'Blood Frenzy: {playerName} missing {missingHpPercent}% HP, damage increased by {damageIncreasePercent}%',
+    UndyingSetup: 'UNDYING SETUP: {playerName} now has Undying effect:',
   },
 };

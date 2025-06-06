@@ -207,7 +207,7 @@ const classAbilities = {
       category: 'Heal',
       effect: null,
       target: 'Self',
-      params: { amount: 15 }, // Painful but effective
+      params: { amount: 25 }, // Painful but effective
       unlockAt: 3,
       order: 10000,
       cooldown: 2,
@@ -220,11 +220,11 @@ const classAbilities = {
       effect: 'poison_detect', // or 'burn_detect'
       target: 'Single',
       params: {
-        damage: 55,
+        damage: 45,
         poison: { damage: 18, turns: 3 }, // Representing superheated burns
         detectChance: 1.0,
       },
-      unlockAt: 3,
+      unlockAt: 2,
       order: 1100,
       cooldown: 4,
       flavorText:

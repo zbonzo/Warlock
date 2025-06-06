@@ -1,5 +1,5 @@
 /**
- * @fileoverview Player system messages
+ * @fileoverview Player system messages (updated with audit findings)
  * Messages for player actions, validation, state changes, and feedback
  */
 
@@ -147,6 +147,30 @@ module.exports = {
     gameStarting: 'Game is starting!',
     gameEnding: 'Game is ending.',
   },
+
+  // NEW: Combat messages that relate to player actions from CombatSystem.js audit
+  combat: {
+    attackedTargetWithArmor:
+      'You attacked {targetName} for {actualDamage} damage ({damageAmount} base, reduced by {reductionPercent}% from their {effectiveArmor} armor).',
+    attackedTargetNoArmor:
+      'You attacked {targetName} for {actualDamage} damage.',
+    stoneArmorWeakenedAttacker:
+      "{targetName}'s Stone Armor weakens from your attack!",
+    moonbeamExposedCorruption:
+      "{targetName}'s Moonbeam exposed your corruption!",
+    moonbeamConfirmedPurityAttacker:
+      "{targetName}'s Moonbeam confirmed your purity.",
+    healedTarget: 'You heal {targetName} for {actualHeal} HP.',
+    youKilledTarget: 'You killed {targetName}.',
+    targetAvoidedDeathUndying: '{playerName} avoided death through Undying.',
+    stoneResolveAbsorbedYourDamage:
+      "{targetName}'s Stone Resolve absorbed all your damage!",
+  },
+
+  // NEW: UI display messages
+  ui: {
+    abilityDamageSimple: '{damage} damage',
+    abilityDamageModified:
+      '{modifiedDamage} damage ({baseDamage} base × {modifier})',
+  },
 };
-
-
