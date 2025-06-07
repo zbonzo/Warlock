@@ -9,13 +9,13 @@
 const monster = {
   // Base stats for level 1 monster
   baseHp: 100,
-  baseDamage: 20,
+  baseDamage: 25,
   baseAge: 0,
 
   // Enhanced scaling formulas
   hpPerLevel: 0, // Increased from 50
   useExponentialScaling: true, // New option for exponential scaling
-  hpScalingMultiplier: 2, // 150% scaling rate vs players
+  hpScalingMultiplier: 2.5, // 150% scaling rate vs players
 
   // Damage scaling with age
   damageScaling: {
@@ -71,8 +71,8 @@ const player = {
 
   // Level up bonuses
   levelUp: {
-    hpIncrease: 0.1, // 20% HP increase
-    damageIncrease: 1.25, // 25% damage increase (multiply by 1.25)
+    hpIncrease: 0.08, // 20% HP increase
+    damageIncrease: 1.15, // 25% damage increase (multiply by 1.25)
     fullHealOnLevelUp: true,
   },
 
@@ -119,9 +119,9 @@ const coordinationBonus = {
 const warlock = {
   // Conversion chance calculation
   conversion: {
-    baseChance: 0.25, // Base conversion chance
-    maxChance: 0.5, // Maximum conversion chance
-    scalingFactor: 0.3, // How much warlock count affects chance
+    baseChance: 0.45, // Base conversion chance
+    maxChance: 0.65, // Maximum conversion chance
+    scalingFactor: 0.4, // How much warlock count affects chance
 
     // New corruption control options
     preventLevelUpCorruption: false, // Option to disable corruption on level-ups
@@ -162,8 +162,8 @@ const warlock = {
       8: 2, // 8-11 players = 2 warlocks
       9: 2,
       10: 2,
-      11: 2,
-      12: 2, // 12-15 players = 3 warlocks
+      11: 3,
+      12: 3, // 12-15 players = 3 warlocks
       13: 3,
       14: 3,
       15: 3,
@@ -233,7 +233,7 @@ const combat = {
 const abilityVariance = {
   critChance: 0.05, // 5% chance to critically succeed
   failChance: 0.05, // 5% chance to completely fail
-  ultraFailChance: 0.01, // 1% chance to target a random entity instead
+  ultraFailChance: 0.05, // 1% chance to target a random entity instead
   critMultiplier: 1.5, // 150% effect multiplier on crit/ultra fail
 };
 

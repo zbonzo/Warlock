@@ -207,7 +207,7 @@ const classAbilities = {
       category: 'Heal',
       effect: null,
       target: 'Self',
-      params: { amount: 25 }, // Painful but effective
+      params: { amount: 35 }, // Painful but effective
       unlockAt: 3,
       order: 10000,
       cooldown: 2,
@@ -429,7 +429,7 @@ const classAbilities = {
       category: 'Heal',
       effect: null,
       target: 'Single',
-      params: { amount: 65 }, // Good emergency healing
+      params: { amount: 50 }, // Good emergency healing
       unlockAt: 2,
       order: 100,
       cooldown: 0,
@@ -442,7 +442,7 @@ const classAbilities = {
       category: 'Heal',
       effect: null,
       target: 'Single',
-      params: { amount: 180 }, // Powerful dedicated healing
+      params: { amount: 120 }, // Powerful dedicated healing
       unlockAt: 3,
       order: 10050,
       cooldown: 2,
@@ -495,7 +495,7 @@ const classAbilities = {
       category: 'Defense',
       effect: 'shielded',
       target: 'Self',
-      params: { armor: 3, counterDamage: 25, duration: 1 }, // Light armor but punishes attackers
+      params: { armor: 3, counterDamage: 50, duration: 1 }, // Light armor but punishes attackers
       unlockAt: 3,
       order: 17,
       cooldown: 3,
@@ -508,7 +508,7 @@ const classAbilities = {
       category: 'Heal',
       effect: 'detect',
       target: 'Self',
-      params: { amount: 30, counterDamage: 50, autoDetect: true }, // Better healing for Oracle
+      params: { amount: 30, counterDamage: 100, autoDetect: true }, // Better healing for Oracle
       unlockAt: 4,
       order: 2,
       cooldown: 3,
@@ -587,7 +587,7 @@ const classAbilities = {
       category: 'Attack',
       effect: null,
       target: 'Single',
-      params: { damage: 50 }, // High damage, elemental theme
+      params: { damage: 25 }, // High damage, elemental theme
       unlockAt: 1,
       order: 1060,
       cooldown: 0,
@@ -613,7 +613,7 @@ const classAbilities = {
       category: 'Heal',
       effect: null,
       target: 'Single',
-      params: { amount: 120 }, // Strong but not as powerful as Priest
+      params: { amount: 100 }, // Strong but not as powerful as Priest
       unlockAt: 3,
       order: 10080,
       cooldown: 2,
@@ -626,7 +626,7 @@ const classAbilities = {
       category: 'Special',
       effect: null,
       target: 'Multi',
-      params: { damage: 25 },
+      params: { damage: 50 },
       unlockAt: 4,
       order: 1510,
       cooldown: 2,
@@ -737,7 +737,7 @@ const classAbilities = {
       effect: 'monsterControl',
       target: 'Single',
       params: {
-        damageBoost: 3,
+        damageBoost: 5,
         forcedAttack: true,
       },
       unlockAt: 4,
