@@ -1,382 +1,408 @@
 /**
- * @fileoverview FIXED StatusEffectManager - no more duplicate messages
- * Now properly uses message templates and allows suppression of automatic messages
+ * @fileoverview Enhanced Status Effect Manager with healing detection for warlock anti-detection
+ * Manages all temporary effects on players with detection chances during healing over time
  */
 const config = require('@config');
 const messages = require('@messages');
 const logger = require('@utils/logger');
 
 /**
- * Manages all status effects across players including healing over time and Oracle effects
- * Centralizes effect processing logic for game consistency
+ * Enhanced StatusEffectManager with healing detection capabilities
+ * Manages poison, shields, invisibility, stunning, vulnerability, and healing over time
  */
 class StatusEffectManager {
   /**
-   * Create a new status effect manager
+   * Create a status effect manager
    * @param {Map} players - Map of player objects
-   * @param {GameStateUtils} gameStateUtils - Game state utility functions
+   * @param {WarlockSystem} warlockSystem - Warlock system for detection
    */
-  constructor(players, gameStateUtils) {
+  constructor(players, warlockSystem = null) {
     this.players = players;
-    this.gameStateUtils = gameStateUtils;
-
-    this.effectDefinitions = {
-      poison: { default: { damage: 5, turns: 3 } },
-      shielded: { default: { armor: 2, turns: 1 } },
-      invisible: { default: { turns: 1 } },
-      stunned: { default: { turns: 1 } },
-      vulnerable: { default: { damageIncrease: 25, turns: 2 } },
-      weakened: { default: { damageReduction: 0.25, turns: 1 } },
-      enraged: {
-        default: { damageBoost: 1.5, damageResistance: 0.3, turns: 2 },
-      },
-      healingOverTime: { default: { amount: 5, turns: 3 } },
-      spiritGuard: { default: { armor: 3, counterDamage: 25, turns: 1 } },
-      sanctuary: { default: { counterDamage: 50, turns: 1 } },
-    };
+    this.warlockSystem = warlockSystem; // NEW: For warlock detection during healing
   }
 
   /**
-   * Apply a status effect to a player - FIXED to avoid duplicate messages
-   * @param {string} playerId - Target player's ID
-   * @param {string} effectName - Name of the effect to apply
-   * @param {Object} effectData - Effect parameters
+   * Apply a status effect to a player
+   * @param {string} playerId - Player ID
+   * @param {string} effectName - Name of the effect
+   * @param {Object} params - Effect parameters
    * @param {Array} log - Event log to append messages to
-   * @param {Object} options - Additional options (suppressMessage, etc.)
-   * @returns {boolean} Whether the effect was successfully applied
+   * @returns {boolean} Whether the effect was applied successfully
    */
-  applyEffect(playerId, effectName, effectData, log = [], options = {}) {
+  applyEffect(playerId, effectName, params, log = []) {
     const player = this.players.get(playerId);
     if (!player || !player.isAlive) return false;
 
-    // FIXED: Check if the effect definition exists in the config
-    // Try multiple ways to get the effect definition
-    let effectDefinition = null;
-
-    // Method 1: Direct property access (for new effects)
-    if (config.statusEffects && config.statusEffects[effectName]) {
-      effectDefinition = config.statusEffects[effectName];
-    }
-
-    // Method 2: Check our local definitions (fallback)
-    if (!effectDefinition && this.effectDefinitions[effectName]) {
-      effectDefinition = this.effectDefinitions[effectName];
-    }
-
-    // Method 3: Check if it's in the config helper function
-    if (!effectDefinition && config.getStatusEffectDefaults) {
-      const defaults = config.getStatusEffectDefaults(effectName);
-      if (defaults) {
-        effectDefinition = { default: defaults };
-      }
-    }
-
-    // If we still don't have a definition, the effect is unknown
-    if (!effectDefinition) {
-      logger.warn(
-        `Unknown effect ${effectName} could not be applied to ${player.name}.`
-      );
-      if (!options.suppressMessage) {
-        log.push(
-          `Unknown effect ${effectName} could not be applied to ${player.name}.`
-        );
-      }
+    // Get effect defaults from config
+    const effectDefaults = config.getEffectDefaults(effectName);
+    if (!effectDefaults) {
+      logger.warn(`Unknown effect: ${effectName}`);
       return false;
     }
 
-    // Check if already has the effect
-    const hasEffect = player.hasStatusEffect(effectName);
+    // Merge params with defaults
+    const effectData = { ...effectDefaults, ...params };
 
-    // Apply default values for any missing parameters
-    const effectDefaults = effectDefinition.default || {};
-    const finalData = {
-      ...effectDefaults,
-      ...effectData,
-    };
+    // Check if effect is stackable or refreshable
+    const isStackable = config.isEffectStackable(effectName);
+    const isRefreshable = config.isEffectRefreshable(effectName);
 
-    // FIX: Add +1 to turns for all timed effects to account for immediate countdown
-    if (finalData.turns && finalData.turns > 0) {
-      finalData.turns = finalData.turns + 1;
-    }
-
-    // Special handling for vulnerability
-    if (effectName === 'vulnerable') {
-      player.applyVulnerability(finalData.damageIncrease, finalData.turns);
-
-      // FIXED: Only add message if not suppressed
-      if (!options.suppressMessage) {
-        const vulnMessage = messages.getAbilityMessage(
-          'statusEffects',
-          'vulnerable.applied'
-        );
-        if (vulnMessage) {
-          log.push(
-            messages.formatMessage(vulnMessage, {
-              playerName: player.name,
-              targetName: player.name, // Provide both for flexibility
-              increase: finalData.damageIncrease,
-              turns: finalData.turns - 1, // Display turns (subtract the +1 we added)
-            })
-          );
-        } else {
-          // Fallback message
-          log.push(
-            `${player.name} is VULNERABLE and will take ${finalData.damageIncrease}% more damage for ${finalData.turns - 1} turn(s)!`
-          );
-        }
+    if (player.hasStatusEffect(effectName)) {
+      if (isRefreshable && !isStackable) {
+        // Refresh the effect duration
+        player.statusEffects[effectName] = effectData;
+        this.logEffectMessage(effectName, 'refreshed', player, log, effectData);
+      } else if (isStackable) {
+        // Stack the effect (for poison)
+        this.stackEffect(player, effectName, effectData, log);
       }
-      return true;
-    }
-
-    // Special handling for spiritGuard and sanctuary
-    if (effectName === 'spiritGuard' || effectName === 'sanctuary') {
-      // Set up class effects for Oracle abilities
-      if (!player.classEffects) {
-        player.classEffects = {};
-      }
-
-      if (effectName === 'spiritGuard') {
-        player.classEffects.spiritGuard = {
-          armor: finalData.armor,
-          counterDamage: finalData.counterDamage,
-          turnsLeft: finalData.turns,
-          revealsWarlocks: true,
-        };
-
-        // Also apply as a shielded effect for the armor
-        player.applyStatusEffect('shielded', {
-          armor: finalData.armor,
-          turns: finalData.turns,
-        });
-      } else if (effectName === 'sanctuary') {
-        player.classEffects.sanctuaryOfTruth = {
-          counterDamage: finalData.counterDamage,
-          turnsLeft: finalData.turns,
-          autoDetect: true,
-        };
-      }
-
-      // Apply the effect normally as well for tracking
-      player.applyStatusEffect(effectName, finalData);
+      // If neither stackable nor refreshable, do nothing
     } else {
-      // For other effects, apply normally
-      player.applyStatusEffect(effectName, finalData);
-    }
+      // Apply new effect
+      player.statusEffects[effectName] = effectData;
+      this.logEffectMessage(effectName, 'applied', player, log, effectData);
 
-    // FIXED: Only add automatic message if not suppressed and we don't have specific handling
-    if (!options.suppressMessage) {
-      const displayTurns = (finalData.turns || 1) - 1;
-
-      // Try to get a proper message template first
-      let messageTemplate = null;
-      let messageData = {
-        playerName: player.name,
-        targetName: player.name, // Provide both for flexibility
-        turns: displayTurns,
-        armor: finalData.armor,
-        damage: finalData.damage,
-        amount: finalData.amount,
-      };
-
-      // Try to get specific message for this effect
-      if (messages.statusEffects && messages.statusEffects[effectName]) {
-        if (!hasEffect && messages.statusEffects[effectName].applied) {
-          messageTemplate = messages.statusEffects[effectName].applied;
-        } else if (hasEffect && messages.statusEffects[effectName].refreshed) {
-          messageTemplate = messages.statusEffects[effectName].refreshed;
-        }
-      }
-
-      // If we have a template, use it
-      if (messageTemplate) {
-        log.push(messages.formatMessage(messageTemplate, messageData));
-      } else {
-        // FIXED: Use specific messages for common effects, suppress for others that should be handled by abilities
-        if (effectName === 'stunned') {
-          // Don't add automatic message for stun - let the ability handler do it
-          return true;
-        } else if (effectName === 'poison') {
-          if (!hasEffect) {
-            log.push(
-              `${player.name} is poisoned for ${finalData.damage || 5} damage over ${displayTurns} turns.`
-            );
-          } else {
-            log.push(
-              `${player.name}'s poison is refreshed for ${displayTurns} turns.`
-            );
-          }
-        } else if (effectName === 'shielded') {
-          if (!hasEffect) {
-            log.push(
-              `${player.name} is shielded with ${finalData.armor || 2} armor for ${displayTurns} turn(s).`
-            );
-          } else {
-            log.push(
-              `${player.name}'s protection is refreshed for ${displayTurns} turn(s).`
-            );
-          }
-        } else if (effectName === 'invisible') {
-          if (!hasEffect) {
-            log.push(
-              `${player.name} becomes invisible for ${displayTurns} turn(s).`
-            );
-          } else {
-            log.push(
-              `${player.name}'s invisibility is extended for ${displayTurns} turn(s).`
-            );
-          }
-        } else {
-          // Generic fallback for other effects
-          if (!hasEffect) {
-            log.push(
-              `${player.name} is affected by ${effectName} for ${displayTurns} turn(s).`
-            );
-          } else {
-            log.push(
-              `${player.name}'s ${effectName} effect is refreshed for ${displayTurns} turn(s).`
-            );
-          }
-        }
-      }
+      // Special handling for different effects
+      this.handleSpecialEffectApplication(player, effectName, effectData, log);
     }
 
     return true;
   }
 
   /**
-   * Remove a status effect from a player
-   * @param {string} playerId - Target player's ID
-   * @param {string} effectName - Name of the effect to remove
-   * @param {Array} log - Event log to append messages to
-   * @param {Object} options - Additional options (suppressMessage, etc.)
-   * @returns {boolean} Whether the effect was successfully removed
+   * Handle special logic when applying effects
+   * @param {Object} player - Player object
+   * @param {string} effectName - Effect name
+   * @param {Object} effectData - Effect data
+   * @param {Array} log - Event log
+   * @private
    */
-  removeEffect(playerId, effectName, log = [], options = {}) {
-    const player = this.players.get(playerId);
-    if (!player) return false;
+  handleSpecialEffectApplication(player, effectName, effectData, log) {
+    switch (effectName) {
+      case 'vulnerable':
+        // Set vulnerability flags for easier damage calculation
+        player.isVulnerable = true;
+        player.vulnerabilityIncrease = effectData.damageIncrease || 25;
+        break;
 
-    const hadEffect = player.hasStatusEffect(effectName);
+      case 'shielded':
+        // Protection effect is handled in player.getEffectiveArmor()
+        break;
 
-    // Special handling for vulnerability
-    if (effectName === 'vulnerable' && player.isVulnerable) {
-      player.isVulnerable = false;
-      player.vulnerabilityIncrease = 0;
-      delete player.statusEffects.vulnerable;
+      case 'invisible':
+        // Invisibility is handled in targeting logic
+        break;
 
-      if (!options.suppressMessage) {
-        log.push(`${player.name} is no longer vulnerable.`);
-      }
-      return true;
-    }
+      case 'stunned':
+        // Stun is checked in action validation
+        break;
 
-    // Special handling for Oracle effects
-    if (effectName === 'spiritGuard' && player.classEffects?.spiritGuard) {
-      delete player.classEffects.spiritGuard;
-      // Also remove shielded effect if it was from spirit guard
-      player.removeStatusEffect('shielded');
-    } else if (
-      effectName === 'sanctuary' &&
-      player.classEffects?.sanctuaryOfTruth
-    ) {
-      delete player.classEffects.sanctuaryOfTruth;
-    }
-
-    // For other effects, remove normally
-    player.removeStatusEffect(effectName);
-
-    // Add log message if effect was present and not suppressed
-    if (hadEffect && !options.suppressMessage) {
-      // Try to get a proper expiration message
-      let messageTemplate = null;
-
-      if (
-        messages.statusEffects &&
-        messages.statusEffects[effectName] &&
-        messages.statusEffects[effectName].expired
-      ) {
-        messageTemplate = messages.statusEffects[effectName].expired;
-        log.push(
-          messages.formatMessage(messageTemplate, {
-            playerName: player.name,
-            targetName: player.name,
-          })
-        );
-      } else {
-        // Specific messages for common effects
-        if (effectName === 'stunned') {
-          log.push(`${player.name} is no longer stunned.`);
-        } else if (effectName === 'poison') {
-          log.push(`The poison affecting ${player.name} has worn off.`);
-        } else if (effectName === 'invisible') {
-          log.push(`${player.name} is no longer invisible.`);
-        } else if (effectName === 'shielded') {
-          log.push(`${player.name} is no longer shielded.`);
-        } else {
-          // Generic fallback
-          log.push(`The ${effectName} effect on ${player.name} has worn off.`);
+      case 'healingOverTime':
+        // NEW: Store healer information for potential detection
+        if (effectData.healerId && effectData.healerName) {
+          player.statusEffects[effectName].healerId = effectData.healerId;
+          player.statusEffects[effectName].healerName = effectData.healerName;
+          player.statusEffects[effectName].isWarlock =
+            effectData.isWarlock || false;
         }
-      }
+        break;
     }
-
-    return hadEffect;
   }
 
-  // ... rest of the methods remain the same ...
+  /**
+   * Stack an effect (currently only used for poison)
+   * @param {Object} player - Player object
+   * @param {string} effectName - Effect name
+   * @param {Object} effectData - New effect data
+   * @param {Array} log - Event log
+   * @private
+   */
+  stackEffect(player, effectName, effectData, log) {
+    if (effectName === 'poison') {
+      // For poison, add damage values and use longer duration
+      const existing = player.statusEffects[effectName];
+      const newDamage = (existing.damage || 0) + (effectData.damage || 0);
+      const newTurns = Math.max(existing.turns || 0, effectData.turns || 0);
+
+      player.statusEffects[effectName] = {
+        ...existing,
+        damage: newDamage,
+        turns: newTurns,
+      };
+
+      this.logEffectMessage(effectName, 'stacked', player, log, {
+        damage: newDamage,
+        turns: newTurns,
+      });
+    }
+  }
 
   /**
-   * Check if a player has a particular status effect
-   * @param {string} playerId - Target player's ID
-   * @param {string} effectName - Name of the effect to check
+   * Process all timed effects at the end of a round
+   * @param {Array} log - Event log to append messages to
+   */
+  processTimedEffects(log = []) {
+    for (const player of this.players.values()) {
+      if (!player.isAlive) continue;
+
+      this.processPlayerEffects(player, log);
+    }
+  }
+
+  /**
+   * Process effects for a single player
+   * @param {Object} player - Player to process
+   * @param {Array} log - Event log
+   * @private
+   */
+  processPlayerEffects(player, log) {
+    const effectsToRemove = [];
+
+    for (const [effectName, effectData] of Object.entries(
+      player.statusEffects
+    )) {
+      let shouldRemove = false;
+
+      switch (effectName) {
+        case 'poison':
+          shouldRemove = this.processPoisonEffect(player, effectData, log);
+          break;
+
+        case 'healingOverTime':
+          shouldRemove = this.processHealingOverTimeEffect(
+            player,
+            effectData,
+            log
+          );
+          break;
+
+        case 'shielded':
+        case 'invisible':
+        case 'stunned':
+        case 'vulnerable':
+        case 'weakened':
+        case 'enraged':
+          shouldRemove = this.processTimedEffect(
+            player,
+            effectName,
+            effectData,
+            log
+          );
+          break;
+      }
+
+      if (shouldRemove) {
+        effectsToRemove.push(effectName);
+      }
+    }
+
+    // Remove expired effects
+    for (const effectName of effectsToRemove) {
+      this.removeEffect(player.id, effectName, log);
+    }
+  }
+
+  /**
+   * NEW: Process healing over time with warlock detection chance
+   * @param {Object} player - Player receiving healing
+   * @param {Object} effectData - Effect data
+   * @param {Array} log - Event log
+   * @returns {boolean} Whether effect should be removed
+   * @private
+   */
+  processHealingOverTimeEffect(player, effectData, log) {
+    const healAmount = effectData.amount || 0;
+
+    // Calculate actual healing received
+    const actualHeal = Math.min(healAmount, player.maxHp - player.hp);
+
+    if (actualHeal > 0) {
+      player.hp += actualHeal;
+
+      // Log the healing
+      const healMessage = messages.getAbilityMessage(
+        'abilities.healing',
+        'heal'
+      );
+      log.push(
+        messages.formatMessage(healMessage, {
+          playerName: player.name,
+          amount: actualHeal,
+        })
+      );
+
+      // NEW: Detection chance if target is warlock and actually received healing
+      if (player.isWarlock && actualHeal > 0 && effectData.healerId) {
+        const detectionChance =
+          config.gameBalance?.player?.healing?.antiDetection?.detectionChance ||
+          0.05;
+        if (Math.random() < detectionChance) {
+          // Mark warlock as detected
+          if (this.warlockSystem && this.warlockSystem.markWarlockDetected) {
+            this.warlockSystem.markWarlockDetected(player.id, log);
+          }
+
+          // Add detection message
+          const detectionLog = {
+            type: 'healing_over_time_detection',
+            public: true,
+            targetId: player.id,
+            attackerId: effectData.healerId,
+            message: `The healing over time on ${player.name} reveals they are a Warlock!`,
+            privateMessage: `Your healing over time detected that ${player.name} is a Warlock!`,
+            attackerMessage: `Your healing over time revealed that ${player.name} is corrupted!`,
+          };
+          log.push(detectionLog);
+        }
+      }
+
+      // Private message to the healed player
+      const privateHealLog = {
+        type: 'heal_over_time',
+        public: false,
+        targetId: player.id,
+        message: '',
+        privateMessage: messages.formatMessage(
+          messages.getAbilityMessage('abilities.healing', 'youRegenerateHP'),
+          { amount: actualHeal }
+        ),
+        attackerMessage: '',
+      };
+      log.push(privateHealLog);
+    }
+
+    // Reduce duration
+    effectData.turns--;
+
+    // Check if effect expired
+    if (effectData.turns <= 0) {
+      this.logEffectMessage(
+        'healingOverTime',
+        'expired',
+        player,
+        log,
+        effectData
+      );
+      return true; // Remove effect
+    }
+
+    return false; // Keep effect
+  }
+
+  /**
+   * Process poison damage effect
+   * @param {Object} player - Player taking poison damage
+   * @param {Object} effectData - Poison effect data
+   * @param {Array} log - Event log
+   * @returns {boolean} Whether effect should be removed
+   * @private
+   */
+  processPoisonEffect(player, effectData, log) {
+    const damage = effectData.damage || 0;
+
+    if (damage > 0) {
+      // Apply poison damage
+      const oldHp = player.hp;
+      player.hp = Math.max(0, player.hp - damage);
+      const actualDamage = oldHp - player.hp;
+
+      // Process stone armor degradation for Rockhewn
+      if (player.race === 'Rockhewn' && player.stoneArmorIntact) {
+        player.processStoneArmorDegradation(actualDamage);
+      }
+
+      // Log poison damage
+      const poisonMessage = messages.getEvent('poisonDamage', {
+        playerName: player.name,
+        damage: actualDamage,
+      });
+      log.push(poisonMessage);
+
+      // Check if poison killed the player
+      if (player.hp <= 0) {
+        player.isAlive = false;
+        player.pendingDeath = true;
+        player.deathAttacker = 'Poison';
+      }
+    }
+
+    // Reduce duration
+    effectData.turns--;
+
+    // Check if effect expired
+    if (effectData.turns <= 0) {
+      this.logEffectMessage('poison', 'expired', player, log, effectData);
+      return true; // Remove effect
+    }
+
+    return false; // Keep effect
+  }
+
+  /**
+   * Process generic timed effects
+   * @param {Object} player - Player object
+   * @param {string} effectName - Effect name
+   * @param {Object} effectData - Effect data
+   * @param {Array} log - Event log
+   * @returns {boolean} Whether effect should be removed
+   * @private
+   */
+  processTimedEffect(player, effectName, effectData, log) {
+    // Reduce duration
+    effectData.turns--;
+
+    // Handle vulnerability expiration
+    if (effectName === 'vulnerable' && effectData.turns <= 0) {
+      player.isVulnerable = false;
+      player.vulnerabilityIncrease = 0;
+    }
+
+    // Check if effect expired
+    if (effectData.turns <= 0) {
+      this.logEffectMessage(effectName, 'expired', player, log, effectData);
+      return true; // Remove effect
+    }
+
+    return false; // Keep effect
+  }
+
+  /**
+   * Remove a status effect from a player
+   * @param {string} playerId - Player ID
+   * @param {string} effectName - Effect name
+   * @param {Array} log - Event log
+   * @returns {boolean} Whether the effect was removed
+   */
+  removeEffect(playerId, effectName, log = []) {
+    const player = this.players.get(playerId);
+    if (!player || !player.hasStatusEffect(effectName)) return false;
+
+    // Handle special cleanup for specific effects
+    if (effectName === 'vulnerable') {
+      player.isVulnerable = false;
+      player.vulnerabilityIncrease = 0;
+    }
+
+    // Remove the effect
+    delete player.statusEffects[effectName];
+
+    return true;
+  }
+
+  /**
+   * Check if a player has a specific status effect
+   * @param {string} playerId - Player ID
+   * @param {string} effectName - Effect name
    * @returns {boolean} Whether the player has the effect
    */
   hasEffect(playerId, effectName) {
     const player = this.players.get(playerId);
-    if (effectName === 'vulnerable') {
-      return player && player.isVulnerable;
-    }
-    if (effectName === 'spiritGuard') {
-      return player && player.classEffects && player.classEffects.spiritGuard;
-    }
-    if (effectName === 'sanctuary') {
-      return (
-        player && player.classEffects && player.classEffects.sanctuaryOfTruth
-      );
-    }
     return player && player.hasStatusEffect(effectName);
   }
 
   /**
-   * Get data for a player's status effect
-   * @param {string} playerId - Target player's ID
-   * @param {string} effectName - Name of the effect to get
-   * @returns {Object|null} Effect data or null if not found
-   */
-  getEffectData(playerId, effectName) {
-    const player = this.players.get(playerId);
-    if (!player) return null;
-
-    if (effectName === 'vulnerable' && player.isVulnerable) {
-      return {
-        damageIncrease: player.vulnerabilityIncrease,
-        turns: player.statusEffects.vulnerable?.turns || 0,
-      };
-    }
-
-    if (effectName === 'spiritGuard' && player.classEffects?.spiritGuard) {
-      return player.classEffects.spiritGuard;
-    }
-
-    if (effectName === 'sanctuary' && player.classEffects?.sanctuaryOfTruth) {
-      return player.classEffects.sanctuaryOfTruth;
-    }
-
-    if (!player.hasStatusEffect(effectName)) return null;
-    return player.statusEffects[effectName];
-  }
-
-  /**
    * Check if a player is stunned
-   * @param {string} playerId - Target player's ID
+   * @param {string} playerId - Player ID
    * @returns {boolean} Whether the player is stunned
    */
   isPlayerStunned(playerId) {
@@ -384,238 +410,170 @@ class StatusEffectManager {
   }
 
   /**
-   * Process all timed status effects for all players including healing over time and Oracle effects
-   * @param {Array} log - Event log to append messages to
+   * Check if a player is invisible
+   * @param {string} playerId - Player ID
+   * @returns {boolean} Whether the player is invisible
    */
-  processTimedEffects(log = []) {
-    const alivePlayers = this.gameStateUtils.getAlivePlayers();
+  isPlayerInvisible(playerId) {
+    return this.hasEffect(playerId, 'invisible');
+  }
 
-    // Process vulnerability directly
-    for (const player of alivePlayers) {
-      if (player.isVulnerable) {
-        const expired = player.processVulnerability();
+  /**
+   * Get all effects for a player
+   * @param {string} playerId - Player ID
+   * @returns {Object} Object containing all active effects
+   */
+  getPlayerEffects(playerId) {
+    const player = this.players.get(playerId);
+    return player ? player.statusEffects : {};
+  }
 
-        if (expired) {
-          log.push(`${player.name} is no longer vulnerable.`);
-        }
-      }
-    }
-
-    // Process effects in order - use our local processing order
-    const processingOrder = {
-      poison: 1,
-      shielded: 2,
-      invisible: 4,
-      stunned: 5,
-      weakened: 6,
-      enraged: 7,
-      healingOverTime: 8,
-      spiritGuard: 9,
-      sanctuary: 10,
-    };
-
-    // Sort effect types by processing order
-    const effectTypes = Object.keys(processingOrder).sort((a, b) => {
-      return processingOrder[a] - processingOrder[b];
+  /**
+   * Log effect messages using the centralized message system
+   * @param {string} effectName - Effect name
+   * @param {string} messageType - Message type (applied, expired, etc.)
+   * @param {Object} player - Player object
+   * @param {Array} log - Event log
+   * @param {Object} effectData - Effect data for message formatting
+   * @private
+   */
+  logEffectMessage(effectName, messageType, player, log, effectData) {
+    const message = config.getEffectMessage(effectName, messageType, {
+      playerName: player.name,
+      damage: effectData.damage,
+      armor: effectData.armor,
+      turns: effectData.turns,
+      amount: effectData.amount,
+      damageIncrease: effectData.damageIncrease,
     });
 
-    // Process each effect type in order
-    for (const effectType of effectTypes) {
-      // Skip vulnerability as it's handled separately
-      if (effectType === 'vulnerable') continue;
+    if (message) {
+      log.push(message);
+    }
+  }
 
-      for (const player of alivePlayers) {
-        if (effectType === 'poison') {
-          this.processPoisonEffect(player, log);
-        } else if (effectType === 'healingOverTime') {
-          this.processHealingOverTime(player, log);
-        } else if (effectType === 'spiritGuard') {
-          this.processSpiritGuardEffect(player, log);
-        } else if (effectType === 'sanctuary') {
-          this.processSanctuaryEffect(player, log);
-        } else {
-          this.processTimedEffect(player, effectType, log);
+  /**
+   * Clear all effects from a player (used on death/resurrection)
+   * @param {string} playerId - Player ID
+   */
+  clearAllEffects(playerId) {
+    const player = this.players.get(playerId);
+    if (!player) return;
+
+    // Clear vulnerability flags
+    player.isVulnerable = false;
+    player.vulnerabilityIncrease = 0;
+
+    // Clear all status effects
+    player.statusEffects = {};
+  }
+
+  /**
+   * Apply multiple effects to a player at once
+   * @param {string} playerId - Player ID
+   * @param {Object} effects - Object with effect names as keys and params as values
+   * @param {Array} log - Event log
+   * @returns {number} Number of effects successfully applied
+   */
+  applyMultipleEffects(playerId, effects, log = []) {
+    let appliedCount = 0;
+
+    for (const [effectName, params] of Object.entries(effects)) {
+      if (this.applyEffect(playerId, effectName, params, log)) {
+        appliedCount++;
+      }
+    }
+
+    return appliedCount;
+  }
+
+  /**
+   * Get effect duration remaining
+   * @param {string} playerId - Player ID
+   * @param {string} effectName - Effect name
+   * @returns {number} Turns remaining (0 if no effect)
+   */
+  getEffectDuration(playerId, effectName) {
+    const player = this.players.get(playerId);
+    if (!player || !player.hasStatusEffect(effectName)) return 0;
+
+    return player.statusEffects[effectName].turns || 0;
+  }
+
+  /**
+   * Modify effect duration
+   * @param {string} playerId - Player ID
+   * @param {string} effectName - Effect name
+   * @param {number} turnChange - Turns to add (positive) or subtract (negative)
+   * @returns {boolean} Whether the effect duration was modified
+   */
+  modifyEffectDuration(playerId, effectName, turnChange) {
+    const player = this.players.get(playerId);
+    if (!player || !player.hasStatusEffect(effectName)) return false;
+
+    const effect = player.statusEffects[effectName];
+    effect.turns = Math.max(0, (effect.turns || 0) + turnChange);
+
+    // Remove effect if duration reaches 0
+    if (effect.turns <= 0) {
+      this.removeEffect(playerId, effectName);
+    }
+
+    return true;
+  }
+
+  /**
+   * Get statistics about active effects
+   * @returns {Object} Statistics object
+   */
+  getEffectStatistics() {
+    const stats = {
+      totalEffects: 0,
+      effectsByType: {},
+      playersCounts: {
+        poisoned: 0,
+        shielded: 0,
+        invisible: 0,
+        stunned: 0,
+        vulnerable: 0,
+        healingOverTime: 0,
+      },
+    };
+
+    for (const player of this.players.values()) {
+      if (!player.isAlive) continue;
+
+      for (const effectName of Object.keys(player.statusEffects)) {
+        stats.totalEffects++;
+        stats.effectsByType[effectName] =
+          (stats.effectsByType[effectName] || 0) + 1;
+
+        if (stats.playersCounts.hasOwnProperty(effectName)) {
+          stats.playersCounts[effectName]++;
         }
       }
     }
+
+    return stats;
   }
 
   /**
-   * Process healing over time effect for a player
-   * @param {Object} player - Player object
-   * @param {Array} log - Event log to append messages to
-   * @private
+   * Debug method to get all active effects
+   * @returns {Object} All active effects by player
    */
-  processHealingOverTime(player, log) {
-    if (!player.hasStatusEffect('healingOverTime')) return;
+  getAllActiveEffects() {
+    const activeEffects = {};
 
-    const healing = player.statusEffects.healingOverTime;
-    const healAmount = healing.amount || 0;
-
-    // Apply healing
-    if (healAmount > 0) {
-      const oldHp = player.hp;
-      player.hp = Math.min(player.maxHp, player.hp + healAmount);
-      const actualHeal = player.hp - oldHp;
-
-      if (actualHeal > 0) {
-        log.push(
-          `${player.name} regenerates ${actualHeal} health from their blessing.`
-        );
-
-        // Add private message to the player
-        const privateHealLog = {
-          type: 'healing_over_time',
-          public: false,
-          targetId: player.id,
-          message: '',
-          privateMessage: `You regenerate ${actualHeal} HP from healing over time.`,
-          attackerMessage: '',
+    for (const [playerId, player] of this.players.entries()) {
+      if (Object.keys(player.statusEffects).length > 0) {
+        activeEffects[playerId] = {
+          playerName: player.name,
+          effects: { ...player.statusEffects },
         };
-        log.push(privateHealLog);
       }
     }
 
-    // Decrement turns
-    healing.turns--;
-
-    // Remove if expired
-    if (healing.turns <= 0) {
-      player.removeStatusEffect('healingOverTime');
-      log.push(`The healing blessing on ${player.name} has faded.`);
-    }
-  }
-
-  /**
-   * Process Spirit Guard effect for a player
-   * @param {Object} player - Player object
-   * @param {Array} log - Event log to append messages to
-   * @private
-   */
-  processSpiritGuardEffect(player, log) {
-    if (!player.classEffects?.spiritGuard) return;
-
-    const spiritGuard = player.classEffects.spiritGuard;
-
-    // Decrement turns
-    spiritGuard.turnsLeft--;
-
-    // Remove if expired
-    if (spiritGuard.turnsLeft <= 0) {
-      delete player.classEffects.spiritGuard;
-      // Also remove the shielded effect
-      player.removeStatusEffect('shielded');
-      player.removeStatusEffect('spiritGuard');
-
-      log.push(`${player.name}'s Spirit Guard fades away.`);
-    }
-  }
-
-  /**
-   * Process Sanctuary effect for a player
-   * @param {Object} player - Player object
-   * @param {Array} log - Event log to append messages to
-   * @private
-   */
-  processSanctuaryEffect(player, log) {
-    if (!player.classEffects?.sanctuaryOfTruth) return;
-
-    const sanctuary = player.classEffects.sanctuaryOfTruth;
-
-    // Decrement turns
-    sanctuary.turnsLeft--;
-
-    // Remove if expired
-    if (sanctuary.turnsLeft <= 0) {
-      delete player.classEffects.sanctuaryOfTruth;
-      player.removeStatusEffect('sanctuary');
-
-      log.push(`${player.name}'s Sanctuary of Truth fades away.`);
-    }
-  }
-
-  /**
-   * Process a generic timed effect for a player
-   * @param {Object} player - Player object
-   * @param {string} effectName - Name of the effect to process
-   * @param {Array} log - Event log to append messages to
-   * @private
-   */
-  processTimedEffect(player, effectName, log) {
-    if (!player.hasStatusEffect(effectName)) return;
-
-    const effect = player.statusEffects[effectName];
-
-    // Decrement turns (this is correct with the +1 fix in applyEffect)
-    effect.turns--;
-
-    // Remove if expired
-    if (effect.turns <= 0) {
-      player.removeStatusEffect(effectName);
-
-      // Specific expiration messages
-      if (effectName === 'stunned') {
-        log.push(`${player.name} is no longer stunned.`);
-      } else if (effectName === 'invisible') {
-        log.push(`${player.name} is no longer invisible.`);
-      } else if (effectName === 'shielded') {
-        log.push(`${player.name} is no longer shielded.`);
-      } else {
-        log.push(`The ${effectName} effect on ${player.name} has worn off.`);
-      }
-    }
-  }
-
-  /**
-   * Process poison effect for a player
-   * @param {Object} player - Player object
-   * @param {Array} log - Event log to append messages to
-   * @private
-   */
-  processPoisonEffect(player, log) {
-    if (!player.hasStatusEffect('poison')) return;
-
-    const poison = player.statusEffects.poison;
-
-    // Process Stone Armor degradation for Rockhewn (before applying poison damage)
-    let armorDegradationInfo = null;
-    if (player.race === 'Rockhewn' && player.stoneArmorIntact) {
-      armorDegradationInfo = player.processStoneArmorDegradation(poison.damage);
-    }
-
-    // Apply poison damage
-    player.hp = Math.max(0, player.hp - poison.damage);
-
-    log.push(`${player.name} suffers ${poison.damage} poison damage.`);
-
-    // Add Stone Armor degradation message if applicable
-    if (armorDegradationInfo && armorDegradationInfo.degraded) {
-      log.push(
-        `${player.name}'s Stone Armor weakens from the poison! (${armorDegradationInfo.oldValue} → ${armorDegradationInfo.newArmorValue})`
-      );
-
-      if (
-        armorDegradationInfo.destroyed &&
-        armorDegradationInfo.newArmorValue <= 0
-      ) {
-        log.push(`${player.name}'s Stone Armor is completely destroyed!`);
-      }
-    }
-
-    // Check if died from poison
-    if (player.hp === 0) {
-      player.pendingDeath = true;
-      player.deathAttacker = 'Poison';
-    }
-
-    // Decrement turns (this is correct with the +1 fix in applyEffect)
-    poison.turns--;
-
-    // Remove if expired
-    if (poison.turns <= 0) {
-      player.removeStatusEffect('poison');
-      log.push(`The poison affecting ${player.name} has worn off.`);
-    }
+    return activeEffects;
   }
 }
 

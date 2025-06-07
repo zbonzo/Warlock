@@ -76,11 +76,22 @@ const player = {
     fullHealOnLevelUp: true,
   },
 
-  // Healing mechanics
   healing: {
     modifierBase: 2.0, // healingMod = modifierBase - damageMod
-    warlockSelfHealOnly: false,
-    rejectWarlockHealing: false,
+
+    // OLD SYSTEM - DEPRECATED: These are now ignored to prevent warlock detection
+    warlockSelfHealOnly: false, // DEPRECATED: Always heal warlocks now
+    rejectWarlockHealing: false, // DEPRECATED: Always heal warlocks now
+
+    // NEW: Anti-detection system
+    antiDetection: {
+      enabled: true, // Enable anti-detection healing system
+      alwaysHealWarlocks: true, // Always heal warlocks (no rejection)
+      detectionChance: 0.05, // 5% chance to detect warlock when they receive actual healing
+      requireActualHealing: true, // Only detect if warlock actually received HP (not at full health)
+      applyToHealingOverTime: true, // Apply detection chance to healing over time effects
+      logDetections: true, // Log detection events
+    },
   },
 
   // Death and resurrection
