@@ -41,13 +41,13 @@ const classAttributes = {
   Warrior: {
     hpModifier: 1.1, // More HP
     armorModifier: 1.5, // More armor
-    damageModifier: 0.8, // Slightly increased damage
+    damageModifier: 1.0, // Slightly increased damage
     description:
       'Tank class with high health and armor, focused on protection.',
   },
   Pyromancer: {
-    hpModifier: 0.6, // Less HP
-    armorModifier: 0.7, // No armor bonus
+    hpModifier: 1.0, // Less HP
+    armorModifier: 1.0, // No armor bonus
     damageModifier: 1.6, // High damage
     description: 'Fire-based caster with high damage output and area effects.',
   },
@@ -58,8 +58,8 @@ const classAttributes = {
     description: 'Versatile spellcaster with powerful arcane abilities.',
   },
   Assassin: {
-    hpModifier: 0.9, // Less HP
-    armorModifier: 1.0, // No armor bonus
+    hpModifier: 1.0, // Less HP
+    armorModifier: 1.1, // No armor bonus
     damageModifier: 1.5, // Very high damage
     description: 'Stealth-focused class with high single-target damage.',
   },
@@ -73,20 +73,20 @@ const classAttributes = {
   Priest: {
     hpModifier: 1.3, // Standard HP
     armorModifier: 1.4, // Some divine protection
-    damageModifier: 0.7, // Low damage
+    damageModifier: 1.0, // Low damage
     description: 'Healing-focused class with support abilities.',
   },
   Oracle: {
     hpModifier: 1.1, // Less HP
     armorModifier: 1.5, // Some divine protection
-    damageModifier: 0.7, // Low damage
+    damageModifier: 1.0, // Low damage
     description:
       'Divination-focused class that can reveal warlocks and manipulate fate.',
   },
   Barbarian: {
-    hpModifier: 1.4, // High HP
-    armorModifier: 0.9, // No armor bonus
-    damageModifier: 1.4, // High damage
+    hpModifier: 1.0, // High HP
+    armorModifier: 1.0, // No armor bonus
+    damageModifier: 1.6, // High damage
     description: 'Barbarian has axe. Barbarian use axe.',
   },
   Shaman: {
@@ -96,8 +96,8 @@ const classAttributes = {
     description: 'Elemental caster with healing and lightning abilities.',
   },
   Gunslinger: {
-    hpModifier: 0.9, // Less HP
-    armorModifier: 1.0, // No armor bonus
+    hpModifier: 1.0, // Less HP
+    armorModifier: 1.2, // No armor bonus
     damageModifier: 1.5, // High damage
     description: 'Ranged specialist with high damage and evasion abilities.',
   },
@@ -110,7 +110,7 @@ const classAttributes = {
   Druid: {
     hpModifier: 1.4, // More HP
     armorModifier: 1.3, // Some natural protection
-    damageModifier: 0.7, // Slightly decreased damage
+    damageModifier: 1.0, // Slightly decreased damage
     description: 'Nature-focused class with healing and crowd control.',
   },
 };
@@ -277,7 +277,7 @@ const classAbilities = {
       category: 'Attack',
       effect: null,
       target: 'Single',
-      params: { hits: 6, damagePerHit: 6, hitChance: 0.8 }, // 19.2 expected damage - weak but available early
+      params: { hits: 8, damagePerHit: 8, hitChance: 0.8 }, // 19.2 expected damage - weak but available early
       unlockAt: 1,
       order: 1025,
       cooldown: 0,
@@ -289,7 +289,7 @@ const classAbilities = {
       category: 'Special',
       effect: null,
       target: 'Multi',
-      params: { damage: 30 },
+      params: { damage: 50 },
       unlockAt: 4,
       order: 1500,
       cooldown: 3,
@@ -317,7 +317,7 @@ const classAbilities = {
       category: 'Defense',
       effect: 'invisible',
       target: 'Self',
-      params: { duration: 1 },
+      params: { duration: 3 },
       unlockAt: 2,
       order: 13,
       cooldown: 4,
@@ -570,7 +570,7 @@ const classAbilities = {
       target: 'Self',
       params: {
         bonusTargets: 2,
-        stunChance: 0.25,
+        stunChance: 0.1,
         stunDuration: 1,
       },
       unlockAt: 4,
@@ -587,7 +587,7 @@ const classAbilities = {
       category: 'Attack',
       effect: null,
       target: 'Single',
-      params: { damage: 30 }, // High damage, elemental theme
+      params: { damage: 50 }, // High damage, elemental theme
       unlockAt: 1,
       order: 1060,
       cooldown: 0,

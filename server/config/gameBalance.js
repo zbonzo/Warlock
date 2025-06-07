@@ -71,7 +71,7 @@ const player = {
 
   // Level up bonuses
   levelUp: {
-    hpIncrease: 0.2, // 20% HP increase
+    hpIncrease: 0.1, // 20% HP increase
     damageIncrease: 1.25, // 25% damage increase (multiply by 1.25)
     fullHealOnLevelUp: true,
   },

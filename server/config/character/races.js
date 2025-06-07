@@ -38,9 +38,9 @@ const raceAttributes = {
       'Adaptable and versatile, artisans can learn abilities from other classes.',
   },
   Rockhewn: {
-    hpModifier: 1.0,
+    hpModifier: 1.1,
     armorModifier: 1.5,
-    damageModifier: 1.0,
+    damageModifier: 1.1,
     compatibleClasses: [
       'Warrior', // Thematic Score: 9 (Sturdy, martial, axe-wielding)
       'Oracle', // Thematic Score: 8 (Ancient knowledge, prophecies from stone)
@@ -54,9 +54,9 @@ const raceAttributes = {
   },
 
   Lich: {
-    hpModifier: 0.6,
-    armorModifier: 0.7,
-    damageModifier: 1.6,
+    hpModifier: 1.0,
+    armorModifier: 1.0,
+    damageModifier: 1.7,
     compatibleClasses: [
       'Assassin', // Thematic Score: 8 (Silent, unnerving, hard to detect)
       'Priest', // Thematic Score: 6 (Dark priest, necromancy, antithetical to traditional holy themes)
@@ -69,8 +69,8 @@ const raceAttributes = {
       'Undead and resilient, Lich can return to life once after being defeated.',
   },
   Orc: {
-    hpModifier: 0.9,
-    armorModifier: 0.9,
+    hpModifier: 1.0,
+    armorModifier: 1.0,
     damageModifier: 1.5,
     compatibleClasses: [
       'Warrior', // Thematic Score: 10 (Brutal, frontline, iconic warrior)
@@ -85,8 +85,8 @@ const raceAttributes = {
   },
 
   Crestfallen: {
-    hpModifier: 1.15,
-    armorModifier: 1.25,
+    hpModifier: 1.2,
+    armorModifier: 1.3,
     damageModifier: 1.3,
     compatibleClasses: [
       'Assassin', // Thematic Score: 9 (Agile, stealthy, cunning)
@@ -100,9 +100,9 @@ const raceAttributes = {
       'When wounded (below 80% HP), attacks against you reveal if the attacker is corrupted.',
   },
   Kinfolk: {
-    hpModifier: 1.5,
-    armorModifier: 0.9,
-    damageModifier: 0.8,
+    hpModifier: 1.4,
+    armorModifier: 1.1,
+    damageModifier: 1.1,
     compatibleClasses: [
       'Alchemist', // Thematic Score: 9 (Nature-attuned, herbalism, potion crafting)
       'Oracle', // Thematic Score: 9 (Nature's wisdom, prophecy)
@@ -145,8 +145,8 @@ const racialAbilities = {
     effect: 'stoneArmor',
     target: 'Self',
     params: {
-      initialArmor: 8,
-      degradationPerHit: 2,
+      initialArmor: 6,
+      degradationPerHit: 1,
     },
   },
 

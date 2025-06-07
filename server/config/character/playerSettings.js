@@ -19,7 +19,7 @@ const playerSettings = {
   maxReconnectionAttempts: 3,
 
   // Leveling settings
-  hpIncreasePerLevel: 0.2, // 10% HP increase per level
+  hpIncreasePerLevel: 0.1, // 10% HP increase per level
   damageIncreasePerLevel: 0.25, // 25% damage/healing increase per level
 
   // Death and resurrection
