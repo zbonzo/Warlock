@@ -412,14 +412,13 @@ class GameRoom {
   }
 
   /**
-   * Update player unlocked abilities based on current level
+   * UPDATED: Update player unlocked abilities and activate passives
    * Called after level up
    */
   updateUnlockedAbilities() {
     for (const player of this.players.values()) {
       if (!player.abilities || !player.abilities.length) continue;
 
-      // Check all abilities to see if they should be unlocked at the current level
       const newlyUnlocked = [];
 
       for (const ability of player.abilities) {
@@ -428,10 +427,14 @@ class GameRoom {
         );
 
         if (ability.unlockAt <= this.level && !alreadyUnlocked) {
-          // Create a copy to avoid reference issues
           const abilityCopy = { ...ability };
           player.unlocked.push(abilityCopy);
           newlyUnlocked.push(ability.name);
+
+          // NEW: Auto-activate passive abilities when unlocked
+          if (ability.effect === 'passive') {
+            this.activatePassiveAbility(player, ability);
+          }
         }
       }
 
@@ -441,7 +444,46 @@ class GameRoom {
           abilities: newlyUnlocked,
         });
       }
+
+      // NEW: Update Relentless Fury level scaling for existing Barbarians
+      if (player.class === 'Barbarian' && player.classEffects?.relentlessFury) {
+        player.classEffects.relentlessFury.currentLevel = this.level;
+      }
     }
+  }
+
+  /**
+   * NEW: Activate a passive ability for a player
+   * @param {Player} player - Player object
+   * @param {Object} ability - Ability configuration
+   */
+  activatePassiveAbility(player, ability) {
+    // Create a fake log array for ability execution
+    const log = [];
+
+    // Execute the passive ability through the ability registry
+    const success = this.systems.abilityRegistry.executeClassAbility(
+      ability.type,
+      player, // actor
+      player, // target (self for passives)
+      ability,
+      log,
+      this.systems
+    );
+
+    if (success && log.length > 0) {
+      // Add passive activation messages to the next round's log
+      if (!this.pendingPassiveActivations) {
+        this.pendingPassiveActivations = [];
+      }
+      this.pendingPassiveActivations.push(...log);
+    }
+
+    logger.debug('PassiveAbilityActivated', {
+      playerName: player.name,
+      abilityType: ability.type,
+      success: success,
+    });
   }
 
   /**
@@ -475,7 +517,7 @@ class GameRoom {
   }
 
   /**
-   * Process a game round (IMPROVED with proper cooldown timing)
+   * UPDATED: Process a game round with passive activation messages
    * @returns {Object} Round result with events and state updates
    */
   processRound() {
@@ -485,17 +527,25 @@ class GameRoom {
     // Reset per-round racial ability uses and process cooldowns for all players
     for (let player of this.players.values()) {
       player.resetRacialPerRoundUses();
-      // Process ability cooldowns BEFORE checking actions
       player.processAbilityCooldowns();
     }
 
-    // ADD PENDING DISCONNECT EVENTS FIRST
+    // Add pending disconnect events first
     if (
       this.pendingDisconnectEvents &&
       this.pendingDisconnectEvents.length > 0
     ) {
       log.push(...this.pendingDisconnectEvents);
-      this.pendingDisconnectEvents = []; // Clear after adding
+      this.pendingDisconnectEvents = [];
+    }
+
+    // NEW: Add pending passive activation messages
+    if (
+      this.pendingPassiveActivations &&
+      this.pendingPassiveActivations.length > 0
+    ) {
+      log.push(...this.pendingPassiveActivations);
+      this.pendingPassiveActivations = [];
     }
 
     // Process racial abilities first
@@ -504,12 +554,13 @@ class GameRoom {
     // Monster ages and prepares to strike
     this.systems.monsterController.ageMonster();
 
-    // Process player actions and apply cooldowns AFTER successful execution
+    // Process player actions
     this.processPlayerActions(log);
 
     // Monster attacks
     this.systems.monsterController.attack(log, this.systems.combatSystem);
 
+    // Process life bond healing for Kinfolk
     if (this.monster.hp > 0) {
       for (const player of this.players.values()) {
         if (player.race === 'Kinfolk' && player.isAlive) {
@@ -517,9 +568,11 @@ class GameRoom {
         }
       }
     }
+
     // Status effects tick-down
     this.systems.statusEffectManager.processTimedEffects(log);
 
+    // Process class effects (including Barbarian passives)
     for (const player of this.players.values()) {
       if (player.isAlive) {
         const classEffectResult = player.processClassEffects();
@@ -553,7 +606,6 @@ class GameRoom {
     if (this.level > oldLevel) {
       logger.info(`Game level up: ${oldLevel} -> ${this.level}`);
 
-      // Use config for level up message
       const levelUpLog = {
         type: 'level_up',
         public: true,
@@ -577,7 +629,7 @@ class GameRoom {
             player.maxHp * config.gameBalance.player.levelUp.hpIncrease
           );
           player.maxHp += hpIncrease;
-          player.hp = player.maxHp; // Set to new max after increase
+          player.hp = player.maxHp;
 
           // Apply damage increase from config
           player.damageMod *= config.gameBalance.player.levelUp.damageIncrease;
@@ -595,21 +647,10 @@ class GameRoom {
             attackerMessage: null,
           };
           log.push(improvementLog);
-        }
-      }
 
-      // Add individual ability unlock messages
-      for (const player of this.players.values()) {
-        if (player.isAlive) {
-          const abilityUnlockLog = {
-            type: 'ability_unlock',
-            public: false,
-            targetId: player.id,
-            message: '',
-            privateMessage: messages.getEvent('levelUp', { level: this.level }),
-            attackerMessage: null,
-          };
-          log.push(abilityUnlockLog);
+          if (player.class === 'Barbarian') {
+            player.updateRelentlessFuryLevel(this.level);
+          }
         }
       }
     }
@@ -636,14 +677,17 @@ class GameRoom {
     this.phase = 'action';
 
     return {
-      eventsLog: processedLog,
+      eventsLog: this.processLogForClients(this.sortLogEntries(log)),
       players: this.getPlayersInfo(),
       monster: this.systems.monsterController.getState(),
       turn: this.round++,
       level: this.level,
       levelUp:
         this.level > oldLevel ? { oldLevel, newLevel: this.level } : null,
-      winner,
+      winner: this.systems.gameStateUtils.checkWinConditions(
+        this.systems.warlockSystem.getWarlockCount(),
+        this.aliveCount
+      ),
     };
   }
 

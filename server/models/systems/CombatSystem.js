@@ -111,58 +111,30 @@ class CombatSystem {
   ) {
     if (!target || !target.isAlive) return false;
 
+    // Apply crit multiplier if present
     const critMultiplier =
       attacker?.tempCritMultiplier || options.critMultiplier || 1;
     if (critMultiplier !== 1) {
       damageAmount = Math.floor(damageAmount * critMultiplier);
     }
+
     // Check for immunity effects first
     if (this.checkImmunityEffects(target, attacker, log)) {
-      return false; // No damage was dealt
+      return false;
     }
 
-    // NEW: Check if target was recently detected as Warlock
+    // Apply detection penalty for recently detected warlocks
     let detectionPenaltyDamage = damageAmount;
     if (target.isWarlock && target.recentlyDetected) {
       const penalty =
         config.gameBalance.warlock.corruption.detectionDamagePenalty / 100;
       detectionPenaltyDamage = Math.floor(damageAmount * (1 + penalty));
-
-      if (detectionPenaltyDamage > damageAmount) {
-        const detectionPenaltyLog = {
-          type: 'detection_penalty',
-          public: false,
-          targetId: target.id,
-          message: '',
-          privateMessage: messages.formatMessage(
-            messages.privateMessages.warlockDetectionPenaltyDamage,
-            {
-              penalty:
-                config.gameBalance.warlock.corruption.detectionDamagePenalty,
-              oldDamage: damageAmount,
-              newDamage: detectionPenaltyDamage,
-            }
-          ),
-          attackerMessage: messages.formatMessage(
-            messages.events.warlockDetectionPenaltyAttacker,
-            {
-              targetName: target.name,
-              penalty:
-                config.gameBalance.warlock.corruption.detectionDamagePenalty,
-            }
-          ),
-        };
-        log.push(detectionPenaltyLog);
-      }
     }
 
-    // NEW: Apply coordination bonus if attacker is a player
+    // Apply coordination bonus if applicable
     let coordinatedDamage = detectionPenaltyDamage;
     if (attacker.id && target !== config.MONSTER_ID) {
-      // Track this coordination
       this.trackCoordination(attacker.id, target.id);
-
-      // Calculate coordination bonus
       const coordinationCount = this.getCoordinationCount(
         target.id,
         attacker.id
@@ -173,58 +145,43 @@ class CombatSystem {
           coordinationCount,
           'damage'
         );
-
-        if (coordinatedDamage > detectionPenaltyDamage) {
-          const coordinationLog = {
-            type: 'coordination_bonus',
-            public: true,
-            targetId: target.id,
-            attackerId: attacker.id,
-            message: messages.formatMessage(
-              messages.events.coordinatedAttackDamage,
-              {
-                playerCount: coordinationCount + 1,
-                targetName: target.name,
-                bonusPercent: Math.round(
-                  (coordinatedDamage / detectionPenaltyDamage - 1) * 100
-                ),
-              }
-            ),
-            privateMessage: '',
-            attackerMessage: '',
-          };
-          log.push(coordinationLog);
-        }
       }
     }
 
-    // Initialize armor degradation info
+    // Process Stone Armor degradation for Rockhewn
     let armorDegradationInfo = null;
-
-    // Process Stone Armor degradation for Rockhewn (before damage calculation)
     if (target.race === 'Rockhewn' && target.stoneArmorIntact) {
       armorDegradationInfo =
         target.processStoneArmorDegradation(coordinatedDamage);
     }
 
-    // STEP 1: Apply vulnerability BEFORE armor calculation
+    // Apply vulnerability BEFORE armor calculation
     let modifiedDamage = coordinatedDamage;
     if (target.isVulnerable && target.vulnerabilityIncrease > 0) {
       const vulnerabilityMultiplier = 1 + target.vulnerabilityIncrease / 100;
       modifiedDamage = Math.floor(modifiedDamage * vulnerabilityMultiplier);
-
-      // Log vulnerability effect
-      log.push(
-        messages.formatMessage(messages.events.vulnerableDamageTaken, {
-          targetName: target.name,
-          increasePercent: target.vulnerabilityIncrease,
-          oldDamage: coordinatedDamage,
-          newDamage: modifiedDamage,
-        })
-      );
     }
 
-    // STEP 2: Apply Unstoppable Rage damage resistance if active
+    // NEW: Apply Relentless Fury vulnerability for Barbarian targets
+    if (target.class === 'Barbarian') {
+      const relentlessFuryDamage =
+        target.getRelentlessFuryVulnerability(modifiedDamage);
+      if (relentlessFuryDamage > 0) {
+        modifiedDamage += relentlessFuryDamage;
+
+        const relentlessFuryLog = {
+          type: 'relentless_fury_vulnerability',
+          public: false,
+          targetId: target.id,
+          message: '',
+          privateMessage: `Your Relentless Fury causes you to take ${relentlessFuryDamage} additional damage!`,
+          attackerMessage: '',
+        };
+        log.push(relentlessFuryLog);
+      }
+    }
+
+    // Apply Unstoppable Rage damage resistance if active
     if (
       target.classEffects &&
       target.classEffects.unstoppableRage &&
@@ -234,52 +191,21 @@ class CombatSystem {
         target.classEffects.unstoppableRage.damageResistance || 0.3;
       const beforeRage = modifiedDamage;
       modifiedDamage = Math.floor(modifiedDamage * (1 - damageResistance));
-
-      log.push(
-        messages.formatMessage(messages.events.unstoppableRageReduction, {
-          targetName: target.name,
-          reductionPercent: Math.round(damageResistance * 100),
-          oldDamage: beforeRage,
-          newDamage: modifiedDamage,
-        })
-      );
     }
 
-    // STEP 3: Apply armor reduction using FIXED calculation
+    // Apply armor reduction
     let effectiveArmor = target.getEffectiveArmor();
-
-    // NEW: Apply comeback mechanics armor bonus for good players
     if (this.comebackActive && !target.isWarlock) {
       const armorBonus = config.gameBalance.comebackMechanics.armorIncrease;
       effectiveArmor += armorBonus;
-
-      const comebackArmorLog = {
-        type: 'comeback_armor',
-        public: false,
-        targetId: target.id,
-        message: '',
-        privateMessage: messages.formatMessage(
-          messages.privateMessages.comebackArmorBonus,
-          { armorBonus }
-        ),
-        attackerMessage: '',
-      };
-      log.push(comebackArmorLog);
     }
 
-    const beforeArmor = modifiedDamage;
     const finalDamage = this.calculateArmorReduction(
       modifiedDamage,
       effectiveArmor
     );
 
-    // Calculate reduction percentage for logs
-    const reductionPercent =
-      effectiveArmor > 0
-        ? Math.round(((beforeArmor - finalDamage) / beforeArmor) * 100)
-        : 0;
-
-    // STEP 4: Apply the final damage to HP
+    // Apply the final damage to HP
     const oldHp = target.hp;
     target.hp = Math.max(0, target.hp - finalDamage);
     const actualDamage = oldHp - target.hp;
@@ -289,9 +215,23 @@ class CombatSystem {
       target.isAlive = false;
     }
 
-    // Create enhanced log entry with armor information
-    const isMonsterAttacker = !attacker.id;
+    // NEW: Process Thirsty Blade life steal for Barbarian attackers
+    if (attacker.id && attacker.class === 'Barbarian' && actualDamage > 0) {
+      const healAmount = attacker.processThirstyBladeLifeSteal(actualDamage);
+      if (healAmount > 0) {
+        const thirstyBladeLog = {
+          type: 'thirsty_blade_heal',
+          public: false,
+          attackerId: attacker.id,
+          message: `${attacker.name} is healed for ${healAmount} HP by their Thirsty Blade!`,
+          privateMessage: '',
+          attackerMessage: `Your Thirsty Blade heals you for ${healAmount} HP!`,
+        };
+        log.push(thirstyBladeLog);
+      }
+    }
 
+    // Create damage log entry
     const logEvent = {
       type: 'damage',
       public: false,
@@ -301,110 +241,19 @@ class CombatSystem {
       attackerName: attacker.name || 'The Monster',
       damage: {
         initial: damageAmount,
-        afterDetectionPenalty: detectionPenaltyDamage,
-        afterCoordination: coordinatedDamage,
-        afterVulnerability: modifiedDamage,
         final: actualDamage,
-        reduction: reductionPercent,
         armor: effectiveArmor,
-        isVulnerable: target.isVulnerable,
       },
-      message:
-        effectiveArmor > 0
-          ? messages.formatMessage(messages.events.playerAttackedWithArmor, {
-              targetName: target.name,
-              actualDamage,
-              damageAmount,
-              reductionPercent,
-            })
-          : messages.formatMessage(messages.events.playerAttackedNoArmor, {
-              targetName: target.name,
-              actualDamage,
-            }),
-      privateMessage:
-        effectiveArmor > 0
-          ? messages.formatMessage(messages.privateMessages.attackedWithArmor, {
-              attackerName: attacker.name || 'The Monster',
-              actualDamage,
-              damageAmount,
-              reductionPercent,
-              effectiveArmor,
-            })
-          : messages.formatMessage(messages.privateMessages.attackedNoArmor, {
-              attackerName: attacker.name || 'The Monster',
-              actualDamage,
-            }),
-      attackerMessage: isMonsterAttacker
-        ? ''
-        : effectiveArmor > 0
-          ? messages.formatMessage(
-              messages.player.combat.attackedTargetWithArmor,
-              {
-                targetName: target.name,
-                actualDamage,
-                damageAmount,
-                reductionPercent,
-                effectiveArmor,
-              }
-            )
-          : messages.formatMessage(
-              messages.player.combat.attackedTargetNoArmor,
-              {
-                targetName: target.name,
-                actualDamage,
-              }
-            ),
+      message: `${target.name} takes ${actualDamage} damage!`,
+      privateMessage: `You take ${actualDamage} damage from ${attacker.name || 'The Monster'}!`,
+      attackerMessage: attacker.id
+        ? `You deal ${actualDamage} damage to ${target.name}!`
+        : '',
     };
-
     log.push(logEvent);
 
-    // Add Stone Armor degradation message if applicable
-    if (armorDegradationInfo && armorDegradationInfo.degraded) {
-      const armorLogEvent = {
-        type: 'stone_armor_degradation',
-        public: false,
-        targetId: target.id,
-        message: messages.formatMessage(messages.events.dwarfStoneArmor, {
-          playerName: target.name,
-          oldValue: armorDegradationInfo.oldValue,
-          newValue: armorDegradationInfo.newArmorValue,
-        }),
-        privateMessage: messages.formatMessage(
-          messages.privateMessages.stoneArmorDegraded,
-          {
-            oldValue: armorDegradationInfo.oldValue,
-            newValue: armorDegradationInfo.newArmorValue,
-          }
-        ),
-        attackerMessage: messages.formatMessage(
-          messages.player.combat.stoneArmorWeakenedAttacker,
-          { targetName: target.name }
-        ),
-      };
-
-      if (
-        armorDegradationInfo.destroyed &&
-        armorDegradationInfo.newArmorValue <= 0
-      ) {
-        armorLogEvent.message = messages.formatMessage(
-          messages.events.stoneArmorDestroyed,
-          { playerName: target.name }
-        );
-        armorLogEvent.privateMessage = messages.formatMessage(
-          messages.privateMessages.stoneArmorDestroyed,
-          {
-            damageIncreasePercent:
-              Math.abs(armorDegradationInfo.newArmorValue) * 10,
-          }
-        );
-      }
-
-      log.push(armorLogEvent);
-    }
-
-    // === Handle counter-attacks from Oracle abilities ===
+    // Handle counter-attacks from Oracle abilities
     if (attacker.id && actualDamage > 0) {
-      // Only for player attackers who dealt damage
       this.handleCounterAttacks(target, attacker, log);
     }
 
@@ -462,13 +311,210 @@ class CombatSystem {
     // Process potential death
     if (target.hp === 0) {
       this.handlePotentialDeath(target, attacker, log);
-      return true;
+      // Sweeping Strike should still trigger even if the target died
     }
 
     // Check for warlock conversion opportunities
     this.checkWarlockConversion(target, attacker, log);
 
+    // FIXED: Check for Sweeping Strike AFTER damage is applied
+    if (
+      attacker.id &&
+      attacker.class === 'Barbarian' &&
+      !options.skipSweepingStrike &&
+      actualDamage > 0
+    ) {
+      console.log(
+        `Checking sweeping strike for ${attacker.name}, damage: ${actualDamage}`
+      );
+      const sweepingParams = attacker.getSweepingStrikeParams();
+      if (sweepingParams) {
+        console.log(`Triggering sweeping strike for ${attacker.name}`);
+        this.processSweepingStrike(attacker, target, actualDamage, log);
+      } else {
+        console.log(`No sweeping strike params for ${attacker.name}`);
+      }
+    }
+
     return true;
+  }
+
+  /**
+   * FIXED: Process Sweeping Strike with RAW damage (no ability re-execution)
+   * @param {Object} attacker - Barbarian attacker
+   * @param {Object} primaryTarget - Original target
+   * @param {number} damage - Damage dealt to primary target
+   * @param {Array} log - Event log
+   */
+  processSweepingStrike(attacker, primaryTarget, damage, log) {
+    const sweepingParams = attacker.getSweepingStrikeParams();
+    if (!sweepingParams) {
+      console.log(`No sweeping params for ${attacker.name}`);
+      return;
+    }
+
+    console.log(
+      `Processing sweeping strike for ${attacker.name}, primary target: ${primaryTarget.name || 'Monster'}`
+    );
+
+    // Build list of potential secondary targets (including self for comedy!)
+    const potentialTargets = [];
+
+    // FIXED: Get monster state properly
+    const monsterState = this.monsterController.getState();
+
+    // Add monster if alive and not the primary target
+    if (monsterState.hp > 0 && primaryTarget !== config.MONSTER_ID) {
+      potentialTargets.push({ type: 'monster', target: 'monster' });
+    }
+
+    // Add other alive players (including attacker for hilarious self-harm!)
+    for (const player of this.players.values()) {
+      if (
+        player.isAlive &&
+        player !== primaryTarget // Only exclude primary target
+      ) {
+        potentialTargets.push({ type: 'player', target: player });
+      }
+    }
+
+    console.log(`Found ${potentialTargets.length} potential secondary targets`);
+
+    if (potentialTargets.length === 0) {
+      console.log('No valid secondary targets for sweeping strike');
+      return;
+    }
+
+    // Select random secondary targets
+    const targetsToHit = Math.min(
+      sweepingParams.bonusTargets,
+      potentialTargets.length
+    );
+    const selectedTargets = [];
+
+    // Shuffle and select
+    const shuffled = [...potentialTargets];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+
+    for (let i = 0; i < targetsToHit; i++) {
+      selectedTargets.push(shuffled[i]);
+    }
+
+    console.log(
+      `Selected ${selectedTargets.length} targets for sweeping strike`
+    );
+
+    // CRITICAL: Apply RAW damage to secondary targets (NO ability re-execution)
+    for (const targetInfo of selectedTargets) {
+      const isTargetingSelf =
+        targetInfo.type === 'player' && targetInfo.target.id === attacker.id;
+
+      console.log(
+        `Sweeping strike hitting ${targetInfo.type}: ${targetInfo.target.name || 'Monster'}`
+      );
+
+      if (targetInfo.type === 'monster') {
+        // Apply raw damage to monster (no ability system involved)
+        const success = this.monsterController.takeDamage(damage, attacker, []);
+
+        if (success) {
+          const monsterDamageLog = {
+            type: 'sweeping_strike_monster',
+            public: true,
+            attackerId: attacker.id,
+            message: `${attacker.name}'s Sweeping Strike hits the Monster for ${damage} damage!`,
+            privateMessage: '',
+            attackerMessage: '',
+          };
+          log.push(monsterDamageLog);
+        }
+      } else {
+        // Apply raw damage to player target (NO ability system involved)
+        const target = targetInfo.target;
+
+        // CRITICAL: Use skipSweepingStrike to prevent infinite loops
+        this.applyDamageToPlayer(
+          target,
+          damage,
+          attacker,
+          log,
+          false,
+          { skipSweepingStrike: true } // PREVENT INFINITE LOOPS
+        );
+
+        const playerDamageLog = {
+          type: 'sweeping_strike_damage',
+          public: true,
+          attackerId: attacker.id,
+          targetId: target.id,
+          message: isTargetingSelf
+            ? `${attacker.name}'s wild swing is so reckless they hit themselves for ${damage} damage!`
+            : `${attacker.name}'s Sweeping Strike hits ${target.name} for ${damage} damage!`,
+          privateMessage: isTargetingSelf
+            ? `Your reckless swing hits you for ${damage} damage!`
+            : '',
+          attackerMessage: isTargetingSelf
+            ? 'Your reckless swing hits even you!'
+            : '',
+        };
+        log.push(playerDamageLog);
+      }
+
+      // Apply stun chance to player targets (including self!)
+      if (
+        targetInfo.type === 'player' &&
+        Math.random() < sweepingParams.stunChance
+      ) {
+        // Apply stun directly using status effect manager
+        if (this.statusEffectManager && this.statusEffectManager.applyEffect) {
+          this.statusEffectManager.applyEffect(
+            targetInfo.target.id,
+            'stunned',
+            { turns: sweepingParams.stunDuration },
+            log
+          );
+        } else {
+          // Fallback: apply stun directly to player
+          if (!targetInfo.target.statusEffects) {
+            targetInfo.target.statusEffects = {};
+          }
+          targetInfo.target.statusEffects.stunned = {
+            turns: sweepingParams.stunDuration,
+          };
+        }
+
+        const stunMessage = isTargetingSelf
+          ? `${attacker.name} is so shocked by their own recklessness that they stun themselves!`
+          : `${targetInfo.target.name} is stunned by ${attacker.name}'s Sweeping Strike!`;
+
+        const stunLog = {
+          type: 'sweeping_strike_stun',
+          public: true,
+          attackerId: attacker.id,
+          targetId: targetInfo.target.id,
+          message: stunMessage,
+          privateMessage: '',
+          attackerMessage: isTargetingSelf
+            ? 'You stun yourself with your own recklessness!'
+            : '',
+        };
+        log.push(stunLog);
+      }
+    }
+
+    // Log the sweeping strike summary
+    const sweepingLog = {
+      type: 'sweeping_strike',
+      public: true,
+      attackerId: attacker.id,
+      message: `${attacker.name}'s Sweeping Strike hits ${selectedTargets.length} additional target(s)!`,
+      privateMessage: '',
+      attackerMessage: '',
+    };
+    log.push(sweepingLog);
   }
 
   /**
@@ -950,6 +996,7 @@ class CombatSystem {
     // Undying will be checked during processPendingDeaths() AFTER monster attacks
     target.pendingDeath = true;
     target.deathAttacker = attacker.name || 'The Monster';
+    target.deathAttackerId = attacker.id || 'monster';
 
     const deathLog = {
       type: 'death',
@@ -971,6 +1018,22 @@ class CombatSystem {
       ),
     };
     log.push(deathLog);
+
+    // Reset Thirsty Blade duration on kill for Barbarian attackers
+    if (attacker.id && attacker.class === 'Barbarian') {
+      const refreshed = attacker.refreshThirstyBladeOnKill();
+      if (refreshed) {
+        const refreshLog = {
+          type: 'thirsty_blade_refresh',
+          public: false,
+          attackerId: attacker.id,
+          message: '',
+          privateMessage: '',
+          attackerMessage: `Your Thirsty Blade thirsts for more! Duration refreshed.`,
+        };
+        log.push(refreshLog);
+      }
+    }
   }
 
   /**
@@ -1061,14 +1124,54 @@ class CombatSystem {
       attacker,
       log
     );
+
+    // Heal attacker via Thirsty Blade when damaging the monster
+    if (
+      attacker.class === 'Barbarian' &&
+      attacker.classEffects &&
+      attacker.classEffects.thirstyBlade &&
+      attacker.classEffects.thirstyBlade.active
+    ) {
+      const lifeSteal = attacker.classEffects.thirstyBlade.lifeSteal || 0.25;
+      const healAmount = Math.floor(modifiedAmount * lifeSteal);
+      if (healAmount > 0) {
+        attacker.heal(healAmount);
+        log.push(
+          messages.formatMessage(messages.getEvent('thirstyBladeHeal'), {
+            playerName: attacker.name,
+            amount: healAmount,
+          })
+        );
+      }
+    }
+
+    // FIXED: Check for Sweeping Strike when attacking monster
+    if (
+      attacker.class === 'Barbarian' &&
+      attacker.classEffects &&
+      attacker.classEffects.sweepingStrike &&
+      !options.skipSweepingStrike &&
+      modifiedAmount > 0
+    ) {
+      this.processSweepingStrike(
+        attacker,
+        config.MONSTER_ID,
+        modifiedAmount,
+        log
+      );
+    }
+
     return result;
   }
 
   /**
    * FIXED: Process all pending deaths - this is where Undying actually triggers
+   * AND where Thirsty Blade gets refreshed for all Barbarians on ANY death
    * @param {Array} log - Event log to append messages to
    */
   processPendingDeaths(log = []) {
+    const playersWhoDied = [];
+
     for (const player of this.players.values()) {
       if (player.pendingDeath) {
         logger.debug('ProcessingPendingDeath', {
@@ -1117,6 +1220,7 @@ class CombatSystem {
           // Clear pending death
           delete player.pendingDeath;
           delete player.deathAttacker;
+          delete player.deathAttackerId;
 
           logger.debug('UndyingSuccess', {
             playerName: player.name,
@@ -1127,15 +1231,50 @@ class CombatSystem {
           player.isAlive = false;
           if (player.isWarlock) this.warlockSystem.decrementWarlockCount();
 
-          // The death message was already logged in handlePotentialDeath
-          // No need to log again
+          // Track who died for Thirsty Blade refresh
+          playersWhoDied.push({
+            name: player.name,
+            id: player.id,
+            attacker: player.deathAttacker,
+            attackerId: player.deathAttackerId,
+          });
 
           delete player.pendingDeath;
           delete player.deathAttacker;
+          delete player.deathAttackerId;
 
           logger.debug('PlayerDeathFinal', {
             playerName: player.name,
           });
+        }
+      }
+    }
+
+    // NEW: Refresh Thirsty Blade for all living Barbarians when ANY player dies
+    if (playersWhoDied.length > 0) {
+      for (const player of this.players.values()) {
+        if (
+          player.isAlive &&
+          player.class === 'Barbarian' &&
+          player.classEffects &&
+          player.classEffects.thirstyBlade
+        ) {
+          const refreshed = player.refreshThirstyBladeOnKill();
+          if (refreshed) {
+            // Create one message per death
+            for (const deadPlayer of playersWhoDied) {
+              const refreshLog = {
+                type: 'thirsty_blade_refresh_any_death',
+                public: false,
+                targetId: player.id,
+                message: '',
+                privateMessage: '',
+                attackerMessage: `The death of ${deadPlayer.name} invigorates your Thirsty Blade! Duration refreshed.`,
+              };
+              log.push(refreshLog);
+            }
+            break; // Only need to refresh once per barbarian
+          }
         }
       }
     }

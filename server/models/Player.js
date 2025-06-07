@@ -25,6 +25,7 @@ class Player {
     this.maxHp = config.gameBalance.player.baseHp || 100;
     this.armor = 0;
     this.damageMod = 1.0; // Damage modifier from race and class
+    this.level = 1; // NEW: Track player level for Relentless Fury
     this.isWarlock = false;
     this.isAlive = true;
     this.isReady = false;
@@ -54,6 +55,9 @@ class Player {
     // Stone Armor tracking
     this.stoneArmorIntact = false; // Whether the Rockhewn has stone armor
     this.stoneArmorValue = 0; // Current stone armor value
+
+    // NEW: Class effects tracking for Barbarian passives
+    this.classEffects = {};
   }
 
   /**
@@ -545,24 +549,32 @@ class Player {
     // First apply the normal damage modifier (level progression)
     let modifiedDamage = Math.floor(rawDamage * (this.damageMod || 1.0));
 
-    // FIXED: Apply blood rage effect if active (Orc racial) - check both old and new properties
+    // Apply Blood Rage effect if active (Orc racial)
     if (this.racialEffects && this.racialEffects.bloodRage) {
-      modifiedDamage = modifiedDamage * 2; // Double the already-modified damage
-
-      // One-time use - clear the effect
+      modifiedDamage = modifiedDamage * 2;
       delete this.racialEffects.bloodRage;
-    }
-    // ALSO check for the newer bloodRageMultiplier property
-    else if (this.racialEffects && this.racialEffects.bloodRageMultiplier) {
+    } else if (this.racialEffects && this.racialEffects.bloodRageMultiplier) {
       modifiedDamage = Math.floor(
         modifiedDamage * this.racialEffects.bloodRageMultiplier
       );
-
-      // One-time use - clear the effect
       delete this.racialEffects.bloodRageMultiplier;
     }
 
-    // Apply Blood Frenzy passive effect (Barbarian class ability)
+    // NEW: Apply Relentless Fury (Barbarian passive)
+    if (
+      this.class === 'Barbarian' &&
+      this.classEffects &&
+      this.classEffects.relentlessFury &&
+      this.classEffects.relentlessFury.active
+    ) {
+      const level = this.classEffects.relentlessFury.currentLevel || 1;
+      const damagePerLevel =
+        this.classEffects.relentlessFury.damagePerLevel || 0.03;
+      const damageBonus = level * damagePerLevel;
+      modifiedDamage = Math.floor(modifiedDamage * (1 + damageBonus));
+    }
+
+    // Apply Blood Frenzy passive effect (existing)
     if (
       this.classEffects &&
       this.classEffects.bloodFrenzy &&
@@ -574,23 +586,9 @@ class Player {
         this.classEffects.bloodFrenzy.damageIncreasePerHpMissing || 0.01;
       const damageIncrease = missingHpPercent * damageIncreaseRate;
       modifiedDamage = Math.floor(modifiedDamage * (1 + damageIncrease));
-
-      // Debug log for testing
-      if (missingHpPercent > 0) {
-        logger.debug(
-          messages.formatMessage(
-            messages.serverLogMessages.debug.BloodFrenzyDamageIncrease,
-            {
-              playerName: this.name,
-              missingHpPercent: Math.round(missingHpPercent * 100),
-              damageIncreasePercent: Math.round(damageIncrease * 100),
-            }
-          )
-        );
-      }
     }
 
-    // Apply Unstoppable Rage effect if active (Barbarian class ability)
+    // Apply Unstoppable Rage effect if active (existing)
     if (
       this.classEffects &&
       this.classEffects.unstoppableRage &&
@@ -608,6 +606,90 @@ class Player {
     }
 
     return modifiedDamage;
+  }
+
+  /**
+   * NEW: Calculate additional damage taken from Relentless Fury
+   * @param {number} baseDamage - Base incoming damage
+   * @returns {number} Additional damage from vulnerability
+   */
+  getRelentlessFuryVulnerability(baseDamage) {
+    if (
+      this.class === 'Barbarian' &&
+      this.classEffects &&
+      this.classEffects.relentlessFury &&
+      this.classEffects.relentlessFury.active
+    ) {
+      const level = this.classEffects.relentlessFury.currentLevel || 1;
+      const vulnerabilityPerLevel =
+        this.classEffects.relentlessFury.vulnerabilityPerLevel || 0.03;
+      const vulnerabilityBonus = level * vulnerabilityPerLevel;
+      return Math.floor(baseDamage * vulnerabilityBonus);
+    }
+    return 0;
+  }
+
+  /**
+   * NEW: Process Thirsty Blade life steal
+   * @param {number} damageDealt - Damage dealt to trigger life steal
+   * @returns {number} Amount healed
+   */
+  processThirstyBladeLifeSteal(damageDealt) {
+    if (
+      this.class === 'Barbarian' &&
+      this.classEffects &&
+      this.classEffects.thirstyBlade &&
+      this.classEffects.thirstyBlade.active &&
+      this.classEffects.thirstyBlade.turnsLeft > 0
+    ) {
+      const lifeSteal = this.classEffects.thirstyBlade.lifeSteal || 0.15;
+      const healAmount = Math.floor(damageDealt * lifeSteal);
+
+      if (healAmount > 0) {
+        const actualHeal = Math.min(healAmount, this.maxHp - this.hp);
+        this.hp += actualHeal;
+        return actualHeal;
+      }
+    }
+    return 0;
+  }
+
+  /**
+   * NEW: Refresh Thirsty Blade on any death (not just kills by this barbarian)
+   */
+  refreshThirstyBladeOnKill() {
+    if (
+      this.class === 'Barbarian' &&
+      this.classEffects &&
+      this.classEffects.thirstyBlade
+    ) {
+      this.classEffects.thirstyBlade.turnsLeft =
+        this.classEffects.thirstyBlade.maxDuration;
+      this.classEffects.thirstyBlade.active = true;
+      return true;
+    }
+    return false;
+  }
+
+  /**
+   * NEW: Get Sweeping Strike parameters for combat system
+   * @returns {Object|null} Sweeping strike parameters or null if not active
+   */
+  getSweepingStrikeParams() {
+    const result =
+      this.class === 'Barbarian' &&
+      this.classEffects &&
+      this.classEffects.sweepingStrike &&
+      this.classEffects.sweepingStrike.active
+        ? {
+            bonusTargets: this.classEffects.sweepingStrike.bonusTargets || 1,
+            stunChance: this.classEffects.sweepingStrike.stunChance || 0.25,
+            stunDuration: this.classEffects.sweepingStrike.stunDuration || 1,
+          }
+        : null;
+
+    console.log(`${this.name} getSweepingStrikeParams:`, result);
+    return result;
   }
 
   /**
@@ -877,18 +959,41 @@ class Player {
   }
 
   /**
-   * Process class effects at end of round
+   * UPDATED: Process class effects at end of round with proper Thirsty Blade handling
    * @returns {Object|null} Effect results if any
    */
   processClassEffects() {
-    if (!this.classEffects) return;
+    if (!this.classEffects) return null;
 
-    // Process Unstoppable Rage
+    // FIXED: Debug Thirsty Blade processing
+    if (
+      this.classEffects.thirstyBlade &&
+      this.classEffects.thirstyBlade.active
+    ) {
+      console.log(
+        `${this.name} Thirsty Blade: ${this.classEffects.thirstyBlade.turnsLeft} turns left`
+      );
+
+      this.classEffects.thirstyBlade.turnsLeft--;
+
+      if (this.classEffects.thirstyBlade.turnsLeft <= 0) {
+        console.log(`${this.name} Thirsty Blade expiring`);
+        this.classEffects.thirstyBlade.active = false;
+        return {
+          type: 'thirsty_blade_ended',
+          message: messages.formatMessage(
+            messages.getEvent('thirstyBladeFaded'),
+            { playerName: this.name }
+          ),
+        };
+      }
+    }
+
+    // Process existing effects (Unstoppable Rage, Spirit Guard, etc.)
     if (this.classEffects.unstoppableRage) {
       this.classEffects.unstoppableRage.turnsLeft--;
 
       if (this.classEffects.unstoppableRage.turnsLeft <= 0) {
-        // Rage is ending, apply self-damage
         const selfDamagePercent =
           this.classEffects.unstoppableRage.selfDamagePercent || 0.25;
         const selfDamage = Math.floor(this.maxHp * selfDamagePercent);
@@ -896,7 +1001,6 @@ class Player {
         this.hp = Math.max(1, this.hp - selfDamage);
         const actualDamage = oldHp - this.hp;
 
-        // Clear the effect
         delete this.classEffects.unstoppableRage;
 
         return {
@@ -945,6 +1049,23 @@ class Player {
   }
 
   /**
+   * NEW: Update Relentless Fury scaling when player levels up
+   * @param {number} newLevel - New player level
+   */
+  updateRelentlessFuryLevel(newLevel) {
+    this.level = newLevel;
+    if (
+      this.class === 'Barbarian' &&
+      this.classEffects &&
+      this.classEffects.relentlessFury &&
+      this.classEffects.relentlessFury.active
+    ) {
+      this.classEffects.relentlessFury.currentLevel = newLevel;
+      console.log(`${this.name} Relentless Fury updated to level ${newLevel}`);
+    }
+  }
+
+  /**
    * Prepare player data for client transmission
    * @param {boolean} includePrivate - Whether to include private/sensitive data
    * @param {string} requestingPlayerId - ID of player requesting the data
@@ -964,6 +1085,7 @@ class Player {
       isReady: this.isReady,
       hasSubmittedAction: this.hasSubmittedAction,
       statusEffects: this.statusEffects,
+      level: this.level, // Add level for UI
     };
 
     // Include private data for the player themselves or when specifically requested

@@ -147,6 +147,19 @@ module.exports = {
     gameStarting: 'Game is starting!',
     gameEnding: 'Game is ending.',
   },
+  barbarian: {
+    relentlessFuryActive:
+      'Your rage burns brighter with each battle! +{damageBonus}% damage, +{vulnerabilityBonus}% damage taken.',
+    thirstyBladeActive:
+      'Your blade thirsts for blood. Life steal active for {turnsLeft} more turn(s).',
+    thirstyBladeHealed:
+      'Your Thirsty Blade restores {healAmount} HP from the blood spilled!',
+    thirstyBladeRefreshed: 'The taste of victory refreshes your Thirsty Blade!',
+    sweepingStrikeReady:
+      'Your attacks now sweep through multiple enemies with devastating force!',
+    relentlessFuryVulnerability:
+      'Your fury makes you more vulnerable! You take {additionalDamage} extra damage.',
+  },
 
   // NEW: Combat messages that relate to player actions from CombatSystem.js audit
   combat: {

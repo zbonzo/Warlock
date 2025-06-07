@@ -26,6 +26,15 @@ module.exports = {
     damageDealt: '{damage} damage is dealt to {targetName}!',
     damageStruck: '{targetName} is struck for {damage} damage!',
   },
+  barbarian: {
+    relentlessFuryVulnerability:
+      "{playerName}'s Relentless Fury causes them to take {additionalDamage} additional damage!",
+    thirstyBladeLifeSteal:
+      '{playerName} drains {healAmount} HP from their enemy!',
+    sweepingStrikeHits:
+      "{playerName}'s Sweeping Strike cleaves through {targetCount} additional enemies!",
+    sweepingStrikeStuns: 'The devastating blow leaves {targetName} stunned!',
+  },
 
   // NEW: Coordination bonus messages
   coordination: {

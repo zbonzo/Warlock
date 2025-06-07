@@ -87,7 +87,7 @@ const classAttributes = {
     hpModifier: 1.4, // High HP
     armorModifier: 0.9, // No armor bonus
     damageModifier: 1.4, // High damage
-    description: 'Savage warrior who trades safety for overwhelming offense.',
+    description: 'Barbarian has axe. Barbarian use axe.',
   },
   Shaman: {
     hpModifier: 1.1, // Standard HP
@@ -523,7 +523,7 @@ const classAbilities = {
       category: 'Attack',
       effect: null,
       target: 'Single',
-      params: { damage: 35, selfDamage: 10 }, // Highest base damage but hurts self
+      params: { damage: 35, selfDamage: 10 },
       unlockAt: 1,
       order: 1000,
       cooldown: 0,
@@ -531,47 +531,53 @@ const classAbilities = {
         'Strike with reckless abandon, trading safety for overwhelming power.',
     },
     {
-      type: 'primalRoar',
-      name: 'Primal Roar',
-      category: 'Special',
-      effect: 'weakened',
-      target: 'Single',
-      params: { damageReduction: 0.25, duration: 1 },
-      unlockAt: 2,
-      order: 120,
-      cooldown: 0,
-      flavorText:
-        "Let out a terrifying roar that weakens your enemy's resolve.",
-    },
-    {
-      type: 'bloodFrenzy',
-      name: 'Blood Frenzy',
+      type: 'relentlessFury',
+      name: 'Relentless Fury',
       category: 'Special',
       effect: 'passive',
       target: 'Self',
-      params: { damageIncreasePerHpMissing: 0.01 },
-      unlockAt: 3,
+      params: {
+        damagePerLevel: 0.03, // 3% per level
+        vulnerabilityPerLevel: 0.03, // 3% more damage taken per level
+      },
+      unlockAt: 2,
       order: 5,
       cooldown: 0,
-      flavorText: 'The closer to death you get, the more dangerous you become.',
+      flavorText:
+        'Each battle intensifies your rage, increasing damage dealt and taken.',
     },
     {
-      type: 'unstoppableRage',
-      name: 'Unstoppable Rage',
+      type: 'thirstyBlade',
+      name: 'Thirsty Blade',
       category: 'Special',
-      effect: 'enraged',
+      effect: 'passive',
       target: 'Self',
       params: {
-        damageBoost: 2,
-        damageResistance: 0.5,
-        duration: 3,
-        effectEnds: { selfDamagePercent: 0.5 },
+        lifeSteal: 0.15, // 15% life steal
+        initialDuration: 4,
+        refreshOnKill: true,
+      },
+      unlockAt: 3,
+      order: 7,
+      cooldown: 0,
+      flavorText: 'Your blade thirsts for blood, healing you when you draw it.',
+    },
+    {
+      type: 'sweepingStrike',
+      name: 'Sweeping Strike',
+      category: 'Special',
+      effect: 'passive',
+      target: 'Self',
+      params: {
+        bonusTargets: 1,
+        stunChance: 0.25,
+        stunDuration: 1,
       },
       unlockAt: 4,
       order: 8,
-      cooldown: 4,
+      cooldown: 0,
       flavorText:
-        'Enter an unstoppable rage that makes you incredibly dangerous, but at a terrible cost.',
+        'Your mighty swings cleave through multiple foes with devastating force.  Possibly yourself.',
     },
   ],
   Shaman: [

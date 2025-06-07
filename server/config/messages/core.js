@@ -169,6 +169,12 @@ const events = {
   monsterNoTarget: 'The Monster looks around but finds no targets.',
   monsterSwipesAtShadows: 'The Monster swipes at shadows.',
 
+  thirstyBladeHeal:
+    '{playerName} is healed for {amount} HP by their Thirsty Blade!',
+  thirstyBladeFaded: "{playerName}'s Thirsty Blade grows dormant.",
+  relentlessFuryDamage: "{playerName}'s Relentless Fury increases damage!",
+  sweepingStrikeActivated:
+    "{playerName}'s attacks now sweep through multiple enemies!",
   // Player actions
   playerAttacks: '{playerName} uses {abilityName} on {targetName}.',
   playerHealed: '{playerName} was healed for {amount} health.',

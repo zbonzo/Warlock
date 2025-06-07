@@ -161,3 +161,48 @@ function handleForestsGrace(actor, target, ability, log, systems) {
 //     flavorText: "Uncover hidden truths and expose the enemy's deceptions.",
 //   },
 // ],
+/*
+    {
+      type: 'primalRoar',
+      name: 'Primal Roar',
+      category: 'Special',
+      effect: 'weakened',
+      target: 'Single',
+      params: { damageReduction: 0.25, duration: 1 },
+      unlockAt: 2,
+      order: 120,
+      cooldown: 0,
+      flavorText:
+        "Let out a terrifying roar that weakens your enemy's resolve.",
+    },
+    {
+      type: 'bloodFrenzy',
+      name: 'Blood Frenzy',
+      category: 'Special',
+      effect: 'passive',
+      target: 'Self',
+      params: { damageIncreasePerHpMissing: 0.01 },
+      unlockAt: 3,
+      order: 5,
+      cooldown: 0,
+      flavorText: 'The closer to death you get, the more dangerous you become.',
+    },
+    {
+      type: 'unstoppableRage',
+      name: 'Unstoppable Rage',
+      category: 'Special',
+      effect: 'enraged',
+      target: 'Self',
+      params: {
+        damageBoost: 2,
+        damageResistance: 0.5,
+        duration: 3,
+        effectEnds: { selfDamagePercent: 0.5 },
+      },
+      unlockAt: 4,
+      order: 8,
+      cooldown: 4,
+      flavorText:
+        'Enter an unstoppable rage that makes you incredibly dangerous, but at a terrible cost.',
+    },
+*/

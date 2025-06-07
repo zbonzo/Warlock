@@ -24,6 +24,11 @@ function register(registry) {
   registry.registerClassAbility('sanctuaryOfTruth', handleSanctuaryOfTruth);
   registry.registerClassAbility('controlMonster', handleControlMonster);
 
+  // Register Barbarian passive abilities
+  registry.registerClassAbility('relentlessFury', handleRelentlessFury);
+  registry.registerClassAbility('thirstyBlade', handleThirstyBlade);
+  registry.registerClassAbility('sweepingStrike', handleSweepingStrike);
+
   // Register all abilities with 'detect' effect
   registerAbilitiesByEffectAndTarget(
     registry,
@@ -770,5 +775,118 @@ function handleMultiStun(actor, ability, log, systems) {
   }
 
   return stunCount > 0;
+}
+
+/**
+ * Handler for Relentless Fury passive ability (Barbarian Level 2)
+ * Increases damage dealt and taken per level
+ */
+function handleRelentlessFury(actor, target, ability, log, systems) {
+  // Set up the relentless fury effect on the actor
+  if (!actor.classEffects) {
+    actor.classEffects = {};
+  }
+
+  const damagePerLevel = ability.params.damagePerLevel || 0.03;
+  const vulnerabilityPerLevel = ability.params.vulnerabilityPerLevel || 0.03;
+
+  // FIXED: Get level from the player object directly
+  const currentLevel = actor.level || 2; // Default to level 2 when first unlocked
+
+  actor.classEffects.relentlessFury = {
+    damagePerLevel: damagePerLevel,
+    vulnerabilityPerLevel: vulnerabilityPerLevel,
+    currentLevel: currentLevel,
+    active: true,
+  };
+
+  const damageBonus = Math.round(damagePerLevel * currentLevel * 100);
+  const vulnerabilityBonus = Math.round(
+    vulnerabilityPerLevel * currentLevel * 100
+  );
+
+  const relentlessFuryMessage = `${actor.name} enters Relentless Fury! Damage increased by ${damageBonus}% and vulnerability by ${vulnerabilityBonus}% at level ${currentLevel}.`;
+
+  log.push({
+    type: 'relentless_fury_activated',
+    public: true,
+    attackerId: actor.id,
+    message: relentlessFuryMessage,
+    privateMessage: `Your rage burns brighter! +${damageBonus}% damage, +${vulnerabilityBonus}% damage taken.`,
+    attackerMessage: '',
+  });
+
+  return true;
+}
+
+/**
+ * Handler for Thirsty Blade passive ability (Barbarian Level 3)
+ * Provides life steal and refreshes on kills
+ */
+function handleThirstyBlade(actor, target, ability, log, systems) {
+  if (!actor.classEffects) {
+    actor.classEffects = {};
+  }
+
+  const lifeSteal = ability.params.lifeSteal || 0.15;
+  const initialDuration = ability.params.initialDuration || 4;
+
+  // Create NEW object for each player (not shared reference)
+  actor.classEffects.thirstyBlade = {
+    lifeSteal: lifeSteal,
+    maxDuration: initialDuration,
+    turnsLeft: initialDuration,
+    refreshOnKill: ability.params.refreshOnKill !== false, // Default true
+    active: true,
+  };
+
+  const thirstyBladeMessage = `${actor.name} awakens their Thirsty Blade! ${Math.round(lifeSteal * 100)}% life steal active for ${initialDuration} turns.`;
+
+  log.push({
+    type: 'thirsty_blade_activated',
+    public: true,
+    attackerId: actor.id,
+    message: thirstyBladeMessage,
+    privateMessage: `Your blade thirsts for blood! ${Math.round(lifeSteal * 100)}% life steal for ${initialDuration} turns.`,
+    attackerMessage: '',
+  });
+
+  return true;
+}
+
+/**
+ * Handler for Sweeping Strike passive ability (Barbarian Level 4)
+ * Enables attacks to hit additional targets with stun chance
+ */
+function handleSweepingStrike(actor, target, ability, log, systems) {
+  if (!actor.classEffects) {
+    actor.classEffects = {};
+  }
+
+  const bonusTargets = ability.params.bonusTargets || 1;
+  const stunChance = ability.params.stunChance || 0.25;
+  const stunDuration = ability.params.stunDuration || 1;
+
+  actor.classEffects.sweepingStrike = {
+    bonusTargets: bonusTargets,
+    stunChance: stunChance,
+    stunDuration: stunDuration,
+    active: true,
+  };
+
+  const sweepingStrikeMessage = messages.getAbilityMessage(
+    'abilities.special',
+    'sweepingStrikeActivated'
+  );
+
+  log.push(
+    messages.formatMessage(sweepingStrikeMessage, {
+      playerName: actor.name,
+      bonusTargets: bonusTargets,
+      stunChance: Math.round(stunChance * 100),
+    })
+  );
+
+  return true;
 }
 module.exports = { register };
