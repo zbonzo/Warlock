@@ -27,6 +27,13 @@ module.exports = {
   stunInvalidTarget:
     '{playerName} tries to use {abilityName}, but the target is invalid.',
 
+  // Entangling Roots specific messages
+  entangleRootsCast: '{playerName} casts {abilityName}!',
+  entangleRootsStunned:
+    '{targetName} has been pinned to the ground by roots for {turns} turn(s).',
+  entangleRootsResisted: '{targetName} breaks free from the grasping roots!',
+  entangleRootsNoEffect:
+    "{playerName}'s {abilityName} finds no targets to entangle.",
   // Multi-target stun
   multiStunCast: '{playerName} casts {abilityName}!',
   multiStunNoTargets:

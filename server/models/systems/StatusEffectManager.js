@@ -1,6 +1,6 @@
 /**
- * @fileoverview Updated StatusEffectManager with FIXED validation logic
- * The key issue was that config.statusEffects[effectName] wasn't finding the effect definitions
+ * @fileoverview FIXED StatusEffectManager - no more duplicate messages
+ * Now properly uses message templates and allows suppression of automatic messages
  */
 const config = require('@config');
 const messages = require('@messages');
@@ -37,14 +37,15 @@ class StatusEffectManager {
   }
 
   /**
-   * Apply a status effect to a player - FIXED validation logic
+   * Apply a status effect to a player - FIXED to avoid duplicate messages
    * @param {string} playerId - Target player's ID
    * @param {string} effectName - Name of the effect to apply
    * @param {Object} effectData - Effect parameters
    * @param {Array} log - Event log to append messages to
+   * @param {Object} options - Additional options (suppressMessage, etc.)
    * @returns {boolean} Whether the effect was successfully applied
    */
-  applyEffect(playerId, effectName, effectData, log = []) {
+  applyEffect(playerId, effectName, effectData, log = [], options = {}) {
     const player = this.players.get(playerId);
     if (!player || !player.isAlive) return false;
 
@@ -75,9 +76,11 @@ class StatusEffectManager {
       logger.warn(
         `Unknown effect ${effectName} could not be applied to ${player.name}.`
       );
-      log.push(
-        `Unknown effect ${effectName} could not be applied to ${player.name}.`
-      );
+      if (!options.suppressMessage) {
+        log.push(
+          `Unknown effect ${effectName} could not be applied to ${player.name}.`
+        );
+      }
       return false;
     }
 
@@ -100,18 +103,28 @@ class StatusEffectManager {
     if (effectName === 'vulnerable') {
       player.applyVulnerability(finalData.damageIncrease, finalData.turns);
 
-      // Special log for vulnerability
-      const vulnMessage = messages.getAbilityMessage(
-        'statusEffects',
-        'vulnerable.applied'
-      );
-      log.push(
-        messages.formatMessage(vulnMessage, {
-          playerName: player.name,
-          increase: finalData.damageIncrease,
-          turns: finalData.turns - 1, // Display turns (subtract the +1 we added)
-        })
-      );
+      // FIXED: Only add message if not suppressed
+      if (!options.suppressMessage) {
+        const vulnMessage = messages.getAbilityMessage(
+          'statusEffects',
+          'vulnerable.applied'
+        );
+        if (vulnMessage) {
+          log.push(
+            messages.formatMessage(vulnMessage, {
+              playerName: player.name,
+              targetName: player.name, // Provide both for flexibility
+              increase: finalData.damageIncrease,
+              turns: finalData.turns - 1, // Display turns (subtract the +1 we added)
+            })
+          );
+        } else {
+          // Fallback message
+          log.push(
+            `${player.name} is VULNERABLE and will take ${finalData.damageIncrease}% more damage for ${finalData.turns - 1} turn(s)!`
+          );
+        }
+      }
       return true;
     }
 
@@ -150,18 +163,81 @@ class StatusEffectManager {
       player.applyStatusEffect(effectName, finalData);
     }
 
-    // Add log message (subtract 1 from turns for display since we added 1 internally)
-    const displayTurns = (finalData.turns || 1) - 1;
-    const logData = { ...finalData, turns: displayTurns };
+    // FIXED: Only add automatic message if not suppressed and we don't have specific handling
+    if (!options.suppressMessage) {
+      const displayTurns = (finalData.turns || 1) - 1;
 
-    if (!hasEffect) {
-      // Create a simple success message since we may not have complex message templates
-      const message = `${player.name} is affected by ${effectName} for ${displayTurns} turn(s).`;
-      log.push(message);
-    } else {
-      // Refresh message
-      const message = `${player.name}'s ${effectName} effect is refreshed for ${displayTurns} turn(s).`;
-      log.push(message);
+      // Try to get a proper message template first
+      let messageTemplate = null;
+      let messageData = {
+        playerName: player.name,
+        targetName: player.name, // Provide both for flexibility
+        turns: displayTurns,
+        armor: finalData.armor,
+        damage: finalData.damage,
+        amount: finalData.amount,
+      };
+
+      // Try to get specific message for this effect
+      if (messages.statusEffects && messages.statusEffects[effectName]) {
+        if (!hasEffect && messages.statusEffects[effectName].applied) {
+          messageTemplate = messages.statusEffects[effectName].applied;
+        } else if (hasEffect && messages.statusEffects[effectName].refreshed) {
+          messageTemplate = messages.statusEffects[effectName].refreshed;
+        }
+      }
+
+      // If we have a template, use it
+      if (messageTemplate) {
+        log.push(messages.formatMessage(messageTemplate, messageData));
+      } else {
+        // FIXED: Use specific messages for common effects, suppress for others that should be handled by abilities
+        if (effectName === 'stunned') {
+          // Don't add automatic message for stun - let the ability handler do it
+          return true;
+        } else if (effectName === 'poison') {
+          if (!hasEffect) {
+            log.push(
+              `${player.name} is poisoned for ${finalData.damage || 5} damage over ${displayTurns} turns.`
+            );
+          } else {
+            log.push(
+              `${player.name}'s poison is refreshed for ${displayTurns} turns.`
+            );
+          }
+        } else if (effectName === 'shielded') {
+          if (!hasEffect) {
+            log.push(
+              `${player.name} is shielded with ${finalData.armor || 2} armor for ${displayTurns} turn(s).`
+            );
+          } else {
+            log.push(
+              `${player.name}'s protection is refreshed for ${displayTurns} turn(s).`
+            );
+          }
+        } else if (effectName === 'invisible') {
+          if (!hasEffect) {
+            log.push(
+              `${player.name} becomes invisible for ${displayTurns} turn(s).`
+            );
+          } else {
+            log.push(
+              `${player.name}'s invisibility is extended for ${displayTurns} turn(s).`
+            );
+          }
+        } else {
+          // Generic fallback for other effects
+          if (!hasEffect) {
+            log.push(
+              `${player.name} is affected by ${effectName} for ${displayTurns} turn(s).`
+            );
+          } else {
+            log.push(
+              `${player.name}'s ${effectName} effect is refreshed for ${displayTurns} turn(s).`
+            );
+          }
+        }
+      }
     }
 
     return true;
@@ -172,9 +248,10 @@ class StatusEffectManager {
    * @param {string} playerId - Target player's ID
    * @param {string} effectName - Name of the effect to remove
    * @param {Array} log - Event log to append messages to
+   * @param {Object} options - Additional options (suppressMessage, etc.)
    * @returns {boolean} Whether the effect was successfully removed
    */
-  removeEffect(playerId, effectName, log = []) {
+  removeEffect(playerId, effectName, log = [], options = {}) {
     const player = this.players.get(playerId);
     if (!player) return false;
 
@@ -186,7 +263,9 @@ class StatusEffectManager {
       player.vulnerabilityIncrease = 0;
       delete player.statusEffects.vulnerable;
 
-      log.push(`${player.name} is no longer vulnerable.`);
+      if (!options.suppressMessage) {
+        log.push(`${player.name} is no longer vulnerable.`);
+      }
       return true;
     }
 
@@ -205,13 +284,44 @@ class StatusEffectManager {
     // For other effects, remove normally
     player.removeStatusEffect(effectName);
 
-    // Add log message if effect was present
-    if (hadEffect) {
-      log.push(`The ${effectName} effect on ${player.name} has worn off.`);
+    // Add log message if effect was present and not suppressed
+    if (hadEffect && !options.suppressMessage) {
+      // Try to get a proper expiration message
+      let messageTemplate = null;
+
+      if (
+        messages.statusEffects &&
+        messages.statusEffects[effectName] &&
+        messages.statusEffects[effectName].expired
+      ) {
+        messageTemplate = messages.statusEffects[effectName].expired;
+        log.push(
+          messages.formatMessage(messageTemplate, {
+            playerName: player.name,
+            targetName: player.name,
+          })
+        );
+      } else {
+        // Specific messages for common effects
+        if (effectName === 'stunned') {
+          log.push(`${player.name} is no longer stunned.`);
+        } else if (effectName === 'poison') {
+          log.push(`The poison affecting ${player.name} has worn off.`);
+        } else if (effectName === 'invisible') {
+          log.push(`${player.name} is no longer invisible.`);
+        } else if (effectName === 'shielded') {
+          log.push(`${player.name} is no longer shielded.`);
+        } else {
+          // Generic fallback
+          log.push(`The ${effectName} effect on ${player.name} has worn off.`);
+        }
+      }
     }
 
     return hadEffect;
   }
+
+  // ... rest of the methods remain the same ...
 
   /**
    * Check if a player has a particular status effect
@@ -442,7 +552,17 @@ class StatusEffectManager {
     // Remove if expired
     if (effect.turns <= 0) {
       player.removeStatusEffect(effectName);
-      log.push(`The ${effectName} effect on ${player.name} has worn off.`);
+
+      // Specific expiration messages
+      if (effectName === 'stunned') {
+        log.push(`${player.name} is no longer stunned.`);
+      } else if (effectName === 'invisible') {
+        log.push(`${player.name} is no longer invisible.`);
+      } else if (effectName === 'shielded') {
+        log.push(`${player.name} is no longer shielded.`);
+      } else {
+        log.push(`The ${effectName} effect on ${player.name} has worn off.`);
+      }
     }
   }
 
@@ -500,5 +620,3 @@ class StatusEffectManager {
 }
 
 module.exports = StatusEffectManager;
-
-

@@ -101,7 +101,7 @@ const raceAttributes = {
   },
   Kinfolk: {
     hpModifier: 1.5,
-    armorModifier: 1.1,
+    armorModifier: 0.9,
     damageModifier: 0.8,
     compatibleClasses: [
       'Alchemist', // Thematic Score: 9 (Nature-attuned, herbalism, potion crafting)
@@ -112,7 +112,7 @@ const raceAttributes = {
       'Wizard', // Thematic Score: 7 (Nature magic, less formal than Artisan/Crestfallen wizardry) - ADDED to balance Wizard class
     ],
     description:
-      "At the end of each round, heal for 25% of the monster's remaining HP.",
+      "At the end of each round, heal for 5% of the monster's remaining HP.",
   },
 };
 

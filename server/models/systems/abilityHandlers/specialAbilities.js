@@ -138,9 +138,8 @@ function handleDetectionAbility(actor, target, ability, log, systems) {
   log.push(`Revelation: ${revealText}`);
   return true;
 }
-
 /**
- * Handler for stun abilities
+ * Handler for stun abilities - FINAL FIX
  * @param {Object} actor - Actor using the ability
  * @param {Object} target - Target to potentially stun
  * @param {Object} ability - Ability configuration
@@ -151,7 +150,7 @@ function handleDetectionAbility(actor, target, ability, log, systems) {
 function handleStunAbility(actor, target, ability, log, systems) {
   // For multi-target stun abilities or when target is "multi"
   if (ability.target === 'Multi' || target === 'multi') {
-    return handleMultiStun(actor, ability, log, systems);
+    return handleMultiStunFinal(actor, ability, log, systems);
   }
 
   // For single-target stun abilities
@@ -178,26 +177,41 @@ function handleStunAbility(actor, target, ability, log, systems) {
   const stunChance = ability.params.chance || 0.5;
 
   if (Math.random() < stunChance) {
-    // Apply stun effect
-    systems.statusEffectManager.applyEffect(
-      target.id,
-      'stunned',
-      {
-        turns: ability.params.duration || stunDefaults.turns,
-      },
-      log
-    );
+    // Apply stun effect DIRECTLY to the player, bypassing StatusEffectManager
+    const stunDuration = ability.params.duration || stunDefaults.turns;
 
-    const stunMessage = messages.getAbilityMessage(
-      'abilities.special',
-      'stunApplied'
-    );
-    log.push(
-      messages.formatMessage(stunMessage, {
-        playerName: target.name,
-        turns: ability.params.duration || stunDefaults.turns,
-      })
-    );
+    // Apply stun directly to player
+    if (!target.statusEffects) {
+      target.statusEffects = {};
+    }
+    target.statusEffects.stunned = {
+      turns: stunDuration + 1, // Add 1 for immediate countdown
+    };
+
+    // Generate our own custom message for entangling roots
+    if (ability.type === 'entangle') {
+      const entangleMessage = `${target.name} has been pinned to the ground by roots for ${stunDuration} turn(s).`;
+      log.push({
+        type: 'entangle_stun',
+        public: true,
+        targetId: target.id,
+        attackerId: actor.id,
+        message: entangleMessage,
+        privateMessage: entangleMessage,
+        attackerMessage: entangleMessage,
+      });
+    } else {
+      // For other stun abilities, use a simple message
+      log.push({
+        type: 'stunned',
+        public: true,
+        targetId: target.id,
+        attackerId: actor.id,
+        message: `${target.name} is stunned for ${stunDuration} turn(s).`,
+        privateMessage: `${target.name} is stunned for ${stunDuration} turn(s).`,
+        attackerMessage: `${target.name} is stunned for ${stunDuration} turn(s).`,
+      });
+    }
 
     return true;
   } else {
@@ -216,6 +230,94 @@ function handleStunAbility(actor, target, ability, log, systems) {
   }
 }
 
+/**
+ * FINAL FIX: Multi-stun handler that bypasses StatusEffectManager and fixes target names
+ */
+function handleMultiStunFinal(actor, ability, log, systems) {
+  // Get all alive players except actor
+  const targets = Array.from(systems.players.values()).filter(
+    (p) => p.isAlive && p.id !== actor.id
+  );
+
+  if (targets.length === 0) {
+    log.push({
+      type: 'no_targets',
+      public: true,
+      attackerId: actor.id,
+      message: `${actor.name} uses ${ability.name}, but there are no valid targets.`,
+      privateMessage: `${actor.name} uses ${ability.name}, but there are no valid targets.`,
+      attackerMessage: `${actor.name} uses ${ability.name}, but there are no valid targets.`,
+    });
+    return false;
+  }
+
+  // Cast announcement
+  log.push({
+    type: 'ability_cast',
+    public: true,
+    attackerId: actor.id,
+    message: `${actor.name} casts ${ability.name}!`,
+    privateMessage: `${actor.name} casts ${ability.name}!`,
+    attackerMessage: `${actor.name} casts ${ability.name}!`,
+  });
+
+  const stunDefaults = config.getStatusEffectDefaults('stunned') || {
+    turns: 1,
+  };
+  const stunChance = ability.params.chance || 0.5;
+  const stunDuration = ability.params.duration || stunDefaults.turns;
+  let stunCount = 0;
+
+  for (const potentialTarget of targets) {
+    if (Math.random() < stunChance) {
+      // Apply stun directly to player
+      if (!potentialTarget.statusEffects) {
+        potentialTarget.statusEffects = {};
+      }
+      potentialTarget.statusEffects.stunned = {
+        turns: stunDuration + 1, // Add 1 for immediate countdown
+      };
+
+      // Generate custom message for THIS SPECIFIC TARGET
+      if (ability.type === 'entangle') {
+        const entangleMessage = `${potentialTarget.name} has been pinned to the ground by roots for ${stunDuration} turn(s).`;
+        log.push({
+          type: 'entangle_stun',
+          public: true,
+          targetId: potentialTarget.id,
+          attackerId: actor.id,
+          message: entangleMessage,
+          privateMessage: entangleMessage,
+          attackerMessage: entangleMessage,
+        });
+      } else {
+        log.push({
+          type: 'stunned',
+          public: true,
+          targetId: potentialTarget.id,
+          attackerId: actor.id,
+          message: `${potentialTarget.name} is stunned for ${stunDuration} turn(s).`,
+          privateMessage: `${potentialTarget.name} is stunned for ${stunDuration} turn(s).`,
+          attackerMessage: `${potentialTarget.name} is stunned for ${stunDuration} turn(s).`,
+        });
+      }
+      stunCount++;
+    }
+  }
+
+  if (stunCount === 0) {
+    log.push({
+      type: 'no_effect',
+      public: true,
+      attackerId: actor.id,
+      message: `${actor.name}'s ${ability.name} doesn't stun anyone!`,
+      privateMessage: `${actor.name}'s ${ability.name} doesn't stun anyone!`,
+      attackerMessage: `${actor.name}'s ${ability.name} doesn't stun anyone!`,
+    });
+  }
+
+  return stunCount > 0;
+}
 /**
  * Handler for Primal Roar ability (Barbarian)
  * @param {Object} actor - Actor using the ability
@@ -686,7 +788,7 @@ function handleEyeOfFate(actor, target, ability, log, systems) {
 }
 
 /**
- * Helper for multi-target stun abilities
+ * Helper for multi-target stun abilities - FIXED to prevent duplicate messages
  * @param {Object} actor - Actor using the ability
  * @param {Object} ability - Ability configuration
  * @param {Array} log - Event log to append messages to
@@ -738,25 +840,43 @@ function handleMultiStun(actor, ability, log, systems) {
 
   for (const potentialTarget of targets) {
     if (Math.random() < stunChance) {
+      // FIXED: Apply effect with message suppression
       systems.statusEffectManager.applyEffect(
         potentialTarget.id,
         'stunned',
         {
           turns: ability.params.duration || stunDefaults.turns,
         },
-        log
+        log,
+        { suppressMessage: true } // Suppress automatic messages
       );
 
-      const stunMessage = messages.getAbilityMessage(
-        'abilities.special',
-        'stunApplied'
-      );
-      log.push(
-        messages.formatMessage(stunMessage, {
-          playerName: potentialTarget.name,
-          turns: ability.params.duration || stunDefaults.turns,
-        })
-      );
+      // FIXED: Generate our own custom message for entangling roots
+      if (ability.type === 'entangle') {
+        const entangleMessage = `${potentialTarget.name} has been pinned to the ground by roots for ${ability.params.duration || stunDefaults.turns} turn(s).`;
+        log.push({
+          type: 'entangle_stun',
+          public: true,
+          targetId: potentialTarget.id,
+          attackerId: actor.id,
+          message: entangleMessage,
+          privateMessage: entangleMessage,
+          attackerMessage: entangleMessage,
+        });
+      } else {
+        // Generic stun message for other abilities
+        const stunMessage = messages.getAbilityMessage(
+          'abilities.special',
+          'stunApplied'
+        );
+        log.push(
+          messages.formatMessage(stunMessage, {
+            playerName: potentialTarget.name, // FIXED: Use playerName consistently
+            targetName: potentialTarget.name, // Also provide targetName for flexibility
+            turns: ability.params.duration || stunDefaults.turns,
+          })
+        );
+      }
       stunCount++;
     }
   }
