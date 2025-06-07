@@ -40,7 +40,7 @@ const raceAttributes = {
   Rockhewn: {
     hpModifier: 1.0,
     armorModifier: 1.5,
-    damageModifier: 0.8,
+    damageModifier: 1.0,
     compatibleClasses: [
       'Warrior', // Thematic Score: 9 (Sturdy, martial, axe-wielding)
       'Oracle', // Thematic Score: 8 (Ancient knowledge, prophecies from stone)
@@ -154,14 +154,14 @@ const racialAbilities = {
     type: 'moonbeam',
     name: 'Moonbeam',
     description:
-      'When wounded (below 80% HP), attacks against you reveal if the attacker is corrupted',
+      'When wounded (below 50% HP), attacks against you reveal if the attacker is corrupted',
     usageLimit: 'passive', // Passive ability, always active when conditions are met
     maxUses: 0,
     cooldown: 0,
     effect: 'moonbeam',
     target: 'Self',
     params: {
-      healthThreshold: 0.8, // Triggers when below 50% HP
+      healthThreshold: 0.5, // Triggers when below 50% HP
     },
   },
 
@@ -171,8 +171,8 @@ const racialAbilities = {
     description:
       'Double the damage of your next attack, but take 10 damage yourself',
     usageLimit: 'perGame',
-    maxUses: 1,
-    cooldown: 0,
+    maxUses: 3,
+    cooldown: 3,
     effect: 'doubleDamage',
     target: 'Self',
     params: { selfDamage: 10 },
@@ -182,14 +182,14 @@ const racialAbilities = {
     type: 'lifeBond',
     name: 'Life Bond',
     description:
-      "At the end of each round, heal for 10% of the monster's remaining HP",
+      "At the end of each round, heal for 5% of the monster's remaining HP",
     usageLimit: 'passive',
     maxUses: 0,
     cooldown: 0,
     effect: 'lifeBond',
     target: 'Self',
     params: {
-      healingPercent: 0.1,
+      healingPercent: 0.05,
     },
   },
 

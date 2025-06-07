@@ -254,7 +254,7 @@ const classAbilities = {
       params: { damage: 75 }, // High damage but unlocked later
       unlockAt: 3,
       order: 1011,
-      cooldown: 0,
+      cooldown: 2,
       flavorText:
         'Conjure bolts of pure arcane energy that unerringly seek their target.',
     },
@@ -277,7 +277,7 @@ const classAbilities = {
       category: 'Attack',
       effect: null,
       target: 'Single',
-      params: { hits: 4, damagePerHit: 6, hitChance: 0.8 }, // 19.2 expected damage - weak but available early
+      params: { hits: 6, damagePerHit: 6, hitChance: 0.8 }, // 19.2 expected damage - weak but available early
       unlockAt: 1,
       order: 1025,
       cooldown: 0,
@@ -482,10 +482,10 @@ const classAbilities = {
       category: 'Special',
       effect: 'detect',
       target: 'Single',
-      params: { selfDamageOnFailure: 10 },
+      params: { selfDamageOnFailure: 1000 },
       unlockAt: 2,
       order: 100,
-      cooldown: 3,
+      cooldown: 0,
       flavorText:
         'Peer through the veil of deception, but the truth comes at a cost.',
     },
@@ -523,7 +523,7 @@ const classAbilities = {
       category: 'Attack',
       effect: null,
       target: 'Single',
-      params: { damage: 35, selfDamage: 10 },
+      params: { damage: 50, selfDamage: 25 },
       unlockAt: 1,
       order: 1000,
       cooldown: 0,
@@ -537,8 +537,8 @@ const classAbilities = {
       effect: 'passive',
       target: 'Self',
       params: {
-        damagePerLevel: 0.03, // 3% per level
-        vulnerabilityPerLevel: 0.03, // 3% more damage taken per level
+        damagePerLevel: 0.1, // 3% per level
+        vulnerabilityPerLevel: 0.1, // 3% more damage taken per level
       },
       unlockAt: 2,
       order: 5,
@@ -569,7 +569,7 @@ const classAbilities = {
       effect: 'passive',
       target: 'Self',
       params: {
-        bonusTargets: 1,
+        bonusTargets: 2,
         stunChance: 0.25,
         stunDuration: 1,
       },
@@ -722,7 +722,7 @@ const classAbilities = {
       params: {
         damage: 50,
         poison: { damage: 15, turns: 3 },
-        detectChance: 1.0, // 70% chance to detect if target is a Warlock
+        detectChance: 1.0,
       },
       unlockAt: 3,
       order: 1090,
@@ -737,7 +737,7 @@ const classAbilities = {
       effect: 'monsterControl',
       target: 'Single',
       params: {
-        damageBoost: 2,
+        damageBoost: 3,
         forcedAttack: true,
       },
       unlockAt: 4,

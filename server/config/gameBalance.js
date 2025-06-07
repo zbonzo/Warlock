@@ -9,7 +9,7 @@
 const monster = {
   // Base stats for level 1 monster
   baseHp: 100,
-  baseDamage: 10,
+  baseDamage: 20,
   baseAge: 0,
 
   // Enhanced scaling formulas
@@ -65,7 +65,7 @@ const player = {
   // Armor and damage reduction
   armor: {
     reductionRate: 0.1, // 10% reduction per armor point
-    maxReduction: 0.9, // 90% max damage reduction
+    maxReduction: 0.75, // 90% max damage reduction
     minReduction: 0.0, // 0% min (for negative armor)
   },
 
@@ -79,8 +79,8 @@ const player = {
   // Healing mechanics
   healing: {
     modifierBase: 2.0, // healingMod = modifierBase - damageMod
-    warlockSelfHealOnly: true,
-    rejectWarlockHealing: true,
+    warlockSelfHealOnly: false,
+    rejectWarlockHealing: false,
   },
 
   // Death and resurrection
@@ -96,10 +96,10 @@ const player = {
 const coordinationBonus = {
   enabled: true, // Enable/disable coordination bonuses
   damageBonus: 10, // +10% damage per additional player targeting same enemy
-  healingBonus: 10, // +10% healing per additional player healing same target
+  healingBonus: 15, // +10% healing per additional player healing same target
   appliesToMonster: true, // Whether bonuses work when attacking monster
   maxBonusTargets: 5, // Maximum number of coordinating players that provide bonus
-  announceCoordination: true, // Whether to announce coordination in battle log
+  announceCoordination: false, // Whether to announce coordination in battle log
 };
 
 /**
@@ -108,8 +108,8 @@ const coordinationBonus = {
 const warlock = {
   // Conversion chance calculation
   conversion: {
-    baseChance: 0.2, // Base conversion chance
-    maxChance: 0.3, // Maximum conversion chance
+    baseChance: 0.25, // Base conversion chance
+    maxChance: 0.5, // Maximum conversion chance
     scalingFactor: 0.3, // How much warlock count affects chance
 
     // New corruption control options
@@ -148,19 +148,19 @@ const warlock = {
       5: 1,
       6: 1,
       7: 1,
-      8: 1, // 8-11 players = 2 warlocks
-      9: 1,
-      10: 1,
-      11: 1,
-      12: 1, // 12-15 players = 3 warlocks
-      13: 1,
-      14: 1,
-      15: 1,
-      16: 1, // 16-19 players = 4 warlocks
-      17: 1,
-      18: 1,
-      19: 1,
-      20: 1, // 20+ players = 5 warlocks
+      8: 2, // 8-11 players = 2 warlocks
+      9: 2,
+      10: 2,
+      11: 2,
+      12: 2, // 12-15 players = 3 warlocks
+      13: 3,
+      14: 3,
+      15: 3,
+      16: 3, // 16-19 players = 4 warlocks
+      17: 4,
+      18: 4,
+      19: 4,
+      20: 5, // 20+ players = 5 warlocks
     },
   },
   // Win conditions
@@ -190,7 +190,7 @@ const comebackMechanics = {
 const stoneArmor = {
   initialValue: 5, // Starting stone armor value
   degradationPerHit: 1, // Amount lost per hit taken
-  minimumValue: -3, // Most negative armor allowed
+  minimumValue: -1, // Most negative armor allowed
   allowNegative: true, // Can go negative for vulnerability
 };
 
