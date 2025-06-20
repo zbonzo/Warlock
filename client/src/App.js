@@ -10,6 +10,7 @@ import { ConfigProvider } from '@contexts/ConfigContext';
 import { AppProvider, useAppContext } from './contexts/AppContext';
 import LoadingScreen from './components/common/LoadingScreen';
 import ErrorBoundary from './components/common/ErrorBoundary';
+import usePageLeaveWarning from './hooks/usePageLeaveWarning'; 
 import useSocket from './hooks/useSocket';
 
 // Game components
@@ -79,6 +80,28 @@ function AppContent() {
 
   // Connect to socket server
   const { socket, connected, socketId, emit, on } = useSocket(SOCKET_URL);
+
+  // Determine if we should warn on page leave
+  const isInActiveGame = screen === GAME_PHASES.GAME && !winner;
+  const isInLobby = screen === GAME_PHASES.LOBBY || screen === GAME_PHASES.CHARACTER_SELECT;
+  
+  // Show warning during active game or when in lobby/character select with other players
+  const shouldWarn = isInActiveGame || (isInLobby && players.length > 1);
+  
+  const getWarningMessage = () => {
+    if (isInActiveGame) {
+      return `You're currently playing Warlock! Leaving now will abandon your teammates ` +
+        `and may affect the game. Are you sure you want to leave?`;
+    }
+    if (isInLobby) {
+      return `You're in a game lobby with ${players.length} player(s). ` +
+        `Leaving now may disappoint other players who are waiting. Are you sure you want to leave?`;
+    }
+    return undefined;
+  };
+
+  // Use the page leave warning hook
+  usePageLeaveWarning(shouldWarn, getWarningMessage());
 
   // Initialize socket event listeners
   useEffect(() => {
