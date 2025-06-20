@@ -473,7 +473,11 @@ function getEffectDescription(ability, isRacial, player) {
 
     case 'fatesEye':
     case 'eyeOfFate':
+      if(params.selfDamageOnFailure > 0) {
       return `Detect if target is a Warlock. Take ${params.selfDamageOnFailure || 10} damage if they are not`;
+      } else {
+        return 'Detect if target is a Warlock. Die instantly if they are not';
+      }
 
     case 'spiritGuard':
       return `Gain ${params.armor || 2} armor. Attackers take ${params.counterDamage || 15} damage and are revealed if they are Warlocks`;

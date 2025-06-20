@@ -482,7 +482,7 @@ const classAbilities = {
       category: 'Special',
       effect: 'detect',
       target: 'Single',
-      params: { selfDamageOnFailure: 1000 },
+      params: { selfDamageOnFailure: 'instant_death' },
       unlockAt: 2,
       order: 100,
       cooldown: 0,

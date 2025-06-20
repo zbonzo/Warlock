@@ -711,7 +711,7 @@ function handleEyeOfFate(actor, target, ability, log, systems) {
   );
 
   if (target.isWarlock) {
-    // Found a warlock
+    // Found a warlock - Oracle survives
     const warlockFoundMessage = messages.getAbilityMessage(
       'abilities.special',
       'warlockDetected'
@@ -721,6 +721,9 @@ function handleEyeOfFate(actor, target, ability, log, systems) {
         targetName: target.name,
       })
     );
+
+    // Mark warlock as detected for penalties
+    systems.warlockSystem.markWarlockDetected(target.id, log);
 
     // Private message to the oracle
     const privateFoundLog = {
@@ -740,9 +743,48 @@ function handleEyeOfFate(actor, target, ability, log, systems) {
     };
     log.push(privateFoundLog);
   } else {
-    // Not a warlock - take psychic backlash
-    const backlashDamage = ability.params.selfDamageOnFailure || 10;
-    actor.hp = Math.max(1, actor.hp - backlashDamage);
+    // Not a warlock - Oracle dies instantly
+    const selfDamageType = ability.params.selfDamageOnFailure;
+    
+    if (selfDamageType === 'instant_death') {
+      // Instant death - bypass all armor and protections
+      actor.hp = 0;
+      actor.isAlive = false;
+      actor.pendingDeath = true;
+      actor.deathAttacker = 'Psychic Backlash';
+      
+      const instantDeathMessage = `${actor.name}'s mind is shattered by the psychic backlash of detecting an innocent soul!`;
+      log.push({
+        type: 'eye_of_fate_instant_death',
+        public: true,
+        attackerId: actor.id,
+        targetId: actor.id,
+        message: instantDeathMessage,
+        privateMessage: 'The truth was too much to bear. Your mind is destroyed.',
+        attackerMessage: '',
+      });
+    } else {
+      // Fallback to normal damage (legacy support)
+      const backlashDamage = typeof selfDamageType === 'number' ? selfDamageType : 1000;
+      actor.hp = Math.max(0, actor.hp - backlashDamage);
+      
+      if (actor.hp <= 0) {
+        actor.isAlive = false;
+        actor.pendingDeath = true;
+        actor.deathAttacker = 'Psychic Backlash';
+      }
+      
+      const backlashMessage = messages.getAbilityMessage(
+        'abilities.special',
+        'eyeOfFatePsychicBacklash'
+      );
+      log.push(
+        messages.formatMessage(backlashMessage, {
+          playerName: actor.name,
+          damage: backlashDamage,
+        })
+      );
+    }
 
     const notWarlockMessage = messages.getAbilityMessage(
       'abilities.special',
@@ -753,35 +795,6 @@ function handleEyeOfFate(actor, target, ability, log, systems) {
         targetName: target.name,
       })
     );
-
-    const backlashMessage = messages.getAbilityMessage(
-      'abilities.special',
-      'eyeOfFatePsychicBacklash'
-    );
-    log.push(
-      messages.formatMessage(backlashMessage, {
-        playerName: actor.name,
-        damage: backlashDamage,
-      })
-    );
-
-    // Private message to the oracle
-    const privateBacklashLog = {
-      type: 'oracle_backlash',
-      public: false,
-      targetId: target.id,
-      attackerId: actor.id,
-      message: '',
-      privateMessage: '',
-      attackerMessage: messages.formatMessage(
-        messages.getAbilityMessage(
-          'abilities.special',
-          'eyeOfFateBacklashPrivate'
-        ),
-        { damage: backlashDamage }
-      ),
-    };
-    log.push(privateBacklashLog);
   }
 
   return true;
