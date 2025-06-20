@@ -499,23 +499,125 @@ class GameRoom {
    * @returns {boolean} Whether all actions are submitted
    */
   allActionsSubmitted() {
-    // Only count players who aren't stunned
-    const activePlayerCount = this.getAlivePlayers().filter(
-      (p) => !this.systems.statusEffectManager.isPlayerStunned(p.id)
-    ).length;
+    // Get all alive players
+    const alivePlayers = this.getAlivePlayers();
+    
+    // Filter to only players who can currently act (not stunned)
+    const activePlayerCount = alivePlayers.filter(player => {
+      // Double-check stun status in real-time
+      const isCurrentlyStunned = this.systems.statusEffectManager.isPlayerStunned(player.id);
+      
+      // Also check player's status effects directly as a fallback
+      const hasStunEffect = player.hasStatusEffect && player.hasStatusEffect('stunned');
+      
+      // Player can act if they're not stunned by either check
+      return !isCurrentlyStunned && !hasStunEffect;
+    }).length;
 
-    // Count valid submitted actions
-    const submittedActionCount = Array.from(this.players.values()).filter(
-      (p) =>
-        p.isAlive &&
-        p.hasSubmittedAction &&
-        p.actionValidationState === 'valid' &&
-        !this.systems.statusEffectManager.isPlayerStunned(p.id)
-    ).length;
+    // Count valid submitted actions from non-stunned players
+    const submittedActionCount = Array.from(this.players.values()).filter(player => {
+      if (!player.isAlive) return false;
+      if (!player.hasSubmittedAction) return false;
+      if (player.actionValidationState !== 'valid') return false;
+      
+      // Double-check that this player is not currently stunned
+      const isCurrentlyStunned = this.systems.statusEffectManager.isPlayerStunned(player.id);
+      const hasStunEffect = player.hasStatusEffect && player.hasStatusEffect('stunned');
+      
+      return !isCurrentlyStunned && !hasStunEffect;
+    }).length;
+
+    // Log for debugging purposes
+    logger.debug('ActionSubmissionCheck', {
+      alivePlayers: alivePlayers.length,
+      activePlayerCount: activePlayerCount,
+      submittedActionCount: submittedActionCount,
+      stunned: Array.from(this.players.values())
+        .filter(p => p.isAlive && this.systems.statusEffectManager.isPlayerStunned(p.id))
+        .map(p => p.name)
+    });
 
     return submittedActionCount >= activePlayerCount;
   }
+cleanupInvalidSubmissions() {
+  for (const player of this.players.values()) {
+    if (!player.isAlive) {
+      // Clear submissions from dead players
+      if (player.hasSubmittedAction) {
+        player.clearActionSubmission();
+        logger.debug('ClearedDeadPlayerSubmission', { playerName: player.name });
+      }
+      continue;
+    }
 
+    // Clear submissions from currently stunned players
+    if (this.systems.statusEffectManager.isPlayerStunned(player.id)) {
+      if (player.hasSubmittedAction) {
+        player.clearActionSubmission();
+        logger.debug('ClearedStunnedPlayerSubmission', { playerName: player.name });
+      }
+    }
+  }
+}
+
+/**
+ * NEW: Force progression when players are unable to act
+ * Use this as a safety mechanism if the game gets stuck
+ * @returns {boolean} Whether forced progression was applied
+ */
+forceProgressionIfStuck() {
+  const alivePlayers = this.getAlivePlayers();
+  const activePlayerCount = alivePlayers.filter(player => 
+    !this.systems.statusEffectManager.isPlayerStunned(player.id)
+  ).length;
+  
+  // If no players can act, force progression
+  if (activePlayerCount === 0) {
+    logger.warn('ForceProgressionNoActivePlayers', {
+      gameCode: this.code,
+      aliveCount: alivePlayers.length,
+      phase: this.phase
+    });
+    return true;
+  }
+  
+  // Check for timeout scenario (if players haven't submitted in reasonable time)
+  const submissionDeadline = Date.now() - (30 * 1000); // 30 seconds ago
+  const playersWithRecentSubmissions = Array.from(this.players.values()).filter(player => {
+    return player.isAlive && 
+           !this.systems.statusEffectManager.isPlayerStunned(player.id) &&
+           player.actionSubmissionTime &&
+           player.actionSubmissionTime > submissionDeadline;
+  });
+  
+  const playersWhoCanActCount = Array.from(this.players.values()).filter(player => {
+    return player.isAlive && !this.systems.statusEffectManager.isPlayerStunned(player.id);
+  }).length;
+  
+  // If players can act but haven't submitted recently, don't force yet
+  if (playersWhoCanActCount > 0 && playersWithRecentSubmissions.length < playersWhoCanActCount) {
+    return false;
+  }
+  
+  return false; // Don't force progression under normal circumstances
+}
+
+/**
+ * UPDATED: Modified to use cleanup methods before checking submissions
+ * @returns {boolean} Whether all actions are submitted
+ */
+allActionsSubmittedSafe() {
+  // Clean up invalid submissions first
+  this.cleanupInvalidSubmissions();
+  
+  // Check if we should force progression
+  if (this.forceProgressionIfStuck()) {
+    return true;
+  }
+  
+  // Use the normal check
+  return this.allActionsSubmitted();
+}
   /**
    * UPDATED: Process a game round with passive activation messages
    * @returns {Object} Round result with events and state updates

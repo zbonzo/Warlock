@@ -4,7 +4,7 @@
  */
 
 // Register module aliases - THIS MUST BE FIRST, switching to Babel
-//require('module-alias');
+require('module-alias');
 
 // Start the server
 require('./server');

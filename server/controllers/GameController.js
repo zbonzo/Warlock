@@ -383,7 +383,7 @@ function handlePerformAction(
       );
 
       // If all actions submitted, process the round
-      if (game.allActionsSubmitted()) {
+      if (game.allActionsSubmittedSafe()) {
         logger.info(
           messages.formatMessage(
             messages.serverLogMessages.info.AllActionsSubmitted,

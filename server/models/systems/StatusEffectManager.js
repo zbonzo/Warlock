@@ -347,24 +347,52 @@ class StatusEffectManager {
    * @returns {boolean} Whether effect should be removed
    * @private
    */
-  processTimedEffect(player, effectName, effectData, log) {
-    // Reduce duration
+processTimedEffect(player, effectName, effectData, log) {
+  // Reduce duration FIRST
+  if (effectData.turns > 0) {
     effectData.turns--;
-
-    // Handle vulnerability expiration
-    if (effectName === 'vulnerable' && effectData.turns <= 0) {
-      player.isVulnerable = false;
-      player.vulnerabilityIncrease = 0;
-    }
-
-    // Check if effect expired
-    if (effectData.turns <= 0) {
-      this.logEffectMessage(effectName, 'expired', player, log, effectData);
-      return true; // Remove effect
-    }
-
-    return false; // Keep effect
   }
+
+  // Handle vulnerability expiration
+  if (effectName === 'vulnerable' && effectData.turns <= 0) {
+    player.isVulnerable = false;
+    player.vulnerabilityIncrease = 0;
+  }
+
+  // SPECIAL HANDLING FOR STUN: Clear action submissions when stun expires
+  if (effectName === 'stunned' && effectData.turns <= 0) {
+    // Clear any pending action submission when stun expires
+    if (player.hasSubmittedAction) {
+      player.clearActionSubmission();
+      logger.debug('ClearedSubmissionOnStunExpiry', { 
+        playerName: player.name,
+        hadSubmission: true 
+      });
+    }
+    
+    // Log stun expiration
+    const stunExpiredMessage = `${player.name} is no longer stunned and can act again.`;
+    log.push({
+      type: 'stun_expired',
+      public: true,
+      targetId: player.id,
+      message: stunExpiredMessage,
+      privateMessage: 'You are no longer stunned and can act again!',
+      attackerMessage: stunExpiredMessage,
+    });
+  }
+
+  // Check if effect expired
+  if (effectData.turns <= 0) {
+    // Only log expiration for non-stun effects (stun already logged above)
+    if (effectName !== 'stunned') {
+      this.logEffectMessage(effectName, 'expired', player, log, effectData);
+    }
+    return true; // Remove effect
+  }
+
+  return false; // Keep effect
+}
 
   /**
    * Remove a status effect from a player

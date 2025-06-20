@@ -261,7 +261,7 @@ function handleGameProgressionAfterDisconnect(io, game, gameCode, playerName) {
     }
 
     // Check if all remaining players have submitted actions
-    if (game.allActionsSubmitted()) {
+    if (game.allActionsSubmittedSafe()) {
       logger.info('PlayerDisconnectTriggeredRoundProcessing', {
         gameCode,
         playerName,

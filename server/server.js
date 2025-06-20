@@ -339,9 +339,23 @@ io.on('connection', (socket) => {
   });
 });
 
-// Handle uncaught exceptions
 process.on('uncaughtException', (error) => {
-  logger.error('Uncaught exception', error);
+  logger.error('Uncaught exception', {
+    message: error.message,
+    stack: error.stack,
+    name: error.name,
+    cause: error.cause,
+    timestamp: new Date().toISOString()
+  });
+  
+  // Also log to console for immediate visibility
+  console.error('=== UNCAUGHT EXCEPTION ===');
+  console.error('Message:', error.message);
+  console.error('Stack:', error.stack);
+  console.error('Name:', error.name);
+  console.error('Time:', new Date().toISOString());
+  console.error('========================');
+  
   // In a production environment, you might want to restart the server
   // or perform other recovery actions
 });
