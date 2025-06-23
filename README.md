@@ -2,6 +2,10 @@
 
 A real-time multiplayer browser game where players collaborate to defeat monsters while hidden Warlocks attempt to corrupt and eliminate the good players.
 
+## Demo the Game
+
+https://warlock.zb.wtf
+
 ## 🎮 Game Overview
 
 **Warlock** is a social deduction game with RPG elements where:
