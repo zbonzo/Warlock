@@ -10,6 +10,78 @@ import { ICONS } from '../../config/constants';
 import './CharacterSelectPage.css';
 
 /**
+ * RaceIcon component handles loading states and fallback for race images
+ */
+const RaceIcon = ({ race }) => {
+  const [loaded, setLoaded] = React.useState(false);
+  const [error, setError] = React.useState(false);
+
+  // Emoji fallbacks for each race
+  const emojiFallbacks = {
+    Artisan: '👩‍🌾',
+    Rockhewn: '🧔‍♂️',
+    Lich: '💀',
+    Orc: '🧌',
+    Crestfallen: '🧝',
+    Kinfolk: '🐐',
+  };
+
+  return (
+    <div className="card-icon">
+      {!loaded && !error && <div className="icon-loader">...</div>}
+      {error && <div className="icon-fallback">{emojiFallbacks[race.id] || '❓'}</div>}
+      <img 
+        src={race.icon} 
+        alt={`${race.label} icon`}
+        className={`race-icon-img ${loaded ? 'loaded' : ''}`}
+        onLoad={() => setLoaded(true)}
+        onError={() => setError(true)}
+        style={{ display: loaded && !error ? 'block' : 'none' }}
+      />
+    </div>
+  );
+};
+
+/**
+ * ClassIcon component handles loading states and fallback for class images
+ */
+const ClassIcon = ({ cls }) => {
+  const [loaded, setLoaded] = React.useState(false);
+  const [error, setError] = React.useState(false);
+
+  // Emoji fallbacks for each class
+  const emojiFallbacks = {
+    Warrior: '⚔️',
+    Pyromancer: '🔥',
+    Wizard: '🧙',
+    Assassin: '🥷',
+    Alchemist: '🧪',
+    Priest: '✨',
+    Oracle: '🔮',
+    Barbarian: '🪓',
+    Shaman: '🌀',
+    Gunslinger: '💥',
+    Tracker: '🏹',
+    Druid: '🌿',
+  };
+
+  return (
+    <div className="card-icon">
+      {!loaded && !error && <div className="icon-loader">...</div>}
+      {error && <div className="icon-fallback" style={{ color: cls.color }}>{emojiFallbacks[cls.id] || '❓'}</div>}
+      <img 
+        src={cls.icon} 
+        alt={`${cls.label} icon`}
+        className={`race-icon-img ${loaded ? 'loaded' : ''}`}
+        onLoad={() => setLoaded(true)}
+        onError={() => setError(true)}
+        style={{ display: loaded && !error ? 'block' : 'none' }}
+      />
+    </div>
+  );
+};
+
+/**
  * CharacterSelectPage component allows players to select their race and class
  * Now using ConfigContext for race and class data
  *
@@ -185,12 +257,6 @@ const CharacterSelectPage = ({
 
       <h2 className="welcome-title">Welcome, {playerName}!</h2>
 
-      {suggestedRace && suggestedClass && (
-        <div className="suggestion-box">
-          <strong>Suggested:</strong> {suggestedRace} {suggestedClass}
-        </div>
-      )}
-
       <div className="section-container">
         <h3 className="section-title">
           <span>Select Your Race</span>
@@ -213,8 +279,10 @@ const CharacterSelectPage = ({
                 className={`selection-card ${isSelected ? 'selected' : ''} ${isDisabled ? 'disabled' : ''}`}
                 onClick={() => !isDisabled && handleRaceSelect(race.id)}
               >
-                <div className="card-icon">{race.icon}</div>
-                <div className="card-label">{race.label}</div>
+                <RaceIcon race={race} />
+                <div className="card-label-overlay">
+                  <span className="race-name">{race.label}</span>
+                </div>
               </div>
             );
           })}
@@ -245,10 +313,10 @@ const CharacterSelectPage = ({
                 className={`selection-card ${isSelected ? 'selected' : ''} ${isDisabled ? 'disabled' : ''}`}
                 onClick={() => !isDisabled && handleClassSelect(cls.id)}
               >
-                <div className="card-icon" style={{ color: cls.color }}>
-                  {cls.icon}
+                <ClassIcon cls={cls} />
+                <div className="card-label-overlay">
+                  <span className="race-name">{cls.label}</span>
                 </div>
-                <div className="card-label">{cls.label}</div>
               </div>
             );
           })}

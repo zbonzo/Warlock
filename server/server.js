@@ -19,7 +19,12 @@ const app = express();
 const PORT = process.env.PORT || config.port;
 
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: process.env.NODE_ENV === 'development' ? '*' : config.corsOrigins,
+  credentials: false,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+}));
 app.use(express.json());
 
 // API Routes
@@ -39,9 +44,10 @@ const server = http.createServer(app);
 // Initialize Socket.IO with CORS
 const io = new Server(server, {
   cors: {
-    origin: config.corsOrigins,
+    origin: process.env.NODE_ENV === 'development' ? '*' : config.corsOrigins,
     methods: ['GET', 'POST'],
     allowedHeaders: ['Content-Type'],
+    credentials: false,
   },
 });
 

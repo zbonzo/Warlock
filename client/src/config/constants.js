@@ -99,28 +99,27 @@ export const UI = {
 // Class and race icons (these are UI-specific and don't need to be fetched)
 export const ICONS = {
   RACES: {
-    Artisan: '👩‍🌾',
-    Rockhewn: '🧔‍♂️',
-    Lich: '💀',
-    Orc: '🧌',
-    Crestfallen: '🧝',
-    Kinfolk: '🐐',
+    Artisan: '/images/races/artisan.png',
+    Rockhewn: '/images/races/rockhewn.png',
+    Lich: '/images/races/lich.png',
+    Orc: '/images/races/orc.png',
+    Crestfallen: '/images/races/crestfallen.png',
+    Kinfolk: '/images/races/kinfolk.png',
   },
 
   CLASSES: {
-    Warrior: '⚔️',
-    Pyromancer: '🔥',
-    Wizard: '🧙',
-    Assassin: '🥷',
-    Alchemist: '🧪',
-    Priest: '✨',
-    Oracle: '🔮',
-    Barbarian: '🪓', // Added Barbarian with axe icon
-    Shaman: '🌀',
-    Gunslinger: '💥',
-    Tracker: '🏹',
-    Druid: '🌿',
-    // Seer: '👁️', // Removed Seer
+    Warrior: '/images/classes/warrior.png',
+    Pyromancer: '/images/classes/pyromancer.png',
+    Wizard: '/images/classes/wizard.png',
+    Assassin: '/images/classes/assassin.png',
+    Alchemist: '/images/classes/alchemist.png',
+    Priest: '/images/classes/priest.png',
+    Oracle: '/images/classes/oracle.png',
+    Barbarian: '/images/classes/barbarian.png',
+    Shaman: '/images/classes/shaman.png',
+    Gunslinger: '/images/classes/gunslinger.png',
+    Tracker: '/images/classes/tracker.png',
+    Druid: '/images/classes/druid.png',
   },
 
   ABILITIES: {

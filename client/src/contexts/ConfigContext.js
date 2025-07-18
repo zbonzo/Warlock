@@ -64,6 +64,7 @@ export function ConfigProvider({ children }) {
         setLoading(false);
       } catch (error) {
         console.error('Failed to load configuration:', error);
+        console.error('Error details:', error.response?.data || error);
         setError(error.message || 'Failed to load game configuration');
         setLoading(false);
       }

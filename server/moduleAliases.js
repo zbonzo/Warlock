@@ -1,7 +1,7 @@
 /**
  * @fileoverview Module aliases configuration for server-side code
  * Provides shorthand paths similar to the client-side webpack aliases
-
+ */
 
 const path = require('path');
 const moduleAlias = require('module-alias');
@@ -19,9 +19,5 @@ moduleAlias.addAliases({
 });
 
 console.log('Module aliases registered successfully');
-
-// Register the aliases
-moduleAlias();
- */
 
 

@@ -6,7 +6,7 @@
 import React, { useEffect } from 'react';
 import { ThemeProvider } from './contexts/ThemeContext';
 import ThemeToggle from './components/common/ThemeToggle';
-import { ConfigProvider } from '@contexts/ConfigContext';
+import { ConfigProvider, useConfig } from '@contexts/ConfigContext';
 import { AppProvider, useAppContext } from './contexts/AppContext';
 import LoadingScreen from './components/common/LoadingScreen';
 import ErrorBoundary from './components/common/ErrorBoundary';
@@ -77,6 +77,9 @@ function AppContent() {
     resetGame,
     setEventsLog,
   } = useAppContext();
+
+  // Get configuration loading state from context
+  const { loading: configLoading, error: configError } = useConfig();
 
   // Connect to socket server
   const { socket, connected, socketId, emit, on } = useSocket(SOCKET_URL);
@@ -329,31 +332,10 @@ function AppContent() {
     setPlayerName(playerName); // Keep the same player name
   }, [resetGame, gameCode, playerName, setGameCode, setPlayerName]);
 
-  useEffect(() => {
-    if (!socket) return;
-
-    // Handle play again game creation/joining
-    const handlePlayAgainResponse = (data) => {
-      console.log('Play again response:', data);
-      // This will trigger either gameCreated or playerList events
-      // which are already handled by existing listeners
-    };
-
-    socket.on('gameCreated', handlePlayAgainResponse);
-
-    return () => {
-      socket.off('gameCreated', handlePlayAgainResponse);
-    };
-  }, [socket]);
+  // Play again responses are handled by the existing gameCreated and playerList handlers
 
   // Render the appropriate screen based on the current state
   const renderScreen = () => {
-    // Get configuration loading state from context
-    const { loading: configLoading, error: configError } = {
-      loading: false,
-      error: null,
-    };
-
     // Show loading screen while configuration is loading
     if (configLoading) {
       return <LoadingScreen message="Loading game configuration..." />;

@@ -24,10 +24,11 @@ const configCache = {
 const configService = {
   /**
    * Get basic game configuration
+   * @param {boolean} forceRefresh - Force refresh from server
    * @returns {Promise<Object>} Basic game configuration
    */
-  async getBasicConfig() {
-    if (configCache.basic) return configCache.basic;
+  async getBasicConfig(forceRefresh = false) {
+    if (configCache.basic && !forceRefresh) return configCache.basic;
 
     try {
       const response = await axios.get(`${API_URL}/config`);
