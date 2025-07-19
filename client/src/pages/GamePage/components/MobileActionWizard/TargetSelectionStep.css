@@ -1,0 +1,349 @@
+/* Target Selection Step */
+.target-selection-step {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.step-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px;
+  padding-top: 16px;
+}
+
+.step-title {
+  font-size: 1.5rem;
+  font-weight: bold;
+  margin-bottom: 20px;
+  text-align: center;
+  color: var(--color-text);
+}
+
+/* Selected ability reminder */
+.selected-ability-reminder {
+  display: flex;
+  align-items: center;
+  background-color: var(--color-neutral-light);
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  padding: 12px;
+  margin-bottom: 20px;
+}
+
+.selected-ability-reminder .ability-icon {
+  font-size: 1.5rem;
+  margin-right: 12px;
+}
+
+.ability-info {
+  flex: 1;
+}
+
+.ability-info strong {
+  display: block;
+  font-size: 1rem;
+  color: var(--color-text);
+}
+
+.ability-info .ability-category {
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.change-ability-btn {
+  padding: 8px 16px;
+  background-color: var(--color-secondary);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.change-ability-btn:hover {
+  background-color: var(--color-secondary-dark);
+}
+
+/* Targets section */
+.targets-section h3 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-bottom: 16px;
+  color: var(--color-text);
+  border-bottom: 2px solid var(--color-primary);
+  padding-bottom: 4px;
+}
+
+.monster-target-section,
+.player-targets-section {
+  margin-bottom: 24px;
+}
+
+.monster-target-section h4,
+.player-targets-section h4 {
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 12px;
+  color: var(--color-text-muted);
+  padding-left: 8px;
+}
+
+/* Monster target wide layout */
+.monster-target-wide {
+  display: flex;
+  align-items: center;
+  padding: 12px;
+  border: 2px solid var(--color-danger);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-bottom: 16px;
+  background-color: var(--color-surface);
+  gap: 12px;
+}
+
+.monster-target-wide:hover {
+  border-color: var(--color-danger-light);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.monster-target-wide.selected {
+  background-color: rgba(255, 0, 0, 0.1);
+  border-color: #FF0000;
+}
+
+.monster-info {
+  flex: 1;
+}
+
+.monster-name {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--color-text);
+  margin-bottom: 4px;
+}
+
+.monster-stats {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+  margin-bottom: 6px;
+}
+
+.hp-text {
+  font-weight: 500;
+}
+
+.next-attack {
+  font-size: 0.75rem;
+  color: var(--color-danger);
+}
+
+.health-bar-wide {
+  height: 6px;
+  background-color: var(--color-neutral-light);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+/* Player target cards compact */
+.player-target-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 10px;
+  border: 2px solid var(--color-border);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background-color: var(--color-surface);
+  text-align: center;
+  min-height: 100px;
+}
+
+.player-target-card:hover:not(.invalid-target) {
+  border-color: var(--color-primary);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* Ready state - green border */
+.player-target-card.ready {
+  border-color: #4CAF50;
+  border-width: 3px;
+}
+
+/* Selected state - red background */
+.player-target-card.selected {
+  background-color: rgba(255, 0, 0, 0.15);
+  border-color: #FF0000;
+}
+
+.player-target-card.self {
+  background-color: rgba(var(--color-secondary-rgb), 0.05);
+}
+
+.player-target-card.invalid-target {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Player card elements */
+.player-name {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--color-text);
+  margin-bottom: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.player-hp {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--color-text);
+  margin-top: 4px;
+}
+
+.health-bar-compact {
+  height: 4px;
+  background-color: var(--color-neutral-light);
+  border-radius: 2px;
+  overflow: hidden;
+  width: 100%;
+  margin-top: 4px;
+}
+
+.health-fill.health-high {
+  background-color: #4CAF50;
+}
+
+.health-fill.health-medium {
+  background-color: #FF9800;
+}
+
+.health-fill.health-low {
+  background-color: #F44336;
+}
+
+/* Removed old status and effects styling - using border colors instead */
+
+/* Player targets grid */
+.player-targets-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-top: 8px;
+}
+
+/* Responsive - 2 columns on very small screens */
+@media (max-width: 360px) {
+  .player-targets-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* Remove old selection indicators since we use background color now */
+
+/* Step navigation */
+.step-navigation {
+  display: flex;
+  gap: 8px;
+  padding: 16px;
+  border-top: 1px solid var(--color-border);
+  background-color: var(--color-surface);
+}
+
+.step-navigation button {
+  padding: 16px;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: bold;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.step-navigation .btn-secondary {
+  flex: 1;
+}
+
+.step-navigation .btn-primary {
+  flex: 2;
+}
+
+.btn-secondary {
+  background-color: var(--color-neutral);
+  color: var(--color-text);
+}
+
+.btn-secondary:hover {
+  background-color: var(--color-neutral-dark);
+}
+
+.btn-primary {
+  background-color: var(--color-primary);
+  color: white;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background-color: var(--color-primary-dark);
+}
+
+.btn-primary:disabled {
+  background-color: var(--color-neutral);
+  color: var(--color-text-muted);
+  cursor: not-allowed;
+}
+
+/* Responsive adjustments */
+@media (max-width: 480px) {
+  .step-content {
+    padding: 12px;
+  }
+  
+  .step-title {
+    font-size: 1.3rem;
+  }
+  
+  .selected-ability-reminder {
+    padding: 10px;
+  }
+  
+  .selected-ability-reminder .ability-icon {
+    font-size: 1.3rem;
+  }
+  
+  .monster-target-wide {
+    padding: 10px;
+  }
+  
+  .player-target-card {
+    padding: 8px;
+    min-height: 90px;
+  }
+  
+  .player-name {
+    font-size: 0.8rem;
+  }
+  
+  .step-navigation {
+    padding: 12px;
+    gap: 6px;
+  }
+  
+  .step-navigation button {
+    padding: 14px;
+    font-size: 14px;
+  }
+}

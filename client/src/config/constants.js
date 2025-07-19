@@ -31,9 +31,12 @@ export const API_URL = (() => {
     return process.env.REACT_APP_API_URL;
   }
 
-  // In development, use localhost:3001
+  // In development, use the hostname from the browser
   if (process.env.NODE_ENV === 'development') {
-    return 'http://localhost:3001/api';
+    // Use the current hostname but with port 3001 for the API
+    const protocol = window.location.protocol;
+    const hostname = window.location.hostname;
+    return `${protocol}//${hostname}:3001/api`;
   }
 
   // In production, use relative URL (same origin via nginx proxy)

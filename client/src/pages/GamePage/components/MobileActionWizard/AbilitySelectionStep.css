@@ -1,0 +1,463 @@
+/* Ability Selection Step */
+.ability-selection-step {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.step-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px;
+  padding-top: 16px;
+}
+
+.step-title {
+  font-size: 1.2rem;
+  font-weight: bold;
+  margin-bottom: 12px;
+  text-align: center;
+  color: var(--color-text);
+}
+
+/* Racial ability section */
+.racial-section {
+  margin-bottom: 12px;
+}
+
+/* Class abilities section */
+.class-abilities-section {
+  margin-top: 4px;
+}
+
+.abilities-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+/* Mobile Ability Card */
+.mobile-ability-card {
+  position: relative;
+  border: 2px solid var(--color-border);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-height: 110px;
+  background-color: var(--color-surface);
+  width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.mobile-ability-card:hover:not(.locked):not(.on-cooldown) {
+  border-color: var(--color-primary);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.mobile-ability-card.selected {
+  border-color: var(--color-primary);
+  border-width: 3px;
+}
+
+.mobile-ability-card.selected .ability-content-overlay {
+  border: 2px solid rgba(255, 255, 255, 0.6);
+}
+
+.mobile-ability-card.selected .ability-content-overlay.ability-attack {
+  background: linear-gradient(135deg, 
+    rgba(255, 255, 255, 0.8) 0%, 
+    rgba(220, 220, 220, 0.6) 0%, 
+    rgba(192, 192, 192, 0.4) 50%
+  );
+}
+
+.mobile-ability-card.selected .ability-content-overlay.ability-defense {
+  background: linear-gradient(135deg, 
+    rgba(30, 144, 255, 0.8) 0%, 
+    rgba(70, 130, 180, 0.6) 0%, 
+    rgba(100, 149, 237, 0.4) 50%
+  );
+}
+
+.mobile-ability-card.selected .ability-content-overlay.ability-heal {
+  background: linear-gradient(135deg, 
+    rgba(50, 205, 50, 0.8) 0%, 
+    rgba(34, 139, 34, 0.6) 0%, 
+    rgba(60, 179, 113, 0.4) 50%
+  );
+}
+
+.mobile-ability-card.selected .ability-content-overlay.ability-special {
+  background: linear-gradient(135deg, 
+    rgba(186, 85, 211, 0.8) 0%, 
+    rgba(138, 43, 226, 0.6) 0%, 
+    rgba(147, 112, 219, 0.4) 50%
+  );
+}
+
+/* Locked ability styling */
+.mobile-ability-card.locked {
+  opacity: 0.7;
+  cursor: not-allowed;
+  background-color: var(--color-neutral-dark);
+}
+
+.mobile-ability-card.locked .ability-background-icon {
+  filter: grayscale(100%);
+  opacity: 0.1;
+}
+
+.mobile-ability-card.locked .ability-content-overlay {
+  background: linear-gradient(135deg, 
+    rgba(100, 100, 100, 0.8) 0%, 
+    rgba(60, 60, 60, 0.6) 50%, 
+    rgba(40, 40, 40, 0.4) 100%
+  );
+}
+
+.lock-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(0, 0, 0, 0.8);
+  border-radius: inherit;
+  z-index: 3;
+}
+
+.lock-icon {
+  font-size: 2rem;
+  margin-bottom: 8px;
+}
+
+.unlock-text {
+  font-size: 0.875rem;
+  color: white;
+  text-align: center;
+  padding: 0 8px;
+  font-weight: 500;
+}
+
+/* Cooldown styling */
+.mobile-ability-card.on-cooldown {
+  opacity: 0.8;
+  cursor: not-allowed;
+}
+
+.cooldown-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(0, 0, 0, 0.6);
+  border-radius: inherit;
+  z-index: 1;
+}
+
+.cooldown-number {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: white;
+}
+
+.cooldown-text {
+  font-size: 0.875rem;
+  color: white;
+  margin-top: 4px;
+}
+
+/* Ability content */
+/* Background icon styling */
+.ability-background-icon {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 4rem;
+  opacity: 0.15;
+  z-index: 1;
+  color: var(--color-text);
+}
+
+/* Content overlay */
+.ability-content-overlay {
+  position: relative;
+  z-index: 2;
+  height: 100%;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  background: linear-gradient(135deg, 
+    rgba(0, 0, 0, 0.7) 0%, 
+    rgba(0, 0, 0, 0.5) 0%, 
+    rgba(0, 0, 0, 0.3) 50%
+  );
+  border-radius: 6px;
+  margin: 2px;
+}
+
+/* Category-specific gradients */
+.ability-content-overlay.ability-attack {
+  background: linear-gradient(135deg, 
+    rgba(192, 192, 192, 0.7) 0%, 
+    rgba(169, 169, 169, 0.5) 0%, 
+    rgba(128, 128, 128, 0.3) 50%
+  );
+}
+
+.ability-content-overlay.ability-defense {
+  background: linear-gradient(135deg, 
+    rgba(70, 130, 180, 0.7) 0%, 
+    rgba(100, 149, 237, 0.5) 0%, 
+    rgba(135, 206, 250, 0.3) 50%
+  );
+}
+
+.ability-content-overlay.ability-heal {
+  background: linear-gradient(135deg, 
+    rgba(34, 139, 34, 0.7) 0%, 
+    rgba(50, 205, 50, 0.5) 0%, 
+    rgba(144, 238, 144, 0.3) 50%
+  );
+}
+
+.ability-content-overlay.ability-special {
+  background: linear-gradient(135deg, 
+    rgba(138, 43, 226, 0.7) 0%, 
+    rgba(147, 112, 219, 0.5) 0%, 
+    rgba(221, 160, 221, 0.3) 50%
+  );
+}
+
+.ability-name {
+  font-size: 0.9rem;
+  font-weight: 700;
+  margin-bottom: 6px;
+  color: white;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+  text-align: left;
+}
+
+.ability-description {
+  font-size: 0.7rem;
+  color: rgba(255, 255, 255, 0.9);
+  line-height: 1.2;
+  margin-bottom: 4px;
+  text-align: left;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  flex: 1;
+  padding: 4px 6px;
+  border-radius: 4px;
+  margin-top: 4px;
+}
+
+/* Class-specific description backgrounds */
+.ability-description.class-warrior {
+  background-color: rgba(178, 34, 34, 0.3); /* firebrick */
+  color: #ffffff;
+}
+
+.ability-description.class-ranger {
+  background-color: rgba(34, 139, 34, 0.3); /* forestgreen */
+  color: #ffffff;
+}
+
+.ability-description.class-paladin {
+  background-color: rgba(255, 215, 0, 0.3); /* gold */
+  color: #000000;
+}
+
+.ability-description.class-sorcerer {
+  background-color: rgba(138, 43, 226, 0.3); /* blueviolet */
+  color: #ffffff;
+}
+
+.ability-description.class-warlock {
+  background-color: rgba(75, 0, 130, 0.3); /* indigo */
+  color: #ffffff;
+}
+
+.ability-description.class-barbarian {
+  background-color: rgba(165, 42, 42, 0.3); /* brown */
+  color: #ffffff;
+}
+
+.ability-description.class-monk {
+  background-color: rgba(255, 140, 0, 0.3); /* darkorange */
+  color: #000000;
+}
+
+.ability-description.class-rogue {
+  background-color: rgba(105, 105, 105, 0.3); /* dimgray */
+  color: #ffffff;
+}
+
+.ability-description.class-shaman {
+  background-color: rgba(34, 139, 34, 0.3); /* forestgreen */
+  color: #ffffff;
+}
+
+.ability-description.class-gunslinger {
+  background-color: rgba(139, 69, 19, 0.3); /* saddlebrown */
+  color: #ffffff;
+}
+
+.ability-description.class-tracker {
+  background-color: rgba(107, 142, 35, 0.3); /* olivedrab */
+  color: #ffffff;
+}
+
+.ability-description.class-druid {
+  background-color: rgba(85, 107, 47, 0.3); /* darkolivegreen */
+  color: #ffffff;
+}
+
+.ability-damage {
+  font-size: 0.7rem;
+  color: #ffd700;
+  font-weight: 600;
+  text-align: left;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+/* Selection indicator */
+.selection-indicator {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background-color: var(--color-primary);
+  color: white;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: bold;
+  z-index: 4;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+/* Enhancement indicators */
+.enhancements-active {
+  margin-top: 16px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+}
+
+.enhancement-badge {
+  background-color: var(--color-secondary);
+  color: white;
+  padding: 6px 12px;
+  border-radius: 16px;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+/* Step navigation */
+.step-navigation {
+  display: flex;
+  gap: 12px;
+  padding: 16px;
+  border-top: 1px solid var(--color-border);
+  background-color: var(--color-surface);
+}
+
+.step-navigation button {
+  flex: 1;
+  padding: 16px;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: bold;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-secondary {
+  background-color: var(--color-neutral);
+  color: var(--color-text);
+}
+
+.btn-secondary:hover {
+  background-color: var(--color-neutral-dark);
+}
+
+.btn-primary {
+  background-color: var(--color-primary);
+  color: white;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background-color: var(--color-primary-dark);
+}
+
+.btn-primary:disabled {
+  background-color: var(--color-neutral);
+  color: var(--color-text-muted);
+  cursor: not-allowed;
+}
+
+/* Responsive adjustments */
+@media (max-width: 480px) {
+  .step-content {
+    padding: 8px;
+  }
+  
+  .step-title {
+    font-size: 1.2rem;
+    margin-bottom: 8px;
+  }
+  
+  .racial-section {
+    margin-bottom: 12px;
+  }
+  
+  .abilities-grid {
+    gap: 8px;
+  }
+  
+  .mobile-ability-card {
+    min-height: 100px;
+    padding: 12px;
+  }
+  
+  .ability-icon {
+    font-size: 1.5rem;
+  }
+  
+  .ability-name {
+    font-size: 0.8rem;
+  }
+  
+  .step-navigation {
+    padding: 12px;
+  }
+  
+  .step-navigation button {
+    padding: 14px;
+    font-size: 14px;
+  }
+}

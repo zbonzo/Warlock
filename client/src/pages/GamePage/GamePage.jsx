@@ -16,6 +16,7 @@ import PlayerColumn from './components/PlayerColumn';
 import ActionColumn from './components/ActionColumn';
 import HistoryColumn from './components/HistoryColumn';
 import MobileNavigation from './components/MobileNavigation';
+import { MobileActionWizard } from './components/MobileActionWizard';
 import AdaptabilityModal from '@components/modals/AdaptabilityModal';
 import BattleResultsModal from '@components/modals/BattleResultsModal';
 import useMediaQuery from '@hooks/useMediaQuery';
@@ -60,6 +61,11 @@ const GamePage = ({
   // Mobile navigation state
   const [activeTab, setActiveTab] = useState('action');
 
+  // Mobile Action Wizard state
+  const [mobileActionStep, setMobileActionStep] = useState(1);
+  const [showMobileActionWizard, setShowMobileActionWizard] = useState(false);
+  const [selectedAbility, setSelectedAbility] = useState(null);
+
   // Refs
   const prevLogLen = useRef(eventsLog.length);
   const lastValidActionRef = useRef(null);
@@ -67,6 +73,20 @@ const GamePage = ({
 
   // Media query for responsive layout
   const isMobile = useMediaQuery('(max-width: 768px)');
+
+  // Effect to handle initial mobile state - if on mobile and action tab is active, open wizard
+  useEffect(() => {
+    if (isMobile && activeTab === 'action' && !showMobileActionWizard) {
+      console.log('Initial mobile action tab detected, opening wizard');
+      setShowMobileActionWizard(true);
+      setMobileActionStep(1);
+    }
+    // Reset wizard if switching to desktop
+    else if (!isMobile && showMobileActionWizard) {
+      console.log('Switching to desktop, closing wizard');
+      setShowMobileActionWizard(false);
+    }
+  }, [isMobile, activeTab, showMobileActionWizard]);
 
   // Derived values
   const unlocked = useMemo(() => me?.unlocked || [], [me?.unlocked]);
@@ -360,6 +380,10 @@ const GamePage = ({
       setSubmitted(false);
       setSelectedTarget('');
       setReadyClicked(false);
+      // Reset mobile wizard to ability selection
+      if (isMobile && showMobileActionWizard) {
+        setMobileActionStep(1);
+      }
     };
 
     const handleGameStateUpdate = (data) => {
@@ -371,6 +395,10 @@ const GamePage = ({
         setSubmitted(false);
         setSelectedTarget('');
         setReadyClicked(false);
+        // Reset mobile wizard to ability selection
+        if (isMobile && showMobileActionWizard) {
+          setMobileActionStep(1);
+        }
       }
     };
 
@@ -381,7 +409,7 @@ const GamePage = ({
       socket.off('resumeGame', handleResume);
       socket.off('gameStateUpdate', handleGameStateUpdate);
     };
-  }, [socket]);
+  }, [socket, isMobile, showMobileActionWizard]);
 
   // Handle adaptability modal events
   useEffect(() => {
@@ -608,6 +636,45 @@ const GamePage = ({
     setShowAdaptabilityModal(false);
   };
 
+  /**
+   * Handle mobile tab changes - opens wizard for action tab
+   */
+  const handleTabChange = (tab) => {
+    console.log('Tab change requested:', { tab, isMobile, currentActiveTab: activeTab });
+    
+    if (tab === 'action' && isMobile) {
+      console.log('Opening mobile action wizard');
+      // Open wizard instead of showing action column
+      setShowMobileActionWizard(true);
+      setMobileActionStep(1);
+    } else {
+      console.log('Setting active tab to:', tab);
+      setActiveTab(tab);
+    }
+  };
+
+  /**
+   * Handle wizard close
+   */
+  const handleCloseWizard = () => {
+    console.log('Closing wizard and switching to players tab');
+    setShowMobileActionWizard(false);
+    setMobileActionStep(1);
+    setActionType('');
+    setSelectedTarget('');
+    setSelectedAbility(null);
+    // Switch to a different tab when closing to avoid auto-reopening
+    setActiveTab('players');
+  };
+
+  /**
+   * Handle ability selection in wizard
+   */
+  const handleWizardAbilitySelect = (ability) => {
+    setSelectedAbility(ability);
+    setActionType(ability.type);
+  };
+
   // Loading state
   if (!me) {
     return (
@@ -704,20 +771,46 @@ const GamePage = ({
         />
       )}
 
+      {/* Mobile Action Wizard */}
+      {console.log('Wizard render check:', { isMobile, showMobileActionWizard, shouldRender: isMobile && showMobileActionWizard })}
+      {isMobile && showMobileActionWizard && (
+        <MobileActionWizard
+          isOpen={showMobileActionWizard}
+          currentStep={mobileActionStep}
+          onStepChange={setMobileActionStep}
+          onClose={handleCloseWizard}
+          me={me}
+          monster={monster}
+          lastEvent={lastEvent}
+          unlocked={unlocked}
+          racialAbility={me?.racialAbility}
+          alivePlayers={alivePlayers}
+          selectedAbility={selectedAbility}
+          selectedTarget={selectedTarget}
+          bloodRageActive={bloodRageActive}
+          keenSensesActive={keenSensesActive}
+          racialSelected={racialSelected}
+          onAbilitySelect={handleWizardAbilitySelect}
+          onTargetSelect={setSelectedTarget}
+          onRacialAbilityUse={handleRacialAbilityUse}
+          onSubmitAction={handleSubmitAction}
+        />
+      )}
+
       {/* Responsive Layout */}
       <div className={isMobile ? 'mobile-layout' : 'desktop-layout'}>
-        {isMobile && (
-          <MobileNavigation activeTab={activeTab} onTabChange={setActiveTab} />
+        {isMobile && !showMobileActionWizard && (
+          <MobileNavigation activeTab={activeTab} onTabChange={handleTabChange} />
         )}
 
         <PlayerColumn
-          isVisible={!isMobile || activeTab === 'players'}
+          isVisible={(!isMobile || activeTab === 'players') && !showMobileActionWizard}
           me={me}
           players={players}
         />
 
         <ActionColumn
-          isVisible={!isMobile || activeTab === 'action'}
+          isVisible={(!isMobile || activeTab === 'action') && !showMobileActionWizard}
           phase={phase}
           me={me}
           lastEvent={lastEvent}
@@ -752,7 +845,7 @@ const GamePage = ({
         )}
 
         <HistoryColumn
-          isVisible={!isMobile || activeTab === 'history'}
+          isVisible={(!isMobile || activeTab === 'history') && !showMobileActionWizard}
           eventsLog={eventsLog}
           currentPlayerId={me?.id || ''}
           players={players}

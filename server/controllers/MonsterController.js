@@ -565,7 +565,9 @@ class MonsterController {
 
     this.monster.hp = newMonsterHp;
     this.monster.maxHp = newMonsterHp;
-    this.monster.age = config.gameBalance.monster.baseAge;
+    // Scale monster age with level to maintain damage progression
+    // Each level adds 2 to starting age, so Level 2 starts at age 2, Level 3 at age 4, etc.
+    this.monster.age = config.gameBalance.monster.baseAge + ((newLevel - 1) * 2);
 
     // Log respawn using config messages
     log.push(messages.getEvent('levelUp', { level: newLevel }));
