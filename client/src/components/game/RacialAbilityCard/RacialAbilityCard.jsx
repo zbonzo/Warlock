@@ -9,6 +9,38 @@ import { RACE_TO_ABILITY, ABILITY_ICONS } from './racialAbilityData';
 import './RacialAbilityCard.css';
 
 /**
+ * Gets the appropriate icon for a racial ability
+ * @param {Object} ability - The racial ability object
+ * @returns {string|JSX.Element} Icon representation for the ability
+ */
+function getRacialAbilityIcon(ability) {
+  // Map racial ability types to their PNG file names
+  const racialImageMap = {
+    'adaptability': 'adaptability.png',
+    'bloodRage': 'bloodrage.png',
+    'stoneArmor': 'stonearmor.png',
+    'undying': 'undying.png',
+    'lifeBond': 'lifebond.png',
+    'moonbeam': 'moonbeam.png'
+  };
+
+  // Check if we have a PNG for this racial ability
+  const imageName = racialImageMap[ability.type];
+  if (imageName) {
+    return (
+      <img 
+        src={`/images/abilities/${imageName}`} 
+        alt={ability.name} 
+        style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+      />
+    );
+  }
+
+  // Fallback to emoji icons
+  return ABILITY_ICONS[ability.type] || '✨';
+}
+
+/**
  * RacialAbilityCard component displays a racial ability with its availability status
  * 
  * @param {Object} props - Component props
@@ -48,7 +80,7 @@ const RacialAbilityCard = ({ ability, usesLeft, cooldown, disabled, onUse }) => 
         </div>
         
         <div className="ability-icon-container" style={{ backgroundColor: `${raceColor}30` }}>
-          {ABILITY_ICONS[ability.type] || '✨'}
+          {getRacialAbilityIcon(ability)}
         </div>
       </div>
       

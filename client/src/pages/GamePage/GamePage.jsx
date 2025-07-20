@@ -18,6 +18,8 @@ import HistoryColumn from './components/HistoryColumn';
 import MobileNavigation from './components/MobileNavigation';
 import { MobileActionWizard } from './components/MobileActionWizard';
 import AdaptabilityModal from '@components/modals/AdaptabilityModal';
+import ReconnectionToggle from '../../components/ui/ReconnectionToggle';
+import reconnectionStorage from '../../utils/reconnectionStorage';
 import BattleResultsModal from '@components/modals/BattleResultsModal';
 import useMediaQuery from '@hooks/useMediaQuery';
 import './GamePage.css';
@@ -493,6 +495,13 @@ const GamePage = ({
     }
   }, [readyClicked, phase, alivePlayers, socket, gameCode, me]);
 
+  // Save character session for reconnection
+  useEffect(() => {
+    if (me && socket?.id && gameCode) {
+      reconnectionStorage.saveCharacterSession(me, socket.id, gameCode);
+    }
+  }, [me, socket?.id, gameCode]);
+
   /**
    * Enhanced submit action handler with validation
    */
@@ -755,6 +764,9 @@ const GamePage = ({
         alivePlayers={alivePlayers}
         monster={monster}
       />
+
+      {/* Reconnection Toggle - Development/Testing Tool */}
+      <ReconnectionToggle />
 
       {/* Adaptability Modal */}
       {showAdaptabilityModal && (

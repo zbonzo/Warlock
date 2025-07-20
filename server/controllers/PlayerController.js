@@ -167,8 +167,35 @@ function handlePlayerDisconnect(io, socket) {
         });
       }
 
-      // Remove player from game
-      game.removePlayer(socket.id);
+      // If game has started, move player to disconnected state for potential reconnection
+      // Otherwise, remove player completely
+      if (game.started) {
+        // Move player to disconnected players array
+        const player = game.players.get(socket.id);
+        if (player) {
+          game.disconnectedPlayers.push({
+            ...player,
+            disconnectedAt: Date.now(),
+            originalSocketId: socket.id
+          });
+          
+          // Remove from active players but keep in disconnected list
+          game.players.delete(socket.id);
+          if (player.isAlive) {
+            game.aliveCount--;
+          }
+          
+          logger.info('PlayerMovedToDisconnectedState', {
+            playerName,
+            gameCode,
+            socketId: socket.id,
+            disconnectedPlayersCount: game.disconnectedPlayers.length
+          });
+        }
+      } else {
+        // Remove player completely if game hasn't started
+        game.removePlayer(socket.id);
+      }
 
       // Handle host reassignment
       handleHostReassignment(io, game, gameCode, playerName, wasHost);
@@ -275,22 +302,125 @@ function handleGameProgressionAfterDisconnect(io, game, gameCode, playerName) {
 }
 
 /**
- * Handle player reconnection attempt - DISABLED
- * Reconnection is no longer supported with immediate disconnect system
+ * Handle player reconnection attempt
  * @param {Object} io - Socket.IO instance
  * @param {Object} socket - Client socket
  * @param {string} gameCode - Game code
  * @param {string} playerName - Player name
- * @returns {boolean} Always returns false (reconnection not supported)
+ * @returns {boolean} Success status
  */
 function handlePlayerReconnection(io, socket, gameCode, playerName) {
-  // Use centralized messaging for reconnection failure - FAIL HARD if not available
-  const reconnectionMessage = messages.getError('reconnectionFailed');
+  try {
+    const game = gameService.games.get(gameCode);
+    if (!game) {
+      socket.emit('errorMessage', { message: messages.getError('gameNotFound') });
+      return false;
+    }
 
-  socket.emit('errorMessage', {
-    message: reconnectionMessage,
-  });
-  return false;
+    // Look for the player in disconnected players
+    const disconnectedPlayerIndex = game.disconnectedPlayers.findIndex(
+      player => player.name === playerName
+    );
+
+    if (disconnectedPlayerIndex === -1) {
+      socket.emit('errorMessage', { 
+        message: messages.getError('playerNotFoundForReconnection') || 'Player not found for reconnection.'
+      });
+      return false;
+    }
+
+    const disconnectedPlayer = game.disconnectedPlayers[disconnectedPlayerIndex];
+    
+    // Check if reconnection timeout has expired (e.g., 10 minutes)
+    const reconnectionTimeout = 10 * 60 * 1000; // 10 minutes
+    if (Date.now() - disconnectedPlayer.disconnectedAt > reconnectionTimeout) {
+      // Remove from disconnected players
+      game.disconnectedPlayers.splice(disconnectedPlayerIndex, 1);
+      socket.emit('errorMessage', { 
+        message: messages.getError('reconnectionTimeoutExpired') || 'Reconnection timeout expired.'
+      });
+      return false;
+    }
+
+    // Restore the player with new socket ID
+    // Create a new Player instance from the disconnected data
+    const Player = require('@models/Player');
+    const restoredPlayer = Object.assign(new Player(socket.id, disconnectedPlayer.name), disconnectedPlayer);
+    
+    // Clean up disconnect metadata
+    delete restoredPlayer.disconnectedAt;
+    delete restoredPlayer.originalSocketId;
+    
+    // Add new socket ID to tracking
+    restoredPlayer.addSocketId(socket.id);
+    
+    // Add back to active players
+    game.players.set(socket.id, restoredPlayer);
+    if (restoredPlayer.isAlive) {
+      game.aliveCount++;
+    }
+    
+    // Remove from disconnected players
+    game.disconnectedPlayers.splice(disconnectedPlayerIndex, 1);
+    
+    // Join socket to game room
+    socket.join(gameCode);
+    
+    // If this was the host and no one else is host, restore as host
+    if (restoredPlayer.originalSocketId === game.hostId || !game.hostId) {
+      game.hostId = socket.id;
+    }
+    
+    logger.info('PlayerReconnectedSuccessfully', {
+      playerName,
+      gameCode,
+      oldSocketId: disconnectedPlayer.originalSocketId,
+      newSocketId: socket.id,
+      socketIds: restoredPlayer.socketIds
+    });
+
+    // Refresh game timeout and broadcast updates
+    gameService.refreshGameTimeout(io, gameCode);
+    gameService.broadcastPlayerList(io, gameCode);
+    
+    // Emit reconnection success to the player
+    socket.emit('gameReconnected', {
+      players: Array.from(game.players.values()).map(p => p.toClientData()),
+      me: restoredPlayer.toClientData(true, socket.id),
+      monster: game.monster,
+      turn: game.round,
+      level: game.level,
+      started: game.started,
+      host: game.hostId,
+      phase: game.phase,
+      gameCode: gameCode
+    });
+    
+    // Notify other players of reconnection
+    socket.to(gameCode).emit('playerReconnected', {
+      playerId: socket.id,
+      playerName,
+      message: messages.formatMessage(
+        messages.getEvent('playerReconnected') || '{playerName} has reconnected.',
+        { playerName }
+      )
+    });
+
+    return true;
+  } catch (error) {
+    logger.error('ReconnectionError', {
+      error: error.message,
+      stack: error.stack,
+      gameCode,
+      playerName,
+      socketId: socket.id
+    });
+    
+    socket.emit('errorMessage', {
+      message: messages.getError('reconnectionFailed') || 'Reconnection failed.'
+    });
+    return false;
+  }
 }
 
 module.exports = {

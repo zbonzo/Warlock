@@ -1294,6 +1294,26 @@ allActionsSubmittedSafe() {
   getPlayerById(playerId) {
     return this.players.get(playerId) || null;
   }
+
+  /**
+   * Clean up expired disconnected players
+   * @param {number} timeoutMs - Timeout in milliseconds (default: 10 minutes)
+   * @returns {Array} Array of cleaned up player names
+   */
+  cleanupDisconnectedPlayers(timeoutMs = 10 * 60 * 1000) {
+    const now = Date.now();
+    const cleanedUp = [];
+    
+    this.disconnectedPlayers = this.disconnectedPlayers.filter(player => {
+      if (now - player.disconnectedAt > timeoutMs) {
+        cleanedUp.push(player.name);
+        return false; // Remove from array
+      }
+      return true; // Keep in array
+    });
+    
+    return cleanedUp;
+  }
 }
 
 module.exports = { GameRoom };

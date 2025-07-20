@@ -190,23 +190,24 @@
   align-items: center;
   justify-content: center;
   font-size: 4rem;
-  opacity: 0.15;
-  z-index: 1;
+  opacity: 0.6;
+  z-index: 3;
   color: var(--color-text);
+  filter: drop-shadow(0 0 4px rgba(0, 0, 0, 0.8));
 }
 
 /* Content overlay */
 .ability-content-overlay {
   position: relative;
-  z-index: 2;
+  z-index: 4;
   height: 100%;
   padding: 10px;
   display: flex;
   flex-direction: column;
   background: linear-gradient(135deg, 
-    rgba(0, 0, 0, 0.7) 0%, 
-    rgba(0, 0, 0, 0.5) 0%, 
-    rgba(0, 0, 0, 0.3) 50%
+    rgba(0, 0, 0, 0.4) 0%, 
+    rgba(0, 0, 0, 0.3) 0%, 
+    rgba(0, 0, 0, 0.2) 50%
   );
   border-radius: 6px;
   margin: 2px;
@@ -215,33 +216,33 @@
 /* Category-specific gradients */
 .ability-content-overlay.ability-attack {
   background: linear-gradient(135deg, 
-    rgba(192, 192, 192, 0.7) 0%, 
-    rgba(169, 169, 169, 0.5) 0%, 
-    rgba(128, 128, 128, 0.3) 50%
+    rgba(192, 192, 192, 0.4) 0%, 
+    rgba(169, 169, 169, 0.3) 0%, 
+    rgba(128, 128, 128, 0.2) 50%
   );
 }
 
 .ability-content-overlay.ability-defense {
   background: linear-gradient(135deg, 
-    rgba(70, 130, 180, 0.7) 0%, 
-    rgba(100, 149, 237, 0.5) 0%, 
-    rgba(135, 206, 250, 0.3) 50%
+    rgba(70, 130, 180, 0.4) 0%, 
+    rgba(100, 149, 237, 0.3) 0%, 
+    rgba(135, 206, 250, 0.2) 50%
   );
 }
 
 .ability-content-overlay.ability-heal {
   background: linear-gradient(135deg, 
-    rgba(34, 139, 34, 0.7) 0%, 
-    rgba(50, 205, 50, 0.5) 0%, 
-    rgba(144, 238, 144, 0.3) 50%
+    rgba(34, 139, 34, 0.4) 0%, 
+    rgba(50, 205, 50, 0.3) 0%, 
+    rgba(144, 238, 144, 0.2) 50%
   );
 }
 
 .ability-content-overlay.ability-special {
   background: linear-gradient(135deg, 
-    rgba(138, 43, 226, 0.7) 0%, 
-    rgba(147, 112, 219, 0.5) 0%, 
-    rgba(221, 160, 221, 0.3) 50%
+    rgba(138, 43, 226, 0.4) 0%, 
+    rgba(147, 112, 219, 0.3) 0%, 
+    rgba(221, 160, 221, 0.2) 50%
   );
 }
 
@@ -250,7 +251,7 @@
   font-weight: 700;
   margin-bottom: 6px;
   color: white;
-  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 1), 1px 1px 2px rgba(0, 0, 0, 0.8);
   text-align: left;
 }
 

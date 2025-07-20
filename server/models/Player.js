@@ -19,6 +19,7 @@ class Player {
   constructor(id, name) {
     this.id = id;
     this.name = name;
+    this.socketIds = [id]; // Track all socket IDs for reconnection
     this.race = null;
     this.class = null;
     this.hp = config.gameBalance.player.baseHp || 100;
@@ -1063,6 +1064,27 @@ class Player {
       this.classEffects.relentlessFury.currentLevel = newLevel;
       console.log(`${this.name} Relentless Fury updated to level ${newLevel}`);
     }
+  }
+
+  /**
+   * Add a new socket ID for reconnection tracking
+   * @param {string} socketId - New socket ID to track
+   */
+  addSocketId(socketId) {
+    if (!this.socketIds.includes(socketId)) {
+      this.socketIds.push(socketId);
+      logger.debug(`Added socket ID ${socketId} for player ${this.name}. Total socket IDs: ${this.socketIds.length}`);
+    }
+    this.id = socketId; // Update current socket ID
+  }
+
+  /**
+   * Check if this player has used a specific socket ID
+   * @param {string} socketId - Socket ID to check
+   * @returns {boolean} Whether this player has used this socket ID
+   */
+  hasUsedSocketId(socketId) {
+    return this.socketIds.includes(socketId);
   }
 
   /**

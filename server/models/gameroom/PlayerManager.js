@@ -250,8 +250,8 @@ class PlayerManager {
     const player = this.gameRoom.players.get(oldId);
     if (!player) return false;
 
-    // Update player ID
-    player.id = newId;
+    // Add new socket ID to tracking and update current ID
+    player.addSocketId(newId);
     
     // Update maps
     this.gameRoom.players.delete(oldId);
@@ -265,7 +265,7 @@ class PlayerManager {
     // Update pending actions
     this.updatePendingActionsPlayerId(oldId, newId);
     
-    logger.info(`Transferred player ID from ${oldId} to ${newId}`);
+    logger.info(`Transferred player ID from ${oldId} to ${newId} for ${player.name}. Socket IDs: ${player.socketIds.join(', ')}`);
     return true;
   }
 
@@ -276,7 +276,21 @@ class PlayerManager {
    */
   getPlayerBySocketId(socketId) {
     for (const player of this.gameRoom.players.values()) {
-      if (player.socketId === socketId) {
+      if (player.id === socketId) {
+        return player;
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Get player by any socket ID they've used (for reconnection)
+   * @param {string} socketId - Socket ID to search for
+   * @returns {Object|null} Player object or null
+   */
+  getPlayerByAnySocketId(socketId) {
+    for (const player of this.gameRoom.players.values()) {
+      if (player.hasUsedSocketId && player.hasUsedSocketId(socketId)) {
         return player;
       }
     }

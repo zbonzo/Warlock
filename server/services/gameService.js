@@ -324,6 +324,39 @@ function createGameWithCode(gameCode) {
   return game;
 }
 
+/**
+ * Cleanup expired disconnected players across all games
+ * @param {Object} io - Socket.IO instance for notifications
+ */
+function cleanupExpiredDisconnectedPlayers(io) {
+  let totalCleaned = 0;
+  
+  for (const [gameCode, game] of games.entries()) {
+    const cleanedPlayerNames = game.cleanupDisconnectedPlayers();
+    totalCleaned += cleanedPlayerNames.length;
+    
+    if (cleanedPlayerNames.length > 0) {
+      logger.info('CleanedUpDisconnectedPlayers', {
+        gameCode,
+        cleanedPlayers: cleanedPlayerNames,
+        count: cleanedPlayerNames.length
+      });
+    }
+  }
+  
+  if (totalCleaned > 0) {
+    logger.info('DisconnectedPlayersCleanupComplete', {
+      totalCleaned,
+      activeGames: games.size
+    });
+  }
+}
+
+// Run cleanup every 5 minutes
+setInterval(() => {
+  cleanupExpiredDisconnectedPlayers();
+}, 5 * 60 * 1000);
+
 module.exports = {
   games,
   gameTimers,
@@ -338,6 +371,7 @@ module.exports = {
   isWaitingForActions,
   isInRoundResults,
   createGameWithCode,
+  cleanupExpiredDisconnectedPlayers,
 
   // Debug/utility functions
   getGameStats,

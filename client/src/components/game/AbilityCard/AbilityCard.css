@@ -67,6 +67,9 @@
 
 .ability-title {
   flex: 1;
+  min-width: 0;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
 }
 
 .ability-subtitle {
@@ -76,6 +79,20 @@
 
 .ability-icon {
   margin-left: 8px;
+  font-size: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2rem;
+  height: 2rem;
+  filter: drop-shadow(0 0 2px rgba(0, 0, 0, 0.8));
+  flex-shrink: 0;
+}
+
+.ability-icon img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
 }
 
 .ability-description {

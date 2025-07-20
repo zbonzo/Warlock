@@ -203,25 +203,96 @@ const MobileAbilityCard = ({
   };
   
   const getAbilityIcon = (ability) => {
-    // Specific ability icons with images
-    if (ability.type === 'lightningBolt') {
+    // Map ability types to their PNG file names
+    const abilityImageMap = {
+      // Attack abilities
+      'lightningBolt': 'lightningbolt.png',
+      'magicMissile': 'magicmissile.png',
+      'meteorShower': 'meteorshower.png',
+      'backstab': 'backstab.png',
+      'poisonStrike': 'poisonstrike.png',
+      'barbedArrow': 'barbedarrow.png',
+      'preciseArrow': 'precisearrow.png',
+      'clawSwipe': 'clawswipe.png',
+      'psychicBolt': 'psychicbolt.png',
+      'slash': 'slash.png',
+      'fireball': 'fireball.png',
+      'holyBolt': 'holybolt.png',
+      'infernoBlast': 'infernoblast.png',
+      'pistolShot': 'pistolshot.png',
+      'pyroblast': 'pyroblast.png',
+      'recklessStrike': 'recklessstrike.png',
+      'ricochetRound': 'ricochetround.png',
+      'shiv': 'shiv.png',
+      'twinStrike': 'twinstrike.png',
+      'aimedShot': 'aimedshot.png',
+      'arcaneBarrage': 'arcanebarrage.png',
+      'chainLightning': 'chainlightning.png',
+      'deathMark': 'deathmark.png',
+      'sweepingStrike': 'sweepingstrike.png',
+      
+      // Defense abilities
+      'arcaneShield': 'arcaneshield.png',
+      'shadowVeil': 'shadowveil.png',
+      'smokeBomb': 'smokebomb.png',
+      'camouflage': 'camouflage.png',
+      'barkskin': 'barkskin.png',
+      'shieldWall': 'shieldwall.png',
+      'spiritGuard': 'spiritguard.png',
+      'divineShield': 'divineshield.png',
+      'totemicBarrier': 'totemicbarrier.png',
+      'smokeScreen': 'smokescreen.png',
+      
+      // Heal abilities
+      'rejuvenation': 'rejuvenation.png',
+      'swiftMend': 'swiftmend.png',
+      'cauterize': 'cauterize.png',
+      'heal': 'heal.png',
+      'bandage': 'bandage.png',
+      'ancestralHeal': 'ancestralheal.png',
+      
+      // Special abilities
+      'poisonTrap': 'poisontrap.png',
+      'entanglingRoots': 'entanglingroots.png',
+      'controlAnimal': 'controlanimal.png',
+      'controlMonster': 'controlanimal.png',
+      'preciseShot': 'precisearrow.png',
+      'totemShield': 'totemicbarrier.png',
+      'eyeOfFate': 'eyeoffate.png',
+      'battleCry': 'battlecry.png',
+      'sanctuaryOfTruth': 'sanctuaryoftruth.png',
+      'relentlessFury': 'relentlessfury.png',
+      'thirstyBlade': 'thirstyblade.png',
+      
+      // Racial abilities
+      'adaptability': 'adaptability.png',
+      'bloodRage': 'bloodrage.png',
+      'stoneArmor': 'stonearmor.png',
+      'undying': 'undying.png',
+      'lifeBond': 'lifebond.png',
+      'moonbeam': 'moonbeam.png'
+    };
+
+    // Check if we have a PNG for this ability
+    const imageName = abilityImageMap[ability.type];
+    if (imageName) {
       return (
         <img 
-          src="/images/abilities/lightningbolt.png" 
-          alt="Lightning Bolt" 
+          src={`/images/abilities/${imageName}`} 
+          alt={ability.name} 
           style={{ width: '100%', height: '100%', objectFit: 'contain' }}
         />
       );
     }
     
-    // Default category icons
-    const icons = {
+    // Fallback to category icons for abilities without specific images
+    const categoryIcons = {
       'Attack': '⚔️',
       'Defense': '🛡️',
       'Heal': '💚',
       'Special': '✨'
     };
-    return icons[ability.category] || '📜';
+    return categoryIcons[ability.category] || '📜';
   };
   
   return (
