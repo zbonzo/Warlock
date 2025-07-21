@@ -2,14 +2,238 @@
  * @fileoverview Action column component for game interaction
  * Handles ability selection, targeting, and action submission
  */
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import PropTypes from 'prop-types';
 import { useTheme } from '@contexts/ThemeContext';
-import AbilityCard from '@components/game/AbilityCard';
 import RacialAbilityCard from '@components/game/RacialAbilityCard';
 import TargetSelector from '@components/game/TargetSelector';
 import EventsLog from '@components/game/EventsLog';
+import { ICONS } from '../../../config/constants';
 import './ActionColumn.css';
+// Import mobile ability card CSS for unified styling
+import './MobileActionWizard/AbilitySelectionStep.css';
+
+/**
+ * Draws a 40×40 circle with race color background, class emoji, and player initial on top
+ *
+ * @param {HTMLCanvasElement} canvas
+ * @param {string} classEmoji - emoji representing the class
+ * @param {string} letter - single character to center (player initial)
+ * @param {string} raceColor - background color for the race
+ */
+function drawPlayerBadge(canvas, classEmoji, letter, raceColor) {
+  const ctx = canvas.getContext('2d');
+  const size = Math.min(canvas.width, canvas.height);
+  const cx = size / 2;
+  const cy = size / 2;
+  const r = cx - 2; // 2px padding
+
+  ctx.clearRect(0, 0, size, size);
+
+  // Race color background circle
+  ctx.fillStyle = raceColor;
+  ctx.beginPath();
+  ctx.arc(cx, cy, r, 0, 2 * Math.PI);
+  ctx.fill();
+
+  // Circle outline
+  ctx.lineWidth = 2;
+  ctx.strokeStyle = '#000';
+  ctx.beginPath();
+  ctx.arc(cx, cy, r, 0, 2 * Math.PI);
+  ctx.stroke();
+
+  // Class emoji in the background
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.font = `${r * 1.4}px serif`;
+  ctx.fillText(classEmoji, cx, cy);
+
+  // Player initial on top
+  ctx.font = `${r * 1.2}px sans-serif`;
+  ctx.fillStyle = '#FFF';
+  ctx.lineWidth = 3;
+  ctx.strokeStyle = '#000';
+  ctx.strokeText(letter, cx, cy);
+  ctx.fillText(letter, cx, cy);
+}
+
+/**
+ * Custom avatar component that renders a circle with race color, class emoji, and name initial
+ */
+const CustomAvatar = ({ player, isCurrentPlayer }) => {
+  const canvasRef = useRef(null);
+
+  useEffect(() => {
+    if (!canvasRef.current) return;
+
+    const classEmoji = ICONS.CLASSES[player.class] || '❓';
+    const letter = player.name.charAt(0).toUpperCase();
+
+    // Get race color
+    const raceColors = {
+      Artisan: '#4169E1',
+      Rockhewn: '#8B4513',
+      Crestfallen: '#228B22',
+      Orc: '#8B0000',
+      Kinfolk: '#9932CC',
+      Lich: '#36454F',
+    };
+
+    const raceColor = raceColors[player.race] || '#666666';
+
+    drawPlayerBadge(canvasRef.current, classEmoji, letter, raceColor);
+  }, [player]);
+
+  return (
+    <canvas
+      ref={canvasRef}
+      width="40"
+      height="40"
+      className="custom-avatar"
+      style={{ imageRendering: 'crisp-edges' }}
+    />
+  );
+};
+
+// Import mobile-style ability card for unified tile system
+const MobileAbilityCard = ({ 
+  ability, 
+  selected, 
+  onSelect, 
+  locked = false, 
+  cooldown = 0, 
+  player,
+  isSelectable = true 
+}) => {
+  const handleClick = () => {
+    if (!locked && !cooldown && isSelectable) {
+      onSelect(ability.type);
+    }
+  };
+  
+  const getAbilityIcon = (ability) => {
+    // Map ability types to their PNG file names (same as mobile)
+    const abilityImageMap = {
+      // Attack abilities
+      'lightningBolt': 'lightningbolt.png',
+      'magicMissile': 'magicmissile.png',
+      'meteorShower': 'meteorshower.png',
+      'backstab': 'backstab.png',
+      'poisonStrike': 'poisonstrike.png',
+      'barbedArrow': 'barbedarrow.png',
+      'preciseShot': 'precisearrow.png',
+      'clawSwipe': 'clawswipe.png',
+      'psychicBolt': 'psychicbolt.png',
+      'attack': 'slash.png',
+      'fireball': 'fireball.png',
+      'holyBolt': 'holybolt.png',
+      'infernoBlast': 'infernoblast.png',
+      'pistolShot': 'pistolshot.png',
+      'pyroblast': 'pyroblast.png',
+      'recklessStrike': 'recklessstrike.png',
+      'ricochetRound': 'ricochetround.png',
+      'shiv': 'shiv.png',
+      'twinStrike': 'twinstrike.png',
+      'aimedShot': 'aimedshot.png',
+      'arcaneBarrage': 'arcanebarrage.png',
+      'chainLightning': 'chainlightning.png',
+      'deathMark': 'deathmark.png',
+      'sweepingStrike': 'sweepingstrike.png',
+      
+      // Defense abilities
+      'shieldWall': 'shieldwall.png',
+      'arcaneShield': 'arcaneshield.png',
+      'shadowVeil': 'shadowveil.png',
+      'smokeBomb': 'smokebomb.png',
+      'spiritGuard': 'spiritguard.png',
+      'camouflage': 'camouflage.png',
+      'barkskin': 'barkskin.png',
+      'smokeScreen': 'smokescreen.png',
+      'totemShield': 'totemicbarrier.png',
+      'divineShield': 'divineshield.png',
+      'fatesEye': 'fateseye.png',
+      
+      // Heal abilities
+      'bandage': 'bandage.png',
+      'heal': 'heal.png',
+      'cauterize': 'cauterize.png',
+      'swiftMend': 'swiftmend.png',
+      'rejuvenation': 'rejuvenation.png',
+      'ancestralHeal': 'ancestralheal.png',
+      
+      // Special abilities
+      'poisonTrap': 'poisontrap.png',
+      'relentlessFury': 'relentlessfury.png',
+      'thirstyBlade': 'thirstyblade.png',
+      'entangle': 'entangle.png',
+      'controlMonster': 'controlmonster.png',
+      'battleCry': 'battlecry.png',
+      'sanctuaryOfTruth': 'sanctuaryoftruth.png'
+    };
+    
+    // Check if we have a PNG for this ability
+    const imageName = abilityImageMap[ability.type];
+    if (imageName) {
+      return (
+        <img 
+          src={`/images/abilities/${imageName}`} 
+          alt={ability.name} 
+          style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+        />
+      );
+    }
+    
+    // Fallback to category icons for abilities without specific images
+    const categoryIcons = {
+      Attack: '⚔️',
+      Defense: '🛡️',
+      Heal: '❤️',
+      Special: '✨'
+    };
+    
+    return categoryIcons[ability.category] || '❓';
+  };
+  
+  return (
+    <div 
+      className={`mobile-ability-card ${selected ? 'selected' : ''} ${locked ? 'locked' : ''} ${cooldown > 0 ? 'cooldown' : ''} ${!isSelectable ? 'not-selectable' : ''}`}
+      onClick={handleClick}
+    >
+      {/* Background icon */}
+      <div className="ability-background-icon">
+        {getAbilityIcon(ability)}
+      </div>
+      
+      {/* Overlay gradient based on category */}
+      <div className={`ability-content-overlay category-${ability.category?.toLowerCase()}`}>
+        {/* Ability name */}
+        <div className="ability-name">
+          {ability.name}
+        </div>
+        
+        {/* Ability description with class styling */}
+        <div className={`ability-description class-${player.class?.toLowerCase()}`}>
+          {ability.flavorText || ability.effect}
+        </div>
+        
+        {/* Cooldown indicator */}
+        {cooldown > 0 && (
+          <div className="ability-cooldown">
+            {cooldown} turn{cooldown > 1 ? 's' : ''}
+          </div>
+        )}
+        
+        {/* Lock indicator */}
+        {locked && (
+          <div className="ability-locked">
+            🔒 Level {ability.unlockAt}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
 
 /**
  * ActionColumn component handles the main game interaction
@@ -48,7 +272,6 @@ const ActionColumn = ({
   selectedTarget,
   submitted,
   readyClicked,
-  racialSelected,
   bloodRageActive,
   keenSensesActive,
   players,
@@ -58,7 +281,27 @@ const ActionColumn = ({
   onSubmitAction,
   onReadyClick,
 }) => {
-  const theme = useTheme();
+  
+  // Track submission state like mobile
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  // Reset submitting state when submission is completed or failed
+  useEffect(() => {
+    if (submitted) {
+      setIsSubmitting(false);
+    }
+  }, [submitted]);
+  
+  // Auto-reset submitting state after timeout (like mobile)
+  useEffect(() => {
+    if (isSubmitting) {
+      const timeout = setTimeout(() => {
+        setIsSubmitting(false);
+      }, 3000); // 3 second timeout
+      
+      return () => clearTimeout(timeout);
+    }
+  }, [isSubmitting]);
 
   const validPlayers =
     Array.isArray(players) && players.length > 0
@@ -92,7 +335,9 @@ const ActionColumn = ({
 
   // Enhanced submit action handler with validation
   const handleSubmitAction = () => {
-    if (!isCurrentSelectionValid()) {
+    if (!isCurrentSelectionValid() || isSubmitting) {
+      if (isSubmitting) return; // Prevent double submission
+      
       const issues = [];
       if (!actionType) issues.push('Select an ability');
       if (!selectedTarget) issues.push('Select a target');
@@ -117,32 +362,9 @@ const ActionColumn = ({
       return;
     }
 
+    // Set submitting state like mobile
+    setIsSubmitting(true);
     onSubmitAction();
-  };
-
-  // Get submission status for all players with enhanced tracking
-  const getSubmissionStatus = () => {
-    const submittedPlayers = validPlayers.filter(
-      (player) => player.hasSubmittedAction && player.isAlive
-    );
-    const totalAlivePlayers = validPlayers.filter(
-      (player) => player.isAlive
-    ).length;
-
-    // Count valid submissions
-    const validSubmissions = submittedPlayers.filter(
-      (player) => player.submissionStatus?.isValid !== false
-    );
-
-    return {
-      submitted: submittedPlayers,
-      validSubmitted: validSubmissions,
-      total: totalAlivePlayers,
-      percentage:
-        totalAlivePlayers > 0
-          ? (validSubmissions.length / totalAlivePlayers) * 100
-          : 0,
-    };
   };
 
   // Check if player's action needs to be revalidated
@@ -195,10 +417,31 @@ const ActionColumn = ({
               <div className="submit-message card">
                 <h3 className="section-title">Action submitted</h3>
 
-                {/* Show current submission status */}
+                {/* Show current submission status - mobile style */}
                 <div className="submission-status">
                   <p>Waiting for other players to take their actions...</p>
-                  <ActionSubmissionTracker players={validPlayers} />
+                  
+                  {/* Mobile-style player submission grid */}
+                  <div className="player-targets-grid submission-grid">
+                    {validPlayers
+                      .filter((player) => player.isAlive)
+                      .map((player) => (
+                        <div
+                          key={player.id}
+                          className={`
+                            player-target-card submission-card
+                            ${player.hasSubmittedAction ? 'ready' : ''} 
+                            ${player.id === me.id ? 'self' : ''}
+                          `}
+                        >
+                          <div className="player-name">{player.name}</div>
+                          <CustomAvatar player={player} isCurrentPlayer={player.id === me.id} />
+                          <div className="submission-status-text">
+                            {player.hasSubmittedAction ? '✓ Ready' : '⋯ Waiting'}
+                          </div>
+                        </div>
+                      ))}
+                  </div>
                 </div>
 
                 <div className="waiting-spinner"></div>
@@ -234,7 +477,27 @@ const ActionColumn = ({
                 </div>
 
                 <div className="submission-status">
-                  <ActionSubmissionTracker players={validPlayers} />
+                  {/* Mobile-style player submission grid */}
+                  <div className="player-targets-grid submission-grid">
+                    {validPlayers
+                      .filter((player) => player.isAlive)
+                      .map((player) => (
+                        <div
+                          key={player.id}
+                          className={`
+                            player-target-card submission-card
+                            ${player.hasSubmittedAction ? 'ready' : ''} 
+                            ${player.id === me.id ? 'self' : ''}
+                          `}
+                        >
+                          <div className="player-name">{player.name}</div>
+                          <CustomAvatar player={player} isCurrentPlayer={player.id === me.id} />
+                          <div className="submission-status-text">
+                            {player.hasSubmittedAction ? '✓ Ready' : '⋯ Waiting'}
+                          </div>
+                        </div>
+                      ))}
+                  </div>
                 </div>
               </div>
             )}
@@ -258,20 +521,22 @@ const ActionColumn = ({
                   </div>
                 )}
 
-                {/* Class abilities with enhanced cooldown display */}
+                {/* Class abilities with unified tile system */}
                 <h3 className="section-title secondary">Your Abilities</h3>
 
-                <div className="ability-list">
+                <div className="abilities-grid">
                   {unlocked.map((ability) => {
                     const cooldown = me.abilityCooldowns?.[ability.type] || 0;
+                    const isSelectable = cooldown === 0;
                     return (
-                      <AbilityCard
+                      <MobileAbilityCard
                         key={ability.type}
                         ability={ability}
                         selected={actionType === ability.type}
                         onSelect={onSetActionType}
-                        abilityCooldown={cooldown}
+                        cooldown={cooldown}
                         player={me}
+                        isSelectable={isSelectable}
                       />
                     );
                   })}
@@ -338,20 +603,28 @@ const ActionColumn = ({
                   selectedTarget={selectedTarget}
                   onSelectTarget={onSelectTarget}
                   disableMonster={keenSensesActive}
+                  selectedAbility={unlocked.find((ability) => ability.type === actionType)}
                 />
 
-                {/* Enhanced submit button with better validation */}
+                {/* Enhanced submit button with mobile-style submission state */}
                 <button
-                  className="button action-button"
+                  className={`button action-button ${isSubmitting ? 'submitting' : ''}`}
                   onClick={handleSubmitAction}
-                  disabled={!isCurrentSelectionValid()}
+                  disabled={!isCurrentSelectionValid() || isSubmitting}
                   title={
-                    !isCurrentSelectionValid()
+                    isSubmitting
+                      ? 'Submitting your action...'
+                      : !isCurrentSelectionValid()
                       ? 'Please select a valid ability (not on cooldown) and target'
                       : 'Submit your action'
                   }
                 >
-                  {needsRevalidation() ? 'Update Action' : 'Submit Action'}
+                  {isSubmitting 
+                    ? 'Submitting...' 
+                    : needsRevalidation() 
+                    ? 'Update Action' 
+                    : 'Submit Action'
+                  }
                 </button>
               </div>
             )}
@@ -416,76 +689,6 @@ const ActionColumn = ({
   );
 };
 
-/**
- * Enhanced component to track and display action submission status
- */
-const ActionSubmissionTracker = ({ players }) => {
-  const alivePlayers = players.filter((p) => p.isAlive);
-
-  // Count different types of submissions
-  const submittedPlayers = alivePlayers.filter((p) => p.hasSubmittedAction);
-  const validSubmissions = submittedPlayers.filter(
-    (p) => p.submissionStatus?.isValid !== false
-  );
-  const invalidSubmissions = submittedPlayers.filter(
-    (p) => p.submissionStatus?.isValid === false
-  );
-
-  const percentage =
-    alivePlayers.length > 0
-      ? (validSubmissions.length / alivePlayers.length) * 100
-      : 0;
-
-  return (
-    <div className="submission-tracker">
-      <div className="submission-progress">
-        <div className="progress-bar-container">
-          <div
-            className="progress-bar-fill"
-            style={{ width: `${percentage}%` }}
-          />
-        </div>
-        <div className="progress-text">
-          {validSubmissions.length} of {alivePlayers.length} players submitted
-          valid actions
-          {invalidSubmissions.length > 0 && (
-            <span className="invalid-count">
-              ({invalidSubmissions.length} need to resubmit)
-            </span>
-          )}
-        </div>
-      </div>
-
-      <div className="submitted-players">
-        {/* Show valid submissions */}
-        {validSubmissions.map((player) => (
-          <div key={player.id} className="submitted-player-badge valid">
-            <span className="player-initial">{player.name.charAt(0)}</span>
-            <span className="checkmark">✓</span>
-          </div>
-        ))}
-
-        {/* Show invalid submissions */}
-        {invalidSubmissions.map((player) => (
-          <div key={player.id} className="submitted-player-badge invalid">
-            <span className="player-initial">{player.name.charAt(0)}</span>
-            <span className="warning">⚠</span>
-          </div>
-        ))}
-
-        {/* Show pending players */}
-        {alivePlayers
-          .filter((p) => !p.hasSubmittedAction)
-          .map((player) => (
-            <div key={player.id} className="submitted-player-badge pending">
-              <span className="player-initial">{player.name.charAt(0)}</span>
-              <span className="pending">⋯</span>
-            </div>
-          ))}
-      </div>
-    </div>
-  );
-};
 
 ActionColumn.propTypes = {
   isVisible: PropTypes.bool.isRequired,
@@ -512,7 +715,6 @@ ActionColumn.propTypes = {
   selectedTarget: PropTypes.string,
   submitted: PropTypes.bool.isRequired,
   readyClicked: PropTypes.bool.isRequired,
-  racialSelected: PropTypes.bool.isRequired,
   bloodRageActive: PropTypes.bool.isRequired,
   keenSensesActive: PropTypes.bool.isRequired,
   onSetActionType: PropTypes.func.isRequired,

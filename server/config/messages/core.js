@@ -59,9 +59,9 @@ const errors = {
   actionOnCooldown: '{abilityName} is on cooldown for {turns} more turn(s).',
 
   // Character selection errors
-  invalidRace: 'Invalid race selection.',
-  invalidClass: 'Invalid class selection.',
-  invalidCombination: 'Invalid race and class combination.',
+  invalidRace: 'Invalid race selection: "{race}" is not a valid race.',
+  invalidClass: 'Invalid class selection: "{className}" is not a valid class.',
+  invalidCombination: 'Invalid race and class combination: "{race}" cannot be a "{className}".',
 
   // Racial ability errors
   noRacialAbility: 'You do not have a racial ability.',

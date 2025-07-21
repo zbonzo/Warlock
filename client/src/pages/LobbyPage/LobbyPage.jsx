@@ -14,10 +14,11 @@ import './LobbyPage.css';
  * @param {Array} props.players - List of players in the lobby
  * @param {string} props.gameCode - Game room code
  * @param {boolean} props.isHost - Whether current player is the host
+ * @param {string} props.currentPlayerId - ID of the current player
  * @param {Function} props.onStartGame - Callback when host starts the game
  * @returns {React.ReactElement} The rendered component
  */
-const LobbyPage = ({ players, gameCode, isHost, onStartGame }) => {
+const LobbyPage = ({ players, gameCode, isHost, currentPlayerId, onStartGame }) => {
   const theme = useTheme();
   const [showPlayerDetails, setShowPlayerDetails] = useState(false);
   const [copiedCode, setCopiedCode] = useState(false);
@@ -173,8 +174,7 @@ const LobbyPage = ({ players, gameCode, isHost, onStartGame }) => {
 
         <div className="player-list">
           {players.map((player, index) => {
-            const isCurrentPlayer =
-              player.id === players.find((p) => p.id === player.id)?.id;
+            const isCurrentPlayer = player.id === currentPlayerId;
 
             return (
               <div
@@ -263,6 +263,7 @@ LobbyPage.propTypes = {
   ).isRequired,
   gameCode: PropTypes.string.isRequired,
   isHost: PropTypes.bool.isRequired,
+  currentPlayerId: PropTypes.string,
   onStartGame: PropTypes.func.isRequired,
 };
 

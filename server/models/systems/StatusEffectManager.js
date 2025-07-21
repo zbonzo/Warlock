@@ -34,7 +34,7 @@ class StatusEffectManager {
     if (!player || !player.isAlive) return false;
 
     // Get effect defaults from config
-    const effectDefaults = config.getEffectDefaults(effectName);
+    const effectDefaults = config.getStatusEffectDefaults(effectName);
     if (!effectDefaults) {
       logger.warn(`Unknown effect: ${effectName}`);
       return false;
@@ -466,7 +466,7 @@ processTimedEffect(player, effectName, effectData, log) {
    * @private
    */
   logEffectMessage(effectName, messageType, player, log, effectData) {
-    const message = config.getEffectMessage(effectName, messageType, {
+    const message = config.statusEffects.getEffectMessage(effectName, messageType, {
       playerName: player.name,
       damage: effectData.damage,
       armor: effectData.armor,

@@ -322,13 +322,10 @@ class GameStateUtils {
    * @returns {string} Category (Attack, Defense, Heal, Special)
    */
   getAbilityCategory(abilityType) {
-    // Look up ability in config
-    for (const className in config.classAbilities) {
-      const abilities = config.classAbilities[className];
-      const ability = abilities.find((a) => a.type === abilityType);
-      if (ability) {
-        return ability.category;
-      }
+    // Look up ability in new config system first
+    const ability = config.getAbility(abilityType);
+    if (ability) {
+      return ability.category;
     }
 
     // Fallback to pattern matching if not found in config

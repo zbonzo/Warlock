@@ -28,6 +28,69 @@
   margin-bottom: 12px;
 }
 
+/* Unified tile system for abilities */
+.abilities-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+/* Responsive grid for larger screens */
+@media (min-width: 400px) {
+  .abilities-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (min-width: 500px) {
+  .abilities-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+/* Submit button states - consistent with mobile */
+.action-button.submitting {
+  background-color: var(--color-neutral);
+  color: var(--color-text-muted);
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.action-button.submitting:hover {
+  background-color: var(--color-neutral);
+  transform: none;
+  box-shadow: none;
+}
+
+/* Mobile-style submission grid */
+.submission-grid {
+  margin-top: 16px;
+}
+
+.submission-card {
+  pointer-events: none; /* Not clickable in submission view */
+  cursor: default;
+}
+
+.submission-status-text {
+  font-size: 0.75rem;
+  font-weight: 600;
+  margin-top: 4px;
+  padding: 2px 6px;
+  border-radius: 3px;
+}
+
+.submission-card.ready .submission-status-text {
+  background-color: rgba(76, 175, 80, 0.2);
+  color: #4CAF50;
+}
+
+.submission-card:not(.ready) .submission-status-text {
+  background-color: rgba(158, 158, 158, 0.2);
+  color: var(--color-text-muted);
+}
+
 .section-title.danger {
   color: var(--color-danger);
 }

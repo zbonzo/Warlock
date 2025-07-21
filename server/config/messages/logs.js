@@ -84,8 +84,12 @@ module.exports = {
       'Player not in game: {socketId} in game {gameCode}',
     GameNotFoundValidation:
       'Game not found during validation: {gameCode} from {socketId}',
+    InvalidRaceSelection:
+      'Invalid race selection: "{race}" is not a valid race (attempted by player {playerName})',
+    InvalidClassSelection:
+      'Invalid class selection: "{className}" is not a valid class (attempted by player {playerName})',
     InvalidRaceClassCombination:
-      'Invalid race/class combination: {race}/{className} for player {playerName}',
+      'Invalid race/class combination: "{race}" cannot be a "{className}" (attempted by player {playerName})',
     UndyingSetupFailed: 'UNDYING SETUP FAILED for {playerName}, fixing...',
     UnknownAbilityType:
       'Unknown ability type: {actionType} requested by player {playerName}',

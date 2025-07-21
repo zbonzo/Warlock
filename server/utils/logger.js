@@ -98,22 +98,52 @@ function writeLogToFile(logEntry) {
  * @param {string} level - Log level string (e.g., 'info').
  * @param {string} eventKey - Unique key for the log event.
  * @param {object} context - Supplementary data.
+ * @param {object} gameContext - Game-specific context (gameCode, socketId, playerName).
  * @private
  */
-function processLog(level, eventKey, context = {}) {
-  // 1. Prepare human-readable message for console
-  const consoleMessage = `[${new Date().toISOString()}] [${level.toUpperCase()}] ${getFormattedMessage(
-    level,
-    eventKey,
-    context
-  )}`;
+function processLog(level, eventKey, context = {}, gameContext = {}) {
+  const timestamp = new Date().toISOString();
+  const levelUpper = level.toUpperCase();
+  
+  // Enhanced format: [dev:server] [timestamp] [LEVEL] [GameCode] [SocketID] [PlayerName] message
+  const gameCode = gameContext.gameCode || 'none';
+  const socketId = gameContext.socketId || 'null';
+  const playerName = gameContext.playerName || 'system  '; // 8 chars
+  
+  // Format socket ID (first 4 chars unless debug)
+  const formattedSocketId = (level === 'debug' ? socketId : socketId.substring(0, 4));
+  
+  // Format player name (first 8 chars, padded to 8 if shorter)
+  const formattedPlayerName = level === 'debug' 
+    ? playerName 
+    : playerName.substring(0, 8).padEnd(8, ' ');
+  
+  // Build the enhanced console message
+  let consoleMessage;
+  if (gameContext.gameCode || gameContext.socketId || gameContext.playerName) {
+    consoleMessage = `[dev:server] [${timestamp}] [${levelUpper}] [${gameCode}] [${formattedSocketId}] [${formattedPlayerName}] ${getFormattedMessage(
+      level,
+      eventKey,
+      context
+    )}`;
+  } else {
+    // Fallback to original format for backward compatibility
+    consoleMessage = `[${timestamp}] [${levelUpper}] ${getFormattedMessage(
+      level,
+      eventKey,
+      context
+    )}`;
+  }
 
   // 2. Prepare structured JSON object for file logging
   const fileLogEntry = {
-    timestamp: new Date().toISOString(),
+    timestamp,
     level,
     eventKey,
-    message: getFormattedMessage(level, eventKey, context), // Re-interpolate for completeness in file if needed
+    message: getFormattedMessage(level, eventKey, context),
+    gameCode: gameContext.gameCode,
+    socketId: gameContext.socketId,
+    playerName: gameContext.playerName,
     ...context,
   };
   if (context.error && context.error instanceof Error) {
@@ -133,28 +163,28 @@ function processLog(level, eventKey, context = {}) {
   writeLogToFile(fileLogEntry);
 }
 
-function error(eventKey, context = {}) {
+function error(eventKey, context = {}, gameContext = {}) {
   if (currentLevel >= LEVEL_HIERARCHY.error) {
-    processLog(LOG_LEVELS.ERROR, eventKey, context);
+    processLog(LOG_LEVELS.ERROR, eventKey, context, gameContext);
     // if (context.error) apmClient.captureException(context.error);
   }
 }
 
-function warn(eventKey, context = {}) {
+function warn(eventKey, context = {}, gameContext = {}) {
   if (currentLevel >= LEVEL_HIERARCHY.warn) {
-    processLog(LOG_LEVELS.WARN, eventKey, context);
+    processLog(LOG_LEVELS.WARN, eventKey, context, gameContext);
   }
 }
 
-function info(eventKey, context = {}) {
+function info(eventKey, context = {}, gameContext = {}) {
   if (currentLevel >= LEVEL_HIERARCHY.info) {
-    processLog(LOG_LEVELS.INFO, eventKey, context);
+    processLog(LOG_LEVELS.INFO, eventKey, context, gameContext);
   }
 }
 
-function debug(eventKey, context = {}) {
+function debug(eventKey, context = {}, gameContext = {}) {
   if (currentLevel >= LEVEL_HIERARCHY.debug) {
-    processLog(LOG_LEVELS.DEBUG, eventKey, context);
+    processLog(LOG_LEVELS.DEBUG, eventKey, context, gameContext);
   }
 }
 

@@ -380,6 +380,7 @@ function AppContent() {
             players={players}
             gameCode={gameCode}
             isHost={currentPlayer && players[0]?.id === currentPlayer.id}
+            currentPlayerId={currentPlayer?.id}
             onStartGame={handleStartGame}
           />
         );

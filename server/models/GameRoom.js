@@ -39,8 +39,8 @@ class GameRoom {
       age: config.gameBalance.monster.baseAge,
     };
 
-    // Initialize systems using SystemsFactory
-    this.systems = SystemsFactory.createSystems(this.players, this.monster);
+    // Systems will be initialized when game starts (after players join)
+    this.systems = null;
   }
 
   /**
@@ -69,7 +69,7 @@ class GameRoom {
     if (!p) return;
 
     if (p.isAlive) this.aliveCount--;
-    if (p.isWarlock) this.systems.warlockSystem.decrementWarlockCount();
+    if (p.isWarlock && this.systems) this.systems.warlockSystem.decrementWarlockCount();
     this.players.delete(id);
 
     // Clean up any pending actions for this player
@@ -106,8 +106,8 @@ class GameRoom {
     p.race = race;
     p.class = cls;
 
-    // Apply abilities list from class definition using config
-    p.abilities = (config.classAbilities[cls] || []).map((a) => ({ ...a }));
+    // Apply abilities list from class definition using new config system
+    p.abilities = config.getAllClassAbilities(cls).map((a) => ({ ...a }));
     p.unlocked = p.abilities.filter((a) => a.unlockAt <= this.level);
 
     // Apply racial and class stat modifications from gameBalance config
@@ -178,6 +178,11 @@ class GameRoom {
    * @param {Array} preferredPlayerIds - Optional preferred player IDs
    */
   assignInitialWarlock(preferredPlayerIds = []) {
+    // Initialize systems now that players have joined
+    if (!this.systems) {
+      this.systems = SystemsFactory.createSystems(this.players, this.monster);
+    }
+
     // Convert single ID to array for backward compatibility
     const preferredIds = Array.isArray(preferredPlayerIds)
       ? preferredPlayerIds
@@ -1156,6 +1161,20 @@ allActionsSubmittedSafe() {
         attackerMessage: '',
       };
       log.push(actionLog);
+
+      // Check for Last Stand - player at 0 HP but still alive
+      if (actor.hp === 0 && actor.isAlive) {
+        const lastStandLog = {
+          type: 'last_stand',
+          public: true,
+          attackerId: actor.id,
+          targetId: null,
+          message: `${actor.name} makes a Last Stand!`,
+          privateMessage: '',
+          attackerMessage: '',
+        };
+        log.push(lastStandLog);
+      }
 
       // NEW: Pass coordination info to ability execution
       const coordinationInfo = coordinationMap.get(action.targetId) || {

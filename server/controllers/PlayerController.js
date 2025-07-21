@@ -63,8 +63,12 @@ function handleSelectCharacter(io, socket, gameCode, race, className) {
   // Use consolidated validation
   const game = validateGameAction(socket, gameCode, false, false);
 
+  // Get player name for better logging
+  const player = game.players.get(socket.id);
+  const playerName = player ? player.name : 'Unknown';
+
   // Validate race and class using centralized config
-  if (!validateCharacterSelection(race, className)) {
+  if (!validateCharacterSelection(race, className, playerName)) {
     return false;
   }
 
@@ -89,24 +93,49 @@ function handleSelectCharacter(io, socket, gameCode, race, className) {
  * Centralized character selection validation
  * @param {string} race - Selected race
  * @param {string} className - Selected class
+ * @param {string} playerName - Player name for logging
  * @returns {boolean} Whether the selection is valid
  * @private
  */
-function validateCharacterSelection(race, className) {
+function validateCharacterSelection(race, className, playerName = 'Unknown') {
   // Use centralized character validation from config - FAIL HARD if not available
   if (!config.races.includes(race)) {
-    errorHandler.throwValidationError(messages.getError('invalidRace'));
+    const errorMessage = messages.getError('invalidRace', { race });
+    logger.warn('InvalidRaceSelection', {
+      race,
+      className,
+      playerName,
+      availableRaces: config.races,
+      message: errorMessage
+    });
+    errorHandler.throwValidationError(errorMessage);
     return false;
   }
 
   if (!config.classes.includes(className)) {
-    errorHandler.throwValidationError(messages.getError('invalidClass'));
+    const errorMessage = messages.getError('invalidClass', { className });
+    logger.warn('InvalidClassSelection', {
+      race,
+      className,
+      playerName,
+      availableClasses: config.classes,
+      message: errorMessage
+    });
+    errorHandler.throwValidationError(errorMessage);
     return false;
   }
 
   // Use centralized compatibility check - FAIL HARD if not available
   if (!config.isValidCombination(race, className)) {
-    errorHandler.throwValidationError(messages.getError('invalidCombination'));
+    const errorMessage = messages.getError('invalidCombination', { race, className });
+    logger.warn('InvalidRaceClassCombination', {
+      race,
+      className,
+      playerName,
+      compatibleClasses: config.raceAttributes[race]?.compatibleClasses || [],
+      message: errorMessage
+    });
+    errorHandler.throwValidationError(errorMessage);
     return false;
   }
 

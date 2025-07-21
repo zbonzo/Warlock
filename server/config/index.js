@@ -120,6 +120,10 @@ const config = {
   getStatusEffectDefaults: (effectName) =>
     statusEffects[effectName]?.default || {},
   getMessage: (category, key) => messages[category]?.[key] || 'Unknown message',
+  
+  // Status effect convenience methods (from statusEffects module)
+  isEffectStackable: (effectName) => statusEffects.isEffectStackable(effectName),
+  isEffectRefreshable: (effectName) => statusEffects.isEffectRefreshable(effectName),
 
   // Calculated values (examples)
   get maxGameCode() {

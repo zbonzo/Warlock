@@ -79,6 +79,13 @@ const GamePage = ({
   // Effect to handle initial mobile state - if on mobile and action tab is active, open wizard
   useEffect(() => {
     if (isMobile && activeTab === 'action' && !showMobileActionWizard) {
+      // Don't open wizard if player is stunned or dead
+      if (!me?.isAlive || me?.statusEffects?.stunned) {
+        console.log('Cannot open wizard - player is stunned or dead');
+        setActiveTab('players'); // Redirect to players tab instead
+        return;
+      }
+      
       console.log('Initial mobile action tab detected, opening wizard');
       setShowMobileActionWizard(true);
       setMobileActionStep(1);
@@ -88,7 +95,13 @@ const GamePage = ({
       console.log('Switching to desktop, closing wizard');
       setShowMobileActionWizard(false);
     }
-  }, [isMobile, activeTab, showMobileActionWizard]);
+    // Close wizard if player becomes stunned or dies
+    else if (showMobileActionWizard && (!me?.isAlive || me?.statusEffects?.stunned)) {
+      console.log('Closing wizard - player became stunned or dead');
+      setShowMobileActionWizard(false);
+      setActiveTab('players'); // Switch to players tab
+    }
+  }, [isMobile, activeTab, showMobileActionWizard, me?.isAlive, me?.statusEffects?.stunned]);
 
   // Derived values
   const unlocked = useMemo(() => me?.unlocked || [], [me?.unlocked]);
@@ -362,6 +375,11 @@ const GamePage = ({
         setSelectedTarget('');
         setActionType('');
         setReadyClicked(false);
+        
+        // Reset mobile wizard to ability selection
+        if (isMobile && showMobileActionWizard) {
+          setMobileActionStep(1);
+        }
       }
     };
 
@@ -572,11 +590,8 @@ const GamePage = ({
     setRacialSelected(true);
 
     if (abilityType === 'adaptability' && me?.race === 'Artisan') {
-      socket.emit('useRacialAbility', {
-        gameCode,
-        targetId: me.id,
-        abilityType: 'adaptability',
-      });
+      // Don't mark ability as used here - wait for successful replacement
+      // The modal will handle the actual racial ability use when replacement succeeds
       return;
     }
 
@@ -619,6 +634,11 @@ const GamePage = ({
     setShowBattleResults(false);
     setBattleResultsData(null);
 
+    // Reset mobile wizard to ability selection for new round
+    if (isMobile && showMobileActionWizard) {
+      setMobileActionStep(1);
+    }
+
     // If there was a winner, you might want to redirect or show a different screen
     if (battleResultsData?.winner) {
       // Handle game end - maybe redirect to lobby or show final results
@@ -635,11 +655,19 @@ const GamePage = ({
       return;
     }
 
+    // Emit the replacement request
     socket.emit('adaptabilityReplaceAbility', {
       gameCode,
       oldAbilityType,
       newAbilityType,
       level,
+    });
+
+    // Now mark the racial ability as used since replacement is happening
+    socket.emit('useRacialAbility', {
+      gameCode,
+      targetId: me.id,
+      abilityType: 'adaptability',
     });
 
     setShowAdaptabilityModal(false);
@@ -652,6 +680,13 @@ const GamePage = ({
     console.log('Tab change requested:', { tab, isMobile, currentActiveTab: activeTab });
     
     if (tab === 'action' && isMobile) {
+      // Don't open wizard if player is stunned or dead
+      if (!me.isAlive || me.statusEffects?.stunned) {
+        console.log('Cannot open wizard - player is stunned or dead');
+        setActiveTab('players'); // Redirect to players tab instead
+        return;
+      }
+      
       console.log('Opening mobile action wizard');
       // Open wizard instead of showing action column
       setShowMobileActionWizard(true);
@@ -699,8 +734,8 @@ const GamePage = ({
 
   return (
     <div className="game-container">
-      {/* Mobile Player Header - Always visible on mobile */}
-      {isMobile && (
+      {/* Mobile Player Header - Always visible on mobile (except when action wizard is open) */}
+      {isMobile && !showMobileActionWizard && (
         <div className="mobile-player-header">
           <div className="mobile-character-info">
             <h2

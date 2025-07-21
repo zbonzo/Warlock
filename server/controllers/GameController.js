@@ -611,9 +611,9 @@ function handleAdaptabilityReplace(
     return false;
   }
 
-  // Find the new ability in the target class
-  const targetClassAbilities = config.classAbilities[newClassName];
-  if (!targetClassAbilities) {
+  // Find the new ability in the target class using new config system
+  const targetClassAbilities = config.getAllClassAbilities(newClassName);
+  if (!targetClassAbilities || targetClassAbilities.length === 0) {
     logger.error(
       messages.formatMessage(
         messages.serverLogMessages.error.AdaptabilityClassNotFound,

@@ -5,6 +5,19 @@
   font-family: var(--font-body);
 }
 
+/* Unified target layout */
+.targets-container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Monster target styling */
+.monster-target {
+  background: linear-gradient(135deg, rgba(139, 0, 0, 0.2) 0%, rgba(45, 0, 0, 0.3) 100%);
+  border-color: #8B0000;
+}
+
 .target-selector-title {
   color: var(--color-primary);
   font-family: var(--font-heading);

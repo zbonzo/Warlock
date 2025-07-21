@@ -7,6 +7,8 @@ import PropTypes from 'prop-types';
 import { useTheme } from '@contexts/ThemeContext';
 import { ICONS } from '../../../config/constants';
 import './TargetSelector.css';
+// Import mobile target card styling for unified interface
+import '../../../pages/GamePage/components/MobileActionWizard/TargetSelectionStep.css';
 
 /**
  * Draws a 40×40 circle with race color background, class emoji, and player initial on top
@@ -227,6 +229,7 @@ const CustomAvatar = ({ player, isCurrentPlayer }) => {
  * @param {string} props.selectedTarget - ID of the currently selected target
  * @param {Function} props.onSelectTarget - Callback when target is selected
  * @param {boolean} props.disableMonster - Whether monster should be excluded as a target
+ * @param {Object} props.selectedAbility - Currently selected ability to determine targeting restrictions
  * @returns {React.ReactElement} The rendered component
  */
 const TargetSelector = ({
@@ -236,68 +239,119 @@ const TargetSelector = ({
   selectedTarget,
   onSelectTarget,
   disableMonster = false,
+  selectedAbility = null,
 }) => {
   const theme = useTheme();
+
+  // Helper functions for health styling (same as mobile)
+  const getHealthPercent = (hp, maxHp) => Math.max(0, (hp / maxHp) * 100);
+  
+  const getHealthClass = (percent) => {
+    if (percent > 70) return 'health-high';
+    if (percent > 30) return 'health-medium';
+    return 'health-low';
+  };
+
+  // Target validation logic similar to mobile
+  const isValidTarget = (targetId, targetType) => {
+    if (!selectedAbility) return true; // No ability selected, allow all targets
+    
+    // Self-targeting abilities - restrict to current player only
+    if (selectedAbility.target === 'Self') {
+      return targetId === currentPlayerId;
+    }
+    
+    // Healing abilities typically target allies (players)
+    if (selectedAbility.category === 'Heal') {
+      return targetType === 'player';
+    }
+    
+    // Attack abilities can target monster or enemies (but not self)
+    if (selectedAbility.category === 'Attack') {
+      if (targetType === 'player') {
+        return targetId !== currentPlayerId; // Can't attack yourself
+      }
+      return true; // Can attack monster
+    }
+    
+    // Defense abilities typically target allies (players)
+    if (selectedAbility.category === 'Defense') {
+      return targetType === 'player';
+    }
+    
+    // Default: allow all targets
+    return true;
+  };
 
   return (
     <div className="target-selector">
       <h4 className="target-selector-title">Choose Target</h4>
 
-      <div className="target-list">
-        {/* Monster target - appears first */}
-        {!disableMonster && (
+      <div className="targets-container">
+        {/* Monster target card */}
+        {!disableMonster && isValidTarget('__monster__', 'monster') && (
           <div
             onClick={() => onSelectTarget('__monster__')}
-            className={`target-option monster ${selectedTarget === '__monster__' ? 'selected' : ''}`}
+            className={`player-target-card monster-target ${selectedTarget === '__monster__' ? 'selected' : ''}`}
           >
-            <div className="target-avatar-container">
-              <MonsterAvatar monster={monster} />
-            </div>
-
-            <div className="target-info">
-              <div className="target-name">Monster</div>
-              <div className="target-health">
-                HP: {monster.hp}/{monster.maxHp}
-              </div>
+            <div className="player-name">Monster</div>
+            <MonsterAvatar monster={monster} />
+            <div className="player-hp">{monster.hp}/{monster.maxHp}</div>
+            <div className="health-bar-compact">
+              <div 
+                className={`health-fill ${getHealthClass(getHealthPercent(monster.hp, monster.maxHp))}`}
+                style={{ width: `${getHealthPercent(monster.hp, monster.maxHp)}%` }}
+              />
             </div>
           </div>
         )}
 
-        {/* Player targets with custom avatars */}
-        {alivePlayers.map((player) => (
-          <div
-            key={player.id}
-            onClick={() => onSelectTarget(player.id)}
-            className={`target-option ${selectedTarget === player.id ? 'selected' : ''} ${player.id === currentPlayerId ? 'current-player' : ''}`}
-          >
-            <div className="target-avatar-container">
-              {player.race && player.class ? (
-                <CustomAvatar
-                  player={player}
-                  isCurrentPlayer={player.id === currentPlayerId}
-                />
-              ) : (
+        {/* Player targets grid */}
+        <div className="player-targets-grid">
+          {alivePlayers
+            .filter((player) => isValidTarget(player.id, 'player'))
+            .map((player) => {
+              const isValid = isValidTarget(player.id, 'player');
+              
+              return (
                 <div
-                  className={`target-avatar ${player.id === currentPlayerId ? 'current-player' : ''}`}
+                  key={player.id}
+                  className={`
+                    player-target-card 
+                    ${selectedTarget === player.id ? 'selected' : ''} 
+                    ${player.hasSubmittedAction ? 'ready' : ''}
+                    ${player.id === currentPlayerId ? 'self' : ''}
+                    ${!isValid ? 'invalid-target' : ''}
+                  `}
+                  onClick={() => isValid && onSelectTarget(player.id)}
                 >
-                  {player.id === currentPlayerId
-                    ? 'You'
-                    : player.name.charAt(0)}
+                  <div className="player-name">
+                    {player.name}
+                    {player.id === currentPlayerId && ' (You)'}
+                  </div>
+                  {player.race && player.class ? (
+                    <CustomAvatar
+                      player={player}
+                      isCurrentPlayer={player.id === currentPlayerId}
+                    />
+                  ) : (
+                    <div className="target-avatar">
+                      {player.id === currentPlayerId
+                        ? 'You'
+                        : player.name.charAt(0)}
+                    </div>
+                  )}
+                  <div className="player-hp">{player.hp}/{player.maxHp}</div>
+                  <div className="health-bar-compact">
+                    <div 
+                      className={`health-fill ${getHealthClass(getHealthPercent(player.hp, player.maxHp))}`}
+                      style={{ width: `${getHealthPercent(player.hp, player.maxHp)}%` }}
+                    />
+                  </div>
                 </div>
-              )}
-            </div>
-
-            <div className="target-info">
-              <div className="target-name">
-                {player.name}
-                {player.id === currentPlayerId && ' (You)'}
-              </div>
-              <div className="target-health">
-                HP: {player.hp}/{player.maxHp}
-              </div>
-            </div>
-          </div>
-        ))}
+              );
+            })}
+        </div>
 
         {/* Message when monster is disabled but was previously selected */}
         {disableMonster && selectedTarget === '__monster__' && (
@@ -345,6 +399,11 @@ TargetSelector.propTypes = {
   selectedTarget: PropTypes.string,
   onSelectTarget: PropTypes.func.isRequired,
   disableMonster: PropTypes.bool,
+  selectedAbility: PropTypes.shape({
+    target: PropTypes.string,
+    category: PropTypes.string,
+    name: PropTypes.string,
+  }),
 };
 
 export default TargetSelector;

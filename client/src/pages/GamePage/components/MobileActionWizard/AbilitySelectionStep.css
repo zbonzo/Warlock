@@ -257,7 +257,7 @@
 
 .ability-description {
   font-size: 0.7rem;
-  color: rgba(255, 255, 255, 0.9);
+  color: var(--color-text-muted);
   line-height: 1.2;
   margin-bottom: 4px;
   text-align: left;
@@ -271,64 +271,92 @@
   margin-top: 4px;
 }
 
-/* Class-specific description backgrounds */
+/* Dark theme: use light text for descriptions */
+.theme-dark .ability-description {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+/* Class-specific description backgrounds - Light theme */
 .ability-description.class-warrior {
   background-color: rgba(178, 34, 34, 0.3); /* firebrick */
-  color: #ffffff;
+  color: var(--color-text);
 }
 
 .ability-description.class-ranger {
   background-color: rgba(34, 139, 34, 0.3); /* forestgreen */
-  color: #ffffff;
+  color: var(--color-text);
 }
 
 .ability-description.class-paladin {
   background-color: rgba(255, 215, 0, 0.3); /* gold */
-  color: #000000;
+  color: var(--color-text);
 }
 
 .ability-description.class-sorcerer {
   background-color: rgba(138, 43, 226, 0.3); /* blueviolet */
-  color: #ffffff;
+  color: var(--color-text);
 }
 
 .ability-description.class-warlock {
   background-color: rgba(75, 0, 130, 0.3); /* indigo */
-  color: #ffffff;
+  color: var(--color-text);
 }
 
 .ability-description.class-barbarian {
   background-color: rgba(165, 42, 42, 0.3); /* brown */
-  color: #ffffff;
+  color: var(--color-text);
 }
 
 .ability-description.class-monk {
   background-color: rgba(255, 140, 0, 0.3); /* darkorange */
-  color: #000000;
+  color: var(--color-text);
 }
 
 .ability-description.class-rogue {
   background-color: rgba(105, 105, 105, 0.3); /* dimgray */
-  color: #ffffff;
+  color: var(--color-text);
 }
 
 .ability-description.class-shaman {
   background-color: rgba(34, 139, 34, 0.3); /* forestgreen */
-  color: #ffffff;
+  color: var(--color-text);
 }
 
 .ability-description.class-gunslinger {
   background-color: rgba(139, 69, 19, 0.3); /* saddlebrown */
+  color: var(--color-text);
+}
+
+/* Dark theme overrides for class-specific descriptions */
+.theme-dark .ability-description.class-warrior,
+.theme-dark .ability-description.class-ranger,
+.theme-dark .ability-description.class-sorcerer,
+.theme-dark .ability-description.class-warlock,
+.theme-dark .ability-description.class-barbarian,
+.theme-dark .ability-description.class-rogue,
+.theme-dark .ability-description.class-shaman,
+.theme-dark .ability-description.class-gunslinger {
   color: #ffffff;
+}
+
+.theme-dark .ability-description.class-paladin,
+.theme-dark .ability-description.class-monk {
+  color: #000000; /* Dark text on light backgrounds */
 }
 
 .ability-description.class-tracker {
   background-color: rgba(107, 142, 35, 0.3); /* olivedrab */
-  color: #ffffff;
+  color: var(--color-text);
 }
 
 .ability-description.class-druid {
   background-color: rgba(85, 107, 47, 0.3); /* darkolivegreen */
+  color: var(--color-text);
+}
+
+/* Dark theme overrides for remaining classes */
+.theme-dark .ability-description.class-tracker,
+.theme-dark .ability-description.class-druid {
   color: #ffffff;
 }
 
@@ -346,7 +374,7 @@
   top: 8px;
   right: 8px;
   background-color: var(--color-primary);
-  color: white;
+  color: var(--color-text-inverse, white);
   border-radius: 50%;
   width: 24px;
   height: 24px;

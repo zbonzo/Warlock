@@ -32,6 +32,35 @@ const poison = {
 };
 
 /**
+ * Bleed effect configuration - Similar to poison but distinct
+ */
+const bleed = {
+  // Default values
+  default: {
+    damage: 5, // Damage per turn
+    turns: 3, // Duration in turns
+  },
+
+  // Effect behavior
+  stackable: true, // Multiple bleeds can stack
+  refreshable: true, // Can extend duration
+
+  // Mechanics
+  damagePerTurn: true, // Deals damage at end of turn
+  allowsActions: true, // Can still act normally
+  processAtEndOfTurn: true, // Process during end-of-turn phase
+
+  // Display settings
+  messages: {
+    applied: '{playerName} is bleeding for {damage} damage per turn for {turns} turn(s).',
+    stacked: '{playerName} has multiple bleeding wounds for {damage} total damage per turn.',
+    refreshed: '{playerName} continues bleeding for {turns} more turn(s).',
+    damage: '{playerName} takes {damage} bleed damage.',
+    expired: 'The bleeding affecting {playerName} has stopped.',
+  },
+};
+
+/**
  * Protection effect configuration
  */
 const shielded = {
@@ -223,18 +252,185 @@ const healingOverTime = {
 };
 
 /**
+ * Stone Armor effect configuration (Rockhewn racial passive)
+ */
+const stoneArmor = {
+  // Default values
+  default: {
+    armor: 6, // Initial armor value
+    degradationPerHit: 1, // How much armor degrades per hit
+    turns: -1, // Permanent (-1)
+  },
+
+  // Effect behavior
+  stackable: false, // Multiple stone armor don't stack
+  refreshable: false, // Cannot be refreshed (racial passive)
+
+  // Mechanics
+  isPermanent: true, // Lasts for entire game
+  isPassive: true, // Racial passive ability
+  degradesOnHit: true, // Armor value decreases when hit
+
+  // Display settings
+  messages: {
+    applied: '{playerName} gains Stone Armor ({armor} armor that degrades by {degradationPerHit} per hit).',
+    expired: "{playerName}'s Stone Armor has been completely worn away.",
+    degraded: "{playerName}'s Stone Armor degrades (armor reduced).",
+  },
+};
+
+/**
+ * Undying effect configuration (Lich racial passive)
+ */
+const undying = {
+  // Default values
+  default: {
+    resurrectedHp: 1, // HP to resurrect with
+    usesLeft: 1, // Number of times can be used
+    turns: -1, // Permanent (-1)
+  },
+
+  // Effect behavior
+  stackable: false, // Multiple undying don't stack
+  refreshable: false, // Cannot be refreshed (racial passive)
+
+  // Mechanics
+  isPermanent: true, // Lasts for entire game
+  isPassive: true, // Racial passive ability
+  triggersOnDeath: true, // Activates when player would die
+
+  // Display settings
+  messages: {
+    applied: '{playerName} gains the Undying blessing (resurrect to {resurrectedHp} HP once).',
+    triggered: '{playerName} dies but returns to life with {resurrectedHp} HP!',
+    expired: "{playerName}'s Undying blessing has been used up.",
+  },
+};
+
+/**
+ * Moonbeam effect configuration (Crestfallen racial passive)
+ */
+const moonbeam = {
+  // Default values
+  default: {
+    healthThreshold: 0.5, // Trigger when below 50% HP
+    turns: -1, // Permanent (-1)
+  },
+
+  // Effect behavior
+  stackable: false, // Multiple moonbeam don't stack
+  refreshable: false, // Cannot be refreshed (racial passive)
+
+  // Mechanics
+  isPermanent: true, // Lasts for entire game
+  isPassive: true, // Racial passive ability
+  revealsCorruption: true, // Reveals if attacker is corrupted
+
+  // Display settings
+  messages: {
+    applied: '{playerName} gains Moonbeam (reveals corruption when wounded below {healthThreshold}% HP).',
+    triggered: 'The Moonbeam reveals that {attackerName} is corrupted!',
+  },
+};
+
+/**
+ * Life Bond effect configuration (Kinfolk racial passive)
+ */
+const lifeBond = {
+  // Default values
+  default: {
+    healingPercent: 0.05, // 5% of monster's remaining HP
+    turns: -1, // Permanent (-1)
+  },
+
+  // Effect behavior
+  stackable: false, // Multiple life bond don't stack
+  refreshable: false, // Cannot be refreshed (racial passive)
+
+  // Mechanics
+  isPermanent: true, // Lasts for entire game
+  isPassive: true, // Racial passive ability
+  healsEndOfRound: true, // Heals at end of each round
+
+  // Display settings
+  messages: {
+    applied: '{playerName} gains Life Bond (heal for {healingPercent}% of monster HP each round).',
+    heal: '{playerName} heals {amount} HP from Life Bond.',
+  },
+};
+
+/**
+ * Spirit Guard effect configuration (Oracle ability)
+ */
+const spiritGuard = {
+  // Default values
+  default: {
+    armor: 3, // Armor bonus
+    turns: 2, // Duration in turns
+  },
+
+  // Effect behavior
+  stackable: false, // Multiple spirit guard don't stack
+  refreshable: true, // Can be refreshed to extend duration
+
+  // Mechanics
+  armorStacks: true, // Adds to existing armor
+  providesDetection: true, // May provide warlock detection
+
+  // Display settings
+  messages: {
+    applied: '{playerName} is protected by Spirit Guard (+{armor} armor for {turns} turns).',
+    refreshed: "{playerName}'s Spirit Guard protection is renewed for {turns} turns.",
+    expired: 'The Spirit Guard protecting {playerName} fades away.',
+  },
+};
+
+/**
+ * Sanctuary effect configuration (Oracle ability)
+ */
+const sanctuary = {
+  // Default values
+  default: {
+    damageReduction: 0.5, // 50% damage reduction
+    turns: 1, // Duration in turns
+  },
+
+  // Effect behavior
+  stackable: false, // Multiple sanctuary don't stack
+  refreshable: true, // Can be refreshed to extend duration
+
+  // Mechanics
+  reducesDamageTaken: true, // Reduces incoming damage
+  preventsTargeting: false, // Can still be targeted
+
+  // Display settings
+  messages: {
+    applied: '{playerName} enters a Sanctuary ({damageReduction}% damage reduction for {turns} turns).',
+    refreshed: "{playerName}'s Sanctuary protection is renewed for {turns} turns.",
+    expired: '{playerName} leaves the Sanctuary.',
+  },
+};
+
+/**
  * Effect processing order
  * Lower numbers are processed first each round
  */
 const processingOrder = {
   poison: 1, // Process poison damage first
-  shielded: 2, // Then update protection
-  vulnerable: 3, // Handle vulnerability effects
-  weakened: 4, // Handle weakened effects
-  enraged: 5, // Handle enraged effects
-  invisible: 6, // Then handle invisibility
-  stunned: 7, // Finally process stun effects
-  healingOverTime: 8, // Process healing effects last
+  bleed: 2, // Process bleed damage (similar to poison)
+  stoneArmor: 3, // Process stone armor early (for degradation)
+  shielded: 4, // Then update protection
+  spiritGuard: 5, // Handle spirit guard protection
+  sanctuary: 6, // Handle sanctuary protection
+  vulnerable: 7, // Handle vulnerability effects
+  weakened: 8, // Handle weakened effects
+  enraged: 9, // Handle enraged effects
+  invisible: 10, // Then handle invisibility
+  stunned: 11, // Process stun effects
+  healingOverTime: 12, // Process healing effects
+  lifeBond: 13, // Process life bond healing last
+  moonbeam: 13, // Process detection effects last
+  undying: 14, // Process undying last (triggers on death)
 };
 
 /**
@@ -265,6 +461,7 @@ const global = {
 function getEffectDefaults(effectName) {
   const effects = {
     poison,
+    bleed,
     shielded,
     invisible,
     stunned,
@@ -272,6 +469,12 @@ function getEffectDefaults(effectName) {
     weakened,
     enraged,
     healingOverTime,
+    stoneArmor,
+    undying,
+    moonbeam,
+    lifeBond,
+    spiritGuard,
+    sanctuary,
   };
   return effects[effectName]?.default || null;
 }
@@ -284,6 +487,7 @@ function getEffectDefaults(effectName) {
 function isEffectStackable(effectName) {
   const effects = {
     poison,
+    bleed,
     shielded,
     invisible,
     stunned,
@@ -291,6 +495,12 @@ function isEffectStackable(effectName) {
     weakened,
     enraged,
     healingOverTime,
+    stoneArmor,
+    undying,
+    moonbeam,
+    lifeBond,
+    spiritGuard,
+    sanctuary,
   };
   return effects[effectName]?.stackable || false;
 }
@@ -303,6 +513,7 @@ function isEffectStackable(effectName) {
 function isEffectRefreshable(effectName) {
   const effects = {
     poison,
+    bleed,
     shielded,
     invisible,
     stunned,
@@ -310,6 +521,12 @@ function isEffectRefreshable(effectName) {
     weakened,
     enraged,
     healingOverTime,
+    stoneArmor,
+    undying,
+    moonbeam,
+    lifeBond,
+    spiritGuard,
+    sanctuary,
   };
   return effects[effectName]?.refreshable || false;
 }
@@ -325,6 +542,7 @@ function getEffectMessage(effectName, messageType, data = {}) {
   // Use local variables instead of referring to config
   const effects = {
     poison,
+    bleed,
     shielded,
     invisible,
     stunned,
@@ -332,6 +550,12 @@ function getEffectMessage(effectName, messageType, data = {}) {
     weakened,
     enraged,
     healingOverTime,
+    stoneArmor,
+    undying,
+    moonbeam,
+    lifeBond,
+    spiritGuard,
+    sanctuary,
   };
   const template = effects[effectName]?.messages?.[messageType];
 
@@ -366,6 +590,7 @@ function formatEffectMessage(template, data = {}) {
 
 module.exports = {
   poison,
+  bleed,
   shielded,
   vulnerable,
   invisible,
@@ -373,6 +598,12 @@ module.exports = {
   weakened,
   enraged,
   healingOverTime,
+  stoneArmor,
+  undying,
+  moonbeam,
+  lifeBond,
+  spiritGuard,
+  sanctuary,
   processingOrder,
   global,
 

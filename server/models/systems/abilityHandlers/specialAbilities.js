@@ -148,6 +148,11 @@ function handleDetectionAbility(actor, target, ability, log, systems) {
  * @returns {boolean} Whether the ability was successful
  */
 function handleStunAbility(actor, target, ability, log, systems) {
+  // Special handling for Entangling Roots - target single random player
+  if (ability.type === 'entangle') {
+    return handleEntanglingRootsSingleTarget(actor, ability, log, systems);
+  }
+  
   // For multi-target stun abilities or when target is "multi"
   if (ability.target === 'Multi' || target === 'multi') {
     return handleMultiStunFinal(actor, ability, log, systems);
@@ -168,25 +173,23 @@ function handleStunAbility(actor, target, ability, log, systems) {
     return false;
   }
 
-  // Get stun defaults from config if needed
-  const stunDefaults = config.getStatusEffectDefaults('stunned') || {
-    turns: 1,
-  };
-
   // Check stun chance
   const stunChance = ability.params.chance || 0.5;
 
   if (Math.random() < stunChance) {
-    // Apply stun effect DIRECTLY to the player, bypassing StatusEffectManager
-    const stunDuration = ability.params.duration || stunDefaults.turns;
+    // Apply stun effect using new status effect system
+    const stunDuration = ability.params.duration || 1;
 
-    // Apply stun directly to player
-    if (!target.statusEffects) {
-      target.statusEffects = {};
-    }
-    target.statusEffects.stunned = {
-      turns: stunDuration + 1, // Add 1 for immediate countdown
-    };
+    systems.statusEffectSystem.applyEffect(
+      target.id,
+      'stunned',
+      {
+        turns: stunDuration,
+      },
+      actor.id,
+      actor.name,
+      log
+    );
 
     // Generate our own custom message for entangling roots
     if (ability.type === 'entangle') {
@@ -231,6 +234,83 @@ function handleStunAbility(actor, target, ability, log, systems) {
 }
 
 /**
+ * Handler for Entangling Roots - targets a single random alive player
+ */
+function handleEntanglingRootsSingleTarget(actor, ability, log, systems) {
+  // Get all alive players except actor
+  const availableTargets = Array.from(systems.players.values()).filter(
+    (p) => p.isAlive && p.id !== actor.id
+  );
+
+  if (availableTargets.length === 0) {
+    log.push({
+      type: 'no_targets',
+      public: true,
+      attackerId: actor.id,
+      message: `${actor.name} casts ${ability.name}, but there are no valid targets.`,
+      privateMessage: `${actor.name} casts ${ability.name}, but there are no valid targets.`,
+      attackerMessage: `You cast ${ability.name}, but there are no valid targets.`,
+    });
+    return false;
+  }
+
+  // Select a random target
+  const randomTarget = availableTargets[Math.floor(Math.random() * availableTargets.length)];
+
+  // Cast announcement
+  log.push({
+    type: 'ability_cast',
+    public: true,
+    attackerId: actor.id,
+    message: `${actor.name} casts ${ability.name}!`,
+    privateMessage: `${actor.name} casts ${ability.name}!`,
+    attackerMessage: `You cast ${ability.name}!`,
+  });
+
+  const stunChance = ability.params.chance || 0.8; // Higher chance for single target
+  const stunDuration = ability.params.stunDuration || 1;
+
+  if (Math.random() < stunChance) {
+    // Apply stun using new status effect system (using 4-parameter legacy signature)
+    systems.statusEffectManager.applyEffect(
+      randomTarget.id,
+      'stunned',
+      {
+        turns: stunDuration,
+      },
+      log
+    );
+
+    const entangleMessage = `${randomTarget.name} has been pinned to the ground by roots for ${stunDuration} turn(s).`;
+    log.push({
+      type: 'entangle_stun',
+      public: true,
+      targetId: randomTarget.id,
+      attackerId: actor.id,
+      message: entangleMessage,
+      privateMessage: entangleMessage,
+      attackerMessage: `Your ${ability.name} successfully entangles ${randomTarget.name}!`,
+    });
+
+    return true;
+  } else {
+    // Resisted
+    const resistMessage = `${randomTarget.name} breaks free from the grasping roots!`;
+    log.push({
+      type: 'entangle_resist',
+      public: true,
+      targetId: randomTarget.id,
+      attackerId: actor.id,
+      message: resistMessage,
+      privateMessage: resistMessage,
+      attackerMessage: `${randomTarget.name} resisted your ${ability.name}!`,
+    });
+
+    return false;
+  }
+}
+
+/**
  * FINAL FIX: Multi-stun handler that bypasses StatusEffectManager and fixes target names
  */
 function handleMultiStunFinal(actor, ability, log, systems) {
@@ -261,22 +341,23 @@ function handleMultiStunFinal(actor, ability, log, systems) {
     attackerMessage: `${actor.name} casts ${ability.name}!`,
   });
 
-  const stunDefaults = config.getStatusEffectDefaults('stunned') || {
-    turns: 1,
-  };
   const stunChance = ability.params.chance || 0.5;
-  const stunDuration = ability.params.duration || stunDefaults.turns;
+  const stunDuration = ability.params.duration || 1;
   let stunCount = 0;
 
   for (const potentialTarget of targets) {
     if (Math.random() < stunChance) {
-      // Apply stun directly to player
-      if (!potentialTarget.statusEffects) {
-        potentialTarget.statusEffects = {};
-      }
-      potentialTarget.statusEffects.stunned = {
-        turns: stunDuration + 1, // Add 1 for immediate countdown
-      };
+      // Apply stun using new status effect system
+      systems.statusEffectSystem.applyEffect(
+        potentialTarget.id,
+        'stunned',
+        {
+          turns: stunDuration,
+        },
+        actor.id,
+        actor.name,
+        log
+      );
 
       // Generate custom message for THIS SPECIFIC TARGET
       if (ability.type === 'entangle') {
@@ -347,13 +428,15 @@ function handlePrimalRoar(actor, target, ability, log, systems) {
   const duration = ability.params.duration || 1;
 
   // Apply weakened effect (custom status effect)
-  systems.statusEffectManager.applyEffect(
+  systems.statusEffectSystem.applyEffect(
     target.id,
     'weakened',
     {
       damageReduction: damageReduction,
       turns: duration,
     },
+    actor.id,
+    actor.name,
     log
   );
 
@@ -429,7 +512,7 @@ function handleUnstoppableRage(actor, target, ability, log, systems) {
     ability.params.effectEnds?.selfDamagePercent || 0.25;
 
   // Apply enraged status effect
-  systems.statusEffectManager.applyEffect(
+  systems.statusEffectSystem.applyEffect(
     actor.id,
     'enraged',
     {
@@ -438,6 +521,8 @@ function handleUnstoppableRage(actor, target, ability, log, systems) {
       turns: duration + 1, // Add 1 to account for immediate countdown
       selfDamagePercent: selfDamagePercent,
     },
+    actor.id,
+    actor.name,
     log
   );
 
@@ -496,7 +581,7 @@ function handleSpiritGuard(actor, target, ability, log, systems) {
   const duration = ability.params.duration || 1;
 
   // Apply spirit guard status effect using the correct effect name
-  systems.statusEffectManager.applyEffect(
+  systems.statusEffectSystem.applyEffect(
     actor.id,
     'spiritGuard',
     {
@@ -504,6 +589,8 @@ function handleSpiritGuard(actor, target, ability, log, systems) {
       counterDamage: counterDamage,
       turns: duration,
     },
+    actor.id,
+    actor.name,
     log
   );
 
@@ -542,13 +629,15 @@ function handleSanctuaryOfTruth(actor, target, ability, log, systems) {
   actor.hp += actualHeal;
 
   // Apply sanctuary status effect using the correct effect name
-  systems.statusEffectManager.applyEffect(
+  systems.statusEffectSystem.applyEffect(
     actor.id,
     'sanctuary',
     {
       counterDamage: counterDamage,
       turns: duration,
     },
+    actor.id,
+    actor.name,
     log
   );
 
@@ -843,30 +932,26 @@ function handleMultiStun(actor, ability, log, systems) {
     })
   );
 
-  // Get stun defaults from config if needed
-  const stunDefaults = config.getStatusEffectDefaults('stunned') || {
-    turns: 1,
-  };
-
   const stunChance = ability.params.chance || 0.5;
   let stunCount = 0;
 
   for (const potentialTarget of targets) {
     if (Math.random() < stunChance) {
       // FIXED: Apply effect with message suppression
-      systems.statusEffectManager.applyEffect(
+      systems.statusEffectSystem.applyEffect(
         potentialTarget.id,
         'stunned',
         {
-          turns: ability.params.duration || stunDefaults.turns,
+          turns: ability.params.duration || 1,
         },
-        log,
-        { suppressMessage: true } // Suppress automatic messages
+        actor.id,
+        actor.name,
+        log
       );
 
       // FIXED: Generate our own custom message for entangling roots
       if (ability.type === 'entangle') {
-        const entangleMessage = `${potentialTarget.name} has been pinned to the ground by roots for ${ability.params.duration || stunDefaults.turns} turn(s).`;
+        const entangleMessage = `${potentialTarget.name} has been pinned to the ground by roots for ${ability.params.duration || 1} turn(s).`;
         log.push({
           type: 'entangle_stun',
           public: true,
@@ -886,7 +971,7 @@ function handleMultiStun(actor, ability, log, systems) {
           messages.formatMessage(stunMessage, {
             playerName: potentialTarget.name, // FIXED: Use playerName consistently
             targetName: potentialTarget.name, // Also provide targetName for flexibility
-            turns: ability.params.duration || stunDefaults.turns,
+            turns: ability.params.duration || 1,
           })
         );
       }
@@ -988,8 +1073,8 @@ function handleThirstyBlade(actor, target, ability, log, systems) {
 }
 
 /**
- * Handler for Sweeping Strike passive ability (Barbarian Level 4)
- * Enables attacks to hit additional targets with stun chance
+ * Handler for Sweeping Strike ability (Barbarian Level 4)
+ * A powerful attack that hits additional targets with stun chance
  */
 function handleSweepingStrike(actor, target, ability, log, systems) {
   if (!actor.classEffects) {
@@ -999,7 +1084,9 @@ function handleSweepingStrike(actor, target, ability, log, systems) {
   const bonusTargets = ability.params.bonusTargets || 1;
   const stunChance = ability.params.stunChance || 0.25;
   const stunDuration = ability.params.stunDuration || 1;
+  const damage = ability.params.damage || 35;
 
+  // CRITICAL: Set up the sweeping strike effect BEFORE dealing damage
   actor.classEffects.sweepingStrike = {
     bonusTargets: bonusTargets,
     stunChance: stunChance,
@@ -1019,6 +1106,20 @@ function handleSweepingStrike(actor, target, ability, log, systems) {
       stunChance: Math.round(stunChance * 100),
     })
   );
+
+  // Deal damage to the primary target - this will trigger the sweeping strike effect
+  const modifiedDamage = actor.modifyDamage ? actor.modifyDamage(damage) : damage;
+  
+  if (typeof target === 'string' && target === 'monster') {
+    // Attacking the monster
+    systems.combatSystem.applyDamageToMonster(modifiedDamage, actor, log);
+  } else if (target && target.id) {
+    // Attacking a player
+    systems.combatSystem.applyDamageToPlayer(target, modifiedDamage, actor, log);
+  }
+
+  // Clear the sweeping strike effect after use (it's a one-shot ability)
+  delete actor.classEffects.sweepingStrike;
 
   return true;
 }

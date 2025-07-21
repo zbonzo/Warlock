@@ -3,7 +3,9 @@
  * Centralizes system creation and dependency injection
  */
 const GameStateUtils = require('./GameStateUtils');
-const StatusEffectManager = require('./StatusEffectManager');
+const StatusEffectManager = require('./StatusEffectManager'); // Legacy - will be replaced
+const NewStatusEffectManager = require('./NewStatusEffectManager');
+const StatusEffectSystemFactory = require('./StatusEffectSystemFactory');
 const RacialAbilitySystem = require('./RacialAbilitySystem');
 const WarlockSystem = require('./WarlockSystem');
 const MonsterController = require('@controllers/MonsterController');
@@ -26,11 +28,19 @@ class SystemsFactory {
   static createSystems(players, monster) {
     // Create individual systems
     const gameStateUtils = new GameStateUtils(players);
-    const statusEffectManager = new StatusEffectManager(
-      players,
-      gameStateUtils
-    );
+    
+    // Create NEW status effect system
     const warlockSystem = new WarlockSystem(players, gameStateUtils);
+    const newStatusEffectSystem = StatusEffectSystemFactory.createSystem(
+      players, 
+      monster, 
+      warlockSystem, 
+      true // Migrate existing status effects
+    );
+    
+    // Use the new status effect manager
+    const statusEffectManager = newStatusEffectSystem.manager;
+    
     const racialAbilitySystem = new RacialAbilitySystem(
       players,
       statusEffectManager
@@ -77,6 +87,7 @@ class SystemsFactory {
       players: players,
       gameStateUtils,
       statusEffectManager,
+      statusEffectSystem: newStatusEffectSystem, // NEW: Include full status effect system
       warlockSystem,
       racialAbilitySystem,
       monsterController,

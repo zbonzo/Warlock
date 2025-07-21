@@ -268,9 +268,17 @@ const TargetSelectionStep = ({
       return targetType === 'player';
     }
     
-    // Attack abilities can target monster or enemies
+    // Attack abilities can target monster or enemies (but not self)
     if (selectedAbility.category === 'Attack') {
-      return true; // Can target anyone
+      if (targetType === 'player') {
+        return targetId !== me.id; // Can't attack yourself
+      }
+      return true; // Can attack monster
+    }
+    
+    // Defense abilities typically target allies (players)
+    if (selectedAbility.category === 'Defense') {
+      return targetType === 'player';
     }
     
     // Default: allow all targets

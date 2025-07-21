@@ -68,19 +68,15 @@ function register(registry) {
  * @returns {boolean} Whether the ability was successful
  */
 function handleShieldWall(actor, target, ability, log, systems) {
-  // Get protection defaults from config if needed
-  const protectionDefaults = config.getStatusEffectDefaults('shielded') || {
-    armor: 2,
-    turns: 1,
-  };
-
-  systems.statusEffectManager.applyEffect(
+  systems.statusEffectSystem.applyEffect(
     target.id,
     'shielded',
     {
-      armor: ability.params.armor || protectionDefaults.armor,
-      turns: ability.params.duration || protectionDefaults.turns,
+      armor: ability.params.armor || 2,
+      turns: ability.params.duration || 1,
     },
+    actor.id,
+    actor.name,
     log
   );
 
@@ -109,17 +105,14 @@ function handleShieldWall(actor, target, ability, log, systems) {
  * @returns {boolean} Whether the ability was successful
  */
 function handleInvisibility(actor, target, ability, log, systems) {
-  // Get invisibility defaults from config if needed
-  const invisibilityDefaults = config.getStatusEffectDefaults('invisible') || {
-    turns: 1,
-  };
-
-  systems.statusEffectManager.applyEffect(
+  systems.statusEffectSystem.applyEffect(
     target.id,
     'invisible',
     {
-      turns: ability.params.duration || invisibilityDefaults.turns,
+      turns: ability.params.duration || 1,
     },
+    actor.id,
+    actor.name,
     log
   );
 
@@ -162,17 +155,14 @@ function handleShadowstep(actor, target, ability, log, systems) {
     return false;
   }
 
-  // Get invisibility defaults from config if needed
-  const invisibilityDefaults = config.getStatusEffectDefaults('invisible') || {
-    turns: 1,
-  };
-
-  systems.statusEffectManager.applyEffect(
+  systems.statusEffectSystem.applyEffect(
     target.id,
     'invisible',
     {
-      turns: ability.params.duration || invisibilityDefaults.turns,
+      turns: ability.params.duration || 1,
     },
+    actor.id,
+    actor.name,
     log
   );
 
@@ -208,22 +198,18 @@ function handleMultiProtection(actor, target, ability, log, systems) {
   // Get all alive players (multi-protection typically affects everyone including the caster)
   const targets = Array.from(systems.players.values()).filter((p) => p.isAlive);
 
-  // Get protection defaults from config if needed
-  const protectionDefaults = config.getStatusEffectDefaults('shielded') || {
-    armor: 2,
-    turns: 1,
-  };
-
   let shieldedCount = 0;
 
   for (const potentialTarget of targets) {
-    systems.statusEffectManager.applyEffect(
+    systems.statusEffectSystem.applyEffect(
       potentialTarget.id,
       'shielded',
       {
-        armor: ability.params.armor || protectionDefaults.armor,
-        turns: ability.params.duration || protectionDefaults.turns,
+        armor: ability.params.armor || 2,
+        turns: ability.params.duration || 1,
       },
+      actor.id,
+      actor.name,
       log
     );
     shieldedCount++;
@@ -238,8 +224,8 @@ function handleMultiProtection(actor, target, ability, log, systems) {
       playerName: actor.name,
       abilityName: ability.name,
       count: shieldedCount,
-      armor: ability.params.armor || protectionDefaults.armor,
-      turns: ability.params.duration || protectionDefaults.turns,
+      armor: ability.params.armor || 2,
+      turns: ability.params.duration || 1,
     })
   );
 

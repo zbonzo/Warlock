@@ -101,9 +101,11 @@ function handleHeal(actor, target, ability, log, systems) {
     config.gameBalance?.player?.healing?.antiDetection?.alwaysHealWarlocks ||
     false;
 
+  // Calculate healing needed - available throughout function
+  const healingNeeded = target.maxHp - target.hp;
+
   if (antiDetectionEnabled && alwaysHealWarlocks) {
     // NEW SYSTEM: Always heal the target, regardless of warlock status
-    const healingNeeded = target.maxHp - target.hp;
     actualHeal = Math.min(healAmount, healingNeeded);
 
     if (actualHeal > 0) {
@@ -307,7 +309,7 @@ function handleRejuvenationHoT(actor, target, ability, log, systems) {
     }
 
     // Apply healing over time status effect
-    const success = systems.statusEffectManager.applyEffect(
+    const success = systems.statusEffectSystem.applyEffect(
       potentialTarget.id,
       'healingOverTime',
       {
@@ -318,6 +320,8 @@ function handleRejuvenationHoT(actor, target, ability, log, systems) {
         healerId: actor.id,
         healerName: actor.name,
       },
+      actor.id,
+      actor.name,
       log
     );
 

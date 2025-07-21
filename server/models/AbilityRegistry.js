@@ -90,6 +90,8 @@ class AbilityRegistry {
       return false;
     }
 
+    let finalTarget = target;
+
     try {
       const variance = config.gameBalance.abilityVariance;
 
@@ -100,7 +102,6 @@ class AbilityRegistry {
 
       const roll = Math.random();
 
-      let finalTarget = target;
       let outcome = 'normal';
 
       if (roll < ultraFailChance) {
@@ -245,7 +246,50 @@ class AbilityRegistry {
 
       return result;
     } catch (error) {
-      logger.error(`Error executing class ability ${abilityType}:`, error);
+      // Enhanced error logging for debugging
+      logger.error(`Error executing class ability ${abilityType}:`);
+      logger.error(`Error message: ${error.message}`);
+      logger.error(`Error stack: ${error.stack}`);
+      
+      // Log detailed context for debugging
+      logger.error(`Actor state:`, {
+        id: actor.id,
+        name: actor.name,
+        health: actor.health,
+        maxHealth: actor.maxHealth,
+        armor: actor.armor,
+        effects: actor.effects,
+        class: actor.class,
+        level: actor.level
+      });
+      
+      logger.error(`Target info:`, {
+        originalTarget: target,
+        finalTarget: finalTarget ? {
+          id: finalTarget.id,
+          name: finalTarget.name,
+          health: finalTarget.health,
+          maxHealth: finalTarget.maxHealth,
+          armor: finalTarget.armor,
+          effects: finalTarget.effects
+        } : 'No target'
+      });
+      
+      logger.error(`Ability config:`, {
+        name: ability.name,
+        type: abilityType,
+        category: ability.category,
+        targetType: ability.targetType,
+        cooldown: ability.cooldown,
+        effects: ability.effects
+      });
+      
+      logger.error(`Systems state:`, {
+        hasActionProcessor: !!systems.actionProcessor,
+        hasEffectProcessor: !!systems.effectProcessor,
+        hasDamageCalculator: !!systems.damageCalculator,
+        hasGameStateManager: !!systems.gameStateManager
+      });
 
       // Add error message to log
       const errorLog = {
@@ -379,7 +423,50 @@ class AbilityRegistry {
 
       return result;
     } catch (error) {
-      logger.error(`Error executing racial ability ${abilityType}:`, error);
+      // Enhanced error logging for debugging racial abilities
+      logger.error(`Error executing racial ability ${abilityType}:`);
+      logger.error(`Error message: ${error.message}`);
+      logger.error(`Error stack: ${error.stack}`);
+      
+      // Log detailed context for debugging
+      logger.error(`Actor state:`, {
+        id: actor.id,
+        name: actor.name,
+        health: actor.health,
+        maxHealth: actor.maxHealth,
+        armor: actor.armor,
+        effects: actor.effects,
+        race: actor.race,
+        level: actor.level
+      });
+      
+      logger.error(`Target info:`, {
+        originalTarget: target,
+        finalTarget: finalTarget ? {
+          id: finalTarget.id,
+          name: finalTarget.name,
+          health: finalTarget.health,
+          maxHealth: finalTarget.maxHealth,
+          armor: finalTarget.armor,
+          effects: finalTarget.effects
+        } : 'No target'
+      });
+      
+      logger.error(`Racial ability config:`, {
+        name: racialAbility.name,
+        type: abilityType,
+        category: racialAbility.category,
+        targetType: racialAbility.targetType,
+        cooldown: racialAbility.cooldown,
+        effects: racialAbility.effects
+      });
+      
+      logger.error(`Systems state:`, {
+        hasActionProcessor: !!systems.actionProcessor,
+        hasEffectProcessor: !!systems.effectProcessor,
+        hasDamageCalculator: !!systems.damageCalculator,
+        hasGameStateManager: !!systems.gameStateManager
+      });
 
       // Add error message to log
       const errorLog = {

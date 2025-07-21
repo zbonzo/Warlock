@@ -116,7 +116,7 @@ function handleAttack(
   if (
     target !== config.MONSTER_ID &&
     target.hasStatusEffect &&
-    target.hasStatusEffect('invisible')
+    systems.statusEffectSystem.hasEffect(target.id, 'invisible')
   ) {
     const attackFailMessage = messages.getAbilityMessage(
       'abilities.attacks',
@@ -254,7 +254,7 @@ function handlePoisonStrike(
   if (
     target !== config.MONSTER_ID &&
     target.hasStatusEffect &&
-    target.hasStatusEffect('invisible')
+    systems.statusEffectSystem.hasEffect(target.id, 'invisible')
   ) {
     const invisibleMessage = messages.getAbilityMessage(
       'abilities.attacks',
@@ -307,18 +307,16 @@ function handlePoisonStrike(
       );
     }
 
-    // Get poison effect defaults from config
-    const poisonDefaults = config.getStatusEffectDefaults('poison') || {
-      turns: 3,
-    };
-
-    systems.statusEffectManager.applyEffect(
+    // Apply poison using new status effect system
+    systems.statusEffectSystem.applyEffect(
       target.id,
       'poison',
       {
-        turns: poisonData.turns || poisonDefaults.turns,
+        turns: poisonData.turns || 3,
         damage: modifiedPoisonDamage,
       },
+      actor.id,
+      actor.name,
       log
     );
 
@@ -573,7 +571,7 @@ function handleMultiHitAttack(
   if (
     target !== config.MONSTER_ID &&
     target.hasStatusEffect &&
-    target.hasStatusEffect('invisible')
+    systems.statusEffectSystem.hasEffect(target.id, 'invisible')
   ) {
     const invisibleMessage = messages.getAbilityMessage(
       'abilities.attacks',
@@ -816,7 +814,7 @@ function handleRecklessStrike(
   if (
     target !== config.MONSTER_ID &&
     target.hasStatusEffect &&
-    target.hasStatusEffect('invisible')
+    systems.statusEffectSystem.hasEffect(target.id, 'invisible')
   ) {
     const invisibleMessage = messages.getAbilityMessage(
       'abilities.attacks',
@@ -932,7 +930,7 @@ function handleAttackWithDetection(
   if (
     target !== config.MONSTER_ID &&
     target.hasStatusEffect &&
-    target.hasStatusEffect('invisible')
+    systems.statusEffectSystem.hasEffect(target.id, 'invisible')
   ) {
     const invisibleMessage = messages.getAbilityMessage(
       'abilities.attacks',
@@ -1025,7 +1023,7 @@ function handleAttackWithDetection(
 }
 
 /**
- * Handler for barbed arrow with poison and detection (with coordination bonuses)
+ * Handler for barbed arrow with bleed and detection (with coordination bonuses)
  */
 function handleBarbedArrow(
   actor,
@@ -1042,34 +1040,30 @@ function handleBarbedArrow(
     log,
     systems,
     coordinationInfo,
-    // Poison effect handler
+    // Bleed effect handler
     (actor, target, ability, log, systems, coordinationInfo) => {
-      const poisonData = ability.params.poison;
-      let modifiedPoisonDamage = Math.floor(
-        poisonData.damage * (actor.damageMod || 1.0)
+      const bleedData = ability.params.bleed;
+      let modifiedBleedDamage = Math.floor(
+        bleedData.damage * (actor.damageMod || 1.0)
       );
 
-      // Apply coordination bonus to poison as well
+      // Apply coordination bonus to bleed as well
       if (
         coordinationInfo.coordinatedDamage &&
         coordinationInfo.damageBonus > 0
       ) {
         const coordinationMultiplier = 1 + coordinationInfo.damageBonus / 100;
-        modifiedPoisonDamage = Math.floor(
-          modifiedPoisonDamage * coordinationMultiplier
+        modifiedBleedDamage = Math.floor(
+          modifiedBleedDamage * coordinationMultiplier
         );
       }
 
-      const poisonDefaults = config.getStatusEffectDefaults('poison') || {
-        turns: 3,
-      };
-
-      systems.statusEffectManager.applyEffect(
+      systems.statusEffectSystem.applyEffect(
         target.id,
-        'poison',
+        'bleed',
         {
-          turns: poisonData.turns || poisonDefaults.turns,
-          damage: modifiedPoisonDamage,
+          turns: bleedData.turns || 3,
+          damage: modifiedBleedDamage,
         },
         log
       );
@@ -1113,17 +1107,15 @@ function handlePyroblast(
         );
       }
 
-      const poisonDefaults = config.getStatusEffectDefaults('poison') || {
-        turns: 3,
-      };
-
-      systems.statusEffectManager.applyEffect(
+      systems.statusEffectSystem.applyEffect(
         target.id,
         'poison', // Use poison effect for burns
         {
-          turns: burnData.turns || poisonDefaults.turns,
+          turns: burnData.turns || 3,
           damage: modifiedBurnDamage,
         },
+        actor.id,
+        actor.name,
         log
       );
     }
@@ -1203,7 +1195,7 @@ function handleInfernoBlast(
   );
 
   // Get poison defaults from config if needed
-  const poisonDefaults = config.getStatusEffectDefaults('poison') || {
+  const poisonDefaults = {
     turns: 3,
     damage: 5,
   };
@@ -1235,13 +1227,15 @@ function handleInfernoBlast(
         );
       }
 
-      systems.statusEffectManager.applyEffect(
+      systems.statusEffectSystem.applyEffect(
         potentialTarget.id,
         'poison',
         {
-          turns: poisonData.turns || poisonDefaults.turns,
+          turns: poisonData.turns || 3,
           damage: modifiedPoisonDamage,
         },
+        actor.id,
+        actor.name,
         log
       );
 
@@ -1288,7 +1282,7 @@ function handleDeathMark(
   }
 
   // Get poison defaults from config if needed
-  const poisonDefaults = config.getStatusEffectDefaults('poison') || {
+  const poisonDefaults = {
     turns: 3,
     damage: 5,
   };
@@ -1299,24 +1293,28 @@ function handleDeathMark(
     (poisonData.damage || poisonDefaults.damage) * (actor.damageMod || 1.0)
   );
 
-  systems.statusEffectManager.applyEffect(
+  systems.statusEffectSystem.applyEffect(
     target.id,
     'poison',
     {
-      turns: poisonData.turns || poisonDefaults.turns,
+      turns: poisonData.turns || 3,
       damage: modifiedPoisonDamage,
     },
+    actor.id,
+    actor.name,
     log
   );
 
   // Apply invisibility to the caster (actor)
   const invisibleData = ability.params.selfInvisible || { duration: 1 };
-  systems.statusEffectManager.applyEffect(
+  systems.statusEffectSystem.applyEffect(
     actor.id,
     'invisible',
     {
       turns: invisibleData.duration,
     },
+    actor.id,
+    actor.name,
     log
   );
 
@@ -1399,13 +1397,15 @@ function handlePoisonTrap(
   for (const potentialTarget of targets) {
     if (Math.random() < trapHitChance) {
       // Apply poison
-      systems.statusEffectManager.applyEffect(
+      systems.statusEffectSystem.applyEffect(
         potentialTarget.id,
         'poison',
         {
-          turns: poisonData.turns || poisonDefaults.turns,
+          turns: poisonData.turns || 3,
           damage: modifiedPoisonDamage,
         },
+        actor.id,
+        actor.name,
         log
       );
 
