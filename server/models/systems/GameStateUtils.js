@@ -400,6 +400,56 @@ class GameStateUtils {
 
     return true;
   }
+
+  /**
+   * Check if a target is invisible
+   * @param {Object} target - The target to check
+   * @param {Object} systems - Game systems object
+   * @returns {boolean} True if target is invisible
+   */
+  static isTargetInvisible(target, systems) {
+    return (
+      target !== config.MONSTER_ID &&
+      target.hasStatusEffect &&
+      systems.statusEffectSystem.hasEffect(target.id, 'invisible')
+    );
+  }
+
+  /**
+   * Check if a target is invisible and handle attack failure
+   * @param {Object} actor - The player/entity performing the action
+   * @param {Object} target - The target of the action
+   * @param {Object} systems - Game systems object
+   * @param {Array} log - Log array to append invisibility message
+   * @returns {boolean} True if target is invisible (attack should fail)
+   */
+  static checkInvisibilityAndLog(actor, target, systems, log) {
+    // Check if target is invisible
+    if (GameStateUtils.isTargetInvisible(target, systems)) {
+      const invisibleMessage = messages.getAbilityMessage(
+        'abilities.attacks',
+        'attackInvisible'
+      );
+      const invisibleLog = {
+        type: 'attack_invisible',
+        public: false,
+        attackerId: actor.id,
+        targetId: target.id,
+        message: '',
+        privateMessage: messages.formatMessage(invisibleMessage, {
+          attackerName: actor.name,
+          targetName: target.name,
+        }),
+        attackerMessage: messages.formatMessage(invisibleMessage, {
+          attackerName: actor.name,
+          targetName: target.name,
+        }),
+      };
+      log.push(invisibleLog);
+      return true; // Target is invisible, attack fails
+    }
+    return false; // Target is not invisible, attack can proceed
+  }
 }
 
 module.exports = GameStateUtils;

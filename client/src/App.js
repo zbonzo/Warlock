@@ -19,6 +19,7 @@ import CharacterSelectPage from './pages/CharacterSelectPage';
 import LobbyPage from './pages/LobbyPage';
 import GamePage from './pages/GamePage';
 import EndPage from './pages/EndPage';
+import RuneButtonTest from './pages/RuneButtonTest';
 
 // Constants
 import { SOCKET_URL, GAME_PHASES } from './config/constants';
@@ -336,6 +337,12 @@ function AppContent() {
 
   // Render the appropriate screen based on the current state
   const renderScreen = () => {
+    // Check for test route in URL
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('test') === 'rune-buttons') {
+      return <RuneButtonTest />;
+    }
+
     // Show loading screen while configuration is loading
     if (configLoading) {
       return <LoadingScreen message="Loading game configuration..." />;

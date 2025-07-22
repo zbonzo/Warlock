@@ -7,7 +7,9 @@
     "start": "babel-node index.js --trace-warnings",
     "dev": "nodemon --exec babel-node index.js",
     "dev-regular": "nodemon index.js",
-    "test": "jest --selectProjects server"
+    "test": "jest --selectProjects server",
+    "test:watch": "jest --selectProjects server --watch",
+    "test:coverage": "jest --selectProjects server --coverage"
   },
   "dependencies": {
     "cors": "^2.8.5",

@@ -6,6 +6,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import PropTypes from 'prop-types';
 import { useTheme } from '@contexts/ThemeContext';
 import ThemeToggle from '@components/common/ThemeToggle';
+import RuneButton from '../../components/ui/RuneButton';
 import GameTutorial from '@components/modals/GameTutorial';
 import { RANDOM_NAMES } from './constants';
 import useSocket from '@hooks/useSocket';
@@ -524,20 +525,19 @@ const JoinGamePage = ({ onCreateGame, onJoinGame, onReconnect }) => {
         {/* Create game button */}
         {!joinCode && (
           <div className="create-game-section">
-            <button
-              className={`create-button ${!name || !isNameValid || isCheckingDuplicate ? 'disabled' : ''}`}
+            <RuneButton
               onClick={handleCreateGame}
               disabled={!name || !isNameValid || isCheckingDuplicate}
             >
-              Create New Game
-            </button>
+              Cast the First Rune
+            </RuneButton>
           </div>
         )}
 
         {/* Join game section */}
         <div className="join-game-section">
           <div className="code-label-row">
-            <label className="input-label">Game Code</label>
+            <label className="input-label">Whisper the Code</label>
             <button
               className="help-button"
               onClick={() => setShowCodeHelp(!showCodeHelp)}
@@ -548,7 +548,7 @@ const JoinGamePage = ({ onCreateGame, onJoinGame, onReconnect }) => {
 
           {showCodeHelp && (
             <div className="code-help-text">
-              Enter a 4-digit code provided by the game host to join their game.
+              Enter a 4-digit code whispered by the ritual master to join their circle.
               We'll check if your name is available in that game.
             </div>
           )}
@@ -556,7 +556,7 @@ const JoinGamePage = ({ onCreateGame, onJoinGame, onReconnect }) => {
           <input
             type="text"
             className="code-input"
-            placeholder="4-digit game code"
+            placeholder="4-digit mystic code"
             value={joinCode}
             onChange={handleCodeChange}
           />
@@ -582,13 +582,13 @@ const JoinGamePage = ({ onCreateGame, onJoinGame, onReconnect }) => {
 
         {/* Join game button */}
         {joinCode && (
-          <button
-            className={`join-button ${!joinCode || !name || !isNameValid || isCheckingDuplicate ? 'disabled' : ''}`}
+          <RuneButton
+            variant="secondary"
             onClick={handleJoin}
             disabled={!joinCode || !name || !isNameValid || isCheckingDuplicate}
           >
-            {isCheckingDuplicate ? 'Checking...' : 'Join Game'}
-          </button>
+            {isCheckingDuplicate ? 'Checking...' : 'Take your place'}
+          </RuneButton>
         )}
 
         {/* Tutorial button */}

@@ -142,7 +142,7 @@ io.on('connection', (socket) => {
     withSocketErrorHandling(
       socket,
       ({ playerName }) =>
-        gameController.handleCreateGame(io, socket, playerName),
+        gameController.handleGameCreate(io, socket, playerName),
       'creating game'
     )
   );
@@ -163,7 +163,7 @@ io.on('connection', (socket) => {
     withSocketErrorHandling(
       socket,
       ({ gameCode, playerName }) =>
-        gameController.handlePlayAgain(io, socket, gameCode, playerName),
+        gameController.handleGamePlayAgain(io, socket, gameCode, playerName),
       'starting play again game'
     )
   );
@@ -173,7 +173,7 @@ io.on('connection', (socket) => {
     withSocketErrorHandling(
       socket,
       ({ gameCode, playerName }) =>
-        gameController.handleCheckNameAvailability(
+        gameController.handleGameCheckName(
           io,
           socket,
           gameCode,
@@ -189,7 +189,7 @@ io.on('connection', (socket) => {
     withSocketErrorHandling(
       socket,
       ({ gameCode, race, className }) =>
-        playerController.handleSelectCharacter(
+        playerController.handlePlayerSelectCharacter(
           io,
           socket,
           gameCode,
@@ -205,7 +205,7 @@ io.on('connection', (socket) => {
     'startGame',
     withSocketErrorHandling(
       socket,
-      ({ gameCode }) => gameController.handleStartGame(io, socket, gameCode),
+      ({ gameCode }) => gameController.handleGameStart(io, socket, gameCode),
       'starting game'
     )
   );
@@ -254,7 +254,7 @@ io.on('connection', (socket) => {
         bloodRageActive,
         keenSensesActive,
       }) => {
-        gameController.handlePerformAction(
+        gameController.handleGameAction(
           io,
           socket,
           gameCode,
@@ -276,7 +276,7 @@ io.on('connection', (socket) => {
     withSocketErrorHandling(
       socket,
       ({ gameCode, targetId, abilityType }) =>
-        gameController.handleRacialAbility(
+        gameController.handleGameRacialAbility(
           io,
           socket,
           gameCode,
@@ -293,7 +293,7 @@ io.on('connection', (socket) => {
     withSocketErrorHandling(
       socket,
       ({ gameCode, oldAbilityType, newAbilityType, level, newClassName }) =>
-        gameController.handleAdaptabilityReplace(
+        gameController.handleGameAdaptabilityReplace(
           io,
           socket,
           gameCode,
@@ -312,7 +312,7 @@ io.on('connection', (socket) => {
     withSocketErrorHandling(
       socket,
       ({ gameCode, className, level }) =>
-        gameController.handleGetClassAbilities(
+        gameController.handleGameGetAbilities(
           io,
           socket,
           gameCode,
@@ -329,7 +329,7 @@ io.on('connection', (socket) => {
     withSocketErrorHandling(
       socket,
       ({ gameCode }) =>
-        gameController.handlePlayerNextReady(io, socket, gameCode),
+        gameController.handleGamePlayerReady(io, socket, gameCode),
       'preparing for next round'
     )
   );

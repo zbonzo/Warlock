@@ -6,6 +6,7 @@ import React, { useState, useRef } from 'react';
 import PropTypes from 'prop-types';
 import { useTheme } from '@contexts/ThemeContext';
 import './LobbyPage.css';
+import RuneButton from '../../components/ui/RuneButton';
 
 /**
  * LobbyPage component displays the pre-game lobby where players wait
@@ -90,7 +91,7 @@ const LobbyPage = ({ players, gameCode, isHost, currentPlayerId, onStartGame }) 
   return (
     <div className="lobby-container">
       <div className="lobby-card">
-        <h1 className="lobby-title">Game Lobby</h1>
+        <h1 className="lobby-title">Preparing the betrayal</h1>
 
         <div className="game-code-display" onClick={copyGameCode}>
           <div className="game-code">Code: {gameCode}</div>
@@ -119,13 +120,12 @@ const LobbyPage = ({ players, gameCode, isHost, currentPlayerId, onStartGame }) 
 
         {/* Start Game Button moved up here */}
         {isHost ? (
-          <button
-            className={`start-button ${!allReady ? 'disabled' : ''}`}
+          <RuneButton
             onClick={onStartGame}
             disabled={!allReady}
           >
-            {allReady ? 'Start Game' : 'Waiting for all players...'}
-          </button>
+            {allReady ? 'Begin the Quest' : 'Waiting for all players...'}
+          </RuneButton>
         ) : (
           <div className="waiting-host-message">
             Waiting for host to start the game...

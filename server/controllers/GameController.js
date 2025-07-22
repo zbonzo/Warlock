@@ -22,7 +22,7 @@ const { throwGameStateError } = require('@utils/errorHandler');
  * @param {string} playerName - Name of the creating player
  * @returns {boolean} Success status
  */
-function handleCreateGame(io, socket, playerName) {
+function handleGameCreate(io, socket, playerName) {
   // Validate player name
 
   if (!validatePlayerNameSocket(socket, playerName)) {
@@ -66,7 +66,7 @@ function handleCreateGame(io, socket, playerName) {
  * @param {string} playerName - Player name to validate
  * @returns {boolean} Success status
  */
-function handleCheckNameAvailability(io, socket, gameCode, playerName) {
+function handleGameCheckName(io, socket, gameCode, playerName) {
   try {
     // Check if game exists first, without throwing errors
     const game = gameService.games.get(gameCode);
@@ -119,7 +119,7 @@ function handleCheckNameAvailability(io, socket, gameCode, playerName) {
  * @param {string} gameCode - Game code
  * @returns {boolean} Success status
  */
-function handleStartGame(io, socket, gameCode) {
+function handleGameStart(io, socket, gameCode) {
   // Use the combined validation to reduce redundancy
   const game = validateGameAction(socket, gameCode, false, true);
 
@@ -220,7 +220,7 @@ function handleStartGame(io, socket, gameCode) {
  * @param {Object} options - Additional options
  * @returns {boolean} Success status
  */
-function handlePerformAction(
+function handleGameAction(
   io,
   socket,
   gameCode,
@@ -440,7 +440,7 @@ function handlePerformAction(
  * @param {string} abilityType - Type of racial ability
  * @returns {boolean} Success status
  */
-function handleRacialAbility(io, socket, gameCode, targetId, abilityType) {
+function handleGameRacialAbility(io, socket, gameCode, targetId, abilityType) {
   // Use the combined validation
   const game = validateGameAction(socket, gameCode, true, false);
 
@@ -570,7 +570,7 @@ function handleRacialAbility(io, socket, gameCode, targetId, abilityType) {
  * @param {string} newClassName - Class to take ability from
  * @returns {boolean} Success status
  */
-function handleAdaptabilityReplace(
+function handleGameAdaptabilityReplace(
   io,
   socket,
   gameCode,
@@ -697,7 +697,7 @@ function handleAdaptabilityReplace(
  * @param {number} level - Ability level to fetch
  * @returns {boolean} Success status
  */
-function handleGetClassAbilities(io, socket, gameCode, className, level) {
+function handleGameGetAbilities(io, socket, gameCode, className, level) {
   // Validation
   const game = validateGameAction(socket, gameCode, true, false);
   gameService.refreshGameTimeout(io, gameCode);
@@ -760,7 +760,7 @@ function handleGetClassAbilities(io, socket, gameCode, className, level) {
  * @param {string} gameCode - Game code
  * @returns {boolean} Success status
  */
-function handlePlayerNextReady(io, socket, gameCode) {
+function handleGamePlayerReady(io, socket, gameCode) {
   logger.info(
     messages.formatMessage(
       messages.serverLogMessages.info.PlayerReadyNextRound,
@@ -843,7 +843,7 @@ function handlePlayerNextReady(io, socket, gameCode) {
  * @param {string} playerName - Player's display name
  * @returns {boolean} Success status
  */
-function handlePlayAgain(io, socket, gameCode, playerName) {
+function handleGamePlayAgain(io, socket, gameCode, playerName) {
   try {
     // Validate inputs
     if (!gameCode || !playerName) {
@@ -983,13 +983,13 @@ function handlePlayAgain(io, socket, gameCode, playerName) {
 }
 
 module.exports = {
-  handleCreateGame,
-  handleStartGame,
-  handleCheckNameAvailability,
-  handlePerformAction,
-  handleRacialAbility,
-  handlePlayerNextReady,
-  handleGetClassAbilities,
-  handleAdaptabilityReplace,
-  handlePlayAgain,
+  handleGameCreate,
+  handleGameStart,
+  handleGameCheckName,
+  handleGameAction,
+  handleGameRacialAbility,
+  handleGamePlayerReady,
+  handleGameGetAbilities,
+  handleGameAdaptabilityReplace,
+  handleGamePlayAgain,
 };

@@ -21,8 +21,8 @@ const ReconnectionToggle = ({ className = '' }) => {
   };
 
   return (
-    <div className={`reconnection-toggle ${className}`}>
-      <label className="toggle-label">
+    <div className={`reconnection-toggle flex-center-column ${className}`}>
+      <label className="toggle-label flex items-center">
         <input
           type="checkbox"
           checked={isEnabled}

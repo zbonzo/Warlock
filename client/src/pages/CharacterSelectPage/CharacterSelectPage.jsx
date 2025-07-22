@@ -8,6 +8,7 @@ import { useTheme } from '@contexts/ThemeContext';
 import { useConfig } from '@contexts/ConfigContext';
 import { ICONS } from '../../config/constants';
 import './CharacterSelectPage.css';
+import RuneButton from '../../components/ui/RuneButton';
 
 /**
  * RaceIcon component handles loading states and fallback for race images
@@ -147,7 +148,7 @@ const CharacterSelectPage = ({
         <div className="error-message">
           <h3>Error Loading Game Data</h3>
           <p>{error}</p>
-          <button onClick={() => window.location.reload()}>Retry</button>
+          <RuneButton variant="danger" onClick={() => window.location.reload()}>Retry</RuneButton>
         </div>
       </div>
     );
@@ -253,7 +254,7 @@ const CharacterSelectPage = ({
 
   return (
     <div className="character-select-container">
-      <h1 className="game-code-title">Game Code: {gameCode}</h1>
+      <h1 className="game-code-title">Whisper the Code: {gameCode}</h1>
 
       <h2 className="welcome-title">Welcome, {playerName}!</h2>
 
@@ -324,13 +325,12 @@ const CharacterSelectPage = ({
       </div>
 
       <div className="confirm-container">
-        <button
-          className={`confirm-button ${!canConfirm ? 'disabled' : ''}`}
+        <RuneButton
           onClick={() => canConfirm && onConfirm(selectedRace, selectedClass)}
           disabled={!canConfirm}
         >
           Confirm Selection
-        </button>
+        </RuneButton>
       </div>
 
       {/* Visual indicator for compatibility */}

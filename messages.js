@@ -58,6 +58,8 @@ const errors = {
   serverBusy: 'Server is too busy right now. Please try again later.',
   unexpectedError: 'An unexpected error occurred. Please try again.',
   reconnectionFailed: 'Failed to reconnect to game.',
+  playerNotFoundForReconnection: 'Player not found for reconnection.',
+  reconnectionTimeoutExpired: 'Reconnection timeout expired.',
 
   // Rate limiting
   rateLimited: 'Too many requests. Please slow down.',

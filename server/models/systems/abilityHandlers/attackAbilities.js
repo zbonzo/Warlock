@@ -4,6 +4,7 @@
  */
 const config = require('@config');
 const messages = require('@messages');
+const GameStateUtils = require('../GameStateUtils');
 const {
   registerAbilitiesByCategory,
   registerAbilitiesByEffectAndTarget,
@@ -113,11 +114,7 @@ function handleAttack(
   coordinationInfo = {}
 ) {
   // If target is a player (not monster) and is invisible, attack should fail
-  if (
-    target !== config.MONSTER_ID &&
-    target.hasStatusEffect &&
-    systems.statusEffectSystem.hasEffect(target.id, 'invisible')
-  ) {
+  if (GameStateUtils.isTargetInvisible(target, systems)) {
     const attackFailMessage = messages.getAbilityMessage(
       'abilities.attacks',
       'attackInvisible'
@@ -251,31 +248,7 @@ function handlePoisonStrike(
   coordinationInfo = {}
 ) {
   // Check if target is invisible
-  if (
-    target !== config.MONSTER_ID &&
-    target.hasStatusEffect &&
-    systems.statusEffectSystem.hasEffect(target.id, 'invisible')
-  ) {
-    const invisibleMessage = messages.getAbilityMessage(
-      'abilities.attacks',
-      'attackInvisible'
-    );
-    const invisibleLog = {
-      type: 'attack_invisible',
-      public: false,
-      attackerId: actor.id,
-      targetId: target.id,
-      message: '',
-      privateMessage: messages.formatMessage(invisibleMessage, {
-        attackerName: actor.name,
-        targetName: target.name,
-      }),
-      attackerMessage: messages.formatMessage(invisibleMessage, {
-        attackerName: actor.name,
-        targetName: target.name,
-      }),
-    };
-    log.push(invisibleLog);
+  if (GameStateUtils.checkInvisibilityAndLog(actor, target, systems, log)) {
     return false;
   }
 
@@ -568,31 +541,7 @@ function handleMultiHitAttack(
   coordinationInfo = {}
 ) {
   // If target is invisible, attack fails
-  if (
-    target !== config.MONSTER_ID &&
-    target.hasStatusEffect &&
-    systems.statusEffectSystem.hasEffect(target.id, 'invisible')
-  ) {
-    const invisibleMessage = messages.getAbilityMessage(
-      'abilities.attacks',
-      'attackInvisible'
-    );
-    const invisibleLog = {
-      type: 'attack_invisible',
-      public: false,
-      attackerId: actor.id,
-      targetId: target.id,
-      message: '',
-      privateMessage: messages.formatMessage(invisibleMessage, {
-        attackerName: actor.name,
-        targetName: target.name,
-      }),
-      attackerMessage: messages.formatMessage(invisibleMessage, {
-        attackerName: actor.name,
-        targetName: target.name,
-      }),
-    };
-    log.push(invisibleLog);
+  if (GameStateUtils.checkInvisibilityAndLog(actor, target, systems, log)) {
     return false;
   }
 
@@ -811,11 +760,7 @@ function handleRecklessStrike(
   coordinationInfo = {}
 ) {
   // Check if target is invisible first
-  if (
-    target !== config.MONSTER_ID &&
-    target.hasStatusEffect &&
-    systems.statusEffectSystem.hasEffect(target.id, 'invisible')
-  ) {
+  if (GameStateUtils.isTargetInvisible(target, systems)) {
     const invisibleMessage = messages.getAbilityMessage(
       'abilities.attacks',
       'attackInvisible'
@@ -927,11 +872,7 @@ function handleAttackWithDetection(
   additionalEffectHandler = null
 ) {
   // Check if target is invisible
-  if (
-    target !== config.MONSTER_ID &&
-    target.hasStatusEffect &&
-    systems.statusEffectSystem.hasEffect(target.id, 'invisible')
-  ) {
+  if (GameStateUtils.isTargetInvisible(target, systems)) {
     const invisibleMessage = messages.getAbilityMessage(
       'abilities.attacks',
       'attackInvisible'

@@ -51,7 +51,7 @@ class ErrorBoundary extends React.Component {
     // If there's an error, show the fallback UI
     if (this.state.hasError) {
       return (
-        <div className="error-boundary">
+        <div className="error-boundary full-screen-center">
           <div className="error-container">
             <h1 className="error-title">Oops! Something went wrong</h1>
             <p className="error-message">

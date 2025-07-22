@@ -15,7 +15,7 @@ import './LoadingScreen.css';
  */
 const LoadingScreen = ({ message }) => {
   return (
-    <div className="loading-screen">
+    <div className="loading-screen full-screen-center">
       <div className="loading-spinner"></div>
       <p className="loading-message">{message}</p>
     </div>

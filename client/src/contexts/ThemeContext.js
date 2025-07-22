@@ -71,37 +71,6 @@ const themes = {
     borderRadius: '8px',
   },
 
-  colorblind: {
-    colors: {
-      primary: '#0066cc', // Blue instead of purple
-      secondary: '#ff8800', // Orange (colorblind-friendly)
-      accent: '#00aa44', // Green (colorblind-friendly)
-      danger: 'color: var(--color-danger)', // Red (colorblind-friendly)
-      neutral: '#f5f5f5', // Light background
-      dark: '#333333', // Dark text
-      monster: '#990000', // Dark red for monster
-      warlock: '#004499', // Dark blue for warlocks
-      background: '#ffffff', // Main background
-      surface: '#ffffff', // Card/surface background
-      border: '#e0e0e0', // Border color
-      text: '#333333', // Primary text
-      textMuted: '#666666', // Secondary text
-    },
-    fonts: {
-      heading: "'Cinzel', serif",
-      body: "'Source Sans Pro', sans-serif",
-    },
-    shadows: {
-      card: '0 4px 8px rgba(0,0,0,0.2)',
-      button: '0 2px 4px rgba(0,0,0,0.2)',
-    },
-    spacing: {
-      small: '8px',
-      medium: '16px',
-      large: '24px',
-    },
-    borderRadius: '8px',
-  },
 };
 
 // Create context
@@ -215,7 +184,6 @@ export const ThemeProvider = ({ children }) => {
     // Utility functions
     isDark: currentTheme === 'dark',
     isLight: currentTheme === 'light',
-    isColorblind: currentTheme === 'colorblind',
   };
 
   return (

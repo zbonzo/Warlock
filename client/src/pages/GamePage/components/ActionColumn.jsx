@@ -9,6 +9,8 @@ import RacialAbilityCard from '@components/game/RacialAbilityCard';
 import TargetSelector from '@components/game/TargetSelector';
 import EventsLog from '@components/game/EventsLog';
 import { ICONS } from '../../../config/constants';
+import { getActionButtonText, getActionButtonVariant } from '../../../utils/actionButtonText';
+import RuneButton from '../../../components/ui/RuneButton';
 import './ActionColumn.css';
 // Import mobile ability card CSS for unified styling
 import './MobileActionWizard/AbilitySelectionStep.css';
@@ -606,26 +608,26 @@ const ActionColumn = ({
                   selectedAbility={unlocked.find((ability) => ability.type === actionType)}
                 />
 
-                {/* Enhanced submit button with mobile-style submission state */}
-                <button
-                  className={`button action-button ${isSubmitting ? 'submitting' : ''}`}
+                {/* Enhanced submit button with dynamic atmospheric text */}
+                <RuneButton
+                  variant={getActionButtonVariant(actionType, submitted)}
                   onClick={handleSubmitAction}
                   disabled={!isCurrentSelectionValid() || isSubmitting}
                   title={
                     isSubmitting
-                      ? 'Submitting your action...'
+                      ? 'Casting your spell...'
                       : !isCurrentSelectionValid()
                       ? 'Please select a valid ability (not on cooldown) and target'
-                      : 'Submit your action'
+                      : 'Cast your chosen ability'
                   }
                 >
                   {isSubmitting 
-                    ? 'Submitting...' 
+                    ? 'Casting...' 
                     : needsRevalidation() 
                     ? 'Update Action' 
-                    : 'Submit Action'
+                    : getActionButtonText(actionType, submitted, isSubmitting)
                   }
-                </button>
+                </RuneButton>
               </div>
             )}
         </div>

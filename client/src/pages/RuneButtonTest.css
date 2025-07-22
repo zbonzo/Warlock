@@ -1,0 +1,145 @@
+.rune-test-container {
+  min-height: 100vh;
+  padding: 2rem;
+  background: #111;
+  color: var(--color-text);
+}
+
+.rune-test-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 3rem;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid var(--color-border);
+}
+
+.rune-test-header h1 {
+  font-family: var(--font-heading);
+  color: var(--color-primary);
+  font-size: 2.5rem;
+  margin: 0;
+}
+
+.rune-test-content {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.button-section {
+  margin-bottom: 3rem;
+}
+
+.button-section h2 {
+  font-family: var(--font-heading);
+  color: var(--color-primary);
+  margin-bottom: 1.5rem;
+  font-size: 1.8rem;
+}
+
+.button-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 2rem;
+  margin-bottom: 2rem;
+}
+
+.font-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 2rem;
+  margin-bottom: 3rem;
+}
+
+.font-demo {
+  text-align: center;
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.font-demo h3 {
+  margin-bottom: 1rem;
+  color: #8f5df4;
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  opacity: 0.8;
+}
+
+.comparison-section {
+  margin-top: 4rem;
+  padding-top: 2rem;
+  border-top: 2px solid var(--color-border);
+}
+
+.comparison-section h2 {
+  font-family: var(--font-heading);
+  color: var(--color-primary);
+  margin-bottom: 2rem;
+  text-align: center;
+}
+
+.comparison-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 3rem;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.comparison-item {
+  text-align: center;
+}
+
+.comparison-item h3 {
+  margin-bottom: 1rem;
+  color: var(--color-text-muted);
+}
+
+.standard-button {
+  font-family: var(--font-body);
+  font-size: 1rem;
+  padding: 0.75rem 1.5rem;
+  background: var(--color-primary);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-width: 150px;
+}
+
+.standard-button:hover {
+  background: var(--color-secondary);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.standard-button:active {
+  transform: translateY(0);
+}
+
+@media (max-width: 768px) {
+  .rune-test-container {
+    padding: 1rem;
+  }
+  
+  .rune-test-header {
+    flex-direction: column;
+    gap: 1rem;
+    text-align: center;
+  }
+  
+  .button-grid {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+  
+  .comparison-grid {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+  }
+}

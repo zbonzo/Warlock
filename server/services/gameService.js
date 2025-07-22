@@ -4,6 +4,7 @@
  */
 const { GameRoom } = require('@models/GameRoom');
 const config = require('@config');
+const messages = require('@messages');
 const {
   throwGameStateError,
   throwValidationError,
@@ -62,7 +63,7 @@ function createGame(gameCode) {
   if (games.size >= maxGames) {
     // Prevent server overload
     throwGameStateError(
-      'Server is too busy right now. Please try again later.'
+      messages.getError('serverBusy')
     );
     return null;
   }
@@ -100,7 +101,7 @@ function canPlayerJoinGame(game, playerId) {
 
   // Check if player is already in this game
   if (game.players.has(playerId)) {
-    throwValidationError('You are already in this game.');
+    throwValidationError(messages.getError('playerExists'));
     return false;
   }
 

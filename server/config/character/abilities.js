@@ -33,7 +33,11 @@ const abilities = {
     order: 1000,
     cooldown: 0,
     flavorText: 'A swift and decisive blow, honed by countless battles.',
-    tags: ['basic', 'melee', 'physical']
+    tags: ['basic', 'melee', 'physical'],
+    buttonText: {
+      ready: 'Draw Blade',
+      submitted: 'Strike Ready'
+    }
   },
 
   fireball: {
@@ -46,7 +50,11 @@ const abilities = {
     order: 1010,
     cooldown: 0,
     flavorText: 'Conjure a sphere of condensed flame that burns long after impact.',
-    tags: ['magic', 'fire', 'dot']
+    tags: ['magic', 'fire', 'dot'],
+    buttonText: {
+      ready: 'Ignite Flame',
+      submitted: 'Fire Burning'
+    }
   },
 
   magicMissile: {
@@ -59,7 +67,11 @@ const abilities = {
     order: 1030,
     cooldown: 0,
     flavorText: 'Unleash bolts of pure arcane force that never miss their mark.',
-    tags: ['magic', 'arcane', 'reliable']
+    tags: ['magic', 'arcane', 'reliable'],
+    buttonText: {
+      ready: 'Focus Arcane',
+      submitted: 'Magic Charged'
+    }
   },
 
   backstab: {
@@ -72,7 +84,11 @@ const abilities = {
     order: 900,
     cooldown: 0,
     flavorText: 'Strike from the shadows with surgical precision.',
-    tags: ['melee', 'stealth', 'critical']
+    tags: ['melee', 'stealth', 'critical'],
+    buttonText: {
+      ready: 'Find Opening',
+      submitted: 'Shadow Strike'
+    }
   },
 
   poisonStrike: {
@@ -85,7 +101,11 @@ const abilities = {
     order: 1015,
     cooldown: 0,
     flavorText: 'Blade kissed by venom, promising a slow demise.',
-    tags: ['melee', 'poison', 'dot']
+    tags: ['melee', 'poison', 'dot'],
+    buttonText: {
+      ready: 'Coat Blade',
+      submitted: 'Venom Ready'
+    }
   },
 
   holyBolt: {
@@ -98,7 +118,11 @@ const abilities = {
     order: 1020,
     cooldown: 0,
     flavorText: 'Divine light given form, burning away corruption.',
-    tags: ['magic', 'holy', 'light']
+    tags: ['magic', 'holy', 'light'],
+    buttonText: {
+      ready: 'Channel Divine',
+      submitted: 'Light Focused'
+    }
   },
 
   psychicBolt: {
@@ -111,7 +135,11 @@ const abilities = {
     order: 1025,
     cooldown: 0,
     flavorText: 'Strike directly at the mind, bypassing physical defenses.',
-    tags: ['magic', 'psychic', 'mental']
+    tags: ['magic', 'psychic', 'mental'],
+    buttonText: {
+      ready: 'Focus Mind',
+      submitted: 'Psychic Locked'
+    }
   },
 
   recklessStrike: {
@@ -124,7 +152,11 @@ const abilities = {
     order: 1040,
     cooldown: 0,
     flavorText: 'Abandon defense for devastating offense.',
-    tags: ['melee', 'berserker', 'risky']
+    tags: ['melee', 'berserker', 'risky'],
+    buttonText: {
+      ready: 'Abandon Defense',
+      submitted: 'All Out Attack'
+    }
   },
 
   lightningBolt: {
@@ -137,7 +169,11 @@ const abilities = {
     order: 1035,
     cooldown: 0,
     flavorText: 'Call down the fury of the storm.',
-    tags: ['magic', 'lightning', 'nature']
+    tags: ['magic', 'lightning', 'nature'],
+    buttonText: {
+      ready: 'Call Lightning',
+      submitted: 'Storm Bound'
+    }
   },
 
   pistolShot: {
@@ -150,7 +186,11 @@ const abilities = {
     order: 950,
     cooldown: 0,
     flavorText: 'Quick draw, quicker death.',
-    tags: ['ranged', 'physical', 'gunslinger']
+    tags: ['ranged', 'physical', 'gunslinger'],
+    buttonText: {
+      ready: 'Take Aim',
+      submitted: 'Locked and Loaded'
+    }
   },
 
   preciseShot: {
@@ -163,7 +203,11 @@ const abilities = {
     order: 990,
     cooldown: 0,
     flavorText: 'One arrow, one kill.',
-    tags: ['ranged', 'physical', 'precision']
+    tags: ['ranged', 'physical', 'precision'],
+    buttonText: {
+      ready: 'Take Careful Aim',
+      submitted: 'Shot Lined Up'
+    }
   },
 
   clawSwipe: {
@@ -176,7 +220,11 @@ const abilities = {
     order: 980,
     cooldown: 0,
     flavorText: 'Nature\'s fury channeled through sharpened claws.',
-    tags: ['melee', 'nature', 'primal']
+    tags: ['melee', 'nature', 'primal'],
+    buttonText: {
+      ready: 'Bare Claws',
+      submitted: 'Primal Fury'
+    }
   },
 
   // Advanced Attacks
@@ -190,7 +238,11 @@ const abilities = {
     order: 1500,
     cooldown: 3,
     flavorText: 'Channel the heart of a volcano into a single, devastating blast.',
-    tags: ['magic', 'fire', 'ultimate']
+    tags: ['magic', 'fire', 'ultimate'],
+    buttonText: {
+      ready: 'Summon Inferno',
+      submitted: 'Volcano Erupts'
+    }
   },
 
   arcaneBarrage: {
@@ -203,7 +255,11 @@ const abilities = {
     order: 1100,
     cooldown: 2,
     flavorText: 'Overwhelm your foe with rapid-fire arcane projectiles.',
-    tags: ['magic', 'arcane', 'multi-hit']
+    tags: ['magic', 'arcane', 'multi-hit'],
+    buttonText: {
+      ready: 'Weave Barrage',
+      submitted: 'Magic Torrents'
+    }
   },
 
   twinStrike: {
@@ -216,7 +272,11 @@ const abilities = {
     order: 1050,
     cooldown: 1,
     flavorText: 'Two blades moving as one, impossible to defend against.',
-    tags: ['melee', 'multi-hit', 'agile']
+    tags: ['melee', 'multi-hit', 'agile'],
+    buttonText: {
+      ready: 'Dual Wield',
+      submitted: 'Blades Dance'
+    }
   },
 
   shiv: {
@@ -229,7 +289,11 @@ const abilities = {
     order: 920,
     cooldown: 2,
     flavorText: 'A quick stab that leaves lasting wounds.',
-    tags: ['melee', 'bleed', 'dot']
+    tags: ['melee', 'bleed', 'dot'],
+    buttonText: {
+      ready: 'Quick Stab',
+      submitted: 'Blade Strikes'
+    }
   },
 
   aimedShot: {
@@ -242,7 +306,11 @@ const abilities = {
     order: 1200,
     cooldown: 3,
     flavorText: 'Target weak points to maximize future damage.',
-    tags: ['ranged', 'precision', 'debuff']
+    tags: ['ranged', 'precision', 'debuff'],
+    buttonText: {
+      ready: 'Mark Weakness',
+      submitted: 'Targeting Set'
+    }
   },
 
   barbedArrow: {
@@ -255,7 +323,11 @@ const abilities = {
     order: 1060,
     cooldown: 2,
     flavorText: 'Arrows designed to tear on the way out.',
-    tags: ['ranged', 'bleed', 'cruel']
+    tags: ['ranged', 'bleed', 'cruel'],
+    buttonText: {
+      ready: 'Nock Arrow',
+      submitted: 'Bowstring Taut'
+    }
   },
 
   // AOE Attacks
@@ -269,7 +341,11 @@ const abilities = {
     order: 1400,
     cooldown: 4,
     flavorText: 'Engulf all enemies in a conflagration of magical fire.',
-    tags: ['magic', 'fire', 'aoe']
+    tags: ['magic', 'fire', 'aoe'],
+    buttonText: {
+      ready: 'Unleash Inferno',
+      submitted: 'Flames Spread'
+    }
   },
 
   meteorShower: {
@@ -282,7 +358,11 @@ const abilities = {
     order: 1600,
     cooldown: 5,
     flavorText: 'Call down celestial destruction upon your enemies.',
-    tags: ['magic', 'arcane', 'aoe', 'ultimate']
+    tags: ['magic', 'arcane', 'aoe', 'ultimate'],
+    buttonText: {
+      ready: 'Call Stars',
+      submitted: 'Meteors Fall'
+    }
   },
 
   deathMark: {
@@ -295,7 +375,11 @@ const abilities = {
     order: 1300,
     cooldown: 5,
     flavorText: 'Mark enemies for death. The weak shall perish.',
-    tags: ['assassination', 'execute', 'aoe']
+    tags: ['assassination', 'execute', 'aoe'],
+    buttonText: {
+      ready: 'Mark for Death',
+      submitted: 'Doom Sealed'
+    }
   },
 
   chainLightning: {
@@ -308,7 +392,11 @@ const abilities = {
     order: 1350,
     cooldown: 4,
     flavorText: 'Lightning arcs between foes with deadly precision.',
-    tags: ['magic', 'lightning', 'aoe']
+    tags: ['magic', 'lightning', 'aoe'],
+    buttonText: {
+      ready: 'Chain Storm',
+      submitted: 'Lightning Arcs'
+    }
   },
 
   ricochetRound: {
@@ -321,7 +409,11 @@ const abilities = {
     order: 1150,
     cooldown: 3,
     flavorText: 'One bullet, multiple targets. Geometry is deadly.',
-    tags: ['ranged', 'gunslinger', 'clever']
+    tags: ['ranged', 'gunslinger', 'clever'],
+    buttonText: {
+      ready: 'Angle Shot',
+      submitted: 'Trajectory Set'
+    }
   },
 
   sweepingStrike: {
@@ -334,7 +426,11 @@ const abilities = {
     order: 1250,
     cooldown: 4,
     flavorText: 'A wide arc that devastates multiple foes.',
-    tags: ['melee', 'aoe', 'control']
+    tags: ['melee', 'aoe', 'control'],
+    buttonText: {
+      ready: 'Wide Arc',
+      submitted: 'Sweeping Blow'
+    }
   },
 
   // ========== DEFENSE ABILITIES ==========
@@ -349,7 +445,11 @@ const abilities = {
     order: 10,
     cooldown: 0,
     flavorText: 'Brace for impact, becoming an unmovable bastion for your allies.',
-    tags: ['physical', 'armor', 'tank']
+    tags: ['physical', 'armor', 'tank'],
+    buttonText: {
+      ready: 'Raise Guard',
+      submitted: 'Shield Wall'
+    }
   },
 
   arcaneShield: {
@@ -362,7 +462,11 @@ const abilities = {
     order: 15,
     cooldown: 1,
     flavorText: 'Weave raw magic into a protective barrier.',
-    tags: ['magic', 'armor', 'sustained']
+    tags: ['magic', 'armor', 'sustained'],
+    buttonText: {
+      ready: 'Weave Protection',
+      submitted: 'Barrier Cast'
+    }
   },
 
   shadowVeil: {
@@ -375,7 +479,11 @@ const abilities = {
     order: 5,
     cooldown: 3,
     flavorText: 'Become one with the shadows, unseen and untouchable.',
-    tags: ['stealth', 'evasion', 'shadow']
+    tags: ['stealth', 'evasion', 'shadow'],
+    buttonText: {
+      ready: 'Embrace Darkness',
+      submitted: 'Shadows Dance'
+    }
   },
 
   smokeBomb: {
@@ -388,7 +496,11 @@ const abilities = {
     order: 20,
     cooldown: 2,
     flavorText: 'Vanish in a cloud of alchemical smoke.',
-    tags: ['stealth', 'escape', 'alchemy']
+    tags: ['stealth', 'escape', 'alchemy'],
+    buttonText: {
+      ready: 'Ready Reflexes',
+      submitted: 'Poised to Evade'
+    }
   },
 
   divineShield: {
@@ -401,7 +513,11 @@ const abilities = {
     order: 25,
     cooldown: 4,
     flavorText: 'Grant divine protection to those who need it most.',
-    tags: ['holy', 'protection', 'support']
+    tags: ['holy', 'protection', 'support'],
+    buttonText: {
+      ready: 'Blessed Ward',
+      submitted: 'Divine Grace'
+    }
   },
 
   spiritGuard: {
@@ -414,7 +530,11 @@ const abilities = {
     order: 30,
     cooldown: 3,
     flavorText: 'Ancestral spirits protect you from harm.',
-    tags: ['spiritual', 'damage-reduction', 'oracle']
+    tags: ['spiritual', 'damage-reduction', 'oracle'],
+    buttonText: {
+      ready: 'Summon Spirits',
+      submitted: 'Guardians Watch'
+    }
   },
 
   totemShield: {
@@ -427,7 +547,11 @@ const abilities = {
     order: 35,
     cooldown: 2,
     flavorText: 'Protective totems ward off incoming attacks.',
-    tags: ['nature', 'totem', 'shaman']
+    tags: ['nature', 'totem', 'shaman'],
+    buttonText: {
+      ready: 'Plant Totems',
+      submitted: 'Wards Active'
+    }
   },
 
   smokeScreen: {
@@ -440,7 +564,11 @@ const abilities = {
     order: 40,
     cooldown: 3,
     flavorText: 'Cover an ally\'s escape with a wall of smoke.',
-    tags: ['tactical', 'support', 'gunslinger']
+    tags: ['tactical', 'support', 'gunslinger'],
+    buttonText: {
+      ready: 'Create Cover',
+      submitted: 'Smoke Deployed'
+    }
   },
 
   camouflage: {
@@ -453,7 +581,11 @@ const abilities = {
     order: 45,
     cooldown: 4,
     flavorText: 'Blend perfectly with your surroundings.',
-    tags: ['nature', 'stealth', 'hunter']
+    tags: ['nature', 'stealth', 'hunter'],
+    buttonText: {
+      ready: 'Fade to Shadow',
+      submitted: 'Vanished'
+    }
   },
 
   barkskin: {
@@ -466,7 +598,11 @@ const abilities = {
     order: 50,
     cooldown: 2,
     flavorText: 'Your skin becomes as tough as ancient bark.',
-    tags: ['nature', 'druid', 'sustained']
+    tags: ['nature', 'druid', 'sustained'],
+    buttonText: {
+      ready: 'Harden Skin',
+      submitted: 'Bark Armor'
+    }
   },
 
   // ========== HEAL ABILITIES ==========
@@ -481,7 +617,11 @@ const abilities = {
     order: 10000,
     cooldown: 2,
     flavorText: 'A moment of respite to tend to wounds and fight on.',
-    tags: ['physical', 'self-care', 'basic']
+    tags: ['physical', 'self-care', 'basic'],
+    buttonText: {
+      ready: 'Dress Wounds',
+      submitted: 'Bandaging'
+    }
   },
 
   cauterize: {
@@ -494,7 +634,11 @@ const abilities = {
     order: 10100,
     cooldown: 2,
     flavorText: 'Burn wounds closed with searing flame. Painful but effective.',
-    tags: ['fire', 'emergency', 'pyromancer']
+    tags: ['fire', 'emergency', 'pyromancer'],
+    buttonText: {
+      ready: 'Sear Wounds',
+      submitted: 'Flame Heals'
+    }
   },
 
   swiftMend: {
@@ -507,7 +651,11 @@ const abilities = {
     order: 10200,
     cooldown: 1,
     flavorText: 'Channel holy light to rapidly close wounds.',
-    tags: ['holy', 'quick', 'efficient']
+    tags: ['holy', 'quick', 'efficient'],
+    buttonText: {
+      ready: 'Quick Mend',
+      submitted: 'Light Flows'
+    }
   },
 
   heal: {
@@ -520,7 +668,11 @@ const abilities = {
     order: 10300,
     cooldown: 2,
     flavorText: 'Restore an ally with divine grace.',
-    tags: ['holy', 'powerful', 'priest']
+    tags: ['holy', 'powerful', 'priest'],
+    buttonText: {
+      ready: 'Channel Light',
+      submitted: 'Healing Flow'
+    }
   },
 
   ancestralHeal: {
@@ -533,7 +685,11 @@ const abilities = {
     order: 10400,
     cooldown: 3,
     flavorText: 'Call upon ancestral spirits to mend wounds over time.',
-    tags: ['spiritual', 'hot', 'shaman']
+    tags: ['spiritual', 'hot', 'shaman'],
+    buttonText: {
+      ready: 'Commune Spirits',
+      submitted: 'Ancestors Guide'
+    }
   },
 
   rejuvenation: {
@@ -546,7 +702,11 @@ const abilities = {
     order: 10500,
     cooldown: 2,
     flavorText: 'Nature\'s blessing slowly restores vitality.',
-    tags: ['nature', 'hot', 'druid']
+    tags: ['nature', 'hot', 'druid'],
+    buttonText: {
+      ready: 'Nature\'s Touch',
+      submitted: 'Life Renewed'
+    }
   },
 
   // ========== SPECIAL ABILITIES ==========
@@ -561,7 +721,11 @@ const abilities = {
     order: 50,
     cooldown: 3,
     flavorText: 'A deafening roar that steels the resolve of your comrades.',
-    tags: ['leadership', 'aoe-buff', 'warrior']
+    tags: ['leadership', 'aoe-buff', 'warrior'],
+    buttonText: {
+      ready: 'Rally Allies',
+      submitted: 'War Cry'
+    }
   },
 
   poisonTrap: {
@@ -574,7 +738,11 @@ const abilities = {
     order: 200,
     cooldown: 3,
     flavorText: 'Set a hidden trap that poisons attackers.',
-    tags: ['trap', 'poison', 'defensive']
+    tags: ['trap', 'poison', 'defensive'],
+    buttonText: {
+      ready: 'Set Trap',
+      submitted: 'Trap Armed'
+    }
   },
 
   fatesEye: {
@@ -587,7 +755,11 @@ const abilities = {
     order: 100,
     cooldown: 4,
     flavorText: 'Pierce the veil and reveal hidden truths.',
-    tags: ['divination', 'anti-warlock', 'oracle']
+    tags: ['divination', 'anti-warlock', 'oracle'],
+    buttonText: {
+      ready: 'Peer Beyond',
+      submitted: 'Visions Clear'
+    }
   },
 
   sanctuaryOfTruth: {
@@ -600,7 +772,11 @@ const abilities = {
     order: 300,
     cooldown: 5,
     flavorText: 'Create a sacred space where violence is diminished.',
-    tags: ['holy', 'aoe-buff', 'ultimate']
+    tags: ['holy', 'aoe-buff', 'ultimate'],
+    buttonText: {
+      ready: 'Consecrate Ground',
+      submitted: 'Sanctuary Blessed'
+    }
   },
 
   relentlessFury: {
@@ -626,7 +802,11 @@ const abilities = {
     order: 150,
     cooldown: 0,
     flavorText: 'Your weapon thirsts for blood and rewards you with vitality.',
-    tags: ['lifesteal', 'sustained', 'barbarian']
+    tags: ['lifesteal', 'sustained', 'barbarian'],
+    buttonText: {
+      ready: 'Blood Pact',
+      submitted: 'Blade Hungers'
+    }
   },
 
   controlMonster: {
@@ -639,7 +819,11 @@ const abilities = {
     order: 250,
     cooldown: 6,
     flavorText: 'Bend the beast\'s will to your own, if only briefly.',
-    tags: ['control', 'monster', 'druid']
+    tags: ['control', 'monster', 'druid'],
+    buttonText: {
+      ready: 'Tame Beast',
+      submitted: 'Will Bent'
+    }
   },
 
   entangle: {
@@ -652,7 +836,11 @@ const abilities = {
     order: 400,
     cooldown: 5,
     flavorText: 'Roots burst from the earth to bind your enemies.',
-    tags: ['nature', 'control', 'aoe']
+    tags: ['nature', 'control', 'aoe'],
+    buttonText: {
+      ready: 'Call the Wild',
+      submitted: 'Nature Awakened'
+    }
   },
 
   // ========== UNUSED/SPECIAL ACCESS ABILITIES ==========
@@ -784,11 +972,22 @@ function getAllAbilityIds() {
   return Object.keys(abilities);
 }
 
+/**
+ * Get button text for an ability
+ * @param {string} abilityId - The ability ID
+ * @returns {Object|null} Button text object with ready/submitted properties, or null if not found
+ */
+function getAbilityButtonText(abilityId) {
+  const ability = getAbility(abilityId);
+  return ability?.buttonText || null;
+}
+
 module.exports = {
   abilities,
   getAbility,
   getAbilities,
   getAbilitiesByTag,
   getAbilitiesByCategory,
-  getAllAbilityIds
+  getAllAbilityIds,
+  getAbilityButtonText
 };

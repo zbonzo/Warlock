@@ -10,6 +10,7 @@ import PlayerGroup from './components/PlayerGroup';
 import StatsPanel from './components/StatsPanel';
 import HistoryColumn from '@pages/GamePage/components/HistoryColumn';
 import './EndPage.css';
+import RuneButton from '../../components/ui/RuneButton';
 
 /**
  * EndPage component displays the game results after a game has ended
@@ -147,12 +148,12 @@ const EndPage = ({
 
         {/* Game History Toggle */}
         <div className="history-toggle-container">
-          <button
-            className="history-toggle-button"
+          <RuneButton
+            variant="secondary"
             onClick={() => setShowHistory(!showHistory)}
           >
-            {showHistory ? 'Hide' : 'Show'} Complete Game History
-          </button>
+            {showHistory ? 'Seal the Chronicle' : 'Unveil the Chronicle'}
+          </RuneButton>
         </div>
 
         {/* Complete Game History */}
@@ -168,9 +169,9 @@ const EndPage = ({
           </div>
         )}
 
-        <button onClick={handlePlayAgain} className="play-again-button">
-          Play Again (Game Code: {gameCode})
-        </button>
+        <RuneButton onClick={handlePlayAgain}>
+          Awaken a New Circle ({gameCode})
+        </RuneButton>
       </div>
     </div>
   );

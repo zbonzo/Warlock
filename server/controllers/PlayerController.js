@@ -59,7 +59,7 @@ function handlePlayerJoin(io, socket, gameCode, playerName) {
  * @param {string} className - Selected class
  * @returns {boolean} Success status
  */
-function handleSelectCharacter(io, socket, gameCode, race, className) {
+function handlePlayerSelectCharacter(io, socket, gameCode, race, className) {
   // Use consolidated validation
   const game = validateGameAction(socket, gameCode, false, false);
 
@@ -353,7 +353,7 @@ function handlePlayerReconnection(io, socket, gameCode, playerName) {
 
     if (disconnectedPlayerIndex === -1) {
       socket.emit('errorMessage', { 
-        message: messages.getError('playerNotFoundForReconnection') || 'Player not found for reconnection.'
+        message: messages.getError('playerNotFoundForReconnection')
       });
       return false;
     }
@@ -366,7 +366,7 @@ function handlePlayerReconnection(io, socket, gameCode, playerName) {
       // Remove from disconnected players
       game.disconnectedPlayers.splice(disconnectedPlayerIndex, 1);
       socket.emit('errorMessage', { 
-        message: messages.getError('reconnectionTimeoutExpired') || 'Reconnection timeout expired.'
+        message: messages.getError('reconnectionTimeoutExpired')
       });
       return false;
     }
@@ -446,7 +446,7 @@ function handlePlayerReconnection(io, socket, gameCode, playerName) {
     });
     
     socket.emit('errorMessage', {
-      message: messages.getError('reconnectionFailed') || 'Reconnection failed.'
+      message: messages.getError('reconnectionFailed')
     });
     return false;
   }
@@ -454,7 +454,7 @@ function handlePlayerReconnection(io, socket, gameCode, playerName) {
 
 module.exports = {
   handlePlayerJoin,
-  handleSelectCharacter,
+  handlePlayerSelectCharacter,
   handlePlayerDisconnect,
   handlePlayerReconnection,
 };

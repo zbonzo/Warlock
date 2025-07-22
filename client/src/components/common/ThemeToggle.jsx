@@ -29,13 +29,11 @@ const ThemeToggle = ({
   const themeIcons = {
     light: '☀️',
     dark: '🌙',
-    colorblind: '🎨',
   };
 
   const themeLabels = {
-    light: 'Light',
-    dark: 'Dark',
-    colorblind: 'Colorblind',
+    light: 'Return to daylight',
+    dark: 'Fade to shadow',
   };
 
   /**
