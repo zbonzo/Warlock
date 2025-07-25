@@ -7,10 +7,10 @@ import { useTheme } from '@contexts/ThemeContext';
 import { useAppContext } from '@contexts/AppContext';
 import GameDashboard from '@components/game/GameDashboard';
 import PlayerColumn from './components/PlayerColumn';
-import ActionColumn from './components/ActionColumn';
 import HistoryColumn from './components/HistoryColumn';
 import MobileNavigation from './components/MobileNavigation';
-import { MobileActionWizard } from './components/MobileActionWizard';
+import { ActionWizard } from './components/ActionWizard';
+import { GameStateDrawer } from './components/GameStateDrawer';
 import AdaptabilityModal from '@components/modals/AdaptabilityModal';
 import ReconnectionToggle from '../../components/ui/ReconnectionToggle';
 import reconnectionStorage from '../../utils/reconnectionStorage';
@@ -19,10 +19,9 @@ import DamageEffects from '@components/game/DamageEffects/DamageEffects';
 
 // Import custom hooks
 import {
-  useActionState,
   useRacialAbilities,
   useModalState,
-  useMobileState,
+  useActionWizard,
   useGameEvents,
   useCharacterUtils
 } from './hooks';
@@ -50,10 +49,9 @@ const GamePage = ({
   const [readyClicked, setReadyClicked] = useState(false);
 
   // Custom hooks for state management
-  const actionState = useActionState(me, players, monster);
   const racialAbilities = useRacialAbilities();
   const modalState = useModalState();
-  const mobileState = useMobileState(me);
+  const actionWizard = useActionWizard(me);
   const characterUtils = useCharacterUtils(me, players);
 
   // Derived values
@@ -66,15 +64,15 @@ const GamePage = ({
   useGameEvents(socket, {
     // Callbacks
     showBattleResultsModal: modalState.showBattleResultsModal,
-    resetActionState: actionState.resetActionState,
-    resetMobileWizard: mobileState.resetMobileWizard,
+    resetActionState: actionWizard.resetWizard,
+    resetMobileWizard: actionWizard.resetWizard,
     showAdaptabilityModalWithAbilities: modalState.showAdaptabilityModalWithAbilities,
     setPhase,
     setReadyClicked,
     
     // State
-    isMobile: mobileState.isMobile,
-    showMobileActionWizard: mobileState.showMobileActionWizard,
+    isMobile: actionWizard.isMobile,
+    showMobileActionWizard: actionWizard.isWizardOpen,
     me,
   });
 
@@ -83,25 +81,18 @@ const GamePage = ({
    */
   const handleSubmitAction = () => {
     // Validate selection
-    if (!actionState.isCurrentSelectionValid()) {
-      const issues = [];
-      if (!actionState.actionType) issues.push('No ability selected');
-      if (!actionState.selectedTarget) issues.push('No target selected');
-      
-      const selectedAbility = actionState.unlocked.find((a) => a.type === actionState.actionType);
-      if (!selectedAbility) issues.push('Selected ability not available');
-      
-      console.error('Action validation failed:', issues);
+    if (!actionWizard.selectedAbility || !actionWizard.selectedTarget) {
+      console.error('Action validation failed: Missing ability or target');
       return;
     }
 
-    const ability = actionState.unlocked.find((a) => a.type === actionState.actionType);
+    const ability = actionWizard.selectedAbility;
     const isBloodRageApplied = racialAbilities.bloodRageActive && ability?.category === 'Attack';
     const isKeenSensesApplied = racialAbilities.keenSensesActive && ability?.category === 'Attack';
 
     console.log('Submitting action:', {
-      type: actionState.actionType,
-      target: actionState.selectedTarget,
+      type: ability.type,
+      target: actionWizard.selectedTarget,
       bloodRage: isBloodRageApplied,
       keenSenses: isKeenSensesApplied,
     });
@@ -110,8 +101,8 @@ const GamePage = ({
     if (isBloodRageApplied || isKeenSensesApplied) {
       socket.emit('performAction', {
         gameCode,
-        actionType: actionState.actionType,
-        targetId: actionState.selectedTarget,
+        actionType: ability.type,
+        targetId: actionWizard.selectedTarget,
         bloodRageActive: isBloodRageApplied,
         keenSensesActive: isKeenSensesApplied,
       });
@@ -129,7 +120,7 @@ const GamePage = ({
       if (isKeenSensesApplied) {
         socket.emit('useRacialAbility', {
           gameCode,
-          targetId: actionState.selectedTarget,
+          targetId: actionWizard.selectedTarget,
           abilityType: 'keenSenses',
         });
         racialAbilities.setKeenSensesActive(false);
@@ -138,10 +129,10 @@ const GamePage = ({
       racialAbilities.setRacialSelected(false);
     } else {
       // No racial abilities - use the standard submission
-      onSubmitAction(actionState.actionType, actionState.selectedTarget);
+      onSubmitAction(ability.type, actionWizard.selectedTarget);
     }
 
-    actionState.setSubmitted(true);
+    actionWizard.setSubmitted(true);
   };
 
   /**
@@ -167,17 +158,6 @@ const GamePage = ({
     modalState.closeAdaptabilityModal();
   };
 
-  /**
-   * Handle mobile wizard ability selection
-   */
-  const handleWizardAbilitySelect = (ability) => {
-    console.log('Mobile wizard ability selected:', ability);
-    actionState.setSelectedAbility(ability);
-    actionState.setActionType(ability.type);
-    
-    // Move to target selection step
-    mobileState.setMobileActionStep(2);
-  };
 
   return (
     <div className="game-page" data-theme={theme.name}>
@@ -190,7 +170,7 @@ const GamePage = ({
       </div>
 
       {/* Mobile Player Header - Always visible on mobile (except when action wizard is open) */}
-      {mobileState.isMobile && !mobileState.showMobileActionWizard && (
+      {actionWizard.isMobile && !actionWizard.isWizardOpen && (
         <div className="mobile-player-header">
           <div className="mobile-character-info">
             <h2 className={`mobile-player-name ${me?.isWarlock ? 'warlock-text' : ''}`}>
@@ -205,7 +185,7 @@ const GamePage = ({
       )}
 
       {/* Desktop Character Title Section - Hidden on mobile */}
-      {!mobileState.isMobile && (
+      {!actionWizard.isMobile && (
         <div className="character-title-section">
           <h1 className={`game-title ${me?.isWarlock ? 'warlock-text' : ''}`}>
             {characterUtils.getCharacterTitle()}
@@ -220,43 +200,72 @@ const GamePage = ({
       )}
 
       {/* Responsive Layout */}
-      <div className={mobileState.isMobile ? 'mobile-layout' : 'desktop-layout'}>
+      <div className={actionWizard.isMobile ? 'mobile-layout' : 'desktop-layout'}>
         {/* Desktop Grid Columns (direct children for CSS Grid) */}
           <PlayerColumn
-            isVisible={(!mobileState.isMobile || mobileState.activeTab === 'players') && !mobileState.showMobileActionWizard}
+            isVisible={!actionWizard.isMobile || (actionWizard.activeTab === 'players' && !actionWizard.isWizardOpen)}
             players={players}
             me={me}
             alivePlayers={characterUtils.alivePlayers}
-            selectedTarget={actionState.selectedTarget}
-            onTargetSelect={actionState.setSelectedTarget}
-            isMobile={mobileState.isMobile}
+            selectedTarget={actionWizard.selectedTarget}
+            onTargetSelect={actionWizard.handleTargetSelect}
+            isMobile={actionWizard.isMobile}
           />
 
-          <ActionColumn
-            isVisible={(!mobileState.isMobile || mobileState.activeTab === 'action') && !mobileState.showMobileActionWizard}
-            phase={phase}
-            players={players}
-            monster={monster}
-            me={me}
-            lastEvent={lastEvent}
-            unlocked={actionState.unlocked}
-            alivePlayers={characterUtils.alivePlayers}
-            actionType={actionState.actionType}
-            selectedTarget={actionState.selectedTarget}
-            submitted={actionState.submitted}
-            bloodRageActive={racialAbilities.bloodRageActive}
-            keenSensesActive={racialAbilities.keenSensesActive}
-            racialSelected={racialAbilities.racialSelected}
-            readyClicked={readyClicked}
-            onSetActionType={actionState.setActionType}
-            onSelectTarget={actionState.setSelectedTarget}
-            onSubmitAction={handleSubmitAction}
-            onRacialAbilityUse={racialAbilities.handleRacialAbilityUse}
-            onReadyClick={handleReadyClick}
-          />
+          {/* Unified ActionWizard - replaces both ActionColumn and MobileActionWizard */}
+          <div className="action-column-container">
+            {/* Show wizard for both desktop and mobile when appropriate */}
+            <ActionWizard
+              isOpen={actionWizard.isWizardOpen}
+              isMobile={actionWizard.isMobile}
+              me={me}
+              monster={monster}
+              lastEvent={lastEvent}
+              unlocked={me?.unlocked || []}
+              alivePlayers={characterUtils.alivePlayers}
+              selectedAbility={actionWizard.selectedAbility}
+              selectedTarget={actionWizard.selectedTarget}
+              submitted={actionWizard.submitted}
+              bloodRageActive={racialAbilities.bloodRageActive}
+              keenSensesActive={racialAbilities.keenSensesActive}
+              racialSelected={racialAbilities.racialSelected}
+              onAbilitySelect={actionWizard.handleAbilitySelect}
+              onTargetSelect={actionWizard.handleTargetSelect}
+              onRacialAbilityUse={racialAbilities.handleRacialAbilityUse}
+              onSubmitAction={handleSubmitAction}
+              onClose={actionWizard.handleCloseWizard}
+              initialStep={actionWizard.currentStep}
+              onStepChange={actionWizard.handleStepChange}
+            />
+            
+            {/* Results phase for desktop when not in wizard */}
+            {!actionWizard.isMobile && phase === 'results' && (
+              <div className="results-phase">
+                <h2 className="section-title">Round {lastEvent.turn} Results</h2>
+                
+                {/* Ready button */}
+                {me.isAlive && (
+                  <button
+                    className={`button ready-button ${readyClicked ? 'clicked' : ''}`}
+                    onClick={handleReadyClick}
+                    disabled={readyClicked}
+                  >
+                    {readyClicked ? (
+                      <>
+                        <span className="ready-text">Waiting for other players...</span>
+                        <span className="ready-spinner"></span>
+                      </>
+                    ) : (
+                      <>Ready for Next Round</>
+                    )}
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
 
           <HistoryColumn 
-            isVisible={(!mobileState.isMobile || mobileState.activeTab === 'history') && !mobileState.showMobileActionWizard}
+            isVisible={!actionWizard.isMobile || (actionWizard.activeTab === 'history' && !actionWizard.isWizardOpen)}
             eventsLog={eventsLog}
             lastEvent={lastEvent}
             currentPlayerId={me?.id || ''}
@@ -265,38 +274,32 @@ const GamePage = ({
           />
 
         {/* Mobile Navigation - Only show on mobile */}
-        {mobileState.isMobile && (
+        {actionWizard.isMobile && (
           <MobileNavigation
-            activeTab={mobileState.activeTab}
-            onTabChange={mobileState.handleTabChange}
+            activeTab={actionWizard.activeTab}
+            onTabChange={actionWizard.handleTabChange}
             isAlive={me?.isAlive}
             isStunned={me?.statusEffects?.stunned}
           />
         )}
       </div>
 
-      {/* Mobile Action Wizard */}
-      {mobileState.showMobileActionWizard && (
-        <MobileActionWizard
-          isOpen={mobileState.showMobileActionWizard}
-          currentStep={mobileState.mobileActionStep}
-          onStepChange={mobileState.setMobileActionStep}
-          onClose={mobileState.handleCloseWizard}
+      {/* GameState Drawer - Mobile only */}
+      {actionWizard.showGameState && (
+        <GameStateDrawer
+          isOpen={actionWizard.showGameState}
+          onClose={actionWizard.handleCloseGameState}
+          onBackToActions={actionWizard.handleBackToActions}
+          // Player column props
+          players={players}
           me={me}
-          monster={monster}
-          lastEvent={lastEvent}
-          unlocked={actionState.unlocked}
-          racialAbility={me?.race?.ability}
           alivePlayers={characterUtils.alivePlayers}
-          selectedAbility={actionState.selectedAbility}
-          selectedTarget={actionState.selectedTarget}
-          bloodRageActive={racialAbilities.bloodRageActive}
-          keenSensesActive={racialAbilities.keenSensesActive}
-          racialSelected={racialAbilities.racialSelected}
-          onAbilitySelect={handleWizardAbilitySelect}
-          onTargetSelect={actionState.setSelectedTarget}
-          onRacialAbilityUse={racialAbilities.handleRacialAbilityUse}
-          onSubmitAction={handleSubmitAction}
+          selectedTarget={actionWizard.selectedTarget}
+          onTargetSelect={actionWizard.handleTargetSelect}
+          // History column props
+          eventsLog={eventsLog}
+          lastEvent={lastEvent}
+          currentPlayerId={me?.id || ''}
         />
       )}
 

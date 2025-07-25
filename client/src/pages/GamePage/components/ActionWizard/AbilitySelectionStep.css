@@ -1,0 +1,356 @@
+/**
+ * @fileoverview Unified Ability Selection Step styles
+ * Works for both mobile and desktop with responsive design
+ */
+
+/* Step layout */
+.step-title {
+  font-size: 24px;
+  font-weight: 700;
+  margin-bottom: 24px;
+  color: var(--color-text);
+  text-align: center;
+}
+
+.section-subtitle {
+  font-size: 18px;
+  font-weight: 600;
+  margin: 16px 0 12px 0;
+  color: var(--color-text-secondary);
+}
+
+/* Racial ability section */
+.racial-section {
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+/* Class abilities section */
+.class-abilities-section {
+  margin-bottom: 16px;
+}
+
+/* Abilities grid - 2 columns for both desktop and mobile */
+.abilities-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 16px;
+  width: 100%;
+}
+
+.abilities-grid.desktop-grid {
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.abilities-grid.mobile-grid {
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+/* Unified ability card styles */
+.unified-ability-card {
+  position: relative;
+  border-radius: 12px;
+  border: 2px solid var(--color-border);
+  background: var(--color-background-secondary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Size variants */
+.unified-ability-card.desktop-size {
+  min-height: 120px;
+  padding: 16px;
+}
+
+.unified-ability-card.mobile-size {
+  min-height: 100px;
+  padding: 12px;
+}
+
+/* Hover states */
+.unified-ability-card:hover:not(.locked):not(.on-cooldown):not(.not-selectable) {
+  border-color: var(--color-primary);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Selected state */
+.unified-ability-card.selected {
+  border-color: var(--color-primary);
+  background: var(--color-primary-light);
+  box-shadow: 0 0 0 2px var(--color-primary-light);
+}
+
+/* Locked state */
+.unified-ability-card.locked {
+  opacity: 0.6;
+  cursor: not-allowed;
+  background: var(--color-background-tertiary);
+}
+
+/* Cooldown state */
+.unified-ability-card.on-cooldown {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+/* Not selectable state */
+.unified-ability-card.not-selectable {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+/* Background icon */
+.ability-background-icon {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 48px;
+  opacity: 0.3;
+  z-index: 1;
+}
+
+.unified-ability-card.desktop-size .ability-background-icon {
+  font-size: 60px;
+}
+
+.unified-ability-card.mobile-size .ability-background-icon {
+  font-size: 40px;
+}
+
+/* Content overlay */
+.ability-content-overlay {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  justify-content: space-between;
+}
+
+/* Ability name */
+.ability-name {
+  font-weight: 700;
+  font-size: 14px;
+  margin-bottom: 4px;
+  color: var(--color-text);
+  line-height: 1.2;
+}
+
+.unified-ability-card.desktop-size .ability-name {
+  font-size: 16px;
+  margin-bottom: 8px;
+}
+
+/* Ability description */
+.ability-description {
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  line-height: 1.3;
+  margin-bottom: auto;
+}
+
+.unified-ability-card.desktop-size .ability-description {
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+/* Ability damage */
+.ability-damage {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--color-text);
+  margin-top: 4px;
+}
+
+.unified-ability-card.desktop-size .ability-damage {
+  font-size: 12px;
+}
+
+/* Category-based color schemes */
+.ability-content-overlay.ability-attack {
+  background: linear-gradient(135deg, rgba(220, 53, 69, 0.1), rgba(220, 53, 69, 0.05));
+}
+
+.ability-content-overlay.ability-defense {
+  background: linear-gradient(135deg, rgba(0, 123, 255, 0.1), rgba(0, 123, 255, 0.05));
+}
+
+.ability-content-overlay.ability-heal {
+  background: linear-gradient(135deg, rgba(40, 167, 69, 0.1), rgba(40, 167, 69, 0.05));
+}
+
+.ability-content-overlay.ability-special {
+  background: linear-gradient(135deg, rgba(108, 117, 125, 0.1), rgba(108, 117, 125, 0.05));
+}
+
+/* Lock overlay */
+.lock-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  z-index: 10;
+  color: white;
+}
+
+.lock-icon {
+  font-size: 24px;
+  margin-bottom: 4px;
+}
+
+.unlock-text {
+  font-size: 11px;
+  font-weight: 600;
+  text-align: center;
+}
+
+.unified-ability-card.desktop-size .lock-icon {
+  font-size: 28px;
+}
+
+.unified-ability-card.desktop-size .unlock-text {
+  font-size: 12px;
+}
+
+/* Cooldown overlay */
+.cooldown-overlay {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: rgba(220, 53, 69, 0.9);
+  color: white;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  z-index: 10;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.cooldown-number {
+  line-height: 1;
+}
+
+.cooldown-text {
+  font-size: 8px;
+  line-height: 1;
+}
+
+.unified-ability-card.desktop-size .cooldown-overlay {
+  width: 36px;
+  height: 36px;
+  font-size: 11px;
+}
+
+.unified-ability-card.desktop-size .cooldown-text {
+  font-size: 9px;
+}
+
+/* Selection indicator */
+.selection-indicator {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  background: var(--color-success);
+  color: white;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 14px;
+  font-weight: 700;
+  z-index: 10;
+}
+
+.unified-ability-card.desktop-size .selection-indicator {
+  width: 28px;
+  height: 28px;
+  font-size: 16px;
+}
+
+/* Enhancement indicators */
+.enhancements-active {
+  display: flex;
+  gap: 8px;
+  margin-top: 16px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.enhancement-badge {
+  background: var(--color-warning);
+  color: var(--color-text-inverse);
+  padding: 6px 12px;
+  border-radius: 16px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* Loading state */
+.loading-spinner {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 40px;
+  font-size: 16px;
+  color: var(--color-text-secondary);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .step-title {
+    font-size: 20px;
+    margin-bottom: 16px;
+  }
+  
+  .abilities-grid.mobile-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+  
+  .section-subtitle {
+    font-size: 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .abilities-grid.mobile-grid {
+    gap: 8px;
+  }
+}
+
+/* Dark theme support */
+[data-theme="dark"] .unified-ability-card {
+  background: var(--color-background-secondary);
+  border-color: var(--color-border);
+}
+
+[data-theme="dark"] .unified-ability-card.selected {
+  background: var(--color-primary-dark);
+  border-color: var(--color-primary);
+}
+
+[data-theme="dark"] .lock-overlay {
+  background: rgba(0, 0, 0, 0.8);
+}

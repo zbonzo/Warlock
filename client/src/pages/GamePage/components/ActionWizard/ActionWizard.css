@@ -1,0 +1,234 @@
+/**
+ * @fileoverview Unified ActionWizard styles
+ * Handles both mobile drawer and desktop inline rendering
+ */
+
+/* Base action wizard styles */
+.action-wizard {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+}
+
+/* Mobile-specific styles - renders as a drawer from bottom */
+.action-wizard--mobile {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  z-index: 1000;
+  animation: fadeIn 0.2s ease-out;
+}
+
+.action-wizard--mobile .wizard-content {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--color-background);
+  border-top-left-radius: 16px;
+  border-top-right-radius: 16px;
+  max-height: 85vh;
+  animation: slideUp 0.3s ease-out;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 400px;
+  min-width: 350px;
+}
+
+/* Desktop-specific styles - renders inline in the column */
+.action-wizard--desktop {
+  position: relative;
+  background: transparent;
+  animation: none;
+  width: 100%;
+  max-width: 500px;
+  min-width: 450px;
+  margin: 0 auto;
+}
+
+.action-wizard--desktop .wizard-content {
+  background: transparent;
+  border-radius: 0;
+  max-height: none;
+  animation: none;
+  width: 100%;
+}
+
+/* Animation keyframes */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+/* Handle for mobile drawer */
+.action-wizard--mobile .wizard-handle {
+  position: sticky;
+  top: 0;
+  height: 24px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background: var(--color-background);
+  border-top-left-radius: 16px;
+  border-top-right-radius: 16px;
+  cursor: pointer;
+}
+
+.action-wizard--mobile .wizard-handle::after {
+  content: '';
+  width: 40px;
+  height: 4px;
+  background: var(--color-text-secondary);
+  border-radius: 2px;
+  opacity: 0.5;
+}
+
+.action-wizard--desktop .wizard-handle {
+  display: none;
+}
+
+/* Shared step content styles */
+.wizard-step {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.step-content {
+  flex: 1;
+  padding: 16px;
+  overflow-y: auto;
+}
+
+.step-navigation {
+  padding: 16px;
+  border-top: 1px solid var(--color-border);
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  background: var(--color-background);
+}
+
+/* Mobile navigation adjustments */
+.action-wizard--mobile .step-navigation {
+  position: sticky;
+  bottom: 0;
+  border-top: 2px solid var(--color-border);
+  box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* Desktop navigation adjustments */
+.action-wizard--desktop .step-navigation {
+  border-top: 1px solid var(--color-border);
+  position: relative;
+  box-shadow: none;
+}
+
+/* Button styles in navigation */
+.step-navigation .btn-secondary,
+.step-navigation .btn-primary {
+  padding: 12px 24px;
+  border-radius: 8px;
+  border: none;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.step-navigation .btn-secondary {
+  background: var(--color-background-secondary);
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+}
+
+.step-navigation .btn-secondary:hover {
+  background: var(--color-background-tertiary);
+}
+
+.step-navigation .btn-primary {
+  background: var(--color-primary);
+  color: white;
+}
+
+.step-navigation .btn-primary:hover {
+  background: var(--color-primary-dark);
+}
+
+.step-navigation .btn-primary:disabled {
+  background: var(--color-disabled);
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* Mobile-specific button sizing */
+.action-wizard--mobile .step-navigation .btn-secondary,
+.action-wizard--mobile .step-navigation .btn-primary {
+  padding: 16px 24px;
+  font-size: 16px;
+}
+
+/* Responsive improvements for mobile */
+@media (max-width: 768px) {
+  .action-wizard--mobile .wizard-content {
+    max-height: 90vh;
+    max-width: 95vw;
+    min-width: 320px;
+  }
+  
+  .step-navigation {
+    flex-wrap: wrap;
+  }
+  
+  .step-navigation .btn-secondary,
+  .step-navigation .btn-primary {
+    flex: 1;
+    min-width: 120px;
+  }
+}
+
+@media (max-width: 480px) {
+  .action-wizard--mobile .wizard-content {
+    max-width: 100vw;
+    min-width: 100vw;
+    left: 0;
+    transform: none;
+    border-radius: 0;
+  }
+}
+
+@media (min-width: 1200px) {
+  .action-wizard--desktop {
+    max-width: 500px;
+    min-width: 450px;
+  }
+}
+
+/* Dark theme support */
+[data-theme="dark"] .action-wizard--mobile {
+  background: rgba(0, 0, 0, 0.9);
+}
+
+[data-theme="dark"] .action-wizard--mobile .wizard-content {
+  background: var(--color-background);
+  border-top: 1px solid var(--color-border);
+}
