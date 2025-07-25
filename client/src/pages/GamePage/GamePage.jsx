@@ -317,11 +317,16 @@ const GamePage = ({
       )}
 
       {/* Battle Results Modal */}
-      {modalState.showBattleResults && (
+      {modalState.showBattleResults && modalState.battleResultsData && (
         <BattleResultsModal
           isOpen={modalState.showBattleResults}
           onClose={modalState.closeBattleResultsModal}
-          battleData={modalState.battleResultsData}
+          events={modalState.battleResultsData.events || []}
+          round={modalState.battleResultsData.round || 1}
+          currentPlayerId={me?.id}
+          players={players}
+          levelUp={modalState.battleResultsData.levelUp}
+          winner={modalState.battleResultsData.winner}
         />
       )}
 

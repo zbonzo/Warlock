@@ -184,91 +184,40 @@
   font-size: 14px;
 }
 
-/* Player list styling */
-.player-list-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 10px 20px;
-  background-color: var(--color-neutral);
-  border-radius: 6px;
-  margin-bottom: 10px;
-  font-weight: bold;
-  margin-top: 20px;
+/* Lobby Player Cards Grid */
+.lobby-players-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin: 20px 0;
+  width: 100%;
 }
 
-.player-name-col {
-  flex: 2;
-  text-align: left;
+.lobby-player-wrapper {
+  position: relative;
   display: flex;
+  flex-direction: column;
   align-items: center;
   gap: 8px;
 }
 
-.player-race-col,
-.player-class-col {
-  flex: 1;
-  text-align: center;
-}
-
-.player-status-col {
-  flex: 1;
-  text-align: center;
-}
-
-.player-list {
-  max-height: 300px;
-  overflow-y: auto;
-  margin-bottom: 20px;
-  scrollbar-width: thin;
-  scrollbar-color: var(--color-primary) var(--color-neutral);
-}
-
-.player-list::-webkit-scrollbar {
-  width: 8px;
-}
-
-.player-list::-webkit-scrollbar-track {
-  background: var(--color-neutral);
-  border-radius: 4px;
-}
-
-.player-list::-webkit-scrollbar-thumb {
-  background-color: var(--color-primary);
-  border-radius: 4px;
-}
-
-.player-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 12px 20px;
-  border-radius: 6px;
-  margin-bottom: 8px;
-  transition: transform 0.2s;
-  box-shadow: 0 2px 4px var(--color-neutral);
-}
-
-.player-row:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-}
-
-.player-row.even {
-  background-color: var(--color-surface);
-}
-
-.player-row.odd {
-  background-color: var(--color-neutral);
-}
-
-.host-badge {
+.host-badge-card {
+  position: absolute;
+  top: -8px;
+  left: 50%;
+  transform: translateX(-50%);
   background-color: var(--color-secondary);
   color: white;
-  border-radius: 4px;
-  padding: 2px 6px;
+  border-radius: 12px;
+  padding: 4px 12px;
   font-size: 12px;
   font-weight: bold;
+  z-index: 10;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.player-status-overlay {
+  margin-top: 4px;
 }
 
 .current-player-indicator {
@@ -429,9 +378,9 @@
     height: 10px;
   }
 
-  .player-list-header,
-  .player-row {
-    padding: 10px 12px;
+  .lobby-players-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
   }
 
   .start-button,
@@ -442,8 +391,13 @@
 }
 
 @media (max-width: 480px) {
-  .host-badge {
-    padding: 1px 4px;
+  .lobby-players-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+  }
+
+  .host-badge-card {
+    padding: 3px 8px;
     font-size: 10px;
   }
 

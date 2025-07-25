@@ -140,22 +140,30 @@
   background: var(--color-danger);
 }
 
-/* Player targets grid - 2 columns for both desktop and mobile */
+/* Player targets grid - 3 columns for desktop, 2 for mobile */
 .player-targets-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
   gap: 12px;
   width: 100%;
 }
 
 .player-targets-grid.desktop-grid {
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(3, 1fr);
   gap: 16px;
 }
 
 .player-targets-grid.mobile-grid {
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+/* Target player wrapper */
+.target-player-wrapper {
+  width: 100%;
+}
+
+.target-player-wrapper.invalid-target {
+  pointer-events: none;
 }
 
 /* Player target cards */
@@ -281,14 +289,27 @@
   }
   
   .player-targets-grid.mobile-grid {
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+  }
+  
+  .player-targets-grid.desktop-grid {
+    grid-template-columns: repeat(3, 1fr); /* 3 columns on tablets too */
+    gap: 12px;
   }
 }
 
 @media (max-width: 480px) {
   .player-targets-grid.mobile-grid {
-    gap: 8px;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+  }
+}
+
+@media (min-width: 1200px) {
+  .player-targets-grid.desktop-grid {
+    grid-template-columns: repeat(3, 1fr); /* 3 columns on large screens */
+    gap: 16px;
   }
 }
 

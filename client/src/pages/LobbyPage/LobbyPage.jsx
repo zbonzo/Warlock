@@ -7,6 +7,7 @@ import PropTypes from 'prop-types';
 import { useTheme } from '@contexts/ThemeContext';
 import './LobbyPage.css';
 import RuneButton from '../../components/ui/RuneButton';
+import PlayerCard from '../../components/common/PlayerCard/PlayerCard';
 
 /**
  * LobbyPage component displays the pre-game lobby where players wait
@@ -161,52 +162,29 @@ const LobbyPage = ({ players, gameCode, isHost, currentPlayerId, onStartGame }) 
           </div>
         </div>
 
-        <div className="player-list-header">
-          <div className="player-name-col">Player Name</div>
-          {showPlayerDetails && (
-            <>
-              <div className="player-race-col">Race</div>
-              <div className="player-class-col">Class</div>
-            </>
-          )}
-          <div className="player-status-col">Status</div>
-        </div>
-
-        <div className="player-list">
-          {players.map((player, index) => {
+        {/* Player Cards Grid */}
+        <div className="lobby-players-grid">
+          {players.map((player) => {
             const isCurrentPlayer = player.id === currentPlayerId;
-
+            const isHost = player.id === players[0]?.id;
+            
             return (
-              <div
-                key={player.id}
-                className={`player-row ${index % 2 === 0 ? 'even' : 'odd'}`}
-              >
-                <div className="player-name-col">
-                  {player.id === players[0]?.id && (
-                    <div className="host-badge">HOST</div>
-                  )}
-                  <span>{player.name}</span>
-                  {isCurrentPlayer && (
-                    <span className="current-player-indicator">(You)</span>
-                  )}
-                </div>
-
-                {showPlayerDetails && (
-                  <>
-                    <div className="player-race-col">
-                      {player.race || (
-                        <span className="not-selected">Not selected</span>
-                      )}
-                    </div>
-                    <div className="player-class-col">
-                      {player.class || (
-                        <span className="not-selected">Not selected</span>
-                      )}
-                    </div>
-                  </>
+              <div key={player.id} className="lobby-player-wrapper">
+                {isHost && (
+                  <div className="host-badge-card">HOST</div>
                 )}
-
-                <div className="player-status-col">
+                <PlayerCard
+                  player={{
+                    ...player,
+                    hp: player.hp || 100,
+                    maxHp: player.maxHp || 100,
+                    isAlive: true
+                  }}
+                  isCurrentPlayer={isCurrentPlayer}
+                  size="medium"
+                  showStatusEffects={false}
+                />
+                <div className="player-status-overlay">
                   {player.race && player.class ? (
                     <span className="status-badge ready">Ready</span>
                   ) : (
@@ -216,19 +194,6 @@ const LobbyPage = ({ players, gameCode, isHost, currentPlayerId, onStartGame }) 
               </div>
             );
           })}
-        </div>
-
-        {/* Show Details toggle moved to bottom */}
-        <div className="details-toggle-bottom">
-          <div className="details-toggle">
-            <span className="toggle-label">Show details</span>
-            <div
-              onClick={() => setShowPlayerDetails(!showPlayerDetails)}
-              className={`toggle-switch ${showPlayerDetails ? 'active' : ''}`}
-            >
-              <div className="toggle-slider" />
-            </div>
-          </div>
         </div>
       </div>
 

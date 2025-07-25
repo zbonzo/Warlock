@@ -5,7 +5,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { useTheme } from '@contexts/ThemeContext';
-import PlayerCard from '@components/game/PlayerCard';
+import { PlayerCard } from '../../../components/common/PlayerCard';
 import './PlayerColumn.css';
 
 /**
@@ -31,7 +31,8 @@ const PlayerColumn = ({ isVisible, me, players }) => {
       <PlayerCard 
         player={me} 
         isCurrentPlayer={true}
-        canSeeWarlock={me?.isWarlock}
+        size="large"
+        showStatusEffects={true}
       />
       
       <h3 className="section-title secondary">
@@ -47,7 +48,8 @@ const PlayerColumn = ({ isVisible, me, players }) => {
               key={player.id} 
               player={player} 
               isCurrentPlayer={false}
-              canSeeWarlock={me?.isWarlock}
+              size="medium"
+              showStatusEffects={true}
             />
           ))}
       </div>

@@ -1,0 +1,390 @@
+/**
+ * @fileoverview Unified PlayerCard styles
+ * Consistent player card styling with avatar backgrounds
+ */
+
+/* Base player card */
+.unified-player-card {
+  position: relative;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 2px solid var(--color-border);
+  background: var(--color-background-secondary);
+  transition: all 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  min-height: 160px;
+  aspect-ratio: 3/4; /* Makes cards wider and provides consistent proportions */
+}
+
+/* Size variants */
+.unified-player-card--small {
+  min-height: 120px;
+  border-radius: 8px;
+  aspect-ratio: 3/4;
+}
+
+.unified-player-card--medium {
+  min-height: 160px;
+  border-radius: 12px;
+  aspect-ratio: 3/4;
+}
+
+.unified-player-card--large {
+  min-height: 200px;
+  border-radius: 16px;
+  aspect-ratio: 3/4;
+}
+
+/* Clickable state */
+.unified-player-card.clickable {
+  cursor: pointer;
+}
+
+.unified-player-card.clickable:hover {
+  border-color: var(--color-primary);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Selected state */
+.unified-player-card.selected {
+  border-color: var(--color-primary);
+  background: var(--color-primary-light);
+  box-shadow: 0 0 0 2px var(--color-primary-light);
+}
+
+/* Current player state */
+.unified-player-card.current-player {
+  border-color: var(--color-info);
+  background: var(--color-info-light);
+}
+
+/* Dead state */
+.unified-player-card.dead {
+  opacity: 0.6;
+  filter: grayscale(50%);
+}
+
+/* Avatar background image */
+.player-card-background {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1;
+}
+
+/* Overlay for better text readability */
+.player-card-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(180deg, 
+    rgba(0, 0, 0, 0.1) 0%, 
+    rgba(0, 0, 0, 0.3) 50%, 
+    rgba(0, 0, 0, 0.6) 100%
+  );
+  z-index: 2;
+}
+
+/* Card content */
+.player-card-content {
+  position: relative;
+  z-index: 3;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 8px;
+}
+
+/* Name plate - positioned at 1/3 from bottom */
+.name-plate {
+  position: absolute;
+  bottom: 33%;
+  left: 0;
+  right: 0;
+  z-index: 4;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 0 8px;
+}
+
+.name-bar {
+  background: rgba(0, 0, 0, 0.7);
+  border-radius: 20px;
+  padding: 6px 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.player-name {
+  color: white;
+  font-size: 14px;
+  font-weight: 600;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.current-indicator {
+  background: var(--color-info);
+  color: white;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 8px;
+  text-shadow: none;
+}
+
+/* Size-specific name styling */
+.unified-player-card--small .player-name {
+  font-size: 12px;
+}
+
+.unified-player-card--large .player-name {
+  font-size: 16px;
+}
+
+.unified-player-card--small .name-bar {
+  padding: 4px 12px;
+}
+
+.unified-player-card--large .name-bar {
+  padding: 8px 20px;
+}
+
+/* Status effects bar - above health */
+.status-effects-bar {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 4px;
+  min-height: 20px;
+}
+
+.status-effect {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  background: rgba(0, 0, 0, 0.6);
+  border-radius: 10px;
+  padding: 2px 6px;
+  font-size: 12px;
+  color: white;
+  text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.8);
+}
+
+.status-icon {
+  font-size: 14px;
+}
+
+.status-value {
+  font-size: 10px;
+  font-weight: 600;
+}
+
+/* Size-specific status effects */
+.unified-player-card--small .status-effects-bar {
+  gap: 4px;
+  min-height: 16px;
+}
+
+.unified-player-card--small .status-effect {
+  padding: 1px 4px;
+  font-size: 10px;
+}
+
+.unified-player-card--small .status-icon {
+  font-size: 12px;
+}
+
+.unified-player-card--large .status-effects-bar {
+  gap: 8px;
+  min-height: 24px;
+}
+
+.unified-player-card--large .status-effect {
+  padding: 3px 8px;
+  font-size: 14px;
+}
+
+/* Health bar container - 20px tall at bottom */
+.health-bar-container {
+  margin-top: auto;
+}
+
+.health-bar {
+  position: relative;
+  height: 20px;
+  background: rgba(0, 0, 0, 0.6);
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.health-fill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  border-radius: 10px;
+  transition: all 0.3s ease;
+  transform-origin: left center;
+}
+
+.health-text {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: white;
+  font-size: 11px;
+  font-weight: 700;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+  z-index: 2;
+}
+
+/* Size-specific health bar */
+.unified-player-card--small .health-bar {
+  height: 16px;
+}
+
+.unified-player-card--small .health-text {
+  font-size: 10px;
+}
+
+.unified-player-card--large .health-bar {
+  height: 24px;
+}
+
+.unified-player-card--large .health-text {
+  font-size: 12px;
+}
+
+/* Selection indicator */
+.selection-indicator {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: var(--color-success);
+  color: white;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 14px;
+  font-weight: 700;
+  z-index: 10;
+  text-shadow: none;
+}
+
+/* Dead overlay */
+.dead-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 10;
+}
+
+.dead-icon {
+  font-size: 48px;
+  opacity: 0.8;
+}
+
+.unified-player-card--small .dead-icon {
+  font-size: 32px;
+}
+
+.unified-player-card--large .dead-icon {
+  font-size: 64px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .unified-player-card {
+    min-height: 120px;
+    aspect-ratio: 3/4;
+  }
+  
+  .player-name {
+    font-size: 12px;
+  }
+  
+  .health-bar {
+    height: 18px;
+  }
+  
+  .health-text {
+    font-size: 10px;
+  }
+  
+  .status-effect {
+    padding: 1px 4px;
+    font-size: 10px;
+  }
+}
+
+/* Very small screens - adjust aspect ratio */
+@media (max-width: 480px) {
+  .unified-player-card {
+    min-height: 100px;
+    aspect-ratio: 2/3; /* Slightly narrower on very small screens */
+  }
+}
+
+/* Dark theme support */
+[data-theme="dark"] .unified-player-card {
+  background: var(--color-background-secondary);
+  border-color: var(--color-border);
+}
+
+[data-theme="dark"] .unified-player-card.selected {
+  background: var(--color-primary-dark);
+  border-color: var(--color-primary);
+}
+
+[data-theme="dark"] .name-bar {
+  background: rgba(0, 0, 0, 0.8);
+}
+
+[data-theme="dark"] .status-effect {
+  background: rgba(0, 0, 0, 0.7);
+}
+
+[data-theme="dark"] .health-bar {
+  background: rgba(0, 0, 0, 0.7);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+/* Animation for health changes */
+@keyframes healthChange {
+  0% {
+    transform: scaleX(1.05);
+  }
+  100% {
+    transform: scaleX(1);
+  }
+}
+
+.health-fill {
+  animation: healthChange 0.3s ease-out;
+}

@@ -16,7 +16,7 @@ import './EventsLog.css';
  * @param {Array} props.players - Array of all players (to get current player name)
  * @returns {React.ReactElement} The rendered component
  */
-const EventsLog = ({ events, currentPlayerId, players = [] }) => {
+const EventsLog = ({ events = [], currentPlayerId, players = [] }) => {
   const theme = useTheme();
   const logRef = useRef(null);
 
@@ -77,28 +77,32 @@ const EventsLog = ({ events, currentPlayerId, players = [] }) => {
    */
   const shouldShowEvent = (event) => {
     // Legacy string events are always public
-    // if (typeof event === 'string') return true;
+    if (typeof event === 'string') return true;
 
-    // Public events are visible to everyone
-    if (event.public !== false) return true;
+    // If event is explicitly marked as private, check specific visibility rules
+    if (event.public === false) {
+      // Check explicit visibility list first
+      if (
+        Array.isArray(event.visibleTo) &&
+        event.visibleTo.includes(currentPlayerId)
+      ) {
+        return true;
+      }
 
-    // Explicit visibility list
-    if (
-      Array.isArray(event.visibleTo) &&
-      event.visibleTo.includes(currentPlayerId)
-    ) {
-      return true;
+      // Check if player is directly involved (attacker or target)
+      if (
+        event.attackerId === currentPlayerId ||
+        event.targetId === currentPlayerId
+      ) {
+        return true;
+      }
+
+      // Private event not visible to this player
+      return false;
     }
 
-    // Fallback to attacker/target based visibility
-    if (
-      event.attackerId === currentPlayerId ||
-      event.targetId === currentPlayerId
-    ) {
-      return true;
-    }
-
-    return false;
+    // Public events (public: true or undefined) are visible to everyone
+    return true;
   };
 
   /**
@@ -327,7 +331,7 @@ EventsLog.propTypes = {
         attackerId: PropTypes.string,
       }),
     ])
-  ).isRequired,
+  ),
   currentPlayerId: PropTypes.string.isRequired,
   players: PropTypes.arrayOf(
     PropTypes.shape({

@@ -4,58 +4,9 @@
  */
 import React, { useEffect, useRef } from 'react';
 import PropTypes from 'prop-types';
+import { PlayerCard } from '../../../../components/common/PlayerCard';
 import './TargetSelectionStep.css';
 
-/**
- * Draws a 40×40 circle with race color background, class emoji, and player initial on top
- */
-function drawPlayerBadge(canvas, classEmoji, letter, raceColor) {
-  const ctx = canvas.getContext('2d');
-  const size = Math.min(canvas.width, canvas.height);
-  const cx = size / 2;
-  const cy = size / 2;
-  const r = cx - 2; // 2px padding
-
-  ctx.clearRect(0, 0, size, size);
-
-  // Race color background circle
-  ctx.fillStyle = raceColor;
-  ctx.beginPath();
-  ctx.arc(cx, cy, r, 0, 2 * Math.PI);
-  ctx.fill();
-
-  // Circle outline
-  ctx.lineWidth = 2;
-  ctx.strokeStyle = '#000';
-  ctx.beginPath();
-  ctx.arc(cx, cy, r, 0, 2 * Math.PI);
-  ctx.stroke();
-
-  // Class emoji in the background
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.font = `${r * 1.4}px serif`;
-  ctx.fillText(classEmoji, cx, cy);
-
-  // Player initial on top
-  ctx.font = `${r * 1.2}px sans-serif`;
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-
-  // Stroke at 100% opacity
-  ctx.lineWidth = r * 0.15;
-  ctx.strokeStyle = '#000';
-  ctx.globalAlpha = 1.0;
-  ctx.strokeText(letter, cx, cy);
-
-  // Fill at 60% opacity
-  ctx.fillStyle = '#fff';
-  ctx.globalAlpha = 0.6;
-  ctx.fillText(letter, cx, cy);
-
-  // Reset alpha
-  ctx.globalAlpha = 1.0;
-}
 
 /**
  * Draws a menacing Monster avatar with gradient background and glowing effects
@@ -147,55 +98,6 @@ const MonsterAvatar = ({ monster }) => {
   );
 };
 
-/**
- * Custom avatar component
- */
-const CustomAvatar = ({ player }) => {
-  const canvasRef = useRef(null);
-
-  useEffect(() => {
-    if (!canvasRef.current) return;
-
-    // Class icons mapping
-    const classIcons = {
-      'Warrior': '⚔️',
-      'Ranger': '🏹',
-      'Paladin': '🛡️',
-      'Sorcerer': '🔮',
-      'Warlock': '🌑',
-      'Barbarian': '🪓',
-      'Monk': '👊',
-      'Rogue': '🗡️'
-    };
-
-    const classEmoji = classIcons[player.class] || '❓';
-    const letter = player.name.charAt(0).toUpperCase();
-
-    // Get race color
-    const raceColors = {
-      Artisan: '#4169E1',
-      Rockhewn: '#8B4513',
-      Crestfallen: '#228B22',
-      Orc: '#8B0000',
-      Kinfolk: '#9932CC',
-      Lich: '#36454F',
-    };
-
-    const raceColor = raceColors[player.race] || '#666666';
-
-    drawPlayerBadge(canvasRef.current, classEmoji, letter, raceColor);
-  }, [player]);
-
-  return (
-    <canvas
-      ref={canvasRef}
-      width="40"
-      height="40"
-      className="custom-avatar"
-      style={{ imageRendering: 'crisp-edges' }}
-    />
-  );
-};
 
 /**
  * Unified Target Selection Step component
@@ -226,7 +128,7 @@ const TargetSelectionStep = ({
     };
     return icons[ability.category] || '📜';
   };
-  
+
   const getHealthPercent = (current, max) => {
     return (current / max) * 100;
   };
@@ -236,6 +138,7 @@ const TargetSelectionStep = ({
     if (percent < 70) return 'health-medium';
     return 'health-high';
   };
+  
   
   // Determine valid targets based on ability type
   const isValidTarget = (targetId, targetType) => {
@@ -342,24 +245,21 @@ const TargetSelectionStep = ({
                   <div
                     key={player.id}
                     className={`
-                      player-target-card 
-                      ${selectedTarget === player.id ? 'selected' : ''} 
-                      ${player.hasSubmittedAction ? 'ready' : ''}
-                      ${player.id === me.id ? 'self' : ''}
+                      target-player-wrapper
                       ${!isValid ? 'invalid-target' : ''}
-                      ${isMobile ? 'mobile-size' : 'desktop-size'}
                     `}
-                    onClick={() => isValid && onTargetSelect(player.id)}
                   >
-                    <div className="player-name">{player.name}</div>
-                    <CustomAvatar player={player} />
-                    <div className="player-hp">{player.hp}/{player.maxHp}</div>
-                    <div className="health-bar-compact">
-                      <div 
-                        className={`health-fill ${getHealthClass(getHealthPercent(player.hp, player.maxHp))}`}
-                        style={{ width: `${getHealthPercent(player.hp, player.maxHp)}%` }}
-                      />
-                    </div>
+                    <PlayerCard 
+                      player={player}
+                      isSelected={selectedTarget === player.id}
+                      isCurrentPlayer={player.id === me.id}
+                      onClick={isValid ? () => onTargetSelect(player.id) : undefined}
+                      size={isMobile ? 'small' : 'medium'}
+                      customStyles={{
+                        opacity: !isValid ? 0.5 : 1,
+                        cursor: isValid ? 'pointer' : 'not-allowed'
+                      }}
+                    />
                   </div>
                 );
               })}
