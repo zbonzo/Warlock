@@ -18,9 +18,9 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.8);
+  background: transparent;
   z-index: 1000;
-  animation: fadeIn 0.2s ease-out;
+  pointer-events: none; /* Allow clicking through the transparent area */
 }
 
 .action-wizard--mobile .wizard-content {
@@ -38,6 +38,8 @@
   width: 100%;
   max-width: 400px;
   min-width: 350px;
+  pointer-events: auto; /* Re-enable clicks on the drawer content */
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.2); /* Add shadow for depth */
 }
 
 /* Desktop-specific styles - renders inline in the column */
@@ -71,10 +73,10 @@
 
 @keyframes slideUp {
   from {
-    transform: translateY(100%);
+    transform: translateX(-50%) translateY(100%);
   }
   to {
-    transform: translateY(0);
+    transform: translateX(-50%) translateY(0);
   }
 }
 

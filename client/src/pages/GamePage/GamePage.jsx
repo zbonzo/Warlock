@@ -5,7 +5,6 @@ import React, { useState, useEffect, useMemo } from 'react';
 import PropTypes from 'prop-types';
 import { useTheme } from '@contexts/ThemeContext';
 import { useAppContext } from '@contexts/AppContext';
-import GameDashboard from '@components/game/GameDashboard';
 import PlayerColumn from './components/PlayerColumn';
 import HistoryColumn from './components/HistoryColumn';
 import MobileNavigation from './components/MobileNavigation';
@@ -16,6 +15,7 @@ import ReconnectionToggle from '../../components/ui/ReconnectionToggle';
 import reconnectionStorage from '../../utils/reconnectionStorage';
 import BattleResultsModal from '@components/modals/BattleResultsModal';
 import DamageEffects from '@components/game/DamageEffects/DamageEffects';
+import GameHeader from '@components/game/GameHeader';
 
 // Import custom hooks
 import {
@@ -161,43 +161,16 @@ const GamePage = ({
 
   return (
     <div className="game-page" data-theme={theme.name}>
-      <div className="game-header">
-        <GameDashboard 
+
+      {/* Unified Game Header - Always visible */}
+      <div className={actionWizard.isMobile ? "mobile-header-container" : "desktop-header-container"}>
+        <GameHeader
+          player={me}
           round={lastEvent.turn}
-          alivePlayers={characterUtils.alivePlayers}
-          monster={monster} 
+          players={players}
+          isMobile={actionWizard.isMobile}
         />
       </div>
-
-      {/* Mobile Player Header - Always visible on mobile (except when action wizard is open) */}
-      {actionWizard.isMobile && !actionWizard.isWizardOpen && (
-        <div className="mobile-player-header">
-          <div className="mobile-character-info">
-            <h2 className={`mobile-player-name ${me?.isWarlock ? 'warlock-text' : ''}`}>
-              {characterUtils.getCharacterTitle()}
-            </h2>
-            <div className="mobile-health-bar">
-              <div className="mobile-health-fill" style={{ width: `${characterUtils.healthPercent}%` }}></div>
-              <span className="mobile-health-text">{me?.hp || 0}/{me?.maxHp || 0}</span>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Desktop Character Title Section - Hidden on mobile */}
-      {!actionWizard.isMobile && (
-        <div className="character-title-section">
-          <h1 className={`game-title ${me?.isWarlock ? 'warlock-text' : ''}`}>
-            {characterUtils.getCharacterTitle()}
-          </h1>
-          <div className="desktop-health-info">
-            <div className="health-bar">
-              <div className="health-fill" style={{ width: `${characterUtils.healthPercent}%` }}></div>
-            </div>
-            <span className="health-text">{me?.hp || 0}/{me?.maxHp || 0}</span>
-          </div>
-        </div>
-      )}
 
       {/* Responsive Layout */}
       <div className={actionWizard.isMobile ? 'mobile-layout' : 'desktop-layout'}>

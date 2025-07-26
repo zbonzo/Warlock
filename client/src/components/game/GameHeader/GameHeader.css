@@ -1,0 +1,462 @@
+/**
+ * @fileoverview Unified GameHeader styles
+ * Responsive header component with desktop and mobile layouts
+ */
+
+/* Base GameHeader Content */
+.game-header-content {
+  display: flex;
+  align-items: center;
+  background-color: var(--color-background-secondary);
+  border: 2px solid var(--color-border);
+  border-radius: 12px;
+  padding: 12px 16px 12px 80px; /* Add left padding for avatar space */
+  margin-bottom: 16px;
+  position: relative;
+  overflow: hidden;
+  min-height: 80px;
+}
+
+/* Desktop Layout */
+.game-header-content.desktop {
+  flex-direction: row;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+/* Mobile Layout */
+.game-header-content.mobile {
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 12px 12px 60px; /* Smaller left padding on mobile */
+}
+
+.game-header-content.mobile .player-info-section,
+.game-header-content.mobile .game-info-section,
+.game-header-content.mobile .health-section {
+  width: 100%;
+}
+
+.game-header-content.mobile .stats-section {
+  width: 100%;
+  margin-top: 8px;
+}
+
+/* Avatar Section - REMOVED: Avatar is now background of game-header-content */
+/* Avatar styles removed as avatar is now the background image */
+
+/* Player Info Section */
+.player-info-section {
+  flex: 1;
+  position: relative;
+  min-width: 0;
+}
+
+.corruption-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1;
+  pointer-events: none;
+  border-radius: 8px;
+}
+
+.player-name {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--color-text);
+  margin-bottom: 4px;
+  position: relative;
+  z-index: 2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.player-details {
+  display: flex;
+  gap: 8px;
+  font-size: 14px;
+  color: var(--color-text-secondary);
+  position: relative;
+  z-index: 2;
+}
+
+.player-class,
+.player-race {
+  font-weight: 600;
+}
+
+/* Mobile player info adjustments */
+.game-header-content.mobile .player-info-section {
+  text-align: right;
+  justify-self: end;
+}
+
+.game-header-content.mobile .player-name {
+  font-size: 16px;
+  text-align: right;
+}
+
+.game-header-content.mobile .player-details {
+  font-size: 12px;
+  justify-content: flex-end;
+}
+
+/* Game Info Section */
+.game-info-section {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+
+.round-info,
+.level-info {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--color-text);
+  white-space: nowrap;
+}
+
+.round-info {
+  color: var(--color-primary);
+}
+
+.level-info {
+  color: var(--color-secondary);
+}
+
+/* Mobile game info adjustments - remove absolute positioning for grid layout */
+.game-header-content.mobile .game-info-section {
+  display: contents; /* Let children participate in grid directly */
+}
+
+.game-header-content.mobile .round-info,
+.game-header-content.mobile .level-info {
+  font-size: 12px;
+}
+
+/* Health Section */
+.health-section {
+  flex: 2;
+  max-width: 300px;
+}
+
+.health-bar-container {
+  width: 100%;
+}
+
+.health-bar {
+  position: relative;
+  height: 24px;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+}
+
+.health-fill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  border-radius: 12px;
+  transition: all 0.3s ease;
+  transform-origin: left center;
+}
+
+.health-text {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: white;
+  font-size: 12px;
+  font-weight: 700;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+  z-index: 2;
+}
+
+/* Mobile health adjustments */
+.game-header-content.mobile .health-section {
+  max-width: none;
+}
+
+.game-header-content.mobile .health-bar {
+  height: 20px;
+}
+
+.game-header-content.mobile .health-text {
+  font-size: 11px;
+}
+
+/* Stats Section */
+.stats-section {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: flex-end;
+  min-width: 120px;
+}
+
+.player-count,
+.warlock-count {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+}
+
+.player-count {
+  color: var(--color-success);
+}
+
+.warlock-count {
+  color: var(--color-danger);
+}
+
+/* Mobile stats adjustments */
+.game-header-content.mobile .player-count,
+.game-header-content.mobile .warlock-count {
+  font-size: 11px;
+}
+
+/* Desktop layout */
+.game-header-content.desktop {
+  display: grid;
+  grid-template-columns: 1fr 500px 1fr;
+  grid-template-rows: auto auto auto auto;
+  grid-template-areas: 
+    ". round level"
+    ". info stats"
+    ". status ."
+    ". health .";
+  gap: 8px 16px;
+  align-items: center;
+  justify-items: center;
+}
+
+.game-header-content.desktop .player-info-section {
+  grid-area: info;
+  text-align: center;
+}
+
+.game-header-content.desktop .game-info-section {
+  display: contents;
+}
+
+.game-header-content.desktop .round-info {
+  grid-area: round;
+  font-size: 16px;
+  font-weight: 600;
+  align-self: start;
+}
+
+.game-header-content.desktop .level-info {
+  grid-area: level;
+  font-size: 14px;
+  align-self: start;
+  justify-self: start;
+}
+
+.game-header-content.desktop .health-section {
+  grid-area: health;
+  width: 100%;
+  max-width: none;
+}
+
+.game-header-content.desktop .status-effects-section {
+  grid-area: status;
+  justify-content: center;
+}
+
+.game-header-content.desktop .stats-section {
+  grid-area: stats;
+  align-items: flex-end;
+  flex-direction: column;
+  gap: 4px;
+  align-self: start;
+}
+
+/* Mobile stacked layout */
+.game-header-content.mobile {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  grid-template-rows: auto auto auto;
+  grid-template-areas:
+    "info info"
+    "status health"
+    "stats stats";
+  gap: 8px;
+  align-items: start;
+  position: relative;
+}
+
+.game-header-content.mobile .player-info-section {
+  grid-area: info;
+  text-align: right;
+}
+
+/* Hide round and level info on mobile */
+.game-header-content.mobile .round-info,
+.game-header-content.mobile .level-info {
+  display: none;
+}
+
+.game-header-content.mobile .status-effects-section {
+  grid-area: status;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  align-self: center;
+}
+
+.game-header-content.mobile .health-section {
+  grid-area: health;
+  width: 50%;
+  margin-left: auto;
+}
+
+.game-header-content.mobile .stats-section {
+  grid-area: stats;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  font-size: 10px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .game-header-content.desktop {
+    grid-template-columns: 1fr auto;
+    grid-template-areas:
+      "info round"
+      "health level"
+      "stats stats";
+    gap: 8px 12px;
+  }
+  
+  .game-header-content.desktop .level-info {
+    grid-area: level;
+    justify-self: end;
+  }
+  
+  .game-header-content.desktop .stats-section {
+    grid-area: stats;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    border-top: 1px solid var(--color-border);
+    padding-top: 8px;
+    margin-top: 8px;
+  }
+}
+
+@media (max-width: 480px) {
+  .game-header-content {
+    padding: 8px 8px 8px 50px; /* Smaller left padding on small screens */
+    min-height: 60px;
+  }
+  
+  .player-name {
+    font-size: 16px;
+  }
+  
+  .player-details {
+    font-size: 12px;
+  }
+  
+  .round-info,
+  .level-info {
+    font-size: 12px;
+  }
+  
+  .health-bar {
+    height: 16px;
+  }
+  
+  .health-text {
+    font-size: 10px;
+  }
+}
+
+/* Status Effects Section */
+.status-effects-section {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.status-effect {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 2px 4px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.status-effect.armor {
+  background: rgba(59, 130, 246, 0.2);
+  color: #1d4ed8;
+  border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
+.status-effect.stunned {
+  background: rgba(245, 158, 11, 0.2);
+  color: #d97706;
+  border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.status-effect.blessed {
+  background: rgba(34, 197, 94, 0.2);
+  color: #16a34a;
+  border: 1px solid rgba(34, 197, 94, 0.3);
+}
+
+.status-icon {
+  font-size: 10px;
+}
+
+.status-value {
+  font-size: 10px;
+  font-weight: 700;
+}
+
+
+/* Mobile corruption indicator - positioned in center of stats area */
+.mobile-corruption-indicator {
+  position: absolute;
+  bottom: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 24px;
+  height: 24px;
+  z-index: 1;
+  pointer-events: none;
+}
+
+/* Dark theme support */
+[data-theme="dark"] .game-header-content {
+  background: var(--color-background-secondary);
+  border-color: var(--color-border);
+}
+
+[data-theme="dark"] .player-avatar {
+  border-color: var(--color-border);
+  background-color: var(--color-background-tertiary);
+}
+
+[data-theme="dark"] .health-bar {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: var(--color-border);
+}
+
+[data-theme="dark"] .stats-section {
+  border-color: var(--color-border);
+}

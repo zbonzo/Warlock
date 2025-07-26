@@ -23,36 +23,58 @@ const PlayerColumn = ({ isVisible, me, players }) => {
   // Don't render if not visible (mobile view handling)
   if (!isVisible) return null;
   
+  // Filter players based on current player's warlock status
+  const otherPlayers = players.filter(p => p.id !== me.id);
+  
+  let warlockPlayers = [];
+  let regularPlayers = [];
+  
+  if (me?.isWarlock) {
+    // If current player is a warlock, separate other warlocks from regular players
+    warlockPlayers = otherPlayers.filter(p => p.isWarlock);
+    regularPlayers = otherPlayers.filter(p => !p.isWarlock);
+  } else {
+    // If current player is not a warlock, all others are just "Other Players"
+    regularPlayers = otherPlayers;
+  }
+
   return (
     <div className="player-column">
-      <h2 className="section-title">Your Character</h2>
+      {/* Show Other Warlocks section if current player is a warlock */}
+      {me?.isWarlock && warlockPlayers.length > 0 && (
+        <>
+          <h3 className="section-title">Other Warlocks</h3>
+          <div className="players-list">
+            {warlockPlayers.map(player => (
+              <PlayerCard 
+                key={player.id} 
+                player={player} 
+                isCurrentPlayer={false}
+                size="medium"
+                showStatusEffects={true}
+              />
+            ))}
+          </div>
+        </>
+      )}
       
-      {/* Current player card */}
-      <PlayerCard 
-        player={me} 
-        isCurrentPlayer={true}
-        size="large"
-        showStatusEffects={true}
-      />
-      
-      <h3 className="section-title secondary">
-        Other Players
-      </h3>
-      
-      {/* Other players list */}
-      <div className="players-list">
-        {players
-          .filter(p => p.id !== me.id)
-          .map(player => (
-            <PlayerCard 
-              key={player.id} 
-              player={player} 
-              isCurrentPlayer={false}
-              size="medium"
-              showStatusEffects={true}
-            />
-          ))}
-      </div>
+      {/* Other Players section */}
+      {regularPlayers.length > 0 && (
+        <>
+          <h3 className="section-title">Other Players</h3>
+          <div className="players-list">
+            {regularPlayers.map(player => (
+              <PlayerCard 
+                key={player.id} 
+                player={player} 
+                isCurrentPlayer={false}
+                size="medium"
+                showStatusEffects={true}
+              />
+            ))}
+          </div>
+        </>
+      )}
     </div>
   );
 };
