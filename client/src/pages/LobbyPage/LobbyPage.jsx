@@ -5,6 +5,8 @@
 import React, { useState, useRef } from 'react';
 import PropTypes from 'prop-types';
 import { useTheme } from '@contexts/ThemeContext';
+import useMediaQuery from '../../hooks/useMediaQuery';
+import { getPlayerCardSize } from '../../utils/playerCardUtils';
 import './LobbyPage.css';
 import RuneButton from '../../components/ui/RuneButton';
 import PlayerCard from '../../components/common/PlayerCard/PlayerCard';
@@ -22,6 +24,7 @@ import PlayerCard from '../../components/common/PlayerCard/PlayerCard';
  */
 const LobbyPage = ({ players, gameCode, isHost, currentPlayerId, onStartGame }) => {
   const theme = useTheme();
+  const isMobile = useMediaQuery('(max-width: 768px)');
   const [showPlayerDetails, setShowPlayerDetails] = useState(false);
   const [copiedCode, setCopiedCode] = useState(false);
   const codeInputRef = useRef(null);
@@ -181,7 +184,7 @@ const LobbyPage = ({ players, gameCode, isHost, currentPlayerId, onStartGame }) 
                     isAlive: true
                   }}
                   isCurrentPlayer={isCurrentPlayer}
-                  size="medium"
+                  size={getPlayerCardSize(isMobile, 'lobby')}
                   showStatusEffects={false}
                 />
                 <div className="player-status-overlay">

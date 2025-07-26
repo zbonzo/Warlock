@@ -36,6 +36,12 @@
   aspect-ratio: 3/4;
 }
 
+.unified-player-card--xlarge {
+  min-height: 280px;
+  border-radius: 20px;
+  aspect-ratio: 3/4;
+}
+
 /* Clickable state */
 .unified-player-card.clickable {
   cursor: pointer;
@@ -126,8 +132,8 @@
   max-width: 100%;
 }
 
-.player-name {
-  color: white;
+.unified-player-card .player-name {
+  color: white !important;
   font-size: 14px;
   font-weight: 600;
   text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
@@ -149,10 +155,17 @@
 /* Size-specific name styling */
 .unified-player-card--small .player-name {
   font-size: 12px;
+  color: white !important;
 }
 
 .unified-player-card--large .player-name {
   font-size: 16px;
+  color: white !important;
+}
+
+.unified-player-card--xlarge .player-name {
+  font-size: 18px;
+  color: white !important;
 }
 
 .unified-player-card--small .name-bar {
@@ -161,6 +174,10 @@
 
 .unified-player-card--large .name-bar {
   padding: 8px 20px;
+}
+
+.unified-player-card--xlarge .name-bar {
+  padding: 10px 24px;
 }
 
 /* Status effects bar - above health */
@@ -219,6 +236,16 @@
   font-size: 14px;
 }
 
+.unified-player-card--xlarge .status-effects-bar {
+  gap: 10px;
+  min-height: 28px;
+}
+
+.unified-player-card--xlarge .status-effect {
+  padding: 4px 10px;
+  font-size: 16px;
+}
+
 /* Health bar container - 20px tall at bottom */
 .health-bar-container {
   margin-top: auto;
@@ -272,6 +299,14 @@
   font-size: 12px;
 }
 
+.unified-player-card--xlarge .health-bar {
+  height: 28px;
+}
+
+.unified-player-card--xlarge .health-text {
+  font-size: 14px;
+}
+
 /* Selection indicator */
 .selection-indicator {
   position: absolute;
@@ -318,15 +353,15 @@
   font-size: 64px;
 }
 
+.unified-player-card--xlarge .dead-icon {
+  font-size: 80px;
+}
+
 /* Responsive adjustments */
 @media (max-width: 768px) {
-  .unified-player-card {
-    min-height: 120px;
-    aspect-ratio: 3/4;
-  }
-  
   .player-name {
     font-size: 12px;
+    color: white !important;
   }
   
   .health-bar {
