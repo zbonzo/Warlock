@@ -12,6 +12,7 @@ import { useEffect, useRef } from 'react';
 export const useGameEvents = (socket, {
   // Callbacks
   showBattleResultsModal,
+  updateBattleResultsData,
   resetActionState,
   resetMobileWizard,
   showAdaptabilityModalWithAbilities,
@@ -113,6 +114,24 @@ export const useGameEvents = (socket, {
       socket.off('roundResult', handleRoundResult);
     };
   }, [socket, showBattleResultsModal, resetActionState, setReadyClicked, isMobile, showMobileActionWizard, resetMobileWizard]);
+
+  // Handle trophy awards
+  useEffect(() => {
+    if (!socket) return;
+
+    const handleTrophyAwarded = (trophyData) => {
+      console.log('Trophy awarded:', trophyData);
+      
+      // Update the battle results modal with trophy data
+      updateBattleResultsData({ trophyAward: trophyData });
+    };
+
+    socket.on('trophyAwarded', handleTrophyAwarded);
+
+    return () => {
+      socket.off('trophyAwarded', handleTrophyAwarded);
+    };
+  }, [socket, updateBattleResultsData]);
 
   // Handle game resume and state updates
   useEffect(() => {

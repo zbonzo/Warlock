@@ -41,6 +41,17 @@ export const useModalState = () => {
   }, []);
 
   /**
+   * Update battle results data (e.g., for trophy awards)
+   * @param {Object} updatedData - Updated battle results data
+   */
+  const updateBattleResultsData = useCallback((updatedData) => {
+    setBattleResultsData(prev => ({
+      ...prev,
+      ...updatedData,
+    }));
+  }, []);
+
+  /**
    * Close battle results modal
    */
   const closeBattleResultsModal = useCallback(() => {
@@ -59,6 +70,7 @@ export const useModalState = () => {
     showBattleResults,
     battleResultsData,
     showBattleResultsModal,
+    updateBattleResultsData,
     closeBattleResultsModal,
   };
 };

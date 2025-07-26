@@ -86,6 +86,17 @@
   text-align: center;
 }
 
+.class-icon-image {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+  border-radius: 3px;
+}
+
+.class-icon-emoji {
+  font-size: 1.2rem;
+}
+
 .player-name {
   font-weight: 600;
   color: var(--color-text, #333);
@@ -129,6 +140,15 @@
     font-size: 1rem;
     width: 20px;
   }
+  
+  .class-icon-image {
+    width: 20px;
+    height: 20px;
+  }
+  
+  .class-icon-emoji {
+    font-size: 1rem;
+  }
 }
 
 @media (max-width: 480px) {
@@ -151,5 +171,14 @@
   .class-icon {
     font-size: 0.9rem;
     width: 18px;
+  }
+  
+  .class-icon-image {
+    width: 18px;
+    height: 18px;
+  }
+  
+  .class-icon-emoji {
+    font-size: 0.9rem;
   }
 }

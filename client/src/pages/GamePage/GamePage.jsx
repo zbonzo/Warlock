@@ -64,6 +64,7 @@ const GamePage = ({
   useGameEvents(socket, {
     // Callbacks
     showBattleResultsModal: modalState.showBattleResultsModal,
+    updateBattleResultsData: modalState.updateBattleResultsData,
     resetActionState: actionWizard.resetWizard,
     resetMobileWizard: actionWizard.resetWizard,
     showAdaptabilityModalWithAbilities: modalState.showAdaptabilityModalWithAbilities,
@@ -300,6 +301,7 @@ const GamePage = ({
           players={players}
           levelUp={modalState.battleResultsData.levelUp}
           winner={modalState.battleResultsData.winner}
+          trophyAward={modalState.battleResultsData.trophyAward}
         />
       )}
 

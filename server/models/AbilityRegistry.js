@@ -112,6 +112,11 @@ class AbilityRegistry {
         outcome = 'crit';
       }
 
+      // Trophy system: Track abilities used (before potential failure)
+      if (actor.addAbilityUse) {
+        actor.addAbilityUse();
+      }
+
       const categoryMap = {
         Attack: 'attacks',
         Heal: 'healing',

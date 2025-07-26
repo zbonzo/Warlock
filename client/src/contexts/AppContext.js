@@ -18,6 +18,7 @@ const initialState = {
   selectedRace: null,
   selectedClass: null,
   error: null,
+  trophyAward: null,
 };
 
 // Action types
@@ -34,6 +35,7 @@ const ACTION_TYPES = {
   SET_SELECTED_RACE: 'SET_SELECTED_RACE',
   SET_SELECTED_CLASS: 'SET_SELECTED_CLASS',
   SET_ERROR: 'SET_ERROR',
+  SET_TROPHY_AWARD: 'SET_TROPHY_AWARD',
   RESET_GAME: 'RESET_GAME',
 };
 
@@ -87,6 +89,9 @@ function appReducer(state, action) {
     
     case ACTION_TYPES.SET_ERROR:
       return { ...state, error: action.payload };
+    
+    case ACTION_TYPES.SET_TROPHY_AWARD:
+      return { ...state, trophyAward: action.payload };
     
     case ACTION_TYPES.RESET_GAME:
       return { 
@@ -173,6 +178,11 @@ export function AppProvider({ children }) {
     setError: (error) => dispatch({ 
       type: ACTION_TYPES.SET_ERROR, 
       payload: error 
+    }),
+    
+    setTrophyAward: (trophyAward) => dispatch({ 
+      type: ACTION_TYPES.SET_TROPHY_AWARD, 
+      payload: trophyAward 
     }),
     
     resetGame: () => dispatch({ type: ACTION_TYPES.RESET_GAME }),

@@ -469,6 +469,11 @@ class MonsterController {
       );
     } else {
       log.push(messages.getEvent('monsterDefeated'));
+      
+      // Trophy system: Track monster kill for the attacker
+      if (attacker && attacker.addMonsterKill) {
+        attacker.addMonsterKill();
+      }
     }
 
     return true;

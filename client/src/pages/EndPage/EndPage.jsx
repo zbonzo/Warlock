@@ -28,6 +28,7 @@ const EndPage = ({
   gameCode,
   playerName,
   socket,
+  trophyAward,
   onPlayAgain,
 }) => {
   const handlePlayAgain = () => {
@@ -103,6 +104,23 @@ const EndPage = ({
             'The warlocks have corrupted or eliminated all good players.',
         };
 
+  // Filter trophy award for the winning team
+  const displayTrophy = React.useMemo(() => {
+    if (!trophyAward || !players || !winner) return null;
+    
+    // Find the trophy recipient
+    const recipient = players.find(p => p.name === trophyAward.playerName);
+    if (!recipient) return null;
+    
+    // Check if trophy recipient is on the winning team
+    const recipientIsWinner = 
+      (winner === 'Good' && !recipient.isWarlock) || 
+      (winner === 'Evil' && recipient.isWarlock);
+    
+    // Only show trophy if recipient is on the winning team
+    return recipientIsWinner ? trophyAward : null;
+  }, [trophyAward, players, winner]);
+
   // Note: Stats display now handled in FinalScoresTable component
 
   return (
@@ -124,6 +142,58 @@ const EndPage = ({
             {winnerDisplay.text}
           </h1>
         </div>
+
+        {/* Trophy Display */}
+        {displayTrophy && (
+          <div className="trophy-display">
+            <div className="trophy-header">
+              <h2>Trophy Awarded!</h2>
+            </div>
+            <div className="trophy-content">
+              <div className="trophy-avatar">
+                {/* Player Avatar - find the recipient player to get their avatar */}
+                {(() => {
+                  const recipient = players.find(p => p.name === displayTrophy.playerName);
+                  
+                  // Generate avatar image path
+                  const getAvatarPath = (player) => {
+                    if (!player?.race || !player?.class) {
+                      return '/images/races/random.png';
+                    }
+                    
+                    const race = player.race.toLowerCase();
+                    const playerClass = player.class.toLowerCase();
+                    
+                    return `/images/avatars/${race}/${playerClass}.png`;
+                  };
+                  
+                  const avatarPath = recipient ? getAvatarPath(recipient) : '/images/races/random.png';
+                  
+                  return (
+                    <div 
+                      className="player-avatar"
+                      style={{
+                        backgroundImage: `url(${avatarPath})`,
+                        backgroundSize: 'contain',
+                        backgroundPosition: 'center',
+                        backgroundRepeat: 'no-repeat'
+                      }}
+                      title={recipient ? `${recipient.race} ${recipient.class}` : 'Player Avatar'}
+                    />
+                  );
+                })()}
+              </div>
+              <div className="trophy-details">
+                <div className="trophy-name">{displayTrophy.trophyName}</div>
+                <div className="trophy-recipient">Awarded to: {displayTrophy.playerName}</div>
+                <div className="trophy-description">"{displayTrophy.trophyDescription}"</div>
+              </div>
+              <div className="trophy-emoji">
+                🏆
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Final Scores Table */}
         <FinalScoresTable players={players} />
@@ -182,6 +252,11 @@ EndPage.propTypes = {
       events: PropTypes.array.isRequired,
     })
   ),
+  trophyAward: PropTypes.shape({
+    playerName: PropTypes.string,
+    trophyName: PropTypes.string,
+    trophyDescription: PropTypes.string,
+  }),
   onPlayAgain: PropTypes.func.isRequired,
 };
 

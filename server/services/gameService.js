@@ -10,6 +10,7 @@ const {
   throwValidationError,
 } = require('@utils/errorHandler');
 const logger = require('@utils/logger');
+const trophies = require('@config/trophies');
 
 // In-memory storage
 const games = new Map();
@@ -139,6 +140,18 @@ function processGameRound(io, gameCode) {
   // Process the round
   const result = game.processRound();
 
+  logger.info(`=== ROUND ${result.turn} STATS ===`);
+  
+  // Debug: Check that stats are being tracked correctly
+  const actualPlayers = Array.from(game.players.values());
+  logger.info(`Round ${result.turn} stats (${actualPlayers.length} players):`);
+  actualPlayers.forEach(player => {
+    if (player.stats.totalDamageDealt > 0 || player.stats.totalHealingDone > 0 || player.stats.abilitiesUsed > 0) {
+      logger.info(`${player.name}: ${player.stats.totalDamageDealt} dmg, ${player.stats.abilitiesUsed} abilities, ${player.stats.monsterKills} kills`);
+    }
+  });
+  logger.info('=== END ROUND STATS ===');
+
   // Broadcast the results with phase information
   io.to(gameCode).emit('roundResult', {
     ...result,
@@ -164,6 +177,14 @@ function processGameRound(io, gameCode) {
   // Check if game is over
   if (result.winner) {
     logger.info('GameEnded', { gameCode, winner: result.winner });
+    
+    // Trophy system: Award a random trophy
+    const trophyAward = awardRandomTrophy(game, result);
+    if (trophyAward) {
+      // Add trophy to the result that was already emitted
+      io.to(gameCode).emit('trophyAwarded', trophyAward);
+    }
+    
     // Clean up the game
     clearTimeout(gameTimers.get(gameCode));
     gameTimers.delete(gameCode);
@@ -196,13 +217,21 @@ function checkGameWinConditions(io, gameCode, disconnectedPlayerName) {
   }
   // Check if all warlocks are gone
   if (game.systems.warlockSystem.getWarlockCount() <= 0) {
-    io.to(gameCode).emit('roundResult', {
+    const gameResult = {
       eventsLog: [
         `${disconnectedPlayerName} left the game. All Warlocks are gone.`,
       ],
       players: game.getPlayersInfo(),
       winner: 'Good',
-    });
+    };
+    
+    io.to(gameCode).emit('roundResult', gameResult);
+
+    // Trophy system: Award a random trophy
+    const trophyAward = awardRandomTrophy(game, gameResult);
+    if (trophyAward) {
+      io.to(gameCode).emit('trophyAwarded', trophyAward);
+    }
 
     // Clean up the game
     clearTimeout(gameTimers.get(gameCode));
@@ -215,11 +244,19 @@ function checkGameWinConditions(io, gameCode, disconnectedPlayerName) {
     game.systems.warlockSystem.getWarlockCount() ===
     game.getAlivePlayers().length
   ) {
-    io.to(gameCode).emit('roundResult', {
+    const gameResult = {
       eventsLog: [`${disconnectedPlayerName} left the game.`],
       players: game.getPlayersInfo(),
       winner: 'Evil',
-    });
+    };
+    
+    io.to(gameCode).emit('roundResult', gameResult);
+
+    // Trophy system: Award a random trophy
+    const trophyAward = awardRandomTrophy(game, gameResult);
+    if (trophyAward) {
+      io.to(gameCode).emit('trophyAwarded', trophyAward);
+    }
 
     // Clean up the game
     clearTimeout(gameTimers.get(gameCode));
@@ -228,6 +265,110 @@ function checkGameWinConditions(io, gameCode, disconnectedPlayerName) {
     return true;
   }
   return false;
+}
+
+/**
+ * Award a random trophy based on player stats and game result
+ * @param {GameRoom} game - Game room instance
+ * @param {Object} gameResult - Game result with winner information
+ * @returns {Object|null} Trophy award information or null if no trophy
+ */
+function awardRandomTrophy(game, gameResult) {
+  try {
+    // Debug: Check the game state first
+    logger.info('Game state during trophy evaluation:', {
+      gameCode: game.code,
+      hasPlayers: !!game.players,
+      playersMapSize: game.players ? game.players.size : 'undefined',
+      gameStarted: game.started,
+      gamePhase: game.phase
+    });
+
+    logger.info('Trophy evaluation started', {
+      winner: gameResult.winner,
+      gameCode: game.code
+    });
+
+    // FIXED: Refresh gameResult with current player data for trophy evaluation
+    // The original gameResult.players was created earlier and may have empty stats
+    gameResult.players = game.getPlayersInfo();
+    
+    if (gameResult.players && gameResult.players.length > 0) {
+      logger.info('Using refreshed gameResult player data for trophy evaluation');
+      const gameResultPlayers = gameResult.players;
+      
+      gameResultPlayers.forEach((player, index) => {
+        logger.info(`GameResult Player ${index + 1}: ${player.name} - stats: ${JSON.stringify(player.stats)}`);
+      });
+      
+      // Use gameResult players for trophy evaluation instead of game.getPlayersInfo()
+      // since the game state might be inconsistent at this point
+      const earnedTrophiesFromResult = [];
+      
+      // Check each trophy to see if any player qualifies
+      for (const trophy of trophies) {
+        try {
+          if (!trophy || !trophy.getWinner || !trophy.name) {
+            logger.warn('Invalid trophy object:', trophy);
+            continue;
+          }
+          
+          const winner = trophy.getWinner(gameResultPlayers, gameResult);
+          logger.info(`Trophy "${trophy.name}" evaluation: ${winner ? `${winner.name} wins!` : 'No winner'}`);
+          
+          if (winner) {
+            earnedTrophiesFromResult.push({
+              trophy: trophy,
+              winner: winner
+            });
+          }
+        } catch (error) {
+          logger.warn(`Trophy evaluation error for ${trophy.name}:`, {
+            error: error.message,
+            stack: error.stack
+          });
+        }
+      }
+
+      // If no trophies were earned, return null
+      if (earnedTrophiesFromResult.length === 0) {
+        logger.info('No trophies earned this game - no players qualified for any trophy');
+        return null;
+      }
+
+      logger.info(`${earnedTrophiesFromResult.length} trophies earned: ${earnedTrophiesFromResult.map(t => `${t.trophy.name} (${t.winner.name})`).join(', ')}`);
+
+      // Randomly select one trophy from the earned trophies
+      const selectedTrophy = earnedTrophiesFromResult[Math.floor(Math.random() * earnedTrophiesFromResult.length)];
+      
+      const trophyAward = {
+        playerName: selectedTrophy.winner.name,
+        trophyName: selectedTrophy.trophy.name,
+        trophyDescription: selectedTrophy.trophy.description,
+      };
+
+      logger.info('Trophy awarded (from gameResult)', {
+        gameCode: game.code,
+        winner: gameResult.winner,
+        trophy: trophyAward.trophyName,
+        recipient: trophyAward.playerName
+      });
+
+      return trophyAward;
+    }
+
+    // If we reach here, gameResult.players was empty
+    logger.warn('No player data available for trophy evaluation');
+    return null;
+  } catch (error) {
+    logger.error('Error awarding trophy:', {
+      error: error.message,
+      stack: error.stack,
+      gameCode: game?.code,
+      gameResult: gameResult
+    });
+    return null;
+  }
 }
 
 /**

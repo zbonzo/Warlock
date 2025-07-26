@@ -418,6 +418,11 @@ class WarlockSystem {
     // Validate actor is a warlock
     if (!actor || !actor.isWarlock) return false;
 
+    // Trophy system: Track corruption attempts
+    if (actor.addCorruption) {
+      actor.addCorruption();
+    }
+
     // Check corruption limits (includes detection penalty check)
     const limitCheck = this.checkCorruptionLimits(actor.id);
     if (!limitCheck.allowed) {

@@ -4,6 +4,7 @@
  */
 const config = require('@config');
 const messages = require('@messages');
+const logger = require('@utils/logger');
 
 /**
  * Helper class with utility functions for game state
@@ -112,6 +113,12 @@ class GameStateUtils {
       );
       return null; // Don't end game yet, resurrections are coming
     }
+    
+    // If everyone is dead, Evil wins (no survivors means darkness prevails)
+    if (aliveCount === 0) {
+      return 'Evil';
+    }
+    
     // Use win conditions from config
     const winConditions = config.gameBalance.warlock.winConditions;
 

@@ -65,6 +65,7 @@ function AppContent() {
     monster,
     selectedRace,
     selectedClass,
+    trophyAward,
     setScreen,
     setGameCode,
     setPlayerName,
@@ -77,6 +78,7 @@ function AppContent() {
     setSelectedClass,
     resetGame,
     setEventsLog,
+    setTrophyAward,
   } = useAppContext();
 
   // Get configuration loading state from context
@@ -237,6 +239,11 @@ function AppContent() {
       }
     });
 
+    const unsubscribeTrophyAwarded = on('trophyAwarded', (trophyData) => {
+      console.log('Trophy awarded:', trophyData);
+      setTrophyAward(trophyData);
+    });
+
     // Return cleanup function to remove listeners
     return () => {
       unsubscribeGameCreated();
@@ -245,6 +252,7 @@ function AppContent() {
       unsubscribeRoundResult();
       unsubscribeErrorMessage();
       unsubscribePrivateEvent();
+      unsubscribeTrophyAwarded();
       unsubscribeGameReconnected();
       unsubscribePlayerJoined();
     };
@@ -259,6 +267,7 @@ function AppContent() {
     setWinner,
     setScreen,
     setEventsLog,
+    setTrophyAward,
   ]);
 
   // Current player data (derived from players list)
@@ -409,10 +418,11 @@ function AppContent() {
             winner={winner}
             players={players}
             eventsLog={eventsLog}
-            gameCode={gameCode} // Add this
-            playerName={playerName} // Add this
-            socket={socket} // Add this
-            onPlayAgain={handlePlayAgain} // Keep this but make it optional
+            gameCode={gameCode}
+            playerName={playerName}
+            socket={socket}
+            trophyAward={trophyAward}
+            onPlayAgain={handlePlayAgain}
           />
         );
       default:

@@ -59,6 +59,106 @@ class Player {
 
     // NEW: Class effects tracking for Barbarian passives
     this.classEffects = {};
+
+    // Trophy system: Track player statistics throughout the game
+    this.stats = {
+      totalDamageDealt: 0,
+      totalHealingDone: 0,
+      damageTaken: 0,
+      corruptionsPerformed: 0, // For Warlocks
+      abilitiesUsed: 0,
+      monsterKills: 0, // For the player who lands the last hit
+      timesDied: 0,
+      selfHeals: 0,
+      highestSingleHit: 0,
+    };
+  }
+
+  /**
+   * Trophy system: Add damage dealt and update highest single hit
+   * @param {number} damage - Damage amount to add
+   */
+  addDamageDealt(damage) {
+    if (damage > 0) {
+      this.stats.totalDamageDealt += damage;
+      if (damage > this.stats.highestSingleHit) {
+        this.stats.highestSingleHit = damage;
+      }
+      logger.info(`${this.name} stats updated: +${damage} damage, total: ${this.stats.totalDamageDealt}, highest: ${this.stats.highestSingleHit}`);
+    }
+  }
+
+  /**
+   * Trophy system: Add damage taken
+   * @param {number} damage - Damage amount to add
+   */
+  addDamageTaken(damage) {
+    if (damage > 0) {
+      this.stats.damageTaken += damage;
+      logger.info(`${this.name} stats updated: +${damage} damage taken, total: ${this.stats.damageTaken}`);
+    }
+  }
+
+  /**
+   * Trophy system: Add healing done
+   * @param {number} healing - Healing amount to add
+   */
+  addHealingDone(healing) {
+    if (healing > 0) {
+      this.stats.totalHealingDone += healing;
+      logger.info(`${this.name} stats updated: +${healing} healing done, total: ${this.stats.totalHealingDone}`);
+    }
+  }
+
+  /**
+   * Trophy system: Increment corruption count
+   */
+  addCorruption() {
+    this.stats.corruptionsPerformed += 1;
+    logger.info(`${this.name} stats updated: corruption performed, total: ${this.stats.corruptionsPerformed}`);
+  }
+
+  /**
+   * Trophy system: Increment ability use count
+   */
+  addAbilityUse() {
+    this.stats.abilitiesUsed += 1;
+    logger.info(`${this.name} stats updated: ability used, total: ${this.stats.abilitiesUsed}`);
+  }
+
+  /**
+   * Trophy system: Increment death count
+   */
+  addDeath() {
+    this.stats.timesDied += 1;
+    logger.info(`${this.name} stats updated: death recorded, total: ${this.stats.timesDied}`);
+  }
+
+  /**
+   * Trophy system: Increment monster kill count
+   */
+  addMonsterKill() {
+    this.stats.monsterKills += 1;
+    logger.info(`${this.name} stats updated: monster kill, total: ${this.stats.monsterKills}`);
+  }
+
+  /**
+   * Trophy system: Add self-healing
+   * @param {number} healing - Self-healing amount to add
+   */
+  addSelfHeal(healing) {
+    if (healing > 0) {
+      this.stats.selfHeals += healing;
+      logger.info(`${this.name} stats updated: +${healing} self-heal, total: ${this.stats.selfHeals}`);
+    }
+  }
+
+  /**
+   * Trophy system: Get current stats
+   * @returns {Object} Current stats object
+   */
+  getStats() {
+    return { ...this.stats };
   }
 
   /**

@@ -111,6 +111,15 @@ function handleHeal(actor, target, ability, log, systems) {
     if (actualHeal > 0) {
       target.hp += actualHeal;
 
+      // Trophy system: Track healing done by actor
+      if (actor.addHealingDone) {
+        actor.addHealingDone(actualHeal);
+        // Track self-heals separately
+        if (actor.id === target.id && actor.addSelfHeal) {
+          actor.addSelfHeal(actualHeal);
+        }
+      }
+
       // NEW: Detection chance only if target is warlock AND actually received healing
       if (target.isWarlock && actualHeal > 0) {
         const detectionChance =
@@ -152,10 +161,25 @@ function handleHeal(actor, target, ability, log, systems) {
       // Normal healing
       actualHeal = Math.min(healAmount, target.maxHp - target.hp);
       target.hp += actualHeal;
+
+      // Trophy system: Track healing done by actor
+      if (actor.addHealingDone && actualHeal > 0) {
+        actor.addHealingDone(actualHeal);
+        // Track self-heals separately
+        if (actor.id === target.id && actor.addSelfHeal) {
+          actor.addSelfHeal(actualHeal);
+        }
+      }
     } else {
       // Warlock healing behavior - heal self instead
       actualHeal = Math.min(healAmount, actor.maxHp - actor.hp);
       actor.hp += actualHeal;
+
+      // Trophy system: Track healing done by actor (always self-heal in this case)
+      if (actor.addHealingDone && actor.addSelfHeal && actualHeal > 0) {
+        actor.addHealingDone(actualHeal);
+        actor.addSelfHeal(actualHeal);
+      }
 
       // Warlock-specific messages
       const warlockHealLog = {

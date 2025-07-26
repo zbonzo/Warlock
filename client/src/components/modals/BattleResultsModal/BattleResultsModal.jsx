@@ -23,6 +23,7 @@ import './BattleResultsModal.css';
  * @param {Array} props.players - Array of all players
  * @param {Object} props.levelUp - Level up information (if any)
  * @param {string} props.winner - Winner of the game (if any)
+ * @param {Object} props.trophyAward - Trophy award information (if any)
  * @returns {React.ReactElement|null} The rendered component or null if closed
  */
 const BattleResultsModal = ({
@@ -34,6 +35,7 @@ const BattleResultsModal = ({
   players,
   levelUp,
   winner,
+  trophyAward,
 }) => {
   const theme = useTheme();
   const [exiting, setExiting] = useState(false);
@@ -86,6 +88,19 @@ const BattleResultsModal = ({
               Game Over! {winner === 'Good' ? 'Heroes' : 'Warlocks'} Win!
             </div>
           )}
+
+          {trophyAward && (
+            <div className="trophy-award">
+              <div className="trophy-header">
+                <h3>🏆 Trophy Awarded! 🏆</h3>
+              </div>
+              <div className="trophy-details">
+                <div className="trophy-name">{trophyAward.trophyName}</div>
+                <div className="trophy-recipient">Awarded to: {trophyAward.playerName}</div>
+                <div className="trophy-description">"{trophyAward.trophyDescription}"</div>
+              </div>
+            </div>
+          )}
         </div>
 
         <div className="battle-results-content">
@@ -132,6 +147,11 @@ BattleResultsModal.propTypes = {
     newLevel: PropTypes.number,
   }),
   winner: PropTypes.string,
+  trophyAward: PropTypes.shape({
+    playerName: PropTypes.string,
+    trophyName: PropTypes.string,
+    trophyDescription: PropTypes.string,
+  }),
 };
 
 export default BattleResultsModal;

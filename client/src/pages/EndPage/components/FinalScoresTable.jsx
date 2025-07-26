@@ -42,22 +42,25 @@ const FinalScoresTable = ({ players }) => {
   };
 
   const getClassIcon = (playerClass) => {
-    // Map class names to icons - these would ideally be imported from a constants file
-    const classIcons = {
-      warrior: '⚔️',
-      priest: '✨',
-      wizard: '🔮',
-      tracker: '🏹',
-      oracle: '👁️',
-      assassin: '🗡️',
-      barbarian: '🪓',
-      pyromancer: '🔥',
-      shaman: '🌿',
-      druid: '🍃',
-      alchemist: '⚗️',
-      gunslinger: '🔫'
-    };
-    return classIcons[playerClass?.toLowerCase()] || '⚔️';
+    if (!playerClass) {
+      return <span className="class-icon-emoji">⚔️</span>;
+    }
+    
+    const className = playerClass.toLowerCase();
+    const imagePath = `/images/classes/${className}.png`;
+    
+    return (
+      <img 
+        src={imagePath} 
+        alt={playerClass} 
+        className="class-icon-image"
+        onError={(e) => {
+          // Fallback to emoji if image fails to load
+          e.target.style.display = 'none';
+          e.target.nextSibling.style.display = 'inline';
+        }}
+      />
+    );
   };
 
   return (
@@ -76,11 +79,14 @@ const FinalScoresTable = ({ players }) => {
         {sortedPlayers.map(player => (
           <div key={player.id} className={getPlayerRowClass(player)}>
             <div className="player-info">
-              <span className="class-icon">{getClassIcon(player.class)}</span>
+              <span className="class-icon">
+                {getClassIcon(player.class)}
+                <span className="class-icon-emoji" style={{display: 'none'}}>⚔️</span>
+              </span>
               <span className="player-name">{player.name}</span>
-              {!player.isAlive && <span className="death-indicator">💀</span>}
+              {!player.isAlive && <span className="death-indicator">🪦</span>}
             </div>
-            <div className="player-stat">{player.stats?.kills || 0}</div>
+            <div className="player-stat">{player.stats?.timesDied || 0}</div>
             <div className="player-stat">{player.stats?.totalDamageDealt || 0}</div>
             <div className="player-stat">{player.stats?.totalHealingDone || 0}</div>
             <div className="player-stat">{player.stats?.corruptionsPerformed || 0}</div>

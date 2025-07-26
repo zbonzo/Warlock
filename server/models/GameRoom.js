@@ -1205,35 +1205,49 @@ allActionsSubmittedSafe() {
    * @returns {Array} Array of player info objects
    */
   getPlayersInfo() {
-    return Array.from(this.players.values()).map((p) => ({
-      id: p.id,
-      name: p.name,
-      race: p.race,
-      class: p.class,
-      hp: p.hp,
-      maxHp: p.maxHp,
-      armor: p.armor,
-      damageMod: p.damageMod,
-      isWarlock: p.isWarlock,
-      isAlive: p.isAlive,
-      isReady: p.isReady,
-      unlocked: p.unlocked,
-      racialAbility: p.racialAbility,
-      racialUsesLeft: p.racialUsesLeft,
-      racialCooldown: p.racialCooldown,
-      level: this.level,
-      statusEffects: p.statusEffects,
-      abilityCooldowns: p.abilityCooldowns || {},
-      hasSubmittedAction: p.hasSubmittedAction || false,
-      submissionStatus: p.getSubmissionStatus(),
-      stoneArmor: p.stoneArmorIntact
-        ? {
-            active: true,
-            value: p.stoneArmorValue,
-            effectiveArmor: p.getEffectiveArmor(),
-          }
-        : null,
-    }));
+    return Array.from(this.players.values()).map((p) => {
+      return {
+        id: p.id,
+        name: p.name,
+        race: p.race,
+        class: p.class,
+        hp: p.hp,
+        maxHp: p.maxHp,
+        armor: p.armor,
+        damageMod: p.damageMod,
+        isWarlock: p.isWarlock,
+        isAlive: p.isAlive,
+        isReady: p.isReady,
+        unlocked: p.unlocked,
+        racialAbility: p.racialAbility,
+        racialUsesLeft: p.racialUsesLeft,
+        racialCooldown: p.racialCooldown,
+        level: this.level,
+        statusEffects: p.statusEffects,
+        abilityCooldowns: p.abilityCooldowns || {},
+        hasSubmittedAction: p.hasSubmittedAction || false,
+        submissionStatus: p.getSubmissionStatus(),
+        stoneArmor: p.stoneArmorIntact
+          ? {
+              active: true,
+              value: p.stoneArmorValue,
+              effectiveArmor: p.getEffectiveArmor(),
+            }
+          : null,
+        // Trophy system: Include player stats
+        stats: p.stats || {
+          totalDamageDealt: 0,
+          totalHealingDone: 0,
+          damageTaken: 0,
+          corruptionsPerformed: 0,
+          abilitiesUsed: 0,
+          monsterKills: 0,
+          timesDied: 0,
+          selfHeals: 0,
+          highestSingleHit: 0,
+        },
+      };
+    });
   }
 
   /**

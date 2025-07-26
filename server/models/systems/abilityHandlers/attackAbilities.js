@@ -189,6 +189,11 @@ function handleAttack(
     if (success) {
       actualDamage = modifiedDamage;
 
+      // Trophy system: Track damage to monster
+      if (actor.addDamageDealt) {
+        actor.addDamageDealt(actualDamage);
+      }
+
       // Generate warlock threat for attacking monster
       if (actor.isWarlock) {
         const randomConversionModifier =

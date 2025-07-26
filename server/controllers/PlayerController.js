@@ -376,6 +376,11 @@ function handlePlayerReconnection(io, socket, gameCode, playerName) {
     const Player = require('@models/Player');
     const restoredPlayer = Object.assign(new Player(socket.id, disconnectedPlayer.name), disconnectedPlayer);
     
+    // FIXED: Ensure stats are properly restored
+    if (disconnectedPlayer.stats) {
+      restoredPlayer.stats = { ...disconnectedPlayer.stats };
+    }
+    
     // Clean up disconnect metadata
     delete restoredPlayer.disconnectedAt;
     delete restoredPlayer.originalSocketId;

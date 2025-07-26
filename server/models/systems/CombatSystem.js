@@ -210,9 +210,25 @@ class CombatSystem {
     target.hp = Math.max(0, target.hp - finalDamage);
     const actualDamage = oldHp - target.hp;
 
+    // Trophy system: Track damage dealt by attacker
+    if (attacker && attacker.addDamageDealt && actualDamage > 0) {
+      attacker.addDamageDealt(actualDamage);
+    } else if (attacker) {
+      logger.info(`STATS: No tracking for ${attacker.name} - no addDamageDealt method, actualDamage: ${actualDamage}`);
+    }
+
+    // Trophy system: Track damage taken by target
+    if (target.addDamageTaken && actualDamage > 0) {
+      target.addDamageTaken(actualDamage);
+    }
+
     // Check if died
     if (target.hp <= 0) {
       target.isAlive = false;
+      // Trophy system: Track death
+      if (target.addDeath) {
+        target.addDeath();
+      }
     }
 
     // NEW: Process Thirsty Blade life steal for Barbarian attackers
