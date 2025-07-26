@@ -28,11 +28,43 @@
   z-index: 1;
 }
 
-.winner-title {
+.title-container {
+  position: relative;
+  height: 120px; /* Fixed height to prevent layout shifts */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 24px;
+}
+
+.animated-title {
   font-family: var(--font-heading);
+  font-size: 3rem;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  letter-spacing: 2px;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  transition: opacity 0.8s ease-in-out;
+  margin: 0;
+  white-space: nowrap;
+}
+
+.animated-title.visible {
+  opacity: 1;
+}
+
+.animated-title.hidden {
+  opacity: 0;
+}
+
+.animated-title:not(.winner-result) {
+  color: var(--color-primary);
+}
+
+.winner-result {
   font-size: 2.5rem;
-  margin-bottom: 8px;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .winner-description {
@@ -115,6 +147,15 @@
   overflow-y: auto;
 }
 
+/* Action Buttons */
+.action-buttons {
+  display: flex;
+  gap: 20px;
+  justify-content: center;
+  margin-top: 30px;
+  flex-wrap: wrap;
+}
+
 /* Play Again Button */
 .play-again-button {
   display: block;
@@ -174,12 +215,21 @@
     max-width: 100%;
   }
 
-  .winner-title {
+  .title-container {
+    height: 100px;
+  }
+
+  .animated-title {
+    font-size: 2.5rem;
+  }
+
+  .winner-result {
     font-size: 2rem;
   }
 
-  .winner-description {
-    font-size: 1rem;
+  .action-buttons {
+    flex-direction: column;
+    gap: 15px;
   }
 
   .play-again-button {
@@ -201,12 +251,25 @@
     padding: 15px;
   }
 
-  .winner-title {
-    font-size: 1.8rem;
+  .title-container {
+    height: 80px;
+  }
+
+  .animated-title {
+    font-size: 2rem;
+    letter-spacing: 1px;
+  }
+
+  .winner-result {
+    font-size: 1.5rem;
   }
 
   .stats-title {
     font-size: 1.2rem;
+  }
+
+  .action-buttons {
+    gap: 12px;
   }
 
   .play-again-button {

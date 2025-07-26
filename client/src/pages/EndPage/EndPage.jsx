@@ -6,8 +6,7 @@ import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { useTheme } from '@contexts/ThemeContext';
 import Confetti from './components/Confetti';
-import PlayerGroup from './components/PlayerGroup';
-import StatsPanel from './components/StatsPanel';
+import FinalScoresTable from './components/FinalScoresTable';
 import HistoryColumn from '@pages/GamePage/components/HistoryColumn';
 import './EndPage.css';
 import RuneButton from '../../components/ui/RuneButton';
@@ -46,6 +45,7 @@ const EndPage = ({
   const theme = useTheme();
   const [showConfetti, setShowConfetti] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
+  const [showGameOver, setShowGameOver] = useState(true);
 
   useEffect(() => {
     // Scroll to the top of the page
@@ -77,9 +77,16 @@ const EndPage = ({
     localStorage.removeItem('lastPlayerName');
   }, []);
 
-  // Separate players into teams
-  const goodPlayers = players.filter((p) => !p.isWarlock);
-  const evilPlayers = players.filter((p) => p.isWarlock);
+  // Alternating text animation
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setShowGameOver(prev => !prev);
+    }, 3000); // Switch every 3 seconds
+
+    return () => clearInterval(interval);
+  }, []);
+
+  // Note: Player separation now handled in FinalScoresTable component
 
   // Determine the winning team info
   const winnerDisplay =
@@ -96,21 +103,7 @@ const EndPage = ({
             'The warlocks have corrupted or eliminated all good players.',
         };
 
-  // Get survival statistics
-  const survivors = players.filter((p) => p.isAlive).length;
-  const casualties = players.filter((p) => !p.isAlive).length;
-  const totalPlayers = players.length;
-
-  // Get stats for StatsPanel component
-  const stats = [
-    { value: survivors, label: 'Survivors', color: theme.colors.primary },
-    { value: casualties, label: 'Casualties', color: theme.colors.danger },
-    {
-      value: totalPlayers,
-      label: 'Total Players',
-      color: theme.colors.primary,
-    },
-  ];
+  // Note: Stats display now handled in FinalScoresTable component
 
   return (
     <div className="end-page-container">
@@ -118,33 +111,22 @@ const EndPage = ({
       {showConfetti && <Confetti />}
 
       <div className="results-card">
-        <h1 className="winner-title" style={{ color: winnerDisplay.color }}>
-          {winnerDisplay.text}
-        </h1>
-
-        <p className="winner-description">{winnerDisplay.description}</p>
-
-        <div className="team-groups">
-          {/* Good players team */}
-          <PlayerGroup
-            title={`Good Players (${goodPlayers.length})`}
-            players={goodPlayers}
-            color={theme.colors.accent}
-          />
-
-          {/* Evil players team */}
-          <PlayerGroup
-            title={`Warlocks (${evilPlayers.length})`}
-            players={evilPlayers}
-            color={theme.colors.danger}
-          />
+        <div className="title-container">
+          <h1 
+            className={`animated-title ${showGameOver ? 'visible' : 'hidden'}`}
+          >
+            ++ GAME OVER ++
+          </h1>
+          <h1 
+            className={`animated-title winner-result ${!showGameOver ? 'visible' : 'hidden'}`}
+            style={{ color: winnerDisplay.color }}
+          >
+            {winnerDisplay.text}
+          </h1>
         </div>
 
-        <div className="stats-container">
-          <h3 className="stats-title">Final Stats</h3>
-
-          <StatsPanel stats={stats} />
-        </div>
+        {/* Final Scores Table */}
+        <FinalScoresTable players={players} />
 
         {/* Game History Toggle */}
         <div className="history-toggle-container">
@@ -169,9 +151,14 @@ const EndPage = ({
           </div>
         )}
 
-        <RuneButton onClick={handlePlayAgain}>
-          Awaken a New Circle ({gameCode})
-        </RuneButton>
+        <div className="action-buttons">
+          <RuneButton onClick={handlePlayAgain} variant="secondary">
+            Reawaken the Circle ({gameCode})
+          </RuneButton>
+          <RuneButton onClick={() => window.location.href = '/'}>
+            Forge a New Circle
+          </RuneButton>
+        </div>
       </div>
     </div>
   );

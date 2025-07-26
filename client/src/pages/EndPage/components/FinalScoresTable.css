@@ -1,0 +1,155 @@
+.final-scores-container {
+  margin: 30px 0;
+  text-align: center;
+}
+
+.final-scores-title {
+  font-family: var(--font-heading);
+  font-size: 1.5rem;
+  color: var(--color-primary, #6c5ce7);
+  margin-bottom: 20px;
+  letter-spacing: 1px;
+}
+
+.scores-table {
+  background: var(--color-surface);
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  margin: 0 auto;
+  max-width: 600px;
+}
+
+.table-header {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr 1fr;
+  background: var(--color-primary);
+  color: white;
+  padding: 12px 16px;
+  font-weight: bold;
+  font-size: 0.9rem;
+  text-align: center;
+}
+
+.header-player {
+  text-align: left;
+  padding-left: 8px;
+}
+
+.header-stat {
+  text-align: center;
+}
+
+.player-row {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr 1fr;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--color-border);
+  transition: background-color 0.2s ease;
+  text-align: center;
+  align-items: center;
+}
+
+.player-row:last-child {
+  border-bottom: none;
+}
+
+.player-row:hover {
+  background-color: var(--color-neutral);
+}
+
+.player-row-good {
+  background-color: rgba(46, 204, 113, 0.1);
+  border-left: 4px solid #2ecc71;
+}
+
+.warlock-row {
+  background-color: rgba(155, 89, 182, 0.1);
+  border-left: 4px solid #9b59b6;
+}
+
+.dead-row {
+  opacity: 0.6;
+  background-color: rgba(149, 165, 166, 0.1);
+}
+
+.player-info {
+  display: flex;
+  align-items: center;
+  text-align: left;
+  gap: 8px;
+}
+
+.class-icon {
+  font-size: 1.2rem;
+  width: 24px;
+  text-align: center;
+}
+
+.player-name {
+  font-weight: 600;
+  color: var(--color-text, #333);
+}
+
+.death-indicator {
+  margin-left: auto;
+  opacity: 0.7;
+}
+
+.player-stat {
+  font-weight: 500;
+  color: var(--color-text, #333);
+  font-size: 0.9rem;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .scores-table {
+    max-width: 100%;
+    margin: 0 -10px;
+  }
+  
+  .table-header,
+  .player-row {
+    padding: 10px 12px;
+    font-size: 0.8rem;
+  }
+  
+  .final-scores-title {
+    font-size: 1.3rem;
+    color: #6c5ce7; /* Ensure proper color on mobile */
+  }
+  
+  .player-name,
+  .player-stat {
+    color: #333; /* Force dark text on mobile */
+  }
+  
+  .class-icon {
+    font-size: 1rem;
+    width: 20px;
+  }
+}
+
+@media (max-width: 480px) {
+  .table-header,
+  .player-row {
+    grid-template-columns: 1.5fr 0.8fr 0.8fr 0.8fr 0.8fr;
+    padding: 8px 10px;
+    font-size: 0.75rem;
+  }
+  
+  .player-info {
+    gap: 6px;
+  }
+  
+  .player-name,
+  .player-stat {
+    color: #333 !important; /* Force dark text on small mobile */
+  }
+  
+  .class-icon {
+    font-size: 0.9rem;
+    width: 18px;
+  }
+}
