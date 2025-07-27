@@ -14,6 +14,7 @@ module.exports = {
         },
       },
     ],
+    '@babel/preset-typescript',
   ],
   plugins: [
     [
@@ -44,6 +45,7 @@ module.exports = {
             },
           },
         ],
+        '@babel/preset-typescript',
       ],
     },
   },

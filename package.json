@@ -20,7 +20,11 @@
     "test:coverage": "npm run test:coverage --workspaces",
     "test:e2e": "node run-e2e-test.js",
     "test:e2e-abilities": "node e2e-ability-test.js",
-    "install:all": "npm ci"
+    "install:all": "npm ci",
+    "typecheck": "npm run typecheck:server && npm run typecheck:client",
+    "typecheck:server": "cd server && npx tsc --noEmit",
+    "typecheck:client": "cd client && npx tsc --noEmit",
+    "typecheck:watch": "concurrently \"npm run typecheck:server -- --watch\" \"npm run typecheck:client -- --watch\""
   },
   "devDependencies": {
     "concurrently": "^8.2.0",
