@@ -181,8 +181,17 @@ function processGameRound(io, gameCode) {
     // Trophy system: Award a random trophy
     const trophyAward = awardRandomTrophy(game, result);
     if (trophyAward) {
+      // DEBUG: Log trophy emission for client debugging
+      logger.info('EMITTING trophyAwarded event to client:', {
+        gameCode,
+        trophyData: trophyAward,
+        socketRoomSize: io.sockets.adapter.rooms.get(gameCode)?.size || 0
+      });
+      
       // Add trophy to the result that was already emitted
       io.to(gameCode).emit('trophyAwarded', trophyAward);
+    } else {
+      logger.warn('No trophy to award - awardRandomTrophy returned null/undefined');
     }
     
     // Clean up the game
@@ -230,7 +239,16 @@ function checkGameWinConditions(io, gameCode, disconnectedPlayerName) {
     // Trophy system: Award a random trophy
     const trophyAward = awardRandomTrophy(game, gameResult);
     if (trophyAward) {
+      // DEBUG: Log trophy emission for client debugging
+      logger.info('EMITTING trophyAwarded event to client (all warlocks gone):', {
+        gameCode,
+        trophyData: trophyAward,
+        socketRoomSize: io.sockets.adapter.rooms.get(gameCode)?.size || 0
+      });
+      
       io.to(gameCode).emit('trophyAwarded', trophyAward);
+    } else {
+      logger.warn('No trophy to award - awardRandomTrophy returned null/undefined (all warlocks gone)');
     }
 
     // Clean up the game
@@ -255,7 +273,16 @@ function checkGameWinConditions(io, gameCode, disconnectedPlayerName) {
     // Trophy system: Award a random trophy
     const trophyAward = awardRandomTrophy(game, gameResult);
     if (trophyAward) {
+      // DEBUG: Log trophy emission for client debugging
+      logger.info('EMITTING trophyAwarded event to client (all innocents gone):', {
+        gameCode,
+        trophyData: trophyAward,
+        socketRoomSize: io.sockets.adapter.rooms.get(gameCode)?.size || 0
+      });
+      
       io.to(gameCode).emit('trophyAwarded', trophyAward);
+    } else {
+      logger.warn('No trophy to award - awardRandomTrophy returned null/undefined (all innocents gone)');
     }
 
     // Clean up the game
@@ -293,6 +320,15 @@ function awardRandomTrophy(game, gameResult) {
     // The original gameResult.players was created earlier and may have empty stats
     gameResult.players = game.getPlayersInfo();
     
+    // DEBUG: Log the player stats structure for trophy debugging
+    logger.info('Trophy debug - getPlayersInfo structure:', {
+      playerCount: gameResult.players?.length || 0,
+      firstPlayerStats: gameResult.players?.[0]?.stats || 'NO_STATS',
+      firstPlayerName: gameResult.players?.[0]?.name || 'NO_NAME',
+      firstPlayerComplete: gameResult.players?.[0] || 'NO_PLAYER',
+      playerNames: gameResult.players?.map(p => p?.name) || []
+    });
+    
     if (gameResult.players && gameResult.players.length > 0) {
       logger.info('Using refreshed gameResult player data for trophy evaluation');
       const gameResultPlayers = gameResult.players;
@@ -311,6 +347,15 @@ function awardRandomTrophy(game, gameResult) {
           if (!trophy || !trophy.getWinner || !trophy.name) {
             logger.warn('Invalid trophy object:', trophy);
             continue;
+          }
+          
+          // DEBUG: Log first player's stats structure for this trophy
+          if (gameResultPlayers.length > 0) {
+            logger.info(`Trophy "${trophy.name}" debug - First player stats:`, {
+              playerName: gameResultPlayers[0].name,
+              hasStats: !!gameResultPlayers[0].stats,
+              stats: gameResultPlayers[0].stats
+            });
           }
           
           const winner = trophy.getWinner(gameResultPlayers, gameResult);
@@ -352,6 +397,14 @@ function awardRandomTrophy(game, gameResult) {
         winner: gameResult.winner,
         trophy: trophyAward.trophyName,
         recipient: trophyAward.playerName
+      });
+
+      // DEBUG: Log the exact trophy data being returned
+      logger.info('Trophy award data structure:', {
+        trophyAward,
+        winnerObject: selectedTrophy.winner,
+        winnerName: selectedTrophy.winner?.name,
+        winnerType: typeof selectedTrophy.winner?.name
       });
 
       return trophyAward;

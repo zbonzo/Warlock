@@ -37,6 +37,16 @@ const BattleResultsModal = ({
   winner,
   trophyAward,
 }) => {
+  console.log('🏆 BattleResultsModal rendered with trophyAward:', trophyAward);
+  console.log('🏆 BattleResultsModal all props:', {
+    isOpen,
+    hasEvents: !!events,
+    round,
+    hasPlayers: !!players,
+    levelUp,
+    winner,
+    trophyAward
+  });
   const theme = useTheme();
   const [exiting, setExiting] = useState(false);
 

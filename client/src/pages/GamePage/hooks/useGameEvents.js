@@ -120,10 +120,18 @@ export const useGameEvents = (socket, {
     if (!socket) return;
 
     const handleTrophyAwarded = (trophyData) => {
-      console.log('Trophy awarded:', trophyData);
+      console.log('🏆 CLIENT RECEIVED trophyAwarded event:', trophyData);
+      console.log('🏆 Trophy data structure:', {
+        playerName: trophyData?.playerName,
+        trophyName: trophyData?.trophyName,
+        trophyDescription: trophyData?.trophyDescription,
+        dataType: typeof trophyData,
+        keys: Object.keys(trophyData || {})
+      });
       
       // Update the battle results modal with trophy data
       updateBattleResultsData({ trophyAward: trophyData });
+      console.log('🏆 Updated battle results with trophy data');
     };
 
     socket.on('trophyAwarded', handleTrophyAwarded);

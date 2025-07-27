@@ -1,12 +1,16 @@
 /**
  * @fileoverview Game room model with enhanced action submission and validation
  * Manages game state, players, and coordinates systems with proper cooldown timing
+ * Refactored to use composition with domain models for better separation of concerns
  */
 const Player = require('./Player');
 const config = require('@config');
 const SystemsFactory = require('./systems/SystemsFactory');
 const logger = require('@utils/logger');
 const messages = require('@messages');
+const { GameState } = require('./game/GameState');
+const { GamePhase } = require('./game/GamePhase');
+const { GameRules } = require('./game/GameRules');
 
 /**
  * GameRoom class represents a single game instance with enhanced action validation
@@ -19,28 +23,126 @@ class GameRoom {
    */
   constructor(code) {
     this.code = code;
-    this.players = new Map();
-    this.hostId = null;
-    this.started = false;
-    this.round = 0;
-    this.level = 1;
-    this.phase = 'lobby'; // 'lobby', 'action', 'results'
-    this.aliveCount = 0;
-    this.pendingActions = [];
-    this.pendingRacialActions = [];
-    this.nextReady = new Set();
-    this.disconnectedPlayers = [];
-
-    // Monster setup from config
-    this.monster = {
-      hp: config.gameBalance.monster.baseHp,
-      maxHp: config.gameBalance.monster.baseHp,
-      baseDmg: config.gameBalance.monster.baseDamage,
-      age: config.gameBalance.monster.baseAge,
-    };
+    
+    // Domain models for better separation of concerns
+    this.gameState = new GameState(code);
+    this.gamePhase = new GamePhase(code);
+    this.gameRules = new GameRules(code);
+    
+    // Initialize monster from config
+    this.gameState.initializeMonster(config);
 
     // Systems will be initialized when game starts (after players join)
     this.systems = null;
+    
+    // Set up property delegation for backward compatibility
+    this._setupPropertyDelegation();
+  }
+
+  /**
+   * Set up property delegation for backward compatibility
+   * @private
+   */
+  _setupPropertyDelegation() {
+    // Delegate GameState properties
+    Object.defineProperty(this, 'players', {
+      get: () => this.gameState.players,
+      set: (value) => { this.gameState.players = value; },
+      enumerable: true,
+      configurable: true
+    });
+
+    Object.defineProperty(this, 'hostId', {
+      get: () => this.gameState.hostId,
+      set: (value) => { this.gameState.hostId = value; },
+      enumerable: true,
+      configurable: true
+    });
+
+    Object.defineProperty(this, 'started', {
+      get: () => this.gameState.started,
+      set: (value) => { this.gameState.started = value; },
+      enumerable: true,
+      configurable: true
+    });
+
+    Object.defineProperty(this, 'round', {
+      get: () => this.gameState.round,
+      set: (value) => { this.gameState.round = value; },
+      enumerable: true,
+      configurable: true
+    });
+
+    Object.defineProperty(this, 'level', {
+      get: () => this.gameState.level,
+      set: (value) => { this.gameState.level = value; },
+      enumerable: true,
+      configurable: true
+    });
+
+    Object.defineProperty(this, 'aliveCount', {
+      get: () => this.gameState.aliveCount,
+      set: (value) => { this.gameState.aliveCount = value; },
+      enumerable: true,
+      configurable: true
+    });
+
+    Object.defineProperty(this, 'disconnectedPlayers', {
+      get: () => this.gameState.disconnectedPlayers,
+      set: (value) => { this.gameState.disconnectedPlayers = value; },
+      enumerable: true,
+      configurable: true
+    });
+
+    Object.defineProperty(this, 'monster', {
+      get: () => this.gameState.monster,
+      set: (value) => { this.gameState.monster = value; },
+      enumerable: true,
+      configurable: true
+    });
+
+    // Delegate GamePhase properties
+    Object.defineProperty(this, 'phase', {
+      get: () => this.gamePhase.getCurrentPhase(),
+      set: (value) => { this.gamePhase.setPhase(value); },
+      enumerable: true,
+      configurable: true
+    });
+
+    Object.defineProperty(this, 'pendingActions', {
+      get: () => this.gamePhase.pendingActions,
+      set: (value) => { this.gamePhase.pendingActions = value; },
+      enumerable: true,
+      configurable: true
+    });
+
+    Object.defineProperty(this, 'pendingRacialActions', {
+      get: () => this.gamePhase.pendingRacialActions,
+      set: (value) => { this.gamePhase.pendingRacialActions = value; },
+      enumerable: true,
+      configurable: true
+    });
+
+    Object.defineProperty(this, 'nextReady', {
+      get: () => this.gamePhase.nextReady,
+      set: (value) => { this.gamePhase.nextReady = value; },
+      enumerable: true,
+      configurable: true
+    });
+
+    Object.defineProperty(this, 'pendingDisconnectEvents', {
+      get: () => this.gamePhase.pendingDisconnectEvents,
+      set: (value) => { this.gamePhase.pendingDisconnectEvents = value; },
+      enumerable: true,
+      configurable: true
+    });
+
+    Object.defineProperty(this, 'pendingPassiveActivations', {
+      get: () => this.gamePhase.pendingPassiveActivations,
+      set: (value) => { this.gamePhase.pendingPassiveActivations = value; },
+      enumerable: true,
+      configurable: true
+    });
   }
 
   /**
@@ -50,14 +152,12 @@ class GameRoom {
    * @returns {boolean} Success status
    */
   addPlayer(id, name) {
-    if (this.started || this.players.size >= config.maxPlayers) return false;
+    if (!this.gameRules.canAddPlayer(this.gameState.started, this.gameState.players.size)) {
+      return false;
+    }
 
-    const p = new Player(id, name);
-    this.players.set(id, p);
-    this.aliveCount++;
-
-    if (!this.hostId) this.hostId = id;
-    return true;
+    const player = new Player(id, name);
+    return this.gameState.addPlayer(player);
   }
 
   /**
@@ -65,32 +165,27 @@ class GameRoom {
    * @param {string} id - Player's socket ID
    */
   removePlayer(id) {
-    const p = this.players.get(id);
-    if (!p) return;
+    const player = this.gameState.getPlayer(id);
+    if (!player) return;
 
-    if (p.isAlive) this.aliveCount--;
-    if (p.isWarlock && this.systems) this.systems.warlockSystem.decrementWarlockCount();
-    this.players.delete(id);
-
-    // Clean up any pending actions for this player
-    this.pendingActions = this.pendingActions.filter(
-      (action) => action.actorId !== id
-    );
-    this.pendingRacialActions = this.pendingRacialActions.filter(
-      (action) => action.actorId !== id
-    );
-
-    // Remove from ready set if present
-    if (this.nextReady) {
-      this.nextReady.delete(id);
+    // Handle warlock count if systems are initialized
+    if (player.isWarlock && this.systems) {
+      this.systems.warlockSystem.decrementWarlockCount();
     }
+
+    // Remove from game state
+    this.gameState.removePlayer(id);
+
+    // Clean up pending actions and ready state
+    this.gamePhase.removePendingActionsForPlayer(id);
+    this.gamePhase.setPlayerNotReady(id);
   }
   /**
    * Clear ready status for all players
    */
   clearReady() {
-    this.nextReady.clear();
-    for (let p of this.players.values()) p.isReady = false;
+    this.gamePhase.clearReady();
+    for (let p of this.gameState.players.values()) p.isReady = false;
   }
 
   /**
@@ -100,7 +195,7 @@ class GameRoom {
    * @param {string} cls - Selected class
    */
   setPlayerClass(id, race, cls) {
-    const p = this.players.get(id);
+    const p = this.gameState.getPlayer(id);
     if (!p) return;
 
     p.race = race;
@@ -194,7 +289,7 @@ class GameRoom {
       this.systems.warlockSystem.assignInitialWarlocks(preferredIds);
 
     // Set phase to action when game starts
-    this.phase = 'action';
+    this.gamePhase.toAction();
 
     return assignedWarlocks;
   }
@@ -208,80 +303,36 @@ class GameRoom {
    * @returns {boolean} Success status
    */
   addAction(actorId, actionType, targetId, options = {}) {
-    if (!this.started) return false;
-    const actor = this.players.get(actorId);
+    if (!this.gameState.hasStarted()) return false;
+    const actor = this.gameState.getPlayer(actorId);
 
-    // Basic validation
-    if (
-      !actor ||
-      !actor.isAlive ||
-      this.systems.statusEffectManager.isPlayerStunned(actorId)
-    )
+    // Validate action using game rules
+    const validation = this.gameRules.validateActionSubmission(actor, actionType, targetId, this.systems);
+    if (!validation.valid) {
+      if (validation.reason === 'Ability on cooldown') {
+        logger.debug('AbilityOnCooldownAttempt', {
+          playerName: actor.name,
+          actionType,
+          cooldown: actor.getAbilityCooldown(actionType),
+        });
+      } else if (validation.reason === 'Unknown ability type') {
+        logger.warn('UnknownAbilityType', { actionType, playerName: actor.name });
+      }
       return false;
+    }
 
-    // Check if player already has an action submitted
-    if (actor.hasSubmittedAction) return false;
-
-    // Find the ability being used
     const ability = actor.unlocked.find((a) => a.type === actionType);
-    if (!ability) return false; // Ability not found or not unlocked
 
-    // Check if ability is on cooldown
-    if (actor.isAbilityOnCooldown(actionType)) {
-      logger.debug('AbilityOnCooldownAttempt', {
-        playerName: actor.name,
-        actionType,
-        cooldown: actor.getAbilityCooldown(actionType),
-      });
-      return false; // Ability is on cooldown
-    }
-
-    // Check if our registry knows this ability type
-    if (!this.systems.abilityRegistry.hasClassAbility(actionType)) {
-      logger.warn('UnknownAbilityType', { actionType, playerName: actor.name });
-      return false;
-    }
-
-    // NEW: Handle AOE abilities with "multi" target
+    // Handle target resolution
     let finalTargetId = targetId;
 
     if (targetId === 'multi') {
-      // For AOE abilities, keep "multi" as the target
-      // The ability handlers will process this correctly
-      const isAOEAbility =
-        ability.target === 'Multi' ||
-        ability.isAOE === true ||
-        ability.targetType === 'multi' ||
-        [
-          'massHeal',
-          'thunderStrike',
-          'earthquake',
-          'massStun',
-          'groupHeal',
-          'meteorShower',
-          'infernoBlast',
-          'chainLightning',
-          'rejuvenation',
-          'battleCry',
-          'divineShield',
-          'entangle',
-          'poisonTrap',
-        ].includes(ability.type);
-
-      if (!isAOEAbility) {
-        logger.warn('NonAoeAbilityWithMultiTarget', {
-          playerName: actor.name,
-          actionType,
-        });
-        return false;
-      }
-
-      // Keep finalTargetId as "multi" for AOE abilities
+      // For AOE abilities, validation already checked this is valid
       finalTargetId = 'multi';
     } else {
       // Handle invisibility redirection for single-target abilities on player targets
       if (targetId !== '__monster__' && targetId !== actorId) {
-        const targetPlayer = this.players.get(targetId);
+        const targetPlayer = this.gameState.getPlayer(targetId);
         if (targetPlayer && targetPlayer.hasStatusEffect('invisible')) {
           finalTargetId = this.systems.gameStateUtils.getRandomTarget(actorId, {
             excludeIds: [targetId],
@@ -310,7 +361,7 @@ class GameRoom {
     }
 
     // Add the action to pending actions (but don't put ability on cooldown yet)
-    this.pendingActions.push({
+    this.gamePhase.addPendingAction({
       actorId,
       actionType,
       targetId: finalTargetId,
@@ -332,28 +383,31 @@ class GameRoom {
    * @returns {boolean} Success status
    */
   addRacialAction(actorId, targetId) {
-    if (!this.started) return false;
+    if (!this.gameState.hasStarted()) return false;
 
-    const actor = this.players.get(actorId);
-    if (!actor || !actor.isAlive || !actor.canUseRacialAbility()) return false;
-    if (this.pendingRacialActions.some((a) => a.actorId === actorId))
-      return false; // Already used racial this round
-
-    // Check if our registry knows this racial ability type
-    if (
-      !actor.racialAbility ||
-      !this.systems.abilityRegistry.hasRacialAbility(actor.racialAbility.type)
-    ) {
-      logger.warn('UnknownRacialAbilityTypeInGameRoom', {
-        racialAbilityType: actor.racialAbility?.type,
-        playerName: actor.name,
-      });
+    const actor = this.gameState.getPlayer(actorId);
+    
+    // Validate racial action using game rules
+    const validation = this.gameRules.validateRacialActionSubmission(
+      actor, 
+      targetId, 
+      this.gamePhase.getPendingRacialActions(), 
+      this.systems
+    );
+    
+    if (!validation.valid) {
+      if (validation.reason === 'Unknown racial ability type') {
+        logger.warn('UnknownRacialAbilityTypeInGameRoom', {
+          racialAbilityType: actor.racialAbility?.type,
+          playerName: actor.name,
+        });
+      }
       return false;
     }
 
     let finalTargetId = targetId;
     if (targetId !== config.MONSTER_ID && targetId !== actorId) {
-      const targetPlayer = this.players.get(targetId);
+      const targetPlayer = this.gameState.getPlayer(targetId);
       if (!targetPlayer || !targetPlayer.isAlive) return false; // Invalid player target
       if (
         targetPlayer.hasStatusEffect &&
@@ -367,7 +421,7 @@ class GameRoom {
       }
     }
 
-    this.pendingRacialActions.push({
+    this.gamePhase.addPendingRacialAction({
       actorId,
       targetId: finalTargetId,
       racialType: actor.racialAbility.type,
@@ -390,12 +444,12 @@ class GameRoom {
 
     const alivePlayers = this.getAlivePlayers();
 
-    for (const player of this.players.values()) {
+    for (const player of this.gameState.getAllPlayers()) {
       if (!player.hasSubmittedAction) continue;
 
       const validation = player.validateSubmittedAction(
         alivePlayers,
-        this.monster
+        this.gameState.monster
       );
 
       if (validation.isValid) {
@@ -421,7 +475,7 @@ class GameRoom {
    * Called after level up
    */
   updateUnlockedAbilities() {
-    for (const player of this.players.values()) {
+    for (const player of this.gameState.getAllPlayers()) {
       if (!player.abilities || !player.abilities.length) continue;
 
       const newlyUnlocked = [];
@@ -436,7 +490,7 @@ class GameRoom {
           player.unlocked.push(abilityCopy);
           newlyUnlocked.push(ability.name);
 
-          // NEW: Auto-activate passive abilities when unlocked
+          // Auto-activate passive abilities when unlocked
           if (ability.effect === 'passive') {
             this.activatePassiveAbility(player, ability);
           }
@@ -450,9 +504,9 @@ class GameRoom {
         });
       }
 
-      // NEW: Update Relentless Fury level scaling for existing Barbarians
+      // Update Relentless Fury level scaling for existing Barbarians
       if (player.class === 'Barbarian' && player.classEffects?.relentlessFury) {
-        player.classEffects.relentlessFury.currentLevel = this.level;
+        player.classEffects.relentlessFury.currentLevel = this.gameState.level;
       }
     }
   }
@@ -478,10 +532,7 @@ class GameRoom {
 
     if (success && log.length > 0) {
       // Add passive activation messages to the next round's log
-      if (!this.pendingPassiveActivations) {
-        this.pendingPassiveActivations = [];
-      }
-      this.pendingPassiveActivations.push(...log);
+      this.gamePhase.addPendingPassiveActivations(log);
     }
 
     logger.debug('PassiveAbilityActivated', {
@@ -496,7 +547,7 @@ class GameRoom {
    * @returns {Array} List of alive player objects
    */
   getAlivePlayers() {
-    return this.systems.gameStateUtils.getAlivePlayers();
+    return this.gameState.getAlivePlayers();
   }
 
   /**
@@ -504,48 +555,21 @@ class GameRoom {
    * @returns {boolean} Whether all actions are submitted
    */
   allActionsSubmitted() {
-    // Get all alive players
     const alivePlayers = this.getAlivePlayers();
-    
-    // Filter to only players who can currently act (not stunned)
-    const activePlayerCount = alivePlayers.filter(player => {
-      // Double-check stun status in real-time
-      const isCurrentlyStunned = this.systems.statusEffectManager.isPlayerStunned(player.id);
-      
-      // Also check player's status effects directly as a fallback
-      const hasStunEffect = player.hasStatusEffect && player.hasStatusEffect('stunned');
-      
-      // Player can act if they're not stunned by either check
-      return !isCurrentlyStunned && !hasStunEffect;
-    }).length;
-
-    // Count valid submitted actions from non-stunned players
-    const submittedActionCount = Array.from(this.players.values()).filter(player => {
-      if (!player.isAlive) return false;
-      if (!player.hasSubmittedAction) return false;
-      if (player.actionValidationState !== 'valid') return false;
-      
-      // Double-check that this player is not currently stunned
-      const isCurrentlyStunned = this.systems.statusEffectManager.isPlayerStunned(player.id);
-      const hasStunEffect = player.hasStatusEffect && player.hasStatusEffect('stunned');
-      
-      return !isCurrentlyStunned && !hasStunEffect;
-    }).length;
+    const status = this.gameRules.checkActionSubmissionStatus(alivePlayers, this.systems.statusEffectManager);
 
     // Log for debugging purposes
     logger.debug('ActionSubmissionCheck', {
       alivePlayers: alivePlayers.length,
-      activePlayerCount: activePlayerCount,
-      submittedActionCount: submittedActionCount,
-      stunned: Array.from(this.players.values())
-        .filter(p => p.isAlive && this.systems.statusEffectManager.isPlayerStunned(p.id))
-        .map(p => p.name)
+      activePlayerCount: status.activePlayerCount,
+      submittedActionCount: status.submittedActionCount,
+      stunned: status.stunnedPlayers
     });
 
-    return submittedActionCount >= activePlayerCount;
+    return status.allSubmitted;
   }
 cleanupInvalidSubmissions() {
-  for (const player of this.players.values()) {
+  for (const player of this.gameState.getAllPlayers()) {
     if (!player.isAlive) {
       // Clear submissions from dead players
       if (player.hasSubmittedAction) {
@@ -572,39 +596,7 @@ cleanupInvalidSubmissions() {
  */
 forceProgressionIfStuck() {
   const alivePlayers = this.getAlivePlayers();
-  const activePlayerCount = alivePlayers.filter(player => 
-    !this.systems.statusEffectManager.isPlayerStunned(player.id)
-  ).length;
-  
-  // If no players can act, force progression
-  if (activePlayerCount === 0) {
-    logger.warn('ForceProgressionNoActivePlayers', {
-      gameCode: this.code,
-      aliveCount: alivePlayers.length,
-      phase: this.phase
-    });
-    return true;
-  }
-  
-  // Check for timeout scenario (if players haven't submitted in reasonable time)
-  const submissionDeadline = Date.now() - (30 * 1000); // 30 seconds ago
-  const playersWithRecentSubmissions = Array.from(this.players.values()).filter(player => {
-    return player.isAlive && 
-           !this.systems.statusEffectManager.isPlayerStunned(player.id) &&
-           player.actionSubmissionTime &&
-           player.actionSubmissionTime > submissionDeadline;
-  });
-  
-  const playersWhoCanActCount = Array.from(this.players.values()).filter(player => {
-    return player.isAlive && !this.systems.statusEffectManager.isPlayerStunned(player.id);
-  }).length;
-  
-  // If players can act but haven't submitted recently, don't force yet
-  if (playersWhoCanActCount > 0 && playersWithRecentSubmissions.length < playersWhoCanActCount) {
-    return false;
-  }
-  
-  return false; // Don't force progression under normal circumstances
+  return this.gameRules.shouldForceProgression(alivePlayers, this.systems.statusEffectManager);
 }
 
 /**
@@ -629,30 +621,24 @@ allActionsSubmittedSafe() {
    */
   processRound() {
     const log = [];
-    this.phase = 'results';
+    this.gamePhase.toResults();
 
     // Reset per-round racial ability uses and process cooldowns for all players
-    for (let player of this.players.values()) {
+    for (let player of this.gameState.getAllPlayers()) {
       player.resetRacialPerRoundUses();
       player.processAbilityCooldowns();
     }
 
     // Add pending disconnect events first
-    if (
-      this.pendingDisconnectEvents &&
-      this.pendingDisconnectEvents.length > 0
-    ) {
-      log.push(...this.pendingDisconnectEvents);
-      this.pendingDisconnectEvents = [];
+    const disconnectEvents = this.gamePhase.getPendingDisconnectEvents();
+    if (disconnectEvents.length > 0) {
+      log.push(...disconnectEvents);
     }
 
-    // NEW: Add pending passive activation messages
-    if (
-      this.pendingPassiveActivations &&
-      this.pendingPassiveActivations.length > 0
-    ) {
-      log.push(...this.pendingPassiveActivations);
-      this.pendingPassiveActivations = [];
+    // Add pending passive activation messages
+    const passiveActivations = this.gamePhase.getPendingPassiveActivations();
+    if (passiveActivations.length > 0) {
+      log.push(...passiveActivations);
     }
 
     // Process racial abilities first
@@ -668,10 +654,10 @@ allActionsSubmittedSafe() {
     this.systems.monsterController.attack(log, this.systems.combatSystem);
 
     // Process life bond healing for Kinfolk
-    if (this.monster.hp > 0) {
-      for (const player of this.players.values()) {
+    if (this.gameState.monster.hp > 0) {
+      for (const player of this.gameState.getAllPlayers()) {
         if (player.race === 'Kinfolk' && player.isAlive) {
-          player.processLifeBondHealing(this.monster.hp, log);
+          player.processLifeBondHealing(this.gameState.monster.hp, log);
         }
       }
     }
@@ -680,7 +666,7 @@ allActionsSubmittedSafe() {
     this.systems.statusEffectManager.processTimedEffects(log);
 
     // Process class effects (including Barbarian passives)
-    for (const player of this.players.values()) {
+    for (const player of this.gameState.getAllPlayers()) {
       if (player.isAlive) {
         const classEffectResult = player.processClassEffects();
         if (classEffectResult) {
@@ -690,7 +676,7 @@ allActionsSubmittedSafe() {
     }
 
     // Re-check for pending deaths after poison/timed effects
-    for (const player of this.players.values()) {
+    for (const player of this.gameState.getAllPlayers()) {
       if (player.isAlive && player.hp <= 0) {
         player.pendingDeath = true;
         player.deathAttacker = 'Effects';
@@ -704,20 +690,20 @@ allActionsSubmittedSafe() {
     this.systems.combatSystem.processPendingDeaths(log);
 
     // Monster death & level-up
-    const oldLevel = this.level;
+    const oldLevel = this.gameState.level;
     const monsterDeathResult =
-      this.systems.monsterController.handleDeathAndRespawn(this.level, log);
-    this.level = monsterDeathResult.newLevel;
-
-    // Handle level-up
-    if (this.level > oldLevel) {
-      logger.info(`Game level up: ${oldLevel} -> ${this.level}`);
+      this.systems.monsterController.handleDeathAndRespawn(this.gameState.level, log);
+    
+    if (monsterDeathResult.newLevel > oldLevel) {
+      this.gameState.levelUp(monsterDeathResult.newLevel);
+      
+      logger.info(`Game level up: ${oldLevel} -> ${this.gameState.level}`);
 
       const levelUpLog = {
         type: 'level_up',
         public: true,
-        message: messages.getEvent('levelUp', { level: this.level }),
-        privateMessage: messages.getEvent('levelUp', { level: this.level }),
+        message: messages.getEvent('levelUp', { level: this.gameState.level }),
+        privateMessage: messages.getEvent('levelUp', { level: this.gameState.level }),
         attackerMessage: null,
       };
       log.push(levelUpLog);
@@ -725,21 +711,9 @@ allActionsSubmittedSafe() {
       this.updateUnlockedAbilities();
 
       // Apply level up bonuses to all living players
-      for (const player of this.players.values()) {
+      for (const player of this.gameState.getAllPlayers()) {
         if (player.isAlive) {
-          // Full heal
-          const oldHp = player.hp;
-          player.hp = player.maxHp;
-
-          // Apply HP increase from config
-          const hpIncrease = Math.floor(
-            player.maxHp * config.gameBalance.player.levelUp.hpIncrease
-          );
-          player.maxHp += hpIncrease;
-          player.hp = player.maxHp;
-
-          // Apply damage increase from config
-          player.damageMod *= config.gameBalance.player.levelUp.damageIncrease;
+          const bonuses = this.gameRules.applyLevelUpBonuses(player, this.gameState.level);
 
           // Log individual improvements
           const improvementLog = {
@@ -748,53 +722,49 @@ allActionsSubmittedSafe() {
             targetId: player.id,
             message: '',
             privateMessage: messages.getSuccess('bonusesApplied', {
-              level: this.level,
-              hpIncrease: hpIncrease,
+              level: this.gameState.level,
+              hpIncrease: bonuses.hpIncrease,
             }),
             attackerMessage: null,
           };
           log.push(improvementLog);
-
-          if (player.class === 'Barbarian') {
-            player.updateRelentlessFuryLevel(this.level);
-          }
         }
       }
     }
 
     // Clear all action submissions for the new round
-    for (const player of this.players.values()) {
+    for (const player of this.gameState.getAllPlayers()) {
       player.clearActionSubmission();
     }
 
     // Sort log entries - move corruption messages to the end
-    const sortedLog = this.sortLogEntries(log);
+    const sortedLog = this.gameRules.sortLogEntries(log);
 
     // Update game state
-    this.aliveCount = this.getAlivePlayers().length;
-    const winner = this.systems.gameStateUtils.checkWinConditions(
+    this.gameState.updateAliveCount();
+    const winner = this.gameRules.checkWinConditions(
       this.systems.warlockSystem.getWarlockCount(),
-      this.aliveCount
+      this.gameState.aliveCount
     );
 
     // Process log for clients
-    const processedLog = this.processLogForClients(sortedLog);
+    const processedLog = this.gameRules.processLogForClients(sortedLog);
 
     // Reset phase to action for next round BEFORE returning results
-    this.phase = 'action';
+    this.gamePhase.toAction();
+    
+    // Advance to next round
+    this.gameState.nextRound();
 
     return {
-      eventsLog: this.processLogForClients(this.sortLogEntries(log)),
+      eventsLog: processedLog,
       players: this.getPlayersInfo(),
       monster: this.systems.monsterController.getState(),
-      turn: this.round++,
-      level: this.level,
+      turn: this.gameState.round - 1, // Return current round number (before increment)
+      level: this.gameState.level,
       levelUp:
-        this.level > oldLevel ? { oldLevel, newLevel: this.level } : null,
-      winner: this.systems.gameStateUtils.checkWinConditions(
-        this.systems.warlockSystem.getWarlockCount(),
-        this.aliveCount
-      ),
+        this.gameState.level > oldLevel ? { oldLevel, newLevel: this.gameState.level } : null,
+      winner: winner,
     };
   }
 
@@ -879,7 +849,7 @@ allActionsSubmittedSafe() {
       const target =
         action.targetId === config.MONSTER_ID
           ? null
-          : this.players.get(action.targetId);
+          : this.gameState.getPlayer(action.targetId);
 
       if (action.targetId !== config.MONSTER_ID && !target) {
         continue;
@@ -908,87 +878,19 @@ allActionsSubmittedSafe() {
       }
     }
 
-    this.pendingRacialActions = [];
+    this.gamePhase.pendingRacialActions = [];
   }
 
   /**
-   * NEW: Analyze pending actions to calculate coordination bonuses
+   * Analyze pending actions to calculate coordination bonuses
    * This must happen BEFORE actions are executed
    * @returns {Map} Map of targetId -> coordination info
    */
   analyzeCoordination() {
-    const coordinationMap = new Map();
-
-    // Group actions by target
-    const actionsByTarget = new Map();
-
-    for (const action of this.pendingActions) {
-      const actor = this.players.get(action.actorId);
-      if (!actor || !actor.isAlive) continue;
-
-      const ability = actor.unlocked.find((a) => a.type === action.actionType);
-      if (!ability) continue;
-
-      // Determine if this is a damage or healing ability
-      const isDamageAbility =
-        ability.category === 'Attack' || ability.params.damage > 0;
-      const isHealingAbility =
-        ability.category === 'Heal' || ability.params.amount > 0;
-
-      if (!isDamageAbility && !isHealingAbility) continue;
-
-      const targetId = action.targetId;
-
-      if (!actionsByTarget.has(targetId)) {
-        actionsByTarget.set(targetId, {
-          damageActions: [],
-          healingActions: [],
-        });
-      }
-
-      const targetActions = actionsByTarget.get(targetId);
-
-      if (isDamageAbility) {
-        targetActions.damageActions.push({
-          actorId: action.actorId,
-          actionType: action.actionType,
-          ability: ability,
-          actor: actor,
-        });
-      } else if (isHealingAbility) {
-        targetActions.healingActions.push({
-          actorId: action.actorId,
-          actionType: action.actionType,
-          ability: ability,
-          actor: actor,
-        });
-      }
-    }
-
-    // Calculate coordination bonuses for each target
-    for (const [targetId, actions] of actionsByTarget.entries()) {
-      const damageCount = actions.damageActions.length;
-      const healingCount = actions.healingActions.length;
-
-      coordinationMap.set(targetId, {
-        damageActions: actions.damageActions,
-        healingActions: actions.healingActions,
-        damageBonus:
-          damageCount > 1
-            ? (damageCount - 1) *
-              config.gameBalance.coordinationBonus.damageBonus
-            : 0,
-        healingBonus:
-          healingCount > 1
-            ? (healingCount - 1) *
-              config.gameBalance.coordinationBonus.healingBonus
-            : 0,
-        coordinatedDamage: damageCount > 1,
-        coordinatedHealing: healingCount > 1,
-      });
-    }
-
-    return coordinationMap;
+    return this.gameRules.calculateCoordinationBonuses(
+      this.gamePhase.getPendingActions(),
+      this.gameState.players
+    );
   }
   /**
    * Process all pending player actions (IMPROVED with proper cooldown timing and multi-target handling)
@@ -1197,7 +1099,7 @@ allActionsSubmittedSafe() {
     }
 
     // Clear the pending actions queue
-    this.pendingActions = [];
+    this.gamePhase.clearPendingActions();
   }
 
   /**
@@ -1205,49 +1107,7 @@ allActionsSubmittedSafe() {
    * @returns {Array} Array of player info objects
    */
   getPlayersInfo() {
-    return Array.from(this.players.values()).map((p) => {
-      return {
-        id: p.id,
-        name: p.name,
-        race: p.race,
-        class: p.class,
-        hp: p.hp,
-        maxHp: p.maxHp,
-        armor: p.armor,
-        damageMod: p.damageMod,
-        isWarlock: p.isWarlock,
-        isAlive: p.isAlive,
-        isReady: p.isReady,
-        unlocked: p.unlocked,
-        racialAbility: p.racialAbility,
-        racialUsesLeft: p.racialUsesLeft,
-        racialCooldown: p.racialCooldown,
-        level: this.level,
-        statusEffects: p.statusEffects,
-        abilityCooldowns: p.abilityCooldowns || {},
-        hasSubmittedAction: p.hasSubmittedAction || false,
-        submissionStatus: p.getSubmissionStatus(),
-        stoneArmor: p.stoneArmorIntact
-          ? {
-              active: true,
-              value: p.stoneArmorValue,
-              effectiveArmor: p.getEffectiveArmor(),
-            }
-          : null,
-        // Trophy system: Include player stats
-        stats: p.stats || {
-          totalDamageDealt: 0,
-          totalHealingDone: 0,
-          damageTaken: 0,
-          corruptionsPerformed: 0,
-          abilitiesUsed: 0,
-          monsterKills: 0,
-          timesDied: 0,
-          selfHeals: 0,
-          highestSingleHit: 0,
-        },
-      };
-    });
+    return this.gameState.getPlayersInfo();
   }
 
   /**
@@ -1257,54 +1117,19 @@ allActionsSubmittedSafe() {
    * @returns {boolean} Whether the transfer was successful
    */
   transferPlayerId(oldId, newId) {
-    // Check if the old ID exists
-    if (!this.players.has(oldId)) {
+    // Transfer in game state
+    const success = this.gameState.transferPlayerId(oldId, newId);
+    if (!success) {
       return false;
     }
 
-    // Get the player
-    const player = this.players.get(oldId);
+    // Update pending actions in game phase
+    this.gamePhase.updatePendingActionTargets(oldId, newId);
 
-    // Remove from old ID
-    this.players.delete(oldId);
-
-    // Update player's ID
-    player.id = newId;
-
-    // Add to new ID
-    this.players.set(newId, player);
-
-    // Update host if needed
-    if (this.hostId === oldId) {
-      this.hostId = newId;
-    }
-
-    // Also check and update pending actions
-    this.pendingActions = this.pendingActions.map((action) => {
-      if (action.actorId === oldId) {
-        action.actorId = newId;
-      }
-      if (action.targetId === oldId) {
-        action.targetId = newId;
-      }
-      return action;
-    });
-
-    // Update pending racial actions
-    this.pendingRacialActions = this.pendingRacialActions.map((action) => {
-      if (action.actorId === oldId) {
-        action.actorId = newId;
-      }
-      if (action.targetId === oldId) {
-        action.targetId = newId;
-      }
-      return action;
-    });
-
-    // Update ready players set
-    if (this.nextReady.has(oldId)) {
-      this.nextReady.delete(oldId);
-      this.nextReady.add(newId);
+    // Update ready status
+    if (this.gamePhase.isPlayerReady(oldId)) {
+      this.gamePhase.setPlayerNotReady(oldId);
+      this.gamePhase.setPlayerReady(newId);
     }
 
     return true;
@@ -1316,7 +1141,7 @@ allActionsSubmittedSafe() {
    * @returns {Object|null} Player object or null if not found
    */
   getPlayerBySocketId(socketId) {
-    return this.players.get(socketId) || null;
+    return this.gameState.getPlayer(socketId);
   }
 
   /**
@@ -1325,7 +1150,7 @@ allActionsSubmittedSafe() {
    * @returns {Object|null} Player object or null if not found
    */
   getPlayerById(playerId) {
-    return this.players.get(playerId) || null;
+    return this.gameState.getPlayer(playerId);
   }
 
   /**
@@ -1334,18 +1159,7 @@ allActionsSubmittedSafe() {
    * @returns {Array} Array of cleaned up player names
    */
   cleanupDisconnectedPlayers(timeoutMs = 10 * 60 * 1000) {
-    const now = Date.now();
-    const cleanedUp = [];
-    
-    this.disconnectedPlayers = this.disconnectedPlayers.filter(player => {
-      if (now - player.disconnectedAt > timeoutMs) {
-        cleanedUp.push(player.name);
-        return false; // Remove from array
-      }
-      return true; // Keep in array
-    });
-    
-    return cleanedUp;
+    return this.gameState.cleanupDisconnectedPlayers(timeoutMs);
   }
 }
 
