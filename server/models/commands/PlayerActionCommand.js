@@ -2,9 +2,11 @@
  * @fileoverview Base class for player action commands
  * Implements command pattern for encapsulating player actions
  * Part of Phase 2 refactoring - Event-Driven Architecture
+ * Enhanced with Zod validation for runtime data integrity
  */
 const { EventTypes } = require('../events/EventTypes');
-const logger = require('@utils/logger');
+const { lenientValidator } = require('../validation/ValidationMiddleware');
+const logger = require('../../utils/logger');
 
 /**
  * Base class for all player action commands
@@ -23,6 +25,14 @@ class PlayerActionCommand {
    * @param {boolean} options.canUndo - Whether this command can be undone
    */
   constructor(playerId, actionType, options = {}) {
+    // Basic parameter validation without Zod for now
+    if (!playerId || typeof playerId !== 'string') {
+      throw new Error('Player ID must be a non-empty string');
+    }
+    if (!actionType || typeof actionType !== 'string') {
+      throw new Error('Action type must be a non-empty string');
+    }
+    
     this.playerId = playerId;
     this.actionType = actionType;
     this.targetId = options.targetId || null;
@@ -46,6 +56,7 @@ class PlayerActionCommand {
     this.isValidated = false;
   }
 
+
   /**
    * Validate the command before execution
    * @param {Object} gameContext - Current game context (game room, systems, etc.)
@@ -56,7 +67,29 @@ class PlayerActionCommand {
     this.validationWarnings = [];
     
     try {
-      // Basic validation
+      // Zod validation for basic command structure
+      try {
+        const validationResult = lenientValidator.validatePlayerAction({
+          playerId: this.playerId,
+          actionType: this.actionType,
+          targetId: this.targetId,
+          timestamp: this.timestamp
+        });
+        
+        if (!validationResult.success) {
+          this.validationErrors.push(...validationResult.errors);
+        }
+      } catch (zodError) {
+        // If Zod validation fails, log but continue with basic validation
+        logger.warn('Zod validation error in PlayerActionCommand', {
+          error: zodError.message,
+          playerId: this.playerId,
+          actionType: this.actionType
+        });
+        // Fall back to basic validation only
+      }
+      
+      // Basic validation (keep as fallback)
       if (!this.playerId) {
         this.validationErrors.push('Player ID is required');
       }
@@ -64,6 +97,7 @@ class PlayerActionCommand {
       if (!this.actionType) {
         this.validationErrors.push('Action type is required');
       }
+
 
       // Get player from game context
       const player = gameContext.game.getPlayerById(this.playerId);
@@ -82,8 +116,8 @@ class PlayerActionCommand {
         this.validationErrors.push(`Cannot perform ${this.actionType} during ${gameContext.game.phase} phase`);
       }
 
-      // Validate target if specified
-      if (this.targetId && this.targetId !== 'monster') {
+      // Validate target if specified (exclude monster targets)
+      if (this.targetId && this.targetId !== 'monster' && this.targetId !== '__monster__') {
         const target = gameContext.game.getPlayerById(this.targetId);
         if (!target) {
           this.validationErrors.push(`Target ${this.targetId} not found`);

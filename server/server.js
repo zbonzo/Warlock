@@ -1,6 +1,8 @@
 /**
  * @fileoverview Main server entry point
  * Sets up HTTP server, Socket.IO, and event handlers
+ * Updated for Phase 2 Step 4: Socket.IO Event Consolidation - Stabilized connections
+ * Debugging IPv4/IPv6 connectivity issues
  */
 const express = require('express');
 const http = require('http');
@@ -12,6 +14,7 @@ const logger = require('@utils/logger');
 const gameController = require('@controllers/GameController');
 const playerController = require('@controllers/PlayerController');
 const { withSocketErrorHandling } = require('@utils/errorHandler');
+const { SocketValidators, socketValidator } = require('./middleware/socketValidation');
 const gameService = require('./services/gameService');
 
 // Initialize Express app and HTTP server
@@ -41,14 +44,29 @@ app.get('/health', (req, res) => {
 // Create HTTP server
 const server = http.createServer(app);
 
-// Initialize Socket.IO with CORS
+// Initialize Socket.IO with CORS and transport configuration
 const io = new Server(server, {
   cors: {
-    origin: process.env.NODE_ENV === 'development' ? '*' : config.corsOrigins,
-    methods: ['GET', 'POST'],
-    allowedHeaders: ['Content-Type'],
+    origin: process.env.NODE_ENV === 'development' ? ['http://localhost:3000', 'http://127.0.0.1:3000', 'http://192.168.100.42:3000'] : config.corsOrigins,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
     credentials: false,
   },
+  // Transport configuration - start with polling, allow upgrades
+  transports: ['polling', 'websocket'],
+  allowEIO3: true,
+  
+  // Connection settings - balanced for stability
+  connectTimeout: 45000,
+  pingTimeout: 30000,
+  pingInterval: 25000,
+  
+  // HTTP settings
+  maxHttpBufferSize: 1e6,
+  httpCompression: true,
+  
+  // Allow transport upgrades
+  allowUpgrades: true,
 });
 
 /**
@@ -132,9 +150,67 @@ server.listen(PORT, '0.0.0.0', () => {
   logger.info('ServerStarted', { port: PORT });
 });
 
-// Socket.IO Event Handlers
+// Socket.IO Event Handlers and debugging
+io.engine.on('connection_error', (err) => {
+  logger.error('Socket.IO connection error:', {
+    message: err.message || 'Unknown error',
+    code: err.code || 'NO_CODE',
+    context: err.context || 'NO_CONTEXT',
+    type: err.type || 'UNKNOWN_TYPE',
+    description: err.description || 'No description',
+    stack: err.stack || 'No stack trace',
+    fullError: JSON.stringify(err, null, 2)
+  });
+});
+
+// Additional error handling
+io.on('connect_error', (err) => {
+  logger.error('Socket.IO connect error:', {
+    message: err.message,
+    stack: err.stack
+  });
+});
+
+io.engine.on('initial_headers', (headers, request) => {
+  logger.debug('Socket.IO initial headers:', {
+    headers: Object.keys(headers),
+    url: request.url,
+    method: request.method
+  });
+});
+
+io.engine.on('headers', (headers, request) => {
+  logger.debug('Socket.IO headers:', {
+    url: request.url,
+    userAgent: request.headers['user-agent']?.substring(0, 50)
+  });
+});
+
 io.on('connection', (socket) => {
-  logger.info('PlayerConnected', { socketId: socket.id });
+  logger.info('Socket connected', { 
+    socketId: socket.id,
+    transport: socket.conn.transport.name,
+    userAgent: socket.handshake.headers['user-agent']?.substring(0, 100),
+    remoteAddress: socket.handshake.address
+  });
+
+  // Log transport-specific events for debugging
+  socket.conn.on('packet', (packet) => {
+    if (packet.type === 'error') {
+      logger.warn('Socket transport packet error:', {
+        socketId: socket.id,
+        packet: packet
+      });
+    }
+  });
+
+  socket.conn.on('close', (reason) => {
+    logger.info('Socket transport closed:', {
+      socketId: socket.id,
+      reason,
+      transport: socket.conn.transport.name
+    });
+  });
 
   // Host creates a new game
   socket.on(
@@ -152,8 +228,10 @@ io.on('connection', (socket) => {
     'joinGame',
     withSocketErrorHandling(
       socket,
-      ({ gameCode, playerName }) =>
-        playerController.handlePlayerJoin(io, socket, gameCode, playerName),
+      ({ gameCode, playerName }) => {
+        // Use the original join logic - SocketEventRouter registration handled in PlayerController
+        return playerController.handlePlayerJoin(io, socket, gameCode, playerName);
+      },
       'joining game'
     )
   );
@@ -335,8 +413,13 @@ io.on('connection', (socket) => {
   );
 
   // Handle player disconnection
-  socket.on('disconnect', () => {
+  socket.on('disconnect', (reason) => {
     try {
+      logger.info('Socket disconnected', { 
+        socketId: socket.id,
+        reason,
+        transport: socket.conn?.transport?.name
+      });
       playerController.handlePlayerDisconnect(io, socket);
       socketRateLimiter.cleanupSocket(socket.id);
     } catch (error) {

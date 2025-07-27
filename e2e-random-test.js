@@ -5,6 +5,7 @@
 
 const io = require('socket.io-client');
 const { expect } = require('chai');
+const readline = require('readline');
 
 // Test configuration
 const SERVER_URL = 'http://localhost:3001';
@@ -123,6 +124,12 @@ let testResults = {
   errors: []
 };
 
+// Readline interface for user input
+const rl = readline.createInterface({
+  input: process.stdin,
+  output: process.stdout
+});
+
 /**
  * Utility functions
  */
@@ -141,6 +148,14 @@ function shuffleArray(array) {
     [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
   }
   return shuffled;
+}
+
+function waitForEnter(message = 'Press Enter to continue to the next round...') {
+  return new Promise((resolve) => {
+    rl.question(message + '\n', () => {
+      resolve();
+    });
+  });
 }
 
 /**
@@ -768,6 +783,11 @@ async function runRandomE2ETest() {
         break;
       }
       
+      // Wait for user to press enter before proceeding to next round
+      if (currentRound > 1) {
+        await waitForEnter(`Press Enter to continue to round ${currentRound}...`);
+      }
+      
       await executeRandomAbilities();
       
       // Add some randomness to pacing
@@ -833,6 +853,7 @@ async function runRandomE2ETest() {
           player.socket.disconnect();
         }
       });
+      rl.close();
       console.log('All players disconnected. Exiting.');
       process.exit(0);
     });

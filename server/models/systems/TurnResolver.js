@@ -1,10 +1,12 @@
 /**
  * @fileoverview TurnResolver - handles turn-based combat resolution
  * Extracted from CombatSystem as part of Phase 1 refactoring
+ * Part of Phase 2 refactoring - now emits events for turn operations
  */
 const config = require('@config');
 const logger = require('@utils/logger');
 const messages = require('@messages');
+const { EventTypes } = require('../events/EventTypes');
 
 /**
  * TurnResolver handles turn-based combat resolution
@@ -17,12 +19,14 @@ class TurnResolver {
    * @param {MonsterController} monsterController - Monster controller
    * @param {WarlockSystem} warlockSystem - Warlock system
    * @param {GameStateUtils} gameStateUtils - Game state utilities
+   * @param {GameEventBus} eventBus - Event bus for emitting turn events
    */
-  constructor(players, monsterController, warlockSystem, gameStateUtils) {
+  constructor(players, monsterController, warlockSystem, gameStateUtils, eventBus = null) {
     this.players = players;
     this.monsterController = monsterController;
     this.warlockSystem = warlockSystem;
     this.gameStateUtils = gameStateUtils;
+    this.eventBus = eventBus;
 
     // Track coordination for this round
     this.coordinationTracker = new Map(); // targetId -> [playerId1, playerId2, ...]
@@ -35,6 +39,13 @@ class TurnResolver {
   resetCoordinationTracking() {
     this.coordinationTracker.clear();
     this.updateComebackStatus();
+
+    // Emit turn started event
+    if (this.eventBus) {
+      this.eventBus.emit(EventTypes.COMBAT.TURN_STARTED, {
+        timestamp: new Date().toISOString()
+      });
+    }
   }
 
   /**
@@ -65,6 +76,17 @@ class TurnResolver {
     const coordinators = this.coordinationTracker.get(targetId);
     if (!coordinators.includes(actorId)) {
       coordinators.push(actorId);
+
+      // Emit coordination tracked event
+      if (this.eventBus) {
+        this.eventBus.emit(EventTypes.COORDINATION.CALCULATED, {
+          targetId: targetId,
+          coordinationCount: coordinators.length,
+          participants: [actorId],
+          bonusMultiplier: 1.0,
+          timestamp: new Date().toISOString()
+        });
+      }
     }
   }
 

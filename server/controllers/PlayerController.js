@@ -39,6 +39,13 @@ function handlePlayerJoin(io, socket, gameCode, playerName) {
 
   // Join socket to game room and update clients
   socket.join(gameCode);
+  
+  // Register with SocketEventRouter if available
+  if (game.getSocketEventRouter()) {
+    game.registerSocket(socket);
+    game.mapPlayerSocket(socket.id, socket.id);
+  }
+  
   logger.info('PlayerJoinedGame', {
     playerName: sanitizedName,
     gameCode,

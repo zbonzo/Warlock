@@ -14,7 +14,8 @@ export const SOCKET_URL = (() => {
       window.location.hostname === 'localhost' ||
       window.location.hostname === '127.0.0.1'
     ) {
-      return `${protocol === 'wss:' ? 'https:' : 'http:'}//${window.location.hostname}:3001`;
+      // Force IPv4 to avoid IPv6 connection issues
+      return `${protocol === 'wss:' ? 'https:' : 'http:'}//127.0.0.1:3001`;
     }
     // Otherwise, assume server is on same machine but different port
     return `${protocol === 'wss:' ? 'https:' : 'http:'}//${window.location.hostname}:3001`;
@@ -36,6 +37,12 @@ export const API_URL = (() => {
     // Use the current hostname but with port 3001 for the API
     const protocol = window.location.protocol;
     const hostname = window.location.hostname;
+    
+    // Force IPv4 for localhost to avoid IPv6 connection issues
+    if (hostname === 'localhost' || hostname === '127.0.0.1') {
+      return `${protocol}//127.0.0.1:3001/api`;
+    }
+    
     return `${protocol}//${hostname}:3001/api`;
   }
 

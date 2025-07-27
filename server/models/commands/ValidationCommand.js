@@ -326,7 +326,7 @@ class ValidationCommand extends PlayerActionCommand {
 
     // Check cooldown
     if (player.playerAbilities) {
-      const onCooldown = player.playerAbilities.isOnCooldown(abilityId);
+      const onCooldown = player.playerAbilities.isAbilityOnCooldown(abilityId);
       this._checkRule('ability_not_on_cooldown', !onCooldown, `Ability ${abilityId} is on cooldown`);
     }
   }

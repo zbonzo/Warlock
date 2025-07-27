@@ -2,9 +2,11 @@
  * @fileoverview Ability command implementation for player ability usage
  * Handles ability validation, cooldowns, targeting, and execution
  * Part of Phase 2 refactoring - Event-Driven Architecture
+ * Enhanced with Zod validation for runtime data integrity
  */
 const PlayerActionCommand = require('./PlayerActionCommand');
 const { EventTypes } = require('../events/EventTypes');
+const { lenientValidator } = require('../validation/ValidationMiddleware');
 const logger = require('@utils/logger');
 
 /**
@@ -42,6 +44,29 @@ class AbilityCommand extends PlayerActionCommand {
     const player = game.getPlayerById(this.playerId);
     const ability = this._findAbility(player);
 
+    // Zod validation for ability action structure
+    try {
+      const validationResult = lenientValidator.validateAbilityAction({
+        playerId: this.playerId,
+        actionType: this.actionType,
+        abilityId: this.abilityId,
+        targetId: this.targetId,
+        timestamp: this.timestamp
+      });
+      
+      if (!validationResult.success) {
+        this.validationErrors.push(...validationResult.errors);
+      }
+    } catch (zodError) {
+      // If Zod validation fails, log but continue with basic validation
+      logger.warn('Zod validation error in AbilityCommand', {
+        error: zodError.message,
+        playerId: this.playerId,
+        abilityId: this.abilityId
+      });
+      // Fall back to basic validation only
+    }
+
     if (!ability) {
       this.validationErrors.push(`Ability ${this.abilityId} not found for player`);
       return;
@@ -60,10 +85,8 @@ class AbilityCommand extends PlayerActionCommand {
     }
 
     // Check if player has already used an ability this turn
-    if (game.gamePhase && game.gamePhase.hasPlayerSubmittedAction(this.playerId)) {
-      this.validationErrors.push('Player has already submitted an action this turn');
-      return;
-    }
+    // Note: In the new command system, this is handled by the CommandProcessor
+    // which prevents duplicate commands from being processed
 
     // Validate target
     await this._validateTarget(gameContext, ability);
@@ -71,10 +94,8 @@ class AbilityCommand extends PlayerActionCommand {
     // Validate ability-specific requirements
     await this._validateAbilityRequirements(gameContext, ability);
 
-    // Check warlock restrictions
-    if (player.isWarlock && !this._isWarlockAbility(ability)) {
-      this.validationErrors.push('Warlocks can only use warlock abilities');
-    }
+    // Note: Warlock restriction removed - warlocks can use their class abilities
+    // Warlock-specific abilities are handled separately through the warlock system
 
     // Emit ability validation event
     await game.emitEvent(EventTypes.ABILITY.VALIDATED, {
@@ -190,7 +211,7 @@ class AbilityCommand extends PlayerActionCommand {
    */
   _isOnCooldown(player, ability) {
     if (!player.playerAbilities) return false;
-    return player.playerAbilities.isOnCooldown(this.abilityId);
+    return player.playerAbilities.isAbilityOnCooldown(this.abilityId);
   }
 
   /**

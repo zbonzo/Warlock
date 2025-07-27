@@ -1,10 +1,12 @@
 /**
  * @fileoverview EffectManager - handles all effect-related logic
  * Extracted from CombatSystem as part of Phase 1 refactoring
+ * Part of Phase 2 refactoring - now emits events for effect operations
  */
 const config = require('@config');
 const logger = require('@utils/logger');
 const messages = require('@messages');
+const { EventTypes } = require('../events/EventTypes');
 
 /**
  * EffectManager handles all effect-related operations
@@ -18,13 +20,15 @@ class EffectManager {
    * @param {WarlockSystem} warlockSystem - Warlock system
    * @param {Function} getComebackStatus - Function to get comeback status
    * @param {Function} getCoordinationCount - Function to get coordination count
+   * @param {GameEventBus} eventBus - Event bus for emitting effect events
    */
-  constructor(players, statusEffectManager, warlockSystem, getComebackStatus, getCoordinationCount) {
+  constructor(players, statusEffectManager, warlockSystem, getComebackStatus, getCoordinationCount, eventBus = null) {
     this.players = players;
     this.statusEffectManager = statusEffectManager;
     this.warlockSystem = warlockSystem;
     this.getComebackStatus = getComebackStatus;
     this.getCoordinationCount = getCoordinationCount;
+    this.eventBus = eventBus;
   }
 
   /**
@@ -60,6 +64,16 @@ class EffectManager {
           : ''
       };
       log.push(immunityLog);
+
+      // Emit immunity event
+      if (this.eventBus) {
+        this.eventBus.emit(EventTypes.EFFECT.IMMUNITY_TRIGGERED, {
+          targetId: target.id,
+          attackerId: attacker.id || 'monster',
+          effectType: 'stone_resolve',
+          timestamp: new Date().toISOString()
+        });
+      }
 
       delete target.racialEffects.immuneNextDamage;
       return true;
@@ -133,6 +147,17 @@ class EffectManager {
         attackerMessage: ''
       };
       log.push(counterLog);
+
+      // Emit counter-attack event
+      if (this.eventBus) {
+        this.eventBus.emit(EventTypes.EFFECT.COUNTER_ATTACK, {
+          defenderId: target.id,
+          attackerId: attacker.id,
+          effectType: 'spirit_guard',
+          damage: actualCounterDamage,
+          timestamp: new Date().toISOString()
+        });
+      }
     }
 
     // Reveal if attacker is a warlock
@@ -162,6 +187,16 @@ class EffectManager {
 
       // Mark attacker as recently detected
       this.markPlayerAsDetected(attacker);
+
+      // Emit warlock detection event
+      if (this.eventBus) {
+        this.eventBus.emit(EventTypes.EFFECT.WARLOCK_DETECTED, {
+          detectorId: target.id,
+          warlockId: attacker.id,
+          detectionMethod: 'spirit_guard',
+          timestamp: new Date().toISOString()
+        });
+      }
     }
   }
 
@@ -222,6 +257,24 @@ class EffectManager {
 
         // Mark attacker as recently detected
         this.markPlayerAsDetected(attacker);
+
+        // Emit sanctuary counter and detection events
+        if (this.eventBus) {
+          this.eventBus.emit(EventTypes.EFFECT.COUNTER_ATTACK, {
+            defenderId: target.id,
+            attackerId: attacker.id,
+            effectType: 'sanctuary_of_truth',
+            damage: actualCounterDamage,
+            timestamp: new Date().toISOString()
+          });
+
+          this.eventBus.emit(EventTypes.EFFECT.WARLOCK_DETECTED, {
+            detectorId: target.id,
+            warlockId: attacker.id,
+            detectionMethod: 'sanctuary_of_truth',
+            timestamp: new Date().toISOString()
+          });
+        }
       } else {
         log.push(
           messages.formatMessage(
@@ -302,6 +355,16 @@ class EffectManager {
       // Mark attacker as recently detected if they're a Warlock
       if (attacker.isWarlock) {
         this.markPlayerAsDetected(attacker);
+
+        // Emit warlock detection event
+        if (this.eventBus) {
+          this.eventBus.emit(EventTypes.EFFECT.WARLOCK_DETECTED, {
+            detectorId: target.id,
+            warlockId: attacker.id,
+            detectionMethod: 'moonbeam',
+            timestamp: new Date().toISOString()
+          });
+        }
       }
     }
   }
@@ -476,6 +539,18 @@ class EffectManager {
         )
       };
       log.push(healLog);
+
+      // Emit healing event
+      if (this.eventBus) {
+        this.eventBus.emit(EventTypes.EFFECT.HEAL_APPLIED, {
+          healerId: healer.id,
+          targetId: target.id,
+          amount: actualHeal,
+          baseAmount: baseAmount,
+          modifiedAmount: modifiedAmount,
+          timestamp: new Date().toISOString()
+        });
+      }
     }
 
     return actualHeal;

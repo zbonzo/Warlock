@@ -12,6 +12,28 @@ const { validateGameAction } = require('@shared/gameChecks');
 const logger = require('@utils/logger');
 const config = require('@config');
 const messages = require('@messages');
+const { EventTypes } = require('../models/events/EventTypes');
+
+/**
+ * Helper function to emit events through EventBus or fallback to direct socket emission
+ * @param {Object} socket - Socket instance
+ * @param {string} gameCode - Game code
+ * @param {string} eventType - EventBus event type
+ * @param {Object} eventData - Event data
+ * @param {string} fallbackEvent - Fallback socket event name
+ * @param {Object} fallbackData - Fallback socket event data
+ */
+function emitThroughEventBusOrSocket(socket, gameCode, eventType, eventData, fallbackEvent, fallbackData) {
+  const game = gameService.games.get(gameCode);
+  if (game && game.getEventBus()) {
+    game.getEventBus().emit(eventType, {
+      socketId: socket.id,
+      ...eventData
+    });
+  } else {
+    socket.emit(fallbackEvent, fallbackData);
+  }
+}
 
 const { throwGameStateError } = require('@utils/errorHandler');
 
@@ -36,9 +58,16 @@ function handleGameCreate(io, socket, playerName) {
   const game = gameService.createGame(gameCode);
   if (!game) return false; // Handle case where game creation fails
 
+  // Initialize the SocketEventRouter for this game
+  game.setSocketServer(io);
+
   // Add this socket as a player (host) in the new game
   game.addPlayer(socket.id, playerName);
   socket.join(gameCode);
+  
+  // Register the socket with the event router
+  game.registerSocket(socket);
+  game.mapPlayerSocket(socket.id, socket.id);
   logger.info(
     messages.formatMessage(messages.serverLogMessages.info.GameCreated, {
       gameCode,
@@ -49,8 +78,16 @@ function handleGameCreate(io, socket, playerName) {
   // Create timeout for the new game
   gameService.createGameTimeout(io, gameCode);
 
-  // Send the game code back to the host
-  socket.emit('gameCreated', { gameCode: gameCode });
+  // Send the game code back to the host through EventBus
+  if (game.getEventBus()) {
+    game.getEventBus().emit(EventTypes.CONTROLLER.GAME_CREATED, {
+      socketId: socket.id,
+      gameCode: gameCode
+    });
+  } else {
+    // Fallback for games without EventBus
+    socket.emit('gameCreated', { gameCode: gameCode });
+  }
 
   // Broadcast the updated player list
   gameService.broadcastPlayerList(io, gameCode);
@@ -232,16 +269,34 @@ async function handleGameAction(
     // Use the combined validation for basic game state
     const game = validateGameAction(socket, gameCode, true, false);
     if (!game) {
-      socket.emit('errorMessage', {
-        message: messages.getError('gameOrStateInvalid'),
-      });
+      emitThroughEventBusOrSocket(
+        socket, 
+        gameCode, 
+        EventTypes.CONTROLLER.ERROR,
+        { 
+          message: messages.getError('gameOrStateInvalid'),
+          type: 'validation_error'
+        },
+        'errorMessage',
+        { message: messages.getError('gameOrStateInvalid') }
+      );
       return false;
     }
 
     // Get the player
     const player = game.getPlayerBySocketId(socket.id);
     if (!player) {
-      socket.emit('errorMessage', { message: messages.errors.playerNotFound });
+      emitThroughEventBusOrSocket(
+        socket,
+        gameCode,
+        EventTypes.CONTROLLER.ERROR,
+        { 
+          message: messages.errors.playerNotFound,
+          type: 'player_error'
+        },
+        'errorMessage',
+        { message: messages.errors.playerNotFound }
+      );
       return false;
     }
 
@@ -274,12 +329,15 @@ async function handleGameAction(
         )
       );
 
-      // Send success confirmation with command ID
-      socket.emit('actionSubmitted', {
+      // Send success confirmation with command ID through EventBus
+      game.getEventBus().emit(EventTypes.ACTION.SUBMITTED, {
+        socketId: socket.id,
         actionType,
         targetId,
         commandId,
-        message: messages.getSuccess('actionSubmitted')
+        success: true,
+        message: messages.getSuccess('actionSubmitted'),
+        timestamp: new Date().toISOString()
       });
 
       // Broadcast updated player list with submission status

@@ -19,6 +19,13 @@ const EventTypes = {
     ERROR: 'game.error'
   },
 
+  // Controller Events (for Socket.IO routing)
+  CONTROLLER: {
+    GAME_CREATED: 'controller.gameCreated',
+    PLAYER_JOINED: 'controller.playerJoined',
+    ERROR: 'controller.error'
+  },
+
   // Phase Management Events
   PHASE: {
     CHANGED: 'phase.changed',
@@ -205,13 +212,22 @@ const EventSchemas = {
   },
 
   [EventTypes.DAMAGE.APPLIED]: {
-    targetId: 'string',
-    damage: 'number',
-    oldHealth: 'number',
-    newHealth: 'number',
+    // Single target damage event
+    targetId: 'string?',
+    targetName: 'string?',
     attackerId: 'string?',
-    abilityId: 'string?',
-    timestamp: 'string'
+    attackerName: 'string?',
+    damageAmount: 'number?',
+    originalDamage: 'number?',
+    armor: 'number?',
+    targetHpBefore: 'number?',
+    targetHpAfter: 'number?',
+    timestamp: 'string',
+    // Area damage event fields
+    sourceId: 'string?',
+    targetIds: 'array?',
+    damage: 'number?',
+    baseDamage: 'number?'
   },
 
   [EventTypes.HEAL.APPLIED]: {

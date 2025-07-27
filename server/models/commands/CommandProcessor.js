@@ -271,14 +271,47 @@ class CommandProcessor {
         eventBus: this.eventBus
       };
 
+      logger.debug(`Processing command for ${command.playerId}: ${command.actionType} -> ${command.targetId || 'no target'} (${command.abilityId || 'no ability'})`, {
+        commandId: command.id,
+        playerId: command.playerId,
+        actionType: command.actionType,
+        targetId: command.targetId,
+        abilityId: command.abilityId,
+        gameCode: this.gameRoom.code
+      });
+
       // Validate command
       const isValid = await command.validate(gameContext);
       if (!isValid) {
+        logger.error(`Command validation failed for ${command.playerId} (${command.actionType}): ${command.validationErrors.join(', ')}`, {
+          commandId: command.id,
+          playerId: command.playerId,
+          actionType: command.actionType,
+          targetId: command.targetId,
+          abilityId: command.abilityId,
+          validationErrors: command.validationErrors,
+          gameCode: this.gameRoom.code
+        });
         throw new Error(`Command validation failed: ${command.validationErrors.join(', ')}`);
       }
 
+      logger.debug('Command validation passed:', {
+        commandId: command.id,
+        playerId: command.playerId,
+        actionType: command.actionType,
+        gameCode: this.gameRoom.code
+      });
+
       // Execute command
       const result = await command.execute(gameContext);
+
+      logger.debug('Command execution completed:', {
+        commandId: command.id,
+        playerId: command.playerId,
+        actionType: command.actionType,
+        result: result,
+        gameCode: this.gameRoom.code
+      });
 
       // Move to completed state
       this.executingCommands.delete(command.id);

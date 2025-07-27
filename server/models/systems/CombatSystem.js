@@ -45,13 +45,14 @@ class CombatSystem {
     this.eventBus = eventBus;
 
     // Initialize domain models
-    this.turnResolver = new TurnResolver(players, monsterController, warlockSystem, gameStateUtils);
+    this.turnResolver = new TurnResolver(players, monsterController, warlockSystem, gameStateUtils, eventBus);
     this.effectManager = new EffectManager(
       players,
       statusEffectManager,
       warlockSystem,
       () => this.turnResolver.getComebackStatus(),
-      (targetId, excludeActorId) => this.turnResolver.getCoordinationCount(targetId, excludeActorId)
+      (targetId, excludeActorId) => this.turnResolver.getCoordinationCount(targetId, excludeActorId),
+      eventBus
     );
     this.damageCalculator = new DamageCalculator(
       players,
@@ -154,7 +155,7 @@ class CombatSystem {
 
     // Emit damage event
     if (this.eventBus && actualDamage > 0) {
-      this.eventBus.emit(EventTypes.COMBAT.DAMAGE_DEALT, {
+      this.eventBus.emit(EventTypes.DAMAGE.APPLIED, {
         targetId: target.id,
         targetName: target.name,
         attackerId: attacker.id || 'monster',
@@ -307,7 +308,7 @@ class CombatSystem {
 
     // Emit healing event
     if (this.eventBus && actualHealing > 0) {
-      this.eventBus.emit(EventTypes.COMBAT.HEAL_APPLIED, {
+      this.eventBus.emit(EventTypes.HEAL.APPLIED, {
         healerId: healer.id,
         healerName: healer.name,
         targetId: target.id,
@@ -417,7 +418,7 @@ class CombatSystem {
 
     // Emit monster damage event
     if (this.eventBus && actualDamage > 0) {
-      this.eventBus.emit(EventTypes.COMBAT.MONSTER_DAMAGED, {
+      this.eventBus.emit(EventTypes.MONSTER.DAMAGED, {
         attackerId: attacker.id,
         attackerName: attacker.name,
         damageAmount: actualDamage,
@@ -432,7 +433,7 @@ class CombatSystem {
 
     // Check if monster was defeated
     if (this.eventBus && newMonsterHp <= 0 && oldMonsterHp > 0) {
-      this.eventBus.emit(EventTypes.COMBAT.MONSTER_DEFEATED, {
+      this.eventBus.emit(EventTypes.MONSTER.DEFEATED, {
         killerId: attacker.id,
         killerName: attacker.name,
         finalDamage: actualDamage,
@@ -518,6 +519,17 @@ class CombatSystem {
 
     // Handle warlock conversion for area effects
     this.effectManager.handleAreaWarlockConversion(source, validTargets, log);
+
+    // Emit area damage event
+    if (this.eventBus && affectedTargets.length > 0) {
+      this.eventBus.emit(EventTypes.DAMAGE.APPLIED, {
+        sourceId: source.id || 'monster',
+        targetIds: affectedTargets.map(t => t.id),
+        damage: damageResult.finalDamage,
+        baseDamage: baseDamage,
+        timestamp: new Date().toISOString()
+      });
+    }
 
     return affectedTargets;
   }

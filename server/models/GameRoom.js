@@ -16,6 +16,7 @@ const GameEventBus = require('./events/GameEventBus');
 const EventMiddleware = require('./events/EventMiddleware');
 const { EventTypes } = require('./events/EventTypes');
 const CommandProcessor = require('./commands/CommandProcessor');
+const SocketEventRouter = require('./events/SocketEventRouter');
 
 /**
  * GameRoom class represents a single game instance with enhanced action validation
@@ -40,6 +41,9 @@ class GameRoom {
     
     // Initialize command system (Phase 2 enhancement)
     this.commandProcessor = new CommandProcessor(this);
+    
+    // Socket event router will be initialized when setSocketServer is called
+    this.socketEventRouter = null;
     
     // Initialize monster from config
     this.gameState.initializeMonster(config);
@@ -1278,11 +1282,66 @@ allActionsSubmittedSafe() {
   }
 
   /**
+   * Get the game code for this room
+   * @returns {string} Game code
+   */
+  getGameCode() {
+    return this.code;
+  }
+
+  /**
    * Get the event bus for this game room
    * @returns {GameEventBus} Event bus instance
    */
   getEventBus() {
     return this.eventBus;
+  }
+
+  /**
+   * Initialize the socket event router with the Socket.IO server
+   * @param {Object} io - Socket.IO server instance
+   */
+  setSocketServer(io) {
+    if (!this.socketEventRouter) {
+      this.socketEventRouter = new SocketEventRouter(this, io);
+      logger.info('Socket event router initialized for game:', {
+        gameCode: this.code
+      });
+    }
+  }
+
+  /**
+   * Get the socket event router for this game room
+   * @returns {SocketEventRouter|null} Socket event router instance or null if not initialized
+   */
+  getSocketEventRouter() {
+    return this.socketEventRouter;
+  }
+
+  /**
+   * Register a socket with the event router
+   * @param {Object} socket - Socket.IO socket instance
+   */
+  registerSocket(socket) {
+    if (this.socketEventRouter) {
+      this.socketEventRouter.registerSocket(socket);
+    } else {
+      logger.warn('Attempted to register socket before router initialization:', {
+        gameCode: this.code,
+        socketId: socket.id
+      });
+    }
+  }
+
+  /**
+   * Map a player to their socket connection
+   * @param {string} playerId - Player ID
+   * @param {string} socketId - Socket ID
+   */
+  mapPlayerSocket(playerId, socketId) {
+    if (this.socketEventRouter) {
+      this.socketEventRouter.mapPlayerSocket(playerId, socketId);
+    }
   }
 
   /**

@@ -39,7 +39,7 @@ class EventMiddleware {
         logEntry.data = event.data;
       }
 
-      logger.info('Event emitted:', logEntry);
+      logger.info(`Event emitted: ${event.type}`, logEntry);
       next();
     };
   }
@@ -64,7 +64,7 @@ class EventMiddleware {
         if (onError) {
           onError(error, event);
         } else {
-          logger.warn('Invalid event type:', { eventType: event.type, gameCode: event.gameCode });
+          logger.warn(`Invalid event type detected: "${event.type}" (${typeof event.type}) in game ${event.gameCode || 'unknown'}`);
         }
         
         if (strict) {
@@ -79,10 +79,11 @@ class EventMiddleware {
         if (onError) {
           onError(error, event);
         } else {
-          logger.warn('Event validation failed:', {
+          logger.warn(`Event validation failed: ${event.type}`, {
             eventType: event.type,
             gameCode: event.gameCode,
-            errors: validation.errors
+            errors: validation.errors,
+            eventData: event.data
           });
         }
 

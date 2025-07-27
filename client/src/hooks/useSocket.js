@@ -5,6 +5,9 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { io } from 'socket.io-client';
 
+// Global socket instance cache to prevent multiple connections
+const globalSocketCache = new Map();
+
 /**
  * Custom hook for managing Socket.io connections
  * 
@@ -24,6 +27,10 @@ export default function useSocket(url, options = {}) {
   // Flag to track if this hook has initialized a connection
   const hasInitialized = useRef(false);
   
+  // Stabilize URL and options to prevent unnecessary re-renders
+  const stableUrl = useRef(url);
+  const stableOptions = useRef(options);
+  
   // Set up socket connection only once on mount
   useEffect(() => {
     // Prevent multiple socket creation attempts
@@ -31,21 +38,51 @@ export default function useSocket(url, options = {}) {
       return;
     }
 
-    console.log("Creating new socket connection to:", url);
+    // Check if we already have a socket for this URL
+    const cacheKey = stableUrl.current;
+    const existingSocket = globalSocketCache.get(cacheKey);
+    
+    if (existingSocket && existingSocket.connected) {
+      console.log("Reusing existing socket connection to:", stableUrl.current);
+      socketRef.current = existingSocket;
+      setConnected(true);
+      setSocketId(existingSocket.id);
+      hasInitialized.current = true;
+      return;
+    }
+
+    console.log("Creating new socket connection to:", stableUrl.current);
     hasInitialized.current = true;
     
     // Create socket connection with more robust options
-    const socket = io(url, {
-      reconnectionAttempts: 10,
-      reconnectionDelay: 1500,
-      reconnectionDelayMax: 5000,
-      timeout: 20000,
+    const socketOptions = {
+      // Connection settings
       autoConnect: true,
       forceNew: false, // Don't force a new connection
-      ...options
-    });
+      
+      // Transport settings - start with polling, allow upgrades
+      transports: ['polling', 'websocket'],
+      upgrade: true,
+      
+      // Timeout settings
+      timeout: 45000,
+      
+      // Reconnection settings
+      reconnection: true,
+      reconnectionAttempts: 3,
+      reconnectionDelay: 2000,
+      reconnectionDelayMax: 5000,
+      
+      // Additional stability options
+      closeOnBeforeunload: true,
+      ...stableOptions.current
+    };
+    
+    const socket = io(stableUrl.current, socketOptions);
     
     socketRef.current = socket;
+    // Cache the socket globally
+    globalSocketCache.set(cacheKey, socket);
     
     // Set up connection event handlers
     socket.on('connect', () => {
@@ -75,11 +112,27 @@ export default function useSocket(url, options = {}) {
     socket.on('reconnect', (attemptNumber) => {
       console.log(`Socket reconnected after ${attemptNumber} attempts`);
     });
+
+    // Handle transport errors specifically
+    socket.on('reconnect_error', (error) => {
+      console.warn('Socket reconnection failed:', error.message);
+    });
+
+    socket.on('reconnect_failed', () => {
+      console.error('Socket reconnection failed after all attempts');
+      setError('Unable to connect to server after multiple attempts');
+    });
     
     // Cleanup on unmount - IMPORTANT: only execute on actual component unmount
     return () => {
       console.log("Socket hook unmounting, cleaning up connection");
       if (socketRef.current) {
+        // Remove from global cache if it's the same instance
+        const cacheKey = stableUrl.current;
+        if (globalSocketCache.get(cacheKey) === socketRef.current) {
+          globalSocketCache.delete(cacheKey);
+        }
+        
         // Remove all listeners first to prevent any callbacks during disconnect
         socketRef.current.removeAllListeners();
         socketRef.current.disconnect();
@@ -87,7 +140,8 @@ export default function useSocket(url, options = {}) {
       }
       hasInitialized.current = false;
     };
-  }, []); // Empty dependency array ensures this only runs once on mount
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Empty dependency array ensures this only runs once on mount - intentional
   
   /**
    * Emit an event to the server
