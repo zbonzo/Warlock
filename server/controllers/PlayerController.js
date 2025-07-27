@@ -323,8 +323,8 @@ function handleGameProgressionAfterDisconnect(io, game, gameCode, playerName) {
         playerName,
       });
       // Small delay to ensure UI updates
-      setTimeout(() => {
-        gameService.processGameRound(io, gameCode);
+      setTimeout(async () => {
+        await gameService.processGameRound(io, gameCode);
       }, 500);
     }
   }

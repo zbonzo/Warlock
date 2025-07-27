@@ -2,6 +2,7 @@
  * @fileoverview Enhanced Combat System with coordination bonuses and comeback mechanics
  * Refactored to use composition with extracted domain models
  * Part of Phase 1 refactoring - now uses DamageCalculator, EffectManager, and TurnResolver
+ * Part of Phase 2 refactoring - now emits events for combat actions
  */
 const config = require('@config');
 const logger = require('@utils/logger');
@@ -9,6 +10,7 @@ const messages = require('@messages');
 const DamageCalculator = require('./DamageCalculator');
 const EffectManager = require('./EffectManager');
 const TurnResolver = require('./TurnResolver');
+const { EventTypes } = require('../events/EventTypes');
 
 /**
  * Enhanced CombatSystem with coordination bonuses and comeback mechanics
@@ -23,6 +25,7 @@ class CombatSystem {
    * @param {RacialAbilitySystem} racialAbilitySystem - Racial ability system
    * @param {WarlockSystem} warlockSystem - Warlock system
    * @param {GameStateUtils} gameStateUtils - Game state utilities
+   * @param {GameEventBus} eventBus - Event bus for emitting combat events
    */
   constructor(
     players,
@@ -30,7 +33,8 @@ class CombatSystem {
     statusEffectManager,
     racialAbilitySystem,
     warlockSystem,
-    gameStateUtils
+    gameStateUtils,
+    eventBus = null
   ) {
     this.players = players;
     this.monsterController = monsterController;
@@ -38,6 +42,7 @@ class CombatSystem {
     this.racialAbilitySystem = racialAbilitySystem;
     this.warlockSystem = warlockSystem;
     this.gameStateUtils = gameStateUtils;
+    this.eventBus = eventBus;
 
     // Initialize domain models
     this.turnResolver = new TurnResolver(players, monsterController, warlockSystem, gameStateUtils);
@@ -147,6 +152,22 @@ class CombatSystem {
     target.hp = Math.max(0, target.hp - finalDamage);
     const actualDamage = oldHp - target.hp;
 
+    // Emit damage event
+    if (this.eventBus && actualDamage > 0) {
+      this.eventBus.emit(EventTypes.COMBAT.DAMAGE_DEALT, {
+        targetId: target.id,
+        targetName: target.name,
+        attackerId: attacker.id || 'monster',
+        attackerName: attacker.name || 'The Monster',
+        damageAmount: actualDamage,
+        originalDamage: damageAmount,
+        armor: target.getEffectiveArmor(),
+        targetHpBefore: oldHp,
+        targetHpAfter: target.hp,
+        timestamp: new Date().toISOString()
+      });
+    }
+
     // Trophy system: Track damage dealt by attacker
     if (attacker && attacker.addDamageDealt && actualDamage > 0) {
       attacker.addDamageDealt(actualDamage);
@@ -165,6 +186,18 @@ class CombatSystem {
       // Trophy system: Track death
       if (target.addDeath) {
         target.addDeath();
+      }
+
+      // Emit player death event
+      if (this.eventBus) {
+        this.eventBus.emit(EventTypes.PLAYER.DIED, {
+          playerId: target.id,
+          playerName: target.name,
+          killerId: attacker.id || 'monster',
+          killerName: attacker.name || 'The Monster',
+          finalDamage: actualDamage,
+          timestamp: new Date().toISOString()
+        });
       }
     }
 
@@ -269,7 +302,26 @@ class CombatSystem {
       this.trackCoordination(healer.id, target.id);
     }
 
-    return this.effectManager.applyHealing(healer, target, baseAmount, log, options);
+    const oldHp = target.hp;
+    const actualHealing = this.effectManager.applyHealing(healer, target, baseAmount, log, options);
+
+    // Emit healing event
+    if (this.eventBus && actualHealing > 0) {
+      this.eventBus.emit(EventTypes.COMBAT.HEAL_APPLIED, {
+        healerId: healer.id,
+        healerName: healer.name,
+        targetId: target.id,
+        targetName: target.name,
+        healAmount: actualHealing,
+        originalAmount: baseAmount,
+        targetHpBefore: oldHp,
+        targetHpAfter: target.hp,
+        isSelfHeal: healer.id === target.id,
+        timestamp: new Date().toISOString()
+      });
+    }
+
+    return actualHealing;
   }
 
   /**
@@ -358,7 +410,35 @@ class CombatSystem {
       log
     );
 
+    const oldMonsterHp = this.monsterController.monster ? this.monsterController.monster.hp : 0;
     const result = this.monsterController.takeDamage(modifiedAmount, attacker, log);
+    const newMonsterHp = this.monsterController.monster ? this.monsterController.monster.hp : 0;
+    const actualDamage = oldMonsterHp - newMonsterHp;
+
+    // Emit monster damage event
+    if (this.eventBus && actualDamage > 0) {
+      this.eventBus.emit(EventTypes.COMBAT.MONSTER_DAMAGED, {
+        attackerId: attacker.id,
+        attackerName: attacker.name,
+        damageAmount: actualDamage,
+        originalDamage: amount,
+        modifiedDamage: modifiedAmount,
+        monsterHpBefore: oldMonsterHp,
+        monsterHpAfter: newMonsterHp,
+        critMultiplier: options.critMultiplier || 1,
+        timestamp: new Date().toISOString()
+      });
+    }
+
+    // Check if monster was defeated
+    if (this.eventBus && newMonsterHp <= 0 && oldMonsterHp > 0) {
+      this.eventBus.emit(EventTypes.COMBAT.MONSTER_DEFEATED, {
+        killerId: attacker.id,
+        killerName: attacker.name,
+        finalDamage: actualDamage,
+        timestamp: new Date().toISOString()
+      });
+    }
 
     // Heal attacker via Thirsty Blade when damaging the monster
     if (

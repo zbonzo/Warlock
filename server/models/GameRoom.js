@@ -2,6 +2,7 @@
  * @fileoverview Game room model with enhanced action submission and validation
  * Manages game state, players, and coordinates systems with proper cooldown timing
  * Refactored to use composition with domain models for better separation of concerns
+ * Enhanced with event-driven architecture in Phase 2
  */
 const Player = require('./Player');
 const config = require('@config');
@@ -11,6 +12,10 @@ const messages = require('@messages');
 const { GameState } = require('./game/GameState');
 const { GamePhase } = require('./game/GamePhase');
 const { GameRules } = require('./game/GameRules');
+const GameEventBus = require('./events/GameEventBus');
+const EventMiddleware = require('./events/EventMiddleware');
+const { EventTypes } = require('./events/EventTypes');
+const CommandProcessor = require('./commands/CommandProcessor');
 
 /**
  * GameRoom class represents a single game instance with enhanced action validation
@@ -29,6 +34,13 @@ class GameRoom {
     this.gamePhase = new GamePhase(code);
     this.gameRules = new GameRules(code);
     
+    // Initialize event system (Phase 2 enhancement)
+    this.eventBus = new GameEventBus(code);
+    this._setupEventMiddleware();
+    
+    // Initialize command system (Phase 2 enhancement)
+    this.commandProcessor = new CommandProcessor(this);
+    
     // Initialize monster from config
     this.gameState.initializeMonster(config);
 
@@ -37,6 +49,16 @@ class GameRoom {
     
     // Set up property delegation for backward compatibility
     this._setupPropertyDelegation();
+    
+    // Set up event listeners for this game room
+    this._setupEventListeners();
+    
+    // Emit game creation event
+    this.eventBus.emit(EventTypes.GAME.CREATED, {
+      gameCode: code,
+      createdBy: 'system',
+      timestamp: new Date().toISOString()
+    });
   }
 
   /**
@@ -275,7 +297,7 @@ class GameRoom {
   assignInitialWarlock(preferredPlayerIds = []) {
     // Initialize systems now that players have joined
     if (!this.systems) {
-      this.systems = SystemsFactory.createSystems(this.players, this.monster);
+      this.systems = SystemsFactory.createSystems(this.players, this.monster, this.eventBus);
     }
 
     // Convert single ID to array for backward compatibility
@@ -612,7 +634,23 @@ allActionsSubmittedSafe() {
     return true;
   }
   
-  // Use the normal check
+  // Phase 2: Use command system to check submissions
+  if (this.commandProcessor) {
+    const alivePlayers = this.getAlivePlayers();
+    const playersWithActions = this.commandProcessor.getPlayersWithSubmittedActions();
+    
+    // Check if all alive, non-stunned players have submitted
+    for (const player of alivePlayers) {
+      if (!player.hasStatusEffect || !player.hasStatusEffect('stunned')) {
+        if (!playersWithActions.has(player.id)) {
+          return false;
+        }
+      }
+    }
+    return true;
+  }
+  
+  // Fallback to old system if command processor not available
   return this.allActionsSubmitted();
 }
   /**
@@ -1107,7 +1145,21 @@ allActionsSubmittedSafe() {
    * @returns {Array} Array of player info objects
    */
   getPlayersInfo() {
-    return this.gameState.getPlayersInfo();
+    const playersInfo = this.gameState.getPlayersInfo();
+    
+    // Phase 2: Update submission status based on command queue
+    if (this.commandProcessor) {
+      const playersWithActions = this.commandProcessor.getPlayersWithSubmittedActions();
+      
+      return playersInfo.map(playerInfo => ({
+        ...playerInfo,
+        hasSubmittedAction: playersWithActions.has(playerInfo.id),
+        // Keep old submissionStatus for backward compatibility
+        submissionStatus: playersWithActions.has(playerInfo.id) ? 'submitted' : 'none'
+      }));
+    }
+    
+    return playersInfo;
   }
 
   /**
@@ -1160,6 +1212,117 @@ allActionsSubmittedSafe() {
    */
   cleanupDisconnectedPlayers(timeoutMs = 10 * 60 * 1000) {
     return this.gameState.cleanupDisconnectedPlayers(timeoutMs);
+  }
+
+  /**
+   * Set up event middleware for this game room
+   * @private
+   */
+  _setupEventMiddleware() {
+    // Add standard middleware stack
+    const middleware = EventMiddleware.createStandardStack({
+      enableLogging: process.env.NODE_ENV !== 'production',
+      enableValidation: true,
+      enableRateLimit: process.env.NODE_ENV === 'production', // Disable rate limiting in development
+      enablePerformance: true,
+      logEventData: false,
+      maxEventsPerMinute: 200, // Higher limit for active games
+      slowEventThreshold: 50
+    });
+
+    // Add each middleware to the event bus
+    middleware.forEach(mw => this.eventBus.addMiddleware(mw));
+  }
+
+  /**
+   * Set up event listeners for this game room
+   * @private
+   */
+  _setupEventListeners() {
+    // Listen for player events to update game state
+    this.eventBus.on(EventTypes.PLAYER.JOINED, (event) => {
+      logger.info(`Player joined game ${this.code}:`, {
+        playerId: event.data.playerId,
+        playerName: event.data.playerName
+      });
+    });
+
+    this.eventBus.on(EventTypes.PLAYER.LEFT, (event) => {
+      logger.info(`Player left game ${this.code}:`, {
+        playerId: event.data.playerId,
+        playerName: event.data.playerName
+      });
+    });
+
+    // Listen for game state changes
+    this.eventBus.on(EventTypes.GAME.STARTED, (event) => {
+      logger.info(`Game started: ${this.code}`, {
+        playerCount: event.data.playerCount
+      });
+    });
+
+    this.eventBus.on(EventTypes.GAME.ENDED, (event) => {
+      logger.info(`Game ended: ${this.code}`, {
+        winner: event.data.winner,
+        duration: event.data.duration
+      });
+    });
+
+    // Listen for phase changes
+    this.eventBus.on(EventTypes.PHASE.CHANGED, (event) => {
+      logger.debug(`Phase changed in game ${this.code}:`, {
+        oldPhase: event.data.oldPhase,
+        newPhase: event.data.newPhase
+      });
+    });
+  }
+
+  /**
+   * Get the event bus for this game room
+   * @returns {GameEventBus} Event bus instance
+   */
+  getEventBus() {
+    return this.eventBus;
+  }
+
+  /**
+   * Emit an event through the game's event bus
+   * @param {string} eventType - Type of event
+   * @param {Object} eventData - Event data
+   * @returns {Promise<boolean>} Success status
+   */
+  async emitEvent(eventType, eventData) {
+    return await this.eventBus.emit(eventType, eventData);
+  }
+
+  /**
+   * Get the command processor for this game room
+   * @returns {CommandProcessor} Command processor instance
+   */
+  getCommandProcessor() {
+    return this.commandProcessor;
+  }
+
+  /**
+   * Submit a player action through the command system
+   * @param {string} playerId - Player ID
+   * @param {Object} actionData - Action data from client
+   * @returns {Promise<string>} Command ID
+   */
+  async submitPlayerAction(playerId, actionData) {
+    return await this.commandProcessor.submitActionData(playerId, actionData);
+  }
+
+  /**
+   * Clean up event bus and command processor when game room is destroyed
+   */
+  destroy() {
+    if (this.commandProcessor) {
+      this.commandProcessor.destroy();
+    }
+    if (this.eventBus) {
+      this.eventBus.destroy();
+    }
   }
 }
 

@@ -130,9 +130,21 @@ function broadcastPlayerList(io, gameCode) {
  * @param {string} gameCode - Game code
  * @returns {Object|null} Round result or null if game not found
  */
-function processGameRound(io, gameCode) {
+async function processGameRound(io, gameCode) {
   const game = games.get(gameCode);
   if (!game) return null;
+
+  // Process pending commands before changing phase (Phase 2 enhancement)
+  if (game.commandProcessor) {
+    try {
+      await game.commandProcessor.processCommands();
+    } catch (error) {
+      logger.error('Error processing commands:', {
+        gameCode,
+        error: error.message
+      });
+    }
+  }
 
   // Set phase to results before processing
   game.phase = 'results';

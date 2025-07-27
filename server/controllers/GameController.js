@@ -211,7 +211,7 @@ function handleGameStart(io, socket, gameCode) {
 }
 
 /**
- * Handle player action submission with proper cooldown validation and enhanced tracking
+ * Handle player action submission using command system (Phase 2 enhancement)
  * @param {Object} io - Socket.io instance
  * @param {Object} socket - Client socket
  * @param {string} gameCode - Game code
@@ -220,7 +220,7 @@ function handleGameStart(io, socket, gameCode) {
  * @param {Object} options - Additional options
  * @returns {boolean} Success status
  */
-function handleGameAction(
+async function handleGameAction(
   io,
   socket,
   gameCode,
@@ -229,7 +229,7 @@ function handleGameAction(
   options = {}
 ) {
   try {
-    // Use the combined validation
+    // Use the combined validation for basic game state
     const game = validateGameAction(socket, gameCode, true, false);
     if (!game) {
       socket.emit('errorMessage', {
@@ -245,109 +245,20 @@ function handleGameAction(
       return false;
     }
 
-    // Validate player is alive
-    if (!player.isAlive) {
-      socket.emit('errorMessage', {
-        message: messages.errors.playerDead,
-      });
-      return false;
-    }
+    // Create action data for command system
+    const actionData = {
+      actionType: 'ability', // All actions from this handler are abilities
+      targetId,
+      abilityId: actionType,
+      metadata: options
+    };
 
-    // Validate game is in correct state for actions
-    if (!game.started) {
-      socket.emit('errorMessage', { message: messages.errors.gameNotStarted });
-      return false;
-    }
-
-    // Allow actions if game is in action phase OR if it's started but phase isn't explicitly set to results
-    if (game.phase === 'results') {
-      socket.emit('errorMessage', {
-        message: messages.errors.invalidAction,
-      });
-      return false;
-    }
-
-    // COOLDOWN VALIDATION - Check if ability is on cooldown
-    if (player.isAbilityOnCooldown(actionType)) {
-      const remainingCooldown = player.getAbilityCooldown(actionType);
-      socket.emit('errorMessage', {
-        message: messages.formatMessage(
-          messages.getError('abilityOnCooldownPlural'),
-          {
-            abilityName: actionType,
-            turns: remainingCooldown,
-            s: remainingCooldown !== 1 ? 's' : '',
-          }
-        ),
-        type: 'cooldown_error',
-        abilityType: actionType,
-        remainingTurns: remainingCooldown,
-      });
-      return false;
-    }
-
-    // ABILITY VALIDATION - Check if player can use this ability
-    if (!player.canUseAbility(actionType)) {
-      const hasAbility = player.unlocked.some((a) => a.type === actionType);
-      if (!hasAbility) {
-        socket.emit('errorMessage', {
-          message: messages.formatMessage(
-            messages.getError('abilityNotFoundForPlayer'),
-            { abilityName: actionType }
-          ),
-          type: 'ability_not_found',
-        });
-      } else {
-        socket.emit('errorMessage', {
-          message: messages.formatMessage(
-            messages.getError('abilityUnavailableNow'),
-            { abilityName: actionType }
-          ),
-          type: 'ability_unavailable',
-        });
-      }
-      return false;
-    }
-
-    // TARGET VALIDATION - Check if target is valid
-    if (targetId !== config.MONSTER_ID) {
-      const targetPlayer = game.getPlayerById(targetId);
-      if (!targetPlayer || !targetPlayer.isAlive) {
-        socket.emit('errorMessage', {
-          message: messages.getError('targetInvalidOrDead'),
-          type: 'invalid_target',
-        });
-        return false;
-      }
-    } else {
-      // Validate monster is alive (if applicable)
-      if (game.monster && game.monster.hp <= 0) {
-        socket.emit('errorMessage', {
-          message: messages.getError('monsterInvalidTarget'),
-          type: 'invalid_target',
-        });
-        return false;
-      }
-    }
-
-    // Check if player has already submitted an action
-    if (player.hasSubmittedAction) {
-      socket.emit('errorMessage', {
-        message: messages.getError('actionAlreadySubmitted'),
-        type: 'already_submitted',
-      });
-      return false;
-    }
-
-    // Refresh game timeout
-    gameService.refreshGameTimeout(io, gameCode);
-
-    // Record the action with sanitized options (DON'T put ability on cooldown yet)
-    const success = game.addAction(socket.id, actionType, targetId, options);
-
-    if (success) {
-      // Mark player as having submitted an action (this is now handled in Player.submitAction)
-      player.actionSubmissionTime = Date.now();
+    // Submit action through command system (Phase 2 enhancement)
+    try {
+      const commandId = await game.submitPlayerAction(player.id, actionData);
+      
+      // Refresh game timeout
+      gameService.refreshGameTimeout(io, gameCode);
 
       logger.info(
         messages.formatMessage(
@@ -358,31 +269,23 @@ function handleGameAction(
             actionType,
             targetId,
             gameCode,
+            commandId
           }
         )
       );
+
+      // Send success confirmation with command ID
+      socket.emit('actionSubmitted', {
+        actionType,
+        targetId,
+        commandId,
+        message: messages.getSuccess('actionSubmitted')
+      });
 
       // Broadcast updated player list with submission status
       io.to(gameCode).emit('playerList', { players: game.getPlayersInfo() });
 
       // Check if all alive players have submitted actions
-      const alivePlayers = game.getAlivePlayers();
-      const submittedPlayers = alivePlayers.filter(
-        (p) => p.hasSubmittedAction && p.actionValidationState === 'valid'
-      );
-
-      logger.info(
-        messages.formatMessage(
-          messages.serverLogMessages.info.ActionSubmissionProgress,
-          {
-            submittedCount: submittedPlayers.length,
-            totalCount: alivePlayers.length,
-            gameCode,
-          }
-        )
-      );
-
-      // If all actions submitted, process the round
       if (game.allActionsSubmittedSafe()) {
         logger.info(
           messages.formatMessage(
@@ -392,29 +295,33 @@ function handleGameAction(
         );
 
         // Small delay to ensure UI updates
-        setTimeout(() => {
-          gameService.processGameRound(io, gameCode);
+        setTimeout(async () => {
+          await gameService.processGameRound(io, gameCode);
         }, 500);
       }
 
-      // Send success confirmation to the submitting player
-      socket.emit('actionSubmitted', {
+      return true;
+
+    } catch (commandError) {
+      // Handle command validation/execution errors
+      const errorMessage = commandError.message || messages.getError('actionSubmitFailed');
+      
+      socket.emit('errorMessage', {
+        message: errorMessage,
+        type: 'command_error'
+      });
+      
+      logger.error('Command submission failed:', {
+        playerId: player.id,
         actionType,
         targetId,
-        message: messages.getSuccess('actionSubmitted'),
-        submissionProgress: {
-          submitted: submittedPlayers.length,
-          total: alivePlayers.length,
-        },
+        error: errorMessage,
+        stack: commandError.stack,
+        gameCode
       });
-    } else {
-      socket.emit('errorMessage', {
-        message: messages.getError('actionSubmitFailed'),
-        type: 'submission_failed',
-      });
+      
+      return false;
     }
-
-    return success;
   } catch (error) {
     logger.error(
       messages.formatMessage(

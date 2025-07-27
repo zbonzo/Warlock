@@ -23,9 +23,10 @@ class SystemsFactory {
    * Create all game systems with proper dependency injection
    * @param {Map} players - Map of player objects
    * @param {Object} monster - Monster state object
+   * @param {GameEventBus} eventBus - Event bus for system communication
    * @returns {Object} All game systems
    */
-  static createSystems(players, monster) {
+  static createSystems(players, monster, eventBus = null) {
     // Create individual systems
     const gameStateUtils = new GameStateUtils(players);
     
@@ -61,7 +62,8 @@ class SystemsFactory {
       statusEffectManager,
       racialAbilitySystem,
       warlockSystem,
-      gameStateUtils
+      gameStateUtils,
+      eventBus
     );
 
     // Create AbilityRegistry and register all handlers

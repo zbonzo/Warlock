@@ -247,14 +247,14 @@ io.on('connection', (socket) => {
     'performAction',
     withSocketErrorHandling(
       socket,
-      ({
+      async ({
         gameCode,
         actionType,
         targetId,
         bloodRageActive,
         keenSensesActive,
       }) => {
-        gameController.handleGameAction(
+        await gameController.handleGameAction(
           io,
           socket,
           gameCode,
