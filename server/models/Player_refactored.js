@@ -73,37 +73,16 @@ class Player {
 
     Object.defineProperty(this, 'abilityCooldowns', {
       get: () => this.playerAbilities.abilityCooldowns,
-      set: (value) => this.playerAbilities.abilityCooldowns = value,
       enumerable: true
     });
 
     Object.defineProperty(this, 'hasSubmittedAction', {
       get: () => this.playerAbilities.hasSubmittedAction,
-      set: (value) => this.playerAbilities.hasSubmittedAction = value,
       enumerable: true
     });
 
     Object.defineProperty(this, 'submittedAction', {
       get: () => this.playerAbilities.submittedAction,
-      set: (value) => this.playerAbilities.submittedAction = value,
-      enumerable: true
-    });
-
-    Object.defineProperty(this, 'actionValidationState', {
-      get: () => this.playerAbilities.actionValidationState,
-      set: (value) => this.playerAbilities.actionValidationState = value,
-      enumerable: true
-    });
-
-    Object.defineProperty(this, 'actionSubmissionTime', {
-      get: () => this.playerAbilities.actionSubmissionTime,
-      set: (value) => this.playerAbilities.actionSubmissionTime = value,
-      enumerable: true
-    });
-
-    Object.defineProperty(this, 'lastValidAction', {
-      get: () => this.playerAbilities.lastValidAction,
-      set: (value) => this.playerAbilities.lastValidAction = value,
       enumerable: true
     });
 
@@ -128,19 +107,16 @@ class Player {
     // Effects compatibility
     Object.defineProperty(this, 'statusEffects', {
       get: () => this.playerEffects.statusEffects,
-      set: (value) => this.playerEffects.statusEffects = value,
       enumerable: true
     });
 
     Object.defineProperty(this, 'isVulnerable', {
       get: () => this.playerEffects.isVulnerable,
-      set: (value) => this.playerEffects.isVulnerable = value,
       enumerable: true
     });
 
     Object.defineProperty(this, 'vulnerabilityIncrease', {
       get: () => this.playerEffects.vulnerabilityIncrease,
-      set: (value) => this.playerEffects.vulnerabilityIncrease = value,
       enumerable: true
     });
 
@@ -158,13 +134,11 @@ class Player {
 
     Object.defineProperty(this, 'classEffects', {
       get: () => this.playerEffects.classEffects,
-      set: (value) => this.playerEffects.classEffects = value,
       enumerable: true
     });
 
     Object.defineProperty(this, 'racialEffects', {
       get: () => this.playerEffects.racialEffects,
-      set: (value) => this.playerEffects.racialEffects = value,
       enumerable: true
     });
   }
