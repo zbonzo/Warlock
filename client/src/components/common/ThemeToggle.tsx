@@ -3,20 +3,22 @@
  * Can be used as a simple toggle or dropdown with all themes
  */
 import React, { useState } from 'react';
-import PropTypes from 'prop-types';
 import { useTheme } from '../../contexts/ThemeContext';
 import './ThemeToggle.css';
 
+type ThemeToggleVariant = 'simple' | 'dropdown' | 'buttons';
+type ThemeToggleSize = 'small' | 'medium' | 'large';
+
+interface ThemeToggleProps {
+  variant?: ThemeToggleVariant;
+  size?: ThemeToggleSize;
+  showLabel?: boolean;
+}
+
 /**
  * ThemeToggle component provides theme switching functionality
- *
- * @param {Object} props - Component props
- * @param {string} props.variant - Toggle variant ('simple', 'dropdown', 'buttons')
- * @param {string} props.size - Size of the toggle ('small', 'medium', 'large')
- * @param {boolean} props.showLabel - Whether to show theme name labels
- * @returns {React.ReactElement} The rendered component
  */
-const ThemeToggle = ({
+const ThemeToggle: React.FC<ThemeToggleProps> = ({
   variant = 'simple',
   size = 'medium',
   showLabel = false,
@@ -24,14 +26,14 @@ const ThemeToggle = ({
   const { currentTheme, availableThemes, switchTheme, toggleTheme, isDark } =
     useTheme();
 
-  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [dropdownOpen, setDropdownOpen] = useState<boolean>(false);
 
-  const themeIcons = {
+  const themeIcons: Record<string, string> = {
     light: '☀️',
     dark: '🌙',
   };
 
-  const themeLabels = {
+  const themeLabels: Record<string, string> = {
     light: 'Return to daylight',
     dark: 'Fade to shadow',
   };
@@ -39,8 +41,8 @@ const ThemeToggle = ({
   /**
    * Handle theme selection
    */
-  const handleThemeSelect = (theme) => {
-    switchTheme(theme);
+  const handleThemeSelect = (theme: string): void => {
+    switchTheme(theme as any); // The theme context should type this properly
     setDropdownOpen(false);
   };
 
@@ -56,11 +58,11 @@ const ThemeToggle = ({
         title={`Switch to ${isDark ? 'light' : 'dark'} theme`}
       >
         <span className="theme-toggle__icon">
-          {isDark ? themeIcons.light : themeIcons.dark}
+          {isDark ? themeIcons['light'] : themeIcons['dark']}
         </span>
         {showLabel && (
           <span className="theme-toggle__label">
-            {isDark ? themeLabels.light : themeLabels.dark}
+            {isDark ? themeLabels['light'] : themeLabels['dark']}
           </span>
         )}
       </button>
@@ -145,12 +147,4 @@ const ThemeToggle = ({
   );
 };
 
-ThemeToggle.propTypes = {
-  variant: PropTypes.oneOf(['simple', 'dropdown', 'buttons']),
-  size: PropTypes.oneOf(['small', 'medium', 'large']),
-  showLabel: PropTypes.bool,
-};
-
 export default ThemeToggle;
-
-

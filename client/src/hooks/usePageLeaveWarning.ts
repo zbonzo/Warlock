@@ -1,28 +1,36 @@
-// hooks/usePageLeaveWarning.js
+/**
+ * @fileoverview Custom hook to warn users before leaving the page during active gameplay
+ */
 import { useEffect, useCallback } from 'react';
+
+interface UsePageLeaveWarningReturn {
+  confirmLeave: () => boolean;
+}
 
 /**
  * Custom hook to warn users before leaving the page during active gameplay
- * @param {boolean} shouldWarn - Whether to show the warning (e.g., during active game)
- * @param {string} message - Custom warning message (optional)
  */
-const usePageLeaveWarning = (shouldWarn, message) => {
+const usePageLeaveWarning = (
+  shouldWarn: boolean, 
+  message?: string
+): UsePageLeaveWarningReturn => {
   const defaultMessage = "Are you sure you want to leave? You're in the middle of a game and other players are counting on you!";
   
   const warningMessage = message || defaultMessage;
 
   // Handle beforeunload event (page refresh, close, navigate away)
-  const handleBeforeUnload = useCallback((event) => {
+  const handleBeforeUnload = useCallback((event: BeforeUnloadEvent): string | undefined => {
     if (shouldWarn) {
       // Standard way to show browser warning dialog
       event.preventDefault();
       event.returnValue = warningMessage;
       return warningMessage;
     }
+    return undefined;
   }, [shouldWarn, warningMessage]);
 
   // Handle navigation within the app (if using React Router)
-  const handlePopState = useCallback((event) => {
+  const handlePopState = useCallback((event: PopStateEvent) => {
     if (shouldWarn) {
       const confirmed = window.confirm(warningMessage);
       if (!confirmed) {
@@ -50,7 +58,7 @@ const usePageLeaveWarning = (shouldWarn, message) => {
   }, [shouldWarn, handleBeforeUnload, handlePopState]);
 
   // Return a function to manually trigger the warning (useful for custom navigation)
-  const confirmLeave = useCallback(() => {
+  const confirmLeave = useCallback((): boolean => {
     if (shouldWarn) {
       return window.confirm(warningMessage);
     }

@@ -1,0 +1,15 @@
+{
+  "atLeast": 95,
+  "detail": true,
+  "strict": true,
+  "ignoreFiles": [
+    "**/*.js",
+    "**/*.jsx", 
+    "**/node_modules/**",
+    "**/dist/**",
+    "**/build/**",
+    "**/*.test.ts",
+    "**/*.spec.ts"
+  ],
+  "reportSemanticError": false
+}

@@ -1,19 +1,17 @@
 /**
- * client/src/components/common/LoadingScreen.jsx
  * Loading screen component shown during data fetching
  */
 import React from 'react';
-import PropTypes from 'prop-types';
 import './LoadingScreen.css';
+
+interface LoadingScreenProps {
+  message?: string;
+}
 
 /**
  * LoadingScreen component displays a loading spinner with a message
- *
- * @param {Object} props - Component props
- * @param {string} props.message - Message to display
- * @returns {React.ReactElement} The rendered component
  */
-const LoadingScreen = ({ message }) => {
+const LoadingScreen: React.FC<LoadingScreenProps> = ({ message }) => {
   return (
     <div className="loading-screen full-screen-center">
       <div className="loading-spinner"></div>
@@ -22,10 +20,4 @@ const LoadingScreen = ({ message }) => {
   );
 };
 
-LoadingScreen.propTypes = {
-  message: PropTypes.string,
-};
-
 export default LoadingScreen;
-
-

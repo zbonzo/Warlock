@@ -1,36 +1,40 @@
 /**
- * client/src/components/common/ErrorBoundary.jsx
  * Error boundary component to gracefully handle unexpected errors
  */
-import React from 'react';
-import PropTypes from 'prop-types';
+import React, { Component, ErrorInfo, ReactNode } from 'react';
 import './ErrorBoundary.css';
+
+interface ErrorBoundaryProps {
+  children: ReactNode;
+}
+
+interface ErrorBoundaryState {
+  hasError: boolean;
+  error: Error | null;
+  errorInfo: ErrorInfo | null;
+}
 
 /**
  * ErrorBoundary component captures errors in the component tree
  * and displays a fallback UI instead of crashing the application
  */
-class ErrorBoundary extends React.Component {
-  constructor(props) {
+class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
+  constructor(props: ErrorBoundaryProps) {
     super(props);
     this.state = { hasError: false, error: null, errorInfo: null };
   }
 
   /**
    * Update state when error is caught
-   * @param {Error} error - The error that was thrown
-   * @returns {Object} New state with error information
    */
-  static getDerivedStateFromError(error) {
+  static getDerivedStateFromError(error: Error): Partial<ErrorBoundaryState> {
     return { hasError: true, error };
   }
 
   /**
    * Log error details when caught
-   * @param {Error} error - The error that was thrown
-   * @param {Object} errorInfo - React error info object
    */
-  componentDidCatch(error, errorInfo) {
+  componentDidCatch(error: Error, errorInfo: ErrorInfo): void {
     // Log error to console or an error reporting service
     console.error('Application Error:', error, errorInfo);
     this.setState({ errorInfo });
@@ -39,7 +43,7 @@ class ErrorBoundary extends React.Component {
   /**
    * Handle error reset
    */
-  handleReset = () => {
+  handleReset = (): void => {
     // Reset the error state
     this.setState({ hasError: false, error: null, errorInfo: null });
 
@@ -47,7 +51,7 @@ class ErrorBoundary extends React.Component {
     window.location.reload();
   };
 
-  render() {
+  render(): ReactNode {
     // If there's an error, show the fallback UI
     if (this.state.hasError) {
       return (
@@ -78,10 +82,4 @@ class ErrorBoundary extends React.Component {
   }
 }
 
-ErrorBoundary.propTypes = {
-  children: PropTypes.node.isRequired,
-};
-
 export default ErrorBoundary;
-
-

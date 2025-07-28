@@ -1,15 +1,67 @@
 /**
- * client/src/services/configService.js
  * Service for fetching and caching game configuration from the server
  */
-import axios from 'axios';
+import axios, { AxiosResponse } from 'axios';
 import { API_URL } from '../config/constants';
+import { PlayerClass, PlayerRace, Ability } from '../../../shared/types';
+
+interface BasicConfig {
+  gameVersion: string;
+  supportedFeatures: string[];
+  [key: string]: any;
+}
+
+interface RaceAttribute {
+  name: string;
+  description: string;
+  bonuses: Record<string, number>;
+  [key: string]: any;
+}
+
+interface ClassAttribute {
+  name: string;
+  description: string;
+  baseStats: Record<string, number>;
+  [key: string]: any;
+}
+
+interface RacesConfig {
+  races: PlayerRace[];
+  raceAttributes: Record<string, RaceAttribute>;
+}
+
+interface ClassesConfig {
+  classes: PlayerClass[];
+  classAttributes: Record<string, ClassAttribute>;
+}
+
+interface CompatibilityConfig {
+  classToRaces: Record<string, string[]>;
+  racesToClasses: Record<string, string[]>;
+}
+
+interface RacialAbilitiesConfig {
+  [race: string]: Ability;
+}
+
+interface ClassAbilitiesResponse {
+  abilities: Ability[];
+}
 
 /**
  * Cache for configuration data fetched from the server
  * This prevents unnecessary repeated API calls
  */
-const configCache = {
+interface ConfigCache {
+  basic: BasicConfig | null;
+  races: RacesConfig | null;
+  classes: ClassesConfig | null;
+  compatibility: CompatibilityConfig | null;
+  racialAbilities: RacialAbilitiesConfig | null;
+  classAbilities: Record<string, Ability[]>;
+}
+
+const configCache: ConfigCache = {
   basic: null,
   races: null,
   classes: null,
@@ -24,14 +76,12 @@ const configCache = {
 const configService = {
   /**
    * Get basic game configuration
-   * @param {boolean} forceRefresh - Force refresh from server
-   * @returns {Promise<Object>} Basic game configuration
    */
-  async getBasicConfig(forceRefresh = false) {
+  async getBasicConfig(forceRefresh: boolean = false): Promise<BasicConfig> {
     if (configCache.basic && !forceRefresh) return configCache.basic;
 
     try {
-      const response = await axios.get(`${API_URL}/config`);
+      const response: AxiosResponse<BasicConfig> = await axios.get(`${API_URL}/config`);
       configCache.basic = response.data;
       return configCache.basic;
     } catch (error) {
@@ -42,13 +92,12 @@ const configService = {
 
   /**
    * Get races configuration
-   * @returns {Promise<Object>} Races configuration
    */
-  async getRaces() {
+  async getRaces(): Promise<RacesConfig> {
     if (configCache.races) return configCache.races;
 
     try {
-      const response = await axios.get(`${API_URL}/config/races`);
+      const response: AxiosResponse<RacesConfig> = await axios.get(`${API_URL}/config/races`);
       configCache.races = response.data;
       return configCache.races;
     } catch (error) {
@@ -59,13 +108,12 @@ const configService = {
 
   /**
    * Get classes configuration
-   * @returns {Promise<Object>} Classes configuration
    */
-  async getClasses() {
+  async getClasses(): Promise<ClassesConfig> {
     if (configCache.classes) return configCache.classes;
 
     try {
-      const response = await axios.get(`${API_URL}/config/classes`);
+      const response: AxiosResponse<ClassesConfig> = await axios.get(`${API_URL}/config/classes`);
       configCache.classes = response.data;
       return configCache.classes;
     } catch (error) {
@@ -76,13 +124,12 @@ const configService = {
 
   /**
    * Get race-class compatibility mappings
-   * @returns {Promise<Object>} Compatibility mappings
    */
-  async getCompatibility() {
+  async getCompatibility(): Promise<CompatibilityConfig> {
     if (configCache.compatibility) return configCache.compatibility;
 
     try {
-      const response = await axios.get(`${API_URL}/config/compatibility`);
+      const response: AxiosResponse<CompatibilityConfig> = await axios.get(`${API_URL}/config/compatibility`);
       configCache.compatibility = response.data;
       return configCache.compatibility;
     } catch (error) {
@@ -93,13 +140,12 @@ const configService = {
 
   /**
    * Get racial abilities configuration
-   * @returns {Promise<Object>} Racial abilities configuration
    */
-  async getRacialAbilities() {
+  async getRacialAbilities(): Promise<RacialAbilitiesConfig> {
     if (configCache.racialAbilities) return configCache.racialAbilities;
 
     try {
-      const response = await axios.get(`${API_URL}/config/racial-abilities`);
+      const response: AxiosResponse<RacialAbilitiesConfig> = await axios.get(`${API_URL}/config/racial-abilities`);
       configCache.racialAbilities = response.data;
       return configCache.racialAbilities;
     } catch (error) {
@@ -110,16 +156,14 @@ const configService = {
 
   /**
    * Get abilities for a specific class
-   * @param {string} className - Class name
-   * @returns {Promise<Array>} Class abilities
    */
-  async getClassAbilities(className) {
+  async getClassAbilities(className: string): Promise<Ability[]> {
     if (configCache.classAbilities[className]) {
       return configCache.classAbilities[className];
     }
 
     try {
-      const response = await axios.get(
+      const response: AxiosResponse<ClassAbilitiesResponse> = await axios.get(
         `${API_URL}/config/abilities/${className}`
       );
       configCache.classAbilities[className] = response.data.abilities;
@@ -132,9 +176,8 @@ const configService = {
 
   /**
    * Preload all basic configuration at application startup
-   * @returns {Promise<boolean>} Success status
    */
-  async preloadConfig() {
+  async preloadConfig(): Promise<boolean> {
     try {
       // Load all basic configuration in parallel
       await Promise.all([
@@ -156,12 +199,8 @@ const configService = {
   /**
    * Check if a race and class combination is valid
    * Uses cached compatibility data if available
-   *
-   * @param {string} race - Race name
-   * @param {string} className - Class name
-   * @returns {boolean} Whether the combination is valid
    */
-  isValidRaceClassCombo(race, className) {
+  isValidRaceClassCombo(race: string, className: string): boolean {
     if (!configCache.compatibility) {
       console.warn(
         'Compatibility data not loaded, cannot validate combination'
@@ -176,10 +215,8 @@ const configService = {
 
   /**
    * Get compatible classes for a race
-   * @param {string} race - Race name
-   * @returns {Array<string>|null} Compatible class names or null if data not loaded
    */
-  getCompatibleClasses(race) {
+  getCompatibleClasses(race: string): string[] | null {
     if (!configCache.compatibility) {
       console.warn(
         'Compatibility data not loaded, cannot get compatible classes'
@@ -192,10 +229,8 @@ const configService = {
 
   /**
    * Get compatible races for a class
-   * @param {string} className - Class name
-   * @returns {Array<string>|null} Compatible race names or null if data not loaded
    */
-  getCompatibleRaces(className) {
+  getCompatibleRaces(className: string): string[] | null {
     if (!configCache.compatibility) {
       console.warn(
         'Compatibility data not loaded, cannot get compatible races'
@@ -208,10 +243,8 @@ const configService = {
 
   /**
    * Get racial ability for a specific race
-   * @param {string} race - Race name
-   * @returns {Object|null} Racial ability or null if not found
    */
-  getRacialAbility(race) {
+  getRacialAbility(race: string): Ability | null {
     if (!configCache.racialAbilities) {
       console.warn('Racial abilities not loaded, cannot get ability');
       return null;
@@ -223,7 +256,7 @@ const configService = {
   /**
    * Clear the cache (useful for testing or forced refreshes)
    */
-  clearCache() {
+  clearCache(): void {
     configCache.basic = null;
     configCache.races = null;
     configCache.classes = null;
@@ -234,5 +267,3 @@ const configService = {
 };
 
 export default configService;
-
-
