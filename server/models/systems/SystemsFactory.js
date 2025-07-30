@@ -6,12 +6,12 @@ const GameStateUtils = require('./GameStateUtils');
 const StatusEffectManager = require('./StatusEffectManager'); // Legacy - will be replaced
 const NewStatusEffectManager = require('./NewStatusEffectManager');
 const StatusEffectSystemFactory = require('./StatusEffectSystemFactory');
-const RacialAbilitySystem = require('./RacialAbilitySystem');
+const RacialAbilitySystem = require('./RacialAbilitySystem'); // Keep using JS version for now
 const WarlockSystem = require('./WarlockSystem');
 const MonsterController = require('@controllers/MonsterController');
 const CombatSystem = require('./CombatSystem');
 const AbilityRegistry = require('../AbilityRegistry');
-const { registerAbilityHandlers } = require('./abilityHandlers');
+const { registerAbilityHandlers } = require('./abilityHandlers'); // Keep using JS version for now
 const messages = require('@messages');
 
 /**

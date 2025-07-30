@@ -1,0 +1,169 @@
+{
+  "availableClasses": [
+    "Alchemist",
+    "Assassin", 
+    "Barbarian",
+    "Druid",
+    "Gunslinger",
+    "Oracle",
+    "Priest",
+    "Pyromancer",
+    "Shaman",
+    "Tracker",
+    "Warrior",
+    "Wizard"
+  ],
+  "classCategories": {
+    "Melee": ["Warrior", "Assassin", "Alchemist", "Barbarian"],
+    "Caster": ["Pyromancer", "Wizard", "Priest", "Oracle", "Shaman", "Druid"],
+    "Ranged": ["Gunslinger", "Tracker"]
+  },
+  "classAttributes": {
+    "Warrior": {
+      "hpModifier": 1.1,
+      "armorModifier": 1.5,
+      "damageModifier": 1.0,
+      "description": "Tank class with high health and armor, focused on protection."
+    },
+    "Pyromancer": {
+      "hpModifier": 1.0,
+      "armorModifier": 1.0,
+      "damageModifier": 1.6,
+      "description": "Fire-based caster with high damage output and area effects."
+    },
+    "Wizard": {
+      "hpModifier": 1.1,
+      "armorModifier": 1.3,
+      "damageModifier": 1.3,
+      "description": "Versatile spellcaster with powerful arcane abilities."
+    },
+    "Assassin": {
+      "hpModifier": 1.0,
+      "armorModifier": 1.1,
+      "damageModifier": 1.5,
+      "description": "Stealth-focused class with high single-target damage."
+    },
+    "Alchemist": {
+      "hpModifier": 1.2,
+      "armorModifier": 1.2,
+      "damageModifier": 1.3,
+      "description": "Agile fighter with invisibility abilities and poison attacks."
+    },
+    "Priest": {
+      "hpModifier": 1.3,
+      "armorModifier": 1.4,
+      "damageModifier": 1.0,
+      "description": "Healing-focused class with support abilities."
+    },
+    "Oracle": {
+      "hpModifier": 1.1,
+      "armorModifier": 1.5,
+      "damageModifier": 1.0,
+      "description": "Divination-focused class that can reveal warlocks and manipulate fate."
+    },
+    "Barbarian": {
+      "hpModifier": 1.0,
+      "armorModifier": 1.0,
+      "damageModifier": 1.6,
+      "description": "Barbarian has axe. Barbarian use axe."
+    },
+    "Shaman": {
+      "hpModifier": 1.1,
+      "armorModifier": 1.4,
+      "damageModifier": 1.2,
+      "description": "Elemental caster with healing and lightning abilities."
+    },
+    "Gunslinger": {
+      "hpModifier": 1.0,
+      "armorModifier": 1.2,
+      "damageModifier": 1.5,
+      "description": "Ranged specialist with high damage and evasion abilities."
+    },
+    "Tracker": {
+      "hpModifier": 1.2,
+      "armorModifier": 1.2,
+      "damageModifier": 1.3,
+      "description": "Skilled hunter with traps and precise attacks."
+    },
+    "Druid": {
+      "hpModifier": 1.4,
+      "armorModifier": 1.3,
+      "damageModifier": 1.0,
+      "description": "Nature-focused class with healing and crowd control."
+    }
+  },
+  "classAbilityProgression": {
+    "Warrior": {
+      "level1": "attack",
+      "level2": "shieldWall",
+      "level3": "bandage",
+      "level4": "battleCry"
+    },
+    "Pyromancer": {
+      "level1": "fireball",
+      "level2": "pyroblast",
+      "level3": "cauterize",
+      "level4": "infernoBlast"
+    },
+    "Wizard": {
+      "level1": "magicMissile",
+      "level2": "arcaneShield",
+      "level3": "arcaneBarrage",
+      "level4": "meteorShower"
+    },
+    "Assassin": {
+      "level1": "backstab",
+      "level2": "shadowVeil",
+      "level3": "twinStrike",
+      "level4": "deathMark"
+    },
+    "Alchemist": {
+      "level1": "poisonStrike",
+      "level2": "smokeBomb",
+      "level3": "shiv",
+      "level4": "poisonTrap"
+    },
+    "Priest": {
+      "level1": "holyBolt",
+      "level2": "swiftMend",
+      "level3": "heal",
+      "level4": "divineShield"
+    },
+    "Oracle": {
+      "level1": "psychicBolt",
+      "level2": "fatesEye",
+      "level3": "spiritGuard",
+      "level4": "sanctuaryOfTruth"
+    },
+    "Barbarian": {
+      "level1": "recklessStrike",
+      "level2": "relentlessFury",
+      "level3": "thirstyBlade",
+      "level4": "sweepingStrike"
+    },
+    "Shaman": {
+      "level1": "lightningBolt",
+      "level2": "totemShield",
+      "level3": "ancestralHeal",
+      "level4": "chainLightning"
+    },
+    "Gunslinger": {
+      "level1": "pistolShot",
+      "level2": "smokeScreen",
+      "level3": "aimedShot",
+      "level4": "ricochetRound"
+    },
+    "Tracker": {
+      "level1": "preciseShot",
+      "level2": "camouflage",
+      "level3": "barbedArrow",
+      "level4": "controlMonster"
+    },
+    "Druid": {
+      "level1": "clawSwipe",
+      "level2": "barkskin",
+      "level3": "rejuvenation",
+      "level4": "entangle"
+    }
+  }
+}

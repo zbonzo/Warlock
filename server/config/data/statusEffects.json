@@ -1,0 +1,267 @@
+{
+  "effects": {
+    "poison": {
+      "default": {
+        "damage": 5,
+        "turns": 3
+      },
+      "stackable": true,
+      "refreshable": true,
+      "triggersStoneDegradation": true,
+      "canCauseDeath": true,
+      "messages": {
+        "applied": "{playerName} is poisoned for {damage} damage over {turns} turns.",
+        "refreshed": "{playerName}'s poison is refreshed for {damage} damage over {turns} turns.",
+        "damage": "{playerName} suffers {damage} poison damage.",
+        "expired": "The poison affecting {playerName} has worn off."
+      }
+    },
+    "bleed": {
+      "default": {
+        "damage": 5,
+        "turns": 3
+      },
+      "stackable": true,
+      "refreshable": true,
+      "damagePerTurn": true,
+      "allowsActions": true,
+      "processAtEndOfTurn": true,
+      "messages": {
+        "applied": "{playerName} is bleeding for {damage} damage per turn for {turns} turn(s).",
+        "stacked": "{playerName} has multiple bleeding wounds for {damage} total damage per turn.",
+        "refreshed": "{playerName} continues bleeding for {turns} more turn(s).",
+        "damage": "{playerName} takes {damage} bleed damage.",
+        "expired": "The bleeding affecting {playerName} has stopped."
+      }
+    },
+    "shielded": {
+      "default": {
+        "armor": 2,
+        "turns": 1
+      },
+      "stackable": false,
+      "refreshable": true,
+      "armorStacks": true,
+      "messages": {
+        "applied": "{playerName} is shielded with {armor} armor for {turns} turn(s).",
+        "refreshed": "{playerName}'s protection is refreshed for {turns} turn(s).",
+        "expired": "{playerName} is no longer shielded."
+      }
+    },
+    "invisible": {
+      "default": {
+        "turns": 1
+      },
+      "stackable": false,
+      "refreshable": true,
+      "preventsTargeting": true,
+      "allowsSelfTargeting": true,
+      "breaksOnAction": false,
+      "redirectsAttacks": true,
+      "affectsMonster": true,
+      "messages": {
+        "applied": "{playerName} becomes invisible for {turns} turn(s).",
+        "refreshed": "{playerName}'s invisibility is extended for {turns} turn(s).",
+        "expired": "{playerName} is no longer invisible.",
+        "attackMissed": "{attackerName} tries to attack {playerName}, but they are invisible!"
+      }
+    },
+    "stunned": {
+      "default": {
+        "turns": 1
+      },
+      "stackable": false,
+      "refreshable": true,
+      "preventsActions": true,
+      "preventsRacialAbilities": true,
+      "allowsPassiveEffects": true,
+      "messages": {
+        "applied": "{playerName} is stunned for {turns} turn(s).",
+        "refreshed": "{playerName} remains stunned for {turns} more turn(s).",
+        "expired": "{playerName} is no longer stunned.",
+        "cannotAct": "You are stunned and cannot act."
+      }
+    },
+    "vulnerable": {
+      "default": {
+        "damageIncrease": 25,
+        "turns": 2
+      },
+      "stackable": false,
+      "refreshable": true,
+      "affectsDamageCalculation": true,
+      "messages": {
+        "applied": "{playerName} is vulnerable and will take {damageIncrease}% more damage for {turns} turn(s).",
+        "refreshed": "{playerName}'s vulnerability is refreshed for {turns} turn(s).",
+        "expired": "{playerName} is no longer vulnerable."
+      }
+    },
+    "weakened": {
+      "default": {
+        "damageReduction": 0.25,
+        "turns": 1
+      },
+      "stackable": false,
+      "refreshable": true,
+      "affectsDamageCalculation": true,
+      "messages": {
+        "applied": "{playerName} is weakened and will deal {damageReduction}% less damage for {turns} turn(s).",
+        "refreshed": "{playerName}'s weakness is renewed for {turns} turn(s).",
+        "expired": "{playerName} is no longer weakened."
+      }
+    },
+    "enraged": {
+      "default": {
+        "damageBoost": 1.5,
+        "damageResistance": 0.3,
+        "turns": 2
+      },
+      "stackable": false,
+      "refreshable": false,
+      "affectsDamageCalculation": true,
+      "preventsHealing": true,
+      "hasEndEffect": true,
+      "messages": {
+        "applied": "{playerName} enters an unstoppable rage! Damage increased by {damageBoost}% and damage resistance increased by {damageResistance}% for {turns} turn(s).",
+        "expired": "{playerName}'s rage subsides, leaving them exhausted and vulnerable.",
+        "cannotBeHealed": "{playerName} is too enraged to accept healing."
+      }
+    },
+    "healingOverTime": {
+      "default": {
+        "amount": 5,
+        "turns": 3
+      },
+      "stackable": false,
+      "refreshable": true,
+      "healsPerTurn": true,
+      "canOverheal": false,
+      "messages": {
+        "applied": "{playerName} is blessed with healing over time for {amount} HP per turn for {turns} turns.",
+        "refreshed": "{playerName}'s healing blessing is renewed for {turns} turns.",
+        "expired": "The healing blessing on {playerName} has faded.",
+        "heal": "{playerName} regenerates {amount} health from their blessing."
+      }
+    },
+    "stoneArmor": {
+      "default": {
+        "armor": 6,
+        "degradationPerHit": 1,
+        "turns": -1
+      },
+      "stackable": false,
+      "refreshable": false,
+      "isPermanent": true,
+      "isPassive": true,
+      "degradesOnHit": true,
+      "messages": {
+        "applied": "{playerName} gains Stone Armor ({armor} armor that degrades by {degradationPerHit} per hit).",
+        "expired": "{playerName}'s Stone Armor has been completely worn away.",
+        "degraded": "{playerName}'s Stone Armor degrades (armor reduced)."
+      }
+    },
+    "undying": {
+      "default": {
+        "resurrectedHp": 1,
+        "usesLeft": 1,
+        "turns": -1
+      },
+      "stackable": false,
+      "refreshable": false,
+      "isPermanent": true,
+      "isPassive": true,
+      "triggersOnDeath": true,
+      "messages": {
+        "applied": "{playerName} gains the Undying blessing (resurrect to {resurrectedHp} HP once).",
+        "triggered": "{playerName} dies but returns to life with {resurrectedHp} HP!",
+        "expired": "{playerName}'s Undying blessing has been used up."
+      }
+    },
+    "moonbeam": {
+      "default": {
+        "healthThreshold": 0.5,
+        "turns": -1
+      },
+      "stackable": false,
+      "refreshable": false,
+      "isPermanent": true,
+      "isPassive": true,
+      "revealsCorruption": true,
+      "messages": {
+        "applied": "{playerName} gains Moonbeam (reveals corruption when wounded below {healthThreshold}% HP).",
+        "triggered": "The Moonbeam reveals that {attackerName} is corrupted!"
+      }
+    },
+    "lifeBond": {
+      "default": {
+        "healingPercent": 0.05,
+        "turns": -1
+      },
+      "stackable": false,
+      "refreshable": false,
+      "isPermanent": true,
+      "isPassive": true,
+      "healsEndOfRound": true,
+      "messages": {
+        "applied": "{playerName} gains Life Bond (heal for {healingPercent}% of monster HP each round).",
+        "heal": "{playerName} heals {amount} HP from Life Bond."
+      }
+    },
+    "spiritGuard": {
+      "default": {
+        "armor": 3,
+        "turns": 2
+      },
+      "stackable": false,
+      "refreshable": true,
+      "armorStacks": true,
+      "providesDetection": true,
+      "messages": {
+        "applied": "{playerName} is protected by Spirit Guard (+{armor} armor for {turns} turns).",
+        "refreshed": "{playerName}'s Spirit Guard protection is renewed for {turns} turns.",
+        "expired": "The Spirit Guard protecting {playerName} fades away."
+      }
+    },
+    "sanctuary": {
+      "default": {
+        "damageReduction": 0.5,
+        "turns": 1
+      },
+      "stackable": false,
+      "refreshable": true,
+      "reducesDamageTaken": true,
+      "preventsTargeting": false,
+      "messages": {
+        "applied": "{playerName} enters a Sanctuary ({damageReduction}% damage reduction for {turns} turns).",
+        "refreshed": "{playerName}'s Sanctuary protection is renewed for {turns} turns.",
+        "expired": "{playerName} leaves the Sanctuary."
+      }
+    }
+  },
+  "processingOrder": {
+    "poison": 1,
+    "bleed": 2,
+    "stoneArmor": 3,
+    "shielded": 4,
+    "spiritGuard": 5,
+    "sanctuary": 6,
+    "vulnerable": 7,
+    "weakened": 8,
+    "enraged": 9,
+    "invisible": 10,
+    "stunned": 11,
+    "healingOverTime": 12,
+    "lifeBond": 13,
+    "moonbeam": 13,
+    "undying": 14
+  },
+  "global": {
+    "maxEffectsPerPlayer": 10,
+    "maxTurns": 10,
+    "minTurns": 1,
+    "processBeforeActions": true,
+    "processAfterActions": false,
+    "removeExpiredImmediately": true,
+    "allowZeroTurnEffects": false
+  }
+}

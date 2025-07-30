@@ -7,7 +7,7 @@ const fs = require('fs');
 
 // Load game-specific configs
 const characterConfig = require('./character'); // Consolidated character module
-const gameBalance = require('./gameBalance');
+const gameBalance = require('./gameBalance'); // Keep using JS version for now
 const statusEffects = require('./statusEffects');
 const messages = require('./messages');
 

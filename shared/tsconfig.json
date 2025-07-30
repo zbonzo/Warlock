@@ -3,8 +3,6 @@
     "target": "ES2020",
     "module": "commonjs",
     "lib": ["ES2020"],
-    "allowJs": true,
-    "checkJs": false,
     "declaration": true,
     "declarationMap": true,
     "composite": true,
@@ -26,19 +24,11 @@
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
-    "incremental": true,
-    "tsBuildInfoFile": "./dist/.tsbuildinfo",
     "baseUrl": "./",
     "paths": {
-      "@/*": ["./*"],
-      "@models/*": ["./models/*"],
-      "@systems/*": ["./models/systems/*"],
-      "@shared/*": ["../shared/*"]
+      "@shared/*": ["./*"]
     }
   },
-  "include": ["**/*.ts", "**/*.js"],
-  "exclude": ["node_modules", "dist", "tests"],
-  "references": [
-    { "path": "../shared" }
-  ]
+  "include": ["**/*.ts"],
+  "exclude": ["node_modules", "dist"]
 }

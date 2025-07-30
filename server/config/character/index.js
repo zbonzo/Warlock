@@ -5,7 +5,7 @@
 const races = require('./races');
 const classes = require('./classes');
 const abilities = require('./abilities');
-const playerSettings = require('./playerSettings');
+const playerSettings = require('./playerSettings'); // Keep using JS version for now
 
 /**
  * Character configuration module

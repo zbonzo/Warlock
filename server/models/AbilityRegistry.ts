@@ -1,0 +1,326 @@
+/**
+ * @fileoverview Fixed Ability Registry that properly passes coordination information
+ * Maps ability types to their handler functions with enhanced parameter support
+ */
+
+import logger from '../utils/logger.js';
+import config from '../config/index.js';
+import messages from '../config/messages/index.js';
+import type { Player, Monster, Ability } from '../types/generated';
+
+interface AbilityHandler {
+  (
+    ability: Ability,
+    actor: Player,
+    target: Player | Monster | string,
+    game: any,
+    systems: any,
+    eventBus?: any,
+    log?: any[],
+    coordination?: {
+      bonus: number;
+      players: Player[];
+      isCoordinated: boolean;
+    },
+    comeback?: {
+      bonus: number;
+      isActive: boolean;
+    }
+  ): any;
+}
+
+interface RacialAbilityHandler {
+  (
+    actor: Player,
+    target: Player | Monster | string,
+    game: any,
+    systems: any,
+    eventBus?: any,
+    log?: any[]
+  ): any;
+}
+
+interface RegistrationStats {
+  classAbilities: number;
+  racialAbilities: number;
+  totalAbilities: number;
+}
+
+interface DebugInfo {
+  classAbilities: string[];
+  racialAbilities: string[];
+  totalRegistered: number;
+}
+
+/**
+ * AbilityRegistry manages the mapping of ability types to their handler functions
+ * Enhanced to support coordination bonuses and comeback mechanics
+ */
+class AbilityRegistry {
+  private classAbilities: Map<string, AbilityHandler>;
+  private racialAbilities: Map<string, RacialAbilityHandler>;
+
+  constructor() {
+    this.classAbilities = new Map();
+    this.racialAbilities = new Map();
+  }
+
+  /**
+   * Register a class ability handler
+   */
+  registerClassAbility(abilityType: string, handler: AbilityHandler): void {
+    this.classAbilities.set(abilityType, handler);
+    logger.debug(`Registered class ability handler: ${abilityType}`);
+  }
+
+  /**
+   * Register multiple class abilities with the same handler
+   */
+  registerClassAbilities(abilityTypes: string[], handler: AbilityHandler): void {
+    abilityTypes.forEach((type) => {
+      this.registerClassAbility(type, handler);
+    });
+  }
+
+  /**
+   * Register a racial ability handler
+   */
+  registerRacialAbility(abilityType: string, handler: RacialAbilityHandler): void {
+    this.racialAbilities.set(abilityType, handler);
+    logger.debug(`Registered racial ability handler: ${abilityType}`);
+  }
+
+  /**
+   * Check if a class ability is registered
+   */
+  hasClassAbility(abilityType: string): boolean {
+    return this.classAbilities.has(abilityType);
+  }
+
+  /**
+   * Check if a racial ability is registered
+   */
+  hasRacialAbility(abilityType: string): boolean {
+    return this.racialAbilities.has(abilityType);
+  }
+
+  /**
+   * Execute a class ability with enhanced coordination support
+   */
+  executeClassAbility(
+    abilityType: string,
+    ability: Ability,
+    actor: Player,
+    target: Player | Monster | string,
+    game: any,
+    systems: any,
+    eventBus?: any,
+    log: any[] = [],
+    coordination?: {
+      bonus: number;
+      players: Player[];
+      isCoordinated: boolean;
+    },
+    comeback?: {
+      bonus: number;
+      isActive: boolean;
+    }
+  ): any {
+    const handler = this.classAbilities.get(abilityType);
+    if (!handler) {
+      const errorMsg = `No handler registered for class ability: ${abilityType}`;
+      logger.error(errorMsg);
+      throw new Error(errorMsg);
+    }
+
+    // Handle critical hit/ultra fail logic before executing ability
+    let finalTarget = target;
+    let critMultiplier = 1;
+    let outcome = 'normal';
+
+    // Critical hit calculation (5% chance)
+    if (Math.random() < config.gameBalance.criticalHitChance) {
+      critMultiplier = config.gameBalance.criticalHitMultiplier;
+      outcome = 'crit';
+      logger.info(`Critical hit! ${actor.name} using ${ability.name}`);
+    }
+
+    // Ultra fail calculation (1% chance)
+    if (Math.random() < config.gameBalance.ultraFailChance && target !== 'multi') {
+      // Ultra fail: hit random target instead
+      outcome = 'ultraFail';
+      critMultiplier = config.gameBalance.criticalHitMultiplier;
+
+      if (target === config.MONSTER_ID) {
+        // Was targeting monster, now hit random player
+        const alivePlayers = game.players.filter((p: Player) => p.status === 'alive');
+        if (alivePlayers.length > 0) {
+          finalTarget = alivePlayers[Math.floor(Math.random() * alivePlayers.length)];
+          
+          log.push({
+            type: 'ability_ultra_fail',
+            public: false,
+            attackerId: actor.id,
+            message: '',
+            privateMessage: `ULTRA FAIL! Your ${ability.name} hit ${finalTarget.name} instead of the Monster!`,
+            attackerMessage: '',
+          });
+        }
+      } else if (typeof target === 'object' && 'id' in target) {
+        // Was targeting a player, now hit monster or different player
+        if (Math.random() < 0.5) {
+          finalTarget = config.MONSTER_ID;
+          log.push({
+            type: 'ability_ultra_fail',
+            public: false,
+            attackerId: actor.id,
+            message: '',
+            privateMessage: `ULTRA FAIL! Your ${ability.name} hit the Monster instead of ${target.name}!`,
+            attackerMessage: '',
+          });
+        } else {
+          const otherPlayers = game.players.filter(
+            (p: Player) => p.status === 'alive' && p.id !== target.id && p.id !== actor.id
+          );
+          if (otherPlayers.length > 0) {
+            finalTarget = otherPlayers[Math.floor(Math.random() * otherPlayers.length)];
+            log.push({
+              type: 'ability_ultra_fail',
+              public: false,
+              attackerId: actor.id,
+              message: '',
+              privateMessage: `ULTRA FAIL! Your ${ability.name} hit ${finalTarget.name} instead!`,
+              attackerMessage: '',
+            });
+          }
+        }
+      }
+    }
+
+    // Log critical hits
+    if (outcome === 'crit' || outcome === 'ultraFail') {
+      actor.tempCritMultiplier = critMultiplier;
+      const categoryKey = ability.category.toLowerCase();
+      const critMsg = messages.getAbilityMessage(
+        `abilities.${categoryKey}`,
+        'abilityCrit'
+      );
+      const targetName = finalTarget === config.MONSTER_ID
+        ? 'the Monster'
+        : finalTarget === 'multi'
+        ? 'multiple targets'
+        : (finalTarget as Player).name;
+      
+      log.push({
+        type: 'ability_crit',
+        public: true,
+        attackerId: actor.id,
+        targetId: (finalTarget as any).id || finalTarget,
+        message: messages.formatMessage(critMsg, {
+          playerName: actor.name,
+          abilityName: ability.name,
+          targetName,
+          amount: ability.params.amount ||
+                 ability.params.damage ||
+                 ability.params.armor ||
+                 '',
+        }),
+        privateMessage: '',
+        attackerMessage: '',
+      });
+    }
+
+    // Execute the ability handler with all parameters
+    try {
+      return handler(
+        ability,
+        actor,
+        finalTarget,
+        game,
+        systems,
+        eventBus,
+        log,
+        coordination,
+        comeback
+      );
+    } catch (error) {
+      logger.error(`Error executing class ability ${abilityType}:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Execute a racial ability
+   */
+  executeRacialAbility(
+    abilityType: string,
+    actor: Player,
+    target: Player | Monster | string,
+    game: any,
+    systems: any,
+    eventBus?: any,
+    log: any[] = []
+  ): any {
+    const handler = this.racialAbilities.get(abilityType);
+    if (!handler) {
+      const errorMsg = `No handler registered for racial ability: ${abilityType}`;
+      logger.error(errorMsg);
+      throw new Error(errorMsg);
+    }
+
+    try {
+      return handler(actor, target, game, systems, eventBus, log);
+    } catch (error) {
+      logger.error(`Error executing racial ability ${abilityType}:`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get all registered class ability types
+   */
+  getRegisteredClassAbilities(): string[] {
+    return Array.from(this.classAbilities.keys());
+  }
+
+  /**
+   * Get all registered racial ability types
+   */
+  getRegisteredRacialAbilities(): string[] {
+    return Array.from(this.racialAbilities.keys());
+  }
+
+  /**
+   * Clear all registrations (useful for testing)
+   */
+  clear(): void {
+    this.classAbilities.clear();
+    this.racialAbilities.clear();
+    logger.debug('Cleared all ability registrations');
+  }
+
+  /**
+   * Get registration statistics
+   */
+  getStats(): RegistrationStats {
+    return {
+      classAbilities: this.classAbilities.size,
+      racialAbilities: this.racialAbilities.size,
+      totalAbilities: this.classAbilities.size + this.racialAbilities.size,
+    };
+  }
+
+  /**
+   * Get debug information about registered handlers
+   */
+  getDebugInfo(): DebugInfo {
+    return {
+      classAbilities: Array.from(this.classAbilities.keys()),
+      racialAbilities: Array.from(this.racialAbilities.keys()),
+      totalRegistered: this.classAbilities.size + this.racialAbilities.size,
+    };
+  }
+}
+
+export default AbilityRegistry;
+export type { AbilityHandler, RacialAbilityHandler, RegistrationStats, DebugInfo };

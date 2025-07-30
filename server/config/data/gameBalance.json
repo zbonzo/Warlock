@@ -1,0 +1,199 @@
+{
+  "monster": {
+    "baseHp": 100,
+    "baseDamage": 25,
+    "baseAge": 0,
+    "hpPerLevel": 0,
+    "useExponentialScaling": true,
+    "hpScalingMultiplier": 2.5,
+    "damageScaling": {
+      "ageMultiplier": 1,
+      "maxAge": null
+    },
+    "targeting": {
+      "preferLowestHp": false,
+      "useThreatSystem": true,
+      "canAttackInvisible": false,
+      "fallbackToHighestHp": true,
+      "canAttackWarlock": false
+    },
+    "threat": {
+      "enabled": true,
+      "armorMultiplier": 1.0,
+      "damageMultiplier": 1.0,
+      "healingMultiplier": 0.8,
+      "decayRate": 0.25,
+      "monsterDeathReduction": 0.5,
+      "avoidLastTargetRounds": 1,
+      "enableTiebreaker": true,
+      "fallbackToLowestHp": true,
+      "minimumThreatThreshold": 0.1,
+      "logThreatChanges": true
+    }
+  },
+  "player": {
+    "armor": {
+      "reductionRate": 0.1,
+      "maxReduction": 0.75,
+      "minReduction": 0.0
+    },
+    "levelUp": {
+      "hpIncrease": 0.08,
+      "damageIncrease": 1.15,
+      "fullHealOnLevelUp": true
+    },
+    "healing": {
+      "modifierBase": 2.0,
+      "warlockSelfHealOnly": false,
+      "rejectWarlockHealing": false,
+      "antiDetection": {
+        "enabled": true,
+        "alwaysHealWarlocks": true,
+        "detectionChance": 0.05,
+        "requireActualHealing": true,
+        "applyToHealingOverTime": true,
+        "logDetections": true
+      }
+    },
+    "death": {
+      "pendingDeathSystem": true,
+      "allowResurrection": true
+    }
+  },
+  "coordinationBonus": {
+    "enabled": true,
+    "damageBonus": 10,
+    "healingBonus": 15,
+    "appliesToMonster": true,
+    "maxBonusTargets": 5,
+    "announceCoordination": false
+  },
+  "warlock": {
+    "conversion": {
+      "baseChance": 0.45,
+      "maxChance": 0.65,
+      "scalingFactor": 0.4,
+      "preventLevelUpCorruption": false,
+      "maxCorruptionsPerRound": 1,
+      "maxCorruptionsPerPlayer": 1,
+      "corruptionCooldown": 1,
+      "aoeModifier": 0.3,
+      "randomModifier": 0.3,
+      "untargetedModifier": 0.3
+    },
+    "corruption": {
+      "canCorruptWhenDetected": false,
+      "detectionDamagePenalty": 15,
+      "corruptionIsPublic": true,
+      "detectionPenaltyDuration": 1
+    },
+    "scaling": {
+      "enabled": true,
+      "playersPerWarlock": 4,
+      "minimumWarlocks": 1,
+      "maximumWarlocks": 5,
+      "scalingMethod": "custom",
+      "customScaling": {
+        "1": 1,
+        "2": 1,
+        "3": 1,
+        "4": 1,
+        "5": 1,
+        "6": 1,
+        "7": 1,
+        "8": 2,
+        "9": 2,
+        "10": 2,
+        "11": 3,
+        "12": 3,
+        "13": 3,
+        "14": 3,
+        "15": 3,
+        "16": 3,
+        "17": 4,
+        "18": 4,
+        "19": 4,
+        "20": 5
+      }
+    },
+    "winConditions": {
+      "allWarlocksGone": "Good",
+      "allPlayersWarlocks": "Evil",
+      "majorityThreshold": 0.5
+    }
+  },
+  "comebackMechanics": {
+    "enabled": true,
+    "threshold": 25,
+    "damageIncrease": 25,
+    "healingIncrease": 25,
+    "armorIncrease": 1.0,
+    "corruptionResistance": 15,
+    "announceActivation": true
+  },
+  "stoneArmor": {
+    "initialValue": 5,
+    "degradationPerHit": 1,
+    "minimumValue": -1,
+    "allowNegative": true
+  },
+  "combat": {
+    "actionOrder": {
+      "ultraFast": {
+        "min": 1,
+        "max": 9
+      },
+      "defensive": {
+        "min": 10,
+        "max": 99
+      },
+      "special": {
+        "min": 100,
+        "max": 999
+      },
+      "attacks": {
+        "min": 1000,
+        "max": 9999
+      },
+      "healing": {
+        "min": 10000,
+        "max": 99999
+      }
+    },
+    "defaultOrders": {
+      "attack": 5000,
+      "defense": 50,
+      "heal": 50000,
+      "special": 500
+    }
+  },
+  "abilityVariance": {
+    "critChance": 0.05,
+    "failChance": 0.05,
+    "ultraFailChance": 0.05,
+    "critMultiplier": 1.5
+  },
+  "gameCode": {
+    "minValue": 1000,
+    "maxValue": 9999,
+    "length": 4
+  },
+  "rateLimiting": {
+    "defaultLimit": 5,
+    "defaultTimeWindow": 60000,
+    "actionLimits": {
+      "createGame": {
+        "limit": 2,
+        "window": 60000
+      },
+      "joinGame": {
+        "limit": 5,
+        "window": 60000
+      },
+      "performAction": {
+        "limit": 10,
+        "window": 60000
+      }
+    }
+  }
+}

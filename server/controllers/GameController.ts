@@ -16,7 +16,7 @@ import config from '../config/index.js';
 import messages from '../messages/index.js';
 import { EventTypes } from '../models/events/EventTypes.js';
 import { GameRoom } from '../models/GameRoom.js';
-import { Player } from '../models/Player.js';
+import type { Player } from '../models/Player.js';
 import { BaseController } from './PlayerController.js';
 import { 
   GameState,

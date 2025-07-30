@@ -9,7 +9,7 @@ import messages from '../messages/index.js';
 import logger from '../utils/logger.js';
 import { Player } from '../models/Player.js';
 import { BaseController } from './PlayerController.js';
-import { 
+import type { 
   Monster, 
   ActionResult,
   Schemas

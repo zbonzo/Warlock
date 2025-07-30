@@ -1,0 +1,838 @@
+{
+  "attack": {
+    "id": "attack",
+    "name": "Slash",
+    "category": "Attack",
+    "effect": null,
+    "target": "Single",
+    "params": { "damage": 28 },
+    "order": 1000,
+    "cooldown": 0,
+    "flavorText": "A swift and decisive blow, honed by countless battles.",
+    "tags": ["basic", "melee", "physical"],
+    "buttonText": {
+      "ready": "Draw Blade",
+      "submitted": "Strike Ready"
+    }
+  },
+  "fireball": {
+    "id": "fireball",
+    "name": "Fireball",
+    "category": "Attack",
+    "effect": "poison",
+    "target": "Single",
+    "params": { "damage": 22, "poison": { "damage": 22, "turns": 1 } },
+    "order": 1010,
+    "cooldown": 0,
+    "flavorText": "Conjure a sphere of condensed flame that burns long after impact.",
+    "tags": ["magic", "fire", "dot"],
+    "buttonText": {
+      "ready": "Ignite Flame",
+      "submitted": "Fire Burning"
+    }
+  },
+  "magicMissile": {
+    "id": "magicMissile",
+    "name": "Magic Missile",
+    "category": "Attack",
+    "effect": null,
+    "target": "Single",
+    "params": { "damage": 32 },
+    "order": 1030,
+    "cooldown": 0,
+    "flavorText": "Unleash bolts of pure arcane force that never miss their mark.",
+    "tags": ["magic", "arcane", "reliable"],
+    "buttonText": {
+      "ready": "Focus Arcane",
+      "submitted": "Magic Charged"
+    }
+  },
+  "backstab": {
+    "id": "backstab",
+    "name": "Backstab",
+    "category": "Attack",
+    "effect": null,
+    "target": "Single",
+    "params": { "damage": 35 },
+    "order": 900,
+    "cooldown": 0,
+    "flavorText": "Strike from the shadows with surgical precision.",
+    "tags": ["melee", "stealth", "critical"],
+    "buttonText": {
+      "ready": "Find Opening",
+      "submitted": "Shadow Strike"
+    }
+  },
+  "poisonStrike": {
+    "id": "poisonStrike",
+    "name": "Poison Strike",
+    "category": "Attack",
+    "effect": "poison",
+    "target": "Single",
+    "params": { "damage": 24, "poison": { "damage": 20, "turns": 2 } },
+    "order": 1015,
+    "cooldown": 0,
+    "flavorText": "Blade kissed by venom, promising a slow demise.",
+    "tags": ["melee", "poison", "dot"],
+    "buttonText": {
+      "ready": "Coat Blade",
+      "submitted": "Venom Ready"
+    }
+  },
+  "holyBolt": {
+    "id": "holyBolt",
+    "name": "Holy Bolt",
+    "category": "Attack",
+    "effect": null,
+    "target": "Single",
+    "params": { "damage": 25 },
+    "order": 1020,
+    "cooldown": 0,
+    "flavorText": "Divine light given form, burning away corruption.",
+    "tags": ["magic", "holy", "light"],
+    "buttonText": {
+      "ready": "Channel Divine",
+      "submitted": "Light Focused"
+    }
+  },
+  "psychicBolt": {
+    "id": "psychicBolt",
+    "name": "Psychic Bolt",
+    "category": "Attack",
+    "effect": null,
+    "target": "Single",
+    "params": { "damage": 30 },
+    "order": 1025,
+    "cooldown": 0,
+    "flavorText": "Strike directly at the mind, bypassing physical defenses.",
+    "tags": ["magic", "psychic", "mental"],
+    "buttonText": {
+      "ready": "Focus Mind",
+      "submitted": "Psychic Locked"
+    }
+  },
+  "recklessStrike": {
+    "id": "recklessStrike",
+    "name": "Reckless Strike",
+    "category": "Attack",
+    "effect": "selfDamage",
+    "target": "Single",
+    "params": { "damage": 40, "selfDamage": 10 },
+    "order": 1040,
+    "cooldown": 0,
+    "flavorText": "Abandon defense for devastating offense.",
+    "tags": ["melee", "berserker", "risky"],
+    "buttonText": {
+      "ready": "Abandon Defense",
+      "submitted": "All Out Attack"
+    }
+  },
+  "lightningBolt": {
+    "id": "lightningBolt",
+    "name": "Lightning Bolt",
+    "category": "Attack",
+    "effect": null,
+    "target": "Single",
+    "params": { "damage": 28 },
+    "order": 1035,
+    "cooldown": 0,
+    "flavorText": "Call down the fury of the storm.",
+    "tags": ["magic", "lightning", "nature"],
+    "buttonText": {
+      "ready": "Call Lightning",
+      "submitted": "Storm Bound"
+    }
+  },
+  "pistolShot": {
+    "id": "pistolShot",
+    "name": "Pistol Shot",
+    "category": "Attack",
+    "effect": null,
+    "target": "Single",
+    "params": { "damage": 30 },
+    "order": 950,
+    "cooldown": 0,
+    "flavorText": "Quick draw, quicker death.",
+    "tags": ["ranged", "physical", "gunslinger"],
+    "buttonText": {
+      "ready": "Take Aim",
+      "submitted": "Locked and Loaded"
+    }
+  },
+  "preciseShot": {
+    "id": "preciseShot",
+    "name": "Precise Shot",
+    "category": "Attack",
+    "effect": null,
+    "target": "Single",
+    "params": { "damage": 32 },
+    "order": 990,
+    "cooldown": 0,
+    "flavorText": "One arrow, one kill.",
+    "tags": ["ranged", "physical", "precision"],
+    "buttonText": {
+      "ready": "Take Careful Aim",
+      "submitted": "Shot Lined Up"
+    }
+  },
+  "clawSwipe": {
+    "id": "clawSwipe",
+    "name": "Claw Swipe",
+    "category": "Attack",
+    "effect": null,
+    "target": "Single",
+    "params": { "damage": 26 },
+    "order": 980,
+    "cooldown": 0,
+    "flavorText": "Nature's fury channeled through sharpened claws.",
+    "tags": ["melee", "nature", "primal"],
+    "buttonText": {
+      "ready": "Bare Claws",
+      "submitted": "Primal Fury"
+    }
+  },
+  "pyroblast": {
+    "id": "pyroblast",
+    "name": "Pyroblast",
+    "category": "Attack",
+    "effect": null,
+    "target": "Single",
+    "params": { "damage": 50 },
+    "order": 1500,
+    "cooldown": 3,
+    "flavorText": "Channel the heart of a volcano into a single, devastating blast.",
+    "tags": ["magic", "fire", "ultimate"],
+    "buttonText": {
+      "ready": "Summon Inferno",
+      "submitted": "Volcano Erupts"
+    }
+  },
+  "arcaneBarrage": {
+    "id": "arcaneBarrage",
+    "name": "Arcane Barrage",
+    "category": "Attack",
+    "effect": null,
+    "target": "Single",
+    "params": { "damage": 20, "hits": 3 },
+    "order": 1100,
+    "cooldown": 2,
+    "flavorText": "Overwhelm your foe with rapid-fire arcane projectiles.",
+    "tags": ["magic", "arcane", "multi-hit"],
+    "buttonText": {
+      "ready": "Weave Barrage",
+      "submitted": "Magic Torrents"
+    }
+  },
+  "twinStrike": {
+    "id": "twinStrike",
+    "name": "Twin Strike",
+    "category": "Attack",
+    "effect": null,
+    "target": "Single",
+    "params": { "damage": 20, "hits": 2 },
+    "order": 1050,
+    "cooldown": 1,
+    "flavorText": "Two blades moving as one, impossible to defend against.",
+    "tags": ["melee", "multi-hit", "agile"],
+    "buttonText": {
+      "ready": "Dual Wield",
+      "submitted": "Blades Dance"
+    }
+  },
+  "shiv": {
+    "id": "shiv",
+    "name": "Shiv",
+    "category": "Attack",
+    "effect": "bleed",
+    "target": "Single",
+    "params": { "damage": 30, "bleed": { "damage": 15, "turns": 2 } },
+    "order": 920,
+    "cooldown": 2,
+    "flavorText": "A quick stab that leaves lasting wounds.",
+    "tags": ["melee", "bleed", "dot"],
+    "buttonText": {
+      "ready": "Quick Stab",
+      "submitted": "Blade Strikes"
+    }
+  },
+  "aimedShot": {
+    "id": "aimedShot",
+    "name": "Aimed Shot",
+    "category": "Attack",
+    "effect": "vulnerable",
+    "target": "Single",
+    "params": { "damage": 35, "vulnerability": { "damageIncrease": 25, "turns": 2 } },
+    "order": 1200,
+    "cooldown": 3,
+    "flavorText": "Target weak points to maximize future damage.",
+    "tags": ["ranged", "precision", "debuff"],
+    "buttonText": {
+      "ready": "Mark Weakness",
+      "submitted": "Targeting Set"
+    }
+  },
+  "barbedArrow": {
+    "id": "barbedArrow",
+    "name": "Barbed Arrow",
+    "category": "Attack",
+    "effect": "bleed",
+    "target": "Single",
+    "params": { "damage": 25, "bleed": { "damage": 18, "turns": 3 } },
+    "order": 1060,
+    "cooldown": 2,
+    "flavorText": "Arrows designed to tear on the way out.",
+    "tags": ["ranged", "bleed", "cruel"],
+    "buttonText": {
+      "ready": "Nock Arrow",
+      "submitted": "Bowstring Taut"
+    }
+  },
+  "infernoBlast": {
+    "id": "infernoBlast",
+    "name": "Inferno Blast",
+    "category": "Attack",
+    "effect": null,
+    "target": "Multi",
+    "params": { "damage": 35 },
+    "order": 1400,
+    "cooldown": 4,
+    "flavorText": "Engulf all enemies in a conflagration of magical fire.",
+    "tags": ["magic", "fire", "aoe"],
+    "buttonText": {
+      "ready": "Unleash Inferno",
+      "submitted": "Flames Spread"
+    }
+  },
+  "meteorShower": {
+    "id": "meteorShower",
+    "name": "Meteor Shower",
+    "category": "Attack",
+    "effect": null,
+    "target": "Multi",
+    "params": { "damage": 40 },
+    "order": 1600,
+    "cooldown": 5,
+    "flavorText": "Call down celestial destruction upon your enemies.",
+    "tags": ["magic", "arcane", "aoe", "ultimate"],
+    "buttonText": {
+      "ready": "Call Stars",
+      "submitted": "Meteors Fall"
+    }
+  },
+  "deathMark": {
+    "id": "deathMark",
+    "name": "Death Mark",
+    "category": "Attack",
+    "effect": "deathMark",
+    "target": "Multi",
+    "params": { "damage": 30, "deathMarkDamage": 50 },
+    "order": 1300,
+    "cooldown": 5,
+    "flavorText": "Mark enemies for death. The weak shall perish.",
+    "tags": ["assassination", "execute", "aoe"],
+    "buttonText": {
+      "ready": "Mark for Death",
+      "submitted": "Doom Sealed"
+    }
+  },
+  "chainLightning": {
+    "id": "chainLightning",
+    "name": "Chain Lightning",
+    "category": "Attack",
+    "effect": null,
+    "target": "Multi",
+    "params": { "damage": 35 },
+    "order": 1350,
+    "cooldown": 4,
+    "flavorText": "Lightning arcs between foes with deadly precision.",
+    "tags": ["magic", "lightning", "aoe"],
+    "buttonText": {
+      "ready": "Chain Storm",
+      "submitted": "Lightning Arcs"
+    }
+  },
+  "ricochetRound": {
+    "id": "ricochetRound",
+    "name": "Ricochet Round",
+    "category": "Attack",
+    "effect": null,
+    "target": "Multi",
+    "params": { "damage": 25 },
+    "order": 1150,
+    "cooldown": 3,
+    "flavorText": "One bullet, multiple targets. Geometry is deadly.",
+    "tags": ["ranged", "gunslinger", "clever"],
+    "buttonText": {
+      "ready": "Angle Shot",
+      "submitted": "Trajectory Set"
+    }
+  },
+  "sweepingStrike": {
+    "id": "sweepingStrike",
+    "name": "Sweeping Strike",
+    "category": "Special",
+    "effect": "stun",
+    "target": "Single",
+    "params": { "damage": 35, "bonusTargets": 1, "stunChance": 0.25, "stunDuration": 1 },
+    "order": 1250,
+    "cooldown": 4,
+    "flavorText": "A wide arc that devastates multiple foes.",
+    "tags": ["melee", "aoe", "control"],
+    "buttonText": {
+      "ready": "Wide Arc",
+      "submitted": "Sweeping Blow"
+    }
+  },
+  "shieldWall": {
+    "id": "shieldWall",
+    "name": "Shield Wall",
+    "category": "Defense",
+    "effect": "shielded",
+    "target": "Self",
+    "params": { "armor": 8, "duration": 1 },
+    "order": 10,
+    "cooldown": 0,
+    "flavorText": "Brace for impact, becoming an unmovable bastion for your allies.",
+    "tags": ["physical", "armor", "tank"],
+    "buttonText": {
+      "ready": "Raise Guard",
+      "submitted": "Shield Wall"
+    }
+  },
+  "arcaneShield": {
+    "id": "arcaneShield",
+    "name": "Arcane Shield",
+    "category": "Defense",
+    "effect": "shielded",
+    "target": "Self",
+    "params": { "armor": 6, "duration": 2 },
+    "order": 15,
+    "cooldown": 1,
+    "flavorText": "Weave raw magic into a protective barrier.",
+    "tags": ["magic", "armor", "sustained"],
+    "buttonText": {
+      "ready": "Weave Protection",
+      "submitted": "Barrier Cast"
+    }
+  },
+  "shadowVeil": {
+    "id": "shadowVeil",
+    "name": "Shadow Veil",
+    "category": "Defense",
+    "effect": "invisible",
+    "target": "Self",
+    "params": { "duration": 2 },
+    "order": 5,
+    "cooldown": 3,
+    "flavorText": "Become one with the shadows, unseen and untouchable.",
+    "tags": ["stealth", "evasion", "shadow"],
+    "buttonText": {
+      "ready": "Embrace Darkness",
+      "submitted": "Shadows Dance"
+    }
+  },
+  "smokeBomb": {
+    "id": "smokeBomb",
+    "name": "Smoke Bomb",
+    "category": "Defense",
+    "effect": "invisible",
+    "target": "Self",
+    "params": { "duration": 1 },
+    "order": 20,
+    "cooldown": 2,
+    "flavorText": "Vanish in a cloud of alchemical smoke.",
+    "tags": ["stealth", "escape", "alchemy"],
+    "buttonText": {
+      "ready": "Ready Reflexes",
+      "submitted": "Poised to Evade"
+    }
+  },
+  "divineShield": {
+    "id": "divineShield",
+    "name": "Divine Shield",
+    "category": "Defense",
+    "effect": "shielded",
+    "target": "Single",
+    "params": { "armor": 10, "duration": 2 },
+    "order": 25,
+    "cooldown": 4,
+    "flavorText": "Grant divine protection to those who need it most.",
+    "tags": ["holy", "protection", "support"],
+    "buttonText": {
+      "ready": "Blessed Ward",
+      "submitted": "Divine Grace"
+    }
+  },
+  "spiritGuard": {
+    "id": "spiritGuard",
+    "name": "Spirit Guard",
+    "category": "Defense",
+    "effect": "spiritGuard",
+    "target": "Self",
+    "params": { "damageReduction": 0.5, "duration": 2 },
+    "order": 30,
+    "cooldown": 3,
+    "flavorText": "Ancestral spirits protect you from harm.",
+    "tags": ["spiritual", "damage-reduction", "oracle"],
+    "buttonText": {
+      "ready": "Summon Spirits",
+      "submitted": "Guardians Watch"
+    }
+  },
+  "totemShield": {
+    "id": "totemShield",
+    "name": "Totemic Barrier",
+    "category": "Defense",
+    "effect": "shielded",
+    "target": "Single",
+    "params": { "armor": 7, "duration": 2 },
+    "order": 35,
+    "cooldown": 2,
+    "flavorText": "Protective totems ward off incoming attacks.",
+    "tags": ["nature", "totem", "shaman"],
+    "buttonText": {
+      "ready": "Plant Totems",
+      "submitted": "Wards Active"
+    }
+  },
+  "smokeScreen": {
+    "id": "smokeScreen",
+    "name": "Smoke Screen",
+    "category": "Defense",
+    "effect": "invisible",
+    "target": "Single",
+    "params": { "duration": 2 },
+    "order": 40,
+    "cooldown": 3,
+    "flavorText": "Cover an ally's escape with a wall of smoke.",
+    "tags": ["tactical", "support", "gunslinger"],
+    "buttonText": {
+      "ready": "Create Cover",
+      "submitted": "Smoke Deployed"
+    }
+  },
+  "camouflage": {
+    "id": "camouflage",
+    "name": "Camouflage",
+    "category": "Defense",
+    "effect": "invisible",
+    "target": "Self",
+    "params": { "duration": 3 },
+    "order": 45,
+    "cooldown": 4,
+    "flavorText": "Blend perfectly with your surroundings.",
+    "tags": ["nature", "stealth", "hunter"],
+    "buttonText": {
+      "ready": "Fade to Shadow",
+      "submitted": "Vanished"
+    }
+  },
+  "barkskin": {
+    "id": "barkskin",
+    "name": "Barkskin",
+    "category": "Defense",
+    "effect": "shielded",
+    "target": "Self",
+    "params": { "armor": 5, "duration": 3 },
+    "order": 50,
+    "cooldown": 2,
+    "flavorText": "Your skin becomes as tough as ancient bark.",
+    "tags": ["nature", "druid", "sustained"],
+    "buttonText": {
+      "ready": "Harden Skin",
+      "submitted": "Bark Armor"
+    }
+  },
+  "bandage": {
+    "id": "bandage",
+    "name": "Bandage",
+    "category": "Heal",
+    "effect": null,
+    "target": "Self",
+    "params": { "amount": 35 },
+    "order": 10000,
+    "cooldown": 2,
+    "flavorText": "A moment of respite to tend to wounds and fight on.",
+    "tags": ["physical", "self-care", "basic"],
+    "buttonText": {
+      "ready": "Dress Wounds",
+      "submitted": "Bandaging"
+    }
+  },
+  "cauterize": {
+    "id": "cauterize",
+    "name": "Cauterize",
+    "category": "Heal",
+    "effect": null,
+    "target": "Self",
+    "params": { "amount": 40 },
+    "order": 10100,
+    "cooldown": 2,
+    "flavorText": "Burn wounds closed with searing flame. Painful but effective.",
+    "tags": ["fire", "emergency", "pyromancer"],
+    "buttonText": {
+      "ready": "Sear Wounds",
+      "submitted": "Flame Heals"
+    }
+  },
+  "swiftMend": {
+    "id": "swiftMend",
+    "name": "Swift Mend",
+    "category": "Heal",
+    "effect": null,
+    "target": "Single",
+    "params": { "amount": 35 },
+    "order": 10200,
+    "cooldown": 1,
+    "flavorText": "Channel holy light to rapidly close wounds.",
+    "tags": ["holy", "quick", "efficient"],
+    "buttonText": {
+      "ready": "Quick Mend",
+      "submitted": "Light Flows"
+    }
+  },
+  "heal": {
+    "id": "heal",
+    "name": "Heal",
+    "category": "Heal",
+    "effect": null,
+    "target": "Single",
+    "params": { "amount": 50 },
+    "order": 10300,
+    "cooldown": 2,
+    "flavorText": "Restore an ally with divine grace.",
+    "tags": ["holy", "powerful", "priest"],
+    "buttonText": {
+      "ready": "Channel Light",
+      "submitted": "Healing Flow"
+    }
+  },
+  "ancestralHeal": {
+    "id": "ancestralHeal",
+    "name": "Ancestral Heal",
+    "category": "Heal",
+    "effect": "healingOverTime",
+    "target": "Single",
+    "params": { "amount": 30, "hot": { "amount": 20, "turns": 2 } },
+    "order": 10400,
+    "cooldown": 3,
+    "flavorText": "Call upon ancestral spirits to mend wounds over time.",
+    "tags": ["spiritual", "hot", "shaman"],
+    "buttonText": {
+      "ready": "Commune Spirits",
+      "submitted": "Ancestors Guide"
+    }
+  },
+  "rejuvenation": {
+    "id": "rejuvenation",
+    "name": "Rejuvenation",
+    "category": "Heal",
+    "effect": "healingOverTime",
+    "target": "Single",
+    "params": { "amount": 25, "hot": { "amount": 15, "turns": 3 } },
+    "order": 10500,
+    "cooldown": 2,
+    "flavorText": "Nature's blessing slowly restores vitality.",
+    "tags": ["nature", "hot", "druid"],
+    "buttonText": {
+      "ready": "Nature's Touch",
+      "submitted": "Life Renewed"
+    }
+  },
+  "battleCry": {
+    "id": "battleCry",
+    "name": "Battle Cry",
+    "category": "Special",
+    "effect": "shielded",
+    "target": "Multi",
+    "params": { "armor": 4, "duration": 1 },
+    "order": 50,
+    "cooldown": 3,
+    "flavorText": "A deafening roar that steels the resolve of your comrades.",
+    "tags": ["leadership", "aoe-buff", "warrior"],
+    "buttonText": {
+      "ready": "Rally Allies",
+      "submitted": "War Cry"
+    }
+  },
+  "poisonTrap": {
+    "id": "poisonTrap",
+    "name": "Poison Trap",
+    "category": "Special",
+    "effect": "poisonTrap",
+    "target": "Self",
+    "params": { "damage": 20, "duration": 2 },
+    "order": 200,
+    "cooldown": 3,
+    "flavorText": "Set a hidden trap that poisons attackers.",
+    "tags": ["trap", "poison", "defensive"],
+    "buttonText": {
+      "ready": "Set Trap",
+      "submitted": "Trap Armed"
+    }
+  },
+  "fatesEye": {
+    "id": "fatesEye",
+    "name": "Eye of Fate",
+    "category": "Special",
+    "effect": "reveal",
+    "target": "Single",
+    "params": { "duration": 2 },
+    "order": 100,
+    "cooldown": 4,
+    "flavorText": "Pierce the veil and reveal hidden truths.",
+    "tags": ["divination", "anti-warlock", "oracle"],
+    "buttonText": {
+      "ready": "Peer Beyond",
+      "submitted": "Visions Clear"
+    }
+  },
+  "sanctuaryOfTruth": {
+    "id": "sanctuaryOfTruth",
+    "name": "Sanctuary of Truth",
+    "category": "Special",
+    "effect": "sanctuary",
+    "target": "Multi",
+    "params": { "damageReduction": 0.3, "duration": 2 },
+    "order": 300,
+    "cooldown": 5,
+    "flavorText": "Create a sacred space where violence is diminished.",
+    "tags": ["holy", "aoe-buff", "ultimate"],
+    "buttonText": {
+      "ready": "Consecrate Ground",
+      "submitted": "Sanctuary Blessed"
+    }
+  },
+  "relentlessFury": {
+    "id": "relentlessFury",
+    "name": "Relentless Fury",
+    "category": "Special",
+    "effect": "passive",
+    "target": "Self",
+    "params": { "damagePerLevel": 0.03, "vulnerabilityPerLevel": 0.03 },
+    "order": 0,
+    "cooldown": 0,
+    "flavorText": "Grow stronger with each level, but at a cost.",
+    "tags": ["passive", "scaling", "barbarian"]
+  },
+  "thirstyBlade": {
+    "id": "thirstyBlade",
+    "name": "Thirsty Blade",
+    "category": "Special",
+    "effect": "lifesteal",
+    "target": "Self",
+    "params": { "lifeSteal": 0.15, "duration": 3 },
+    "order": 150,
+    "cooldown": 0,
+    "flavorText": "Your weapon thirsts for blood and rewards you with vitality.",
+    "tags": ["lifesteal", "sustained", "barbarian"],
+    "buttonText": {
+      "ready": "Blood Pact",
+      "submitted": "Blade Hungers"
+    }
+  },
+  "controlMonster": {
+    "id": "controlMonster",
+    "name": "Control Animal",
+    "category": "Special",
+    "effect": "controlMonster",
+    "target": "Self",
+    "params": { "skipChance": 0.5 },
+    "order": 250,
+    "cooldown": 6,
+    "flavorText": "Bend the beast's will to your own, if only briefly.",
+    "tags": ["control", "monster", "druid"],
+    "buttonText": {
+      "ready": "Tame Beast",
+      "submitted": "Will Bent"
+    }
+  },
+  "entangle": {
+    "id": "entangle",
+    "name": "Entangling Roots",
+    "category": "Special",
+    "effect": "stun",
+    "target": "Multi",
+    "params": { "stunDuration": 1, "maxTargets": 3, "chance": 0.8 },
+    "order": 400,
+    "cooldown": 5,
+    "flavorText": "Roots burst from the earth to bind your enemies.",
+    "tags": ["nature", "control", "aoe"],
+    "buttonText": {
+      "ready": "Call the Wild",
+      "submitted": "Nature Awakened"
+    }
+  },
+  "bloodFrenzy": {
+    "id": "bloodFrenzy",
+    "name": "Blood Frenzy",
+    "category": "Special",
+    "effect": "passive",
+    "target": "Self",
+    "params": { "damageIncreasePerHpMissing": 0.01 },
+    "order": 0,
+    "cooldown": 0,
+    "flavorText": "The closer to death, the deadlier you become.",
+    "tags": ["passive", "berserker", "hidden"]
+  },
+  "unstoppableRage": {
+    "id": "unstoppableRage",
+    "name": "Unstoppable Rage",
+    "category": "Special",
+    "effect": "rage",
+    "target": "Self",
+    "params": { "damageBoost": 1.5, "damageResistance": 0.3, "duration": 3, "selfDamagePercent": 0.25 },
+    "order": 500,
+    "cooldown": 6,
+    "flavorText": "Enter a berserk state. Powerful but dangerous.",
+    "tags": ["ultimate", "risky", "hidden"]
+  },
+  "shadowStep": {
+    "id": "shadowStep",
+    "name": "Shadow Step",
+    "category": "Defense",
+    "effect": "teleport",
+    "target": "Single",
+    "params": { "swapPositions": true },
+    "order": 60,
+    "cooldown": 4,
+    "flavorText": "Step through shadows to confuse your enemies.",
+    "tags": ["mobility", "tactical", "hidden"]
+  },
+  "mirrorImage": {
+    "id": "mirrorImage",
+    "name": "Mirror Image",
+    "category": "Defense",
+    "effect": "decoy",
+    "target": "Self",
+    "params": { "duration": 2, "copyCount": 2 },
+    "order": 70,
+    "cooldown": 5,
+    "flavorText": "Create illusory duplicates to confuse attackers.",
+    "tags": ["illusion", "defense", "hidden"]
+  },
+  "soulBurn": {
+    "id": "soulBurn",
+    "name": "Soul Burn",
+    "category": "Attack",
+    "effect": "soulburn",
+    "target": "Single",
+    "params": { "damage": 40, "maxHpDamage": 0.1 },
+    "order": 1700,
+    "cooldown": 5,
+    "flavorText": "Burn away a portion of the target's very essence.",
+    "tags": ["dark", "percentage", "hidden"]
+  },
+  "timeWarp": {
+    "id": "timeWarp",
+    "name": "Time Warp",
+    "category": "Special",
+    "effect": "timeManipulation",
+    "target": "Single",
+    "params": { "cooldownReduction": 2 },
+    "order": 600,
+    "cooldown": 6,
+    "flavorText": "Manipulate time to hasten ability recovery.",
+    "tags": ["time", "support", "hidden"]
+  }
+}

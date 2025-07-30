@@ -1,6 +1,13 @@
 {
   "name": "warlock-game",
   "private": true,
+  "sideEffects": [
+    "**/*.css",
+    "**/*.scss",
+    "**/*.less",
+    "**/polyfills.js",
+    "**/setupTests.js"
+  ],
   "workspaces": [
     "client",
     "server"
@@ -21,10 +28,19 @@
     "test:e2e": "node run-e2e-test.js",
     "test:e2e-abilities": "node e2e-ability-test.js",
     "install:all": "npm ci",
-    "typecheck": "npm run typecheck:server && npm run typecheck:client",
+    "typecheck": "npx tsc --build",
     "typecheck:server": "cd server && npx tsc --noEmit",
     "typecheck:client": "cd client && npx tsc --noEmit",
-    "typecheck:watch": "concurrently \"npm run typecheck:server -- --watch\" \"npm run typecheck:client -- --watch\""
+    "typecheck:watch": "npx tsc --build --watch",
+    "typecheck:clean": "npx tsc --build --clean",
+    "typecheck:force": "npx tsc --build --force",
+    "build:types": "npx tsc --build",
+    "build:types:clean": "npx tsc --build --clean",
+    "build:types:watch": "npx tsc --build --watch",
+    "dev:types": "npx tsc --build --watch --preserveWatchOutput",
+    "analyze:types": "node scripts/type-coverage-analysis.js",
+    "analyze:bundle": "npm run build:client -- --analyze",
+    "optimize:check": "npm run analyze:types && npm run analyze:bundle"
   },
   "devDependencies": {
     "babel-jest": "^29.7.0",

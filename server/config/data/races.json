@@ -1,0 +1,175 @@
+{
+  "availableRaces": [
+    "Artisan",
+    "Rockhewn",
+    "Lich",
+    "Orc",
+    "Crestfallen",
+    "Kinfolk"
+  ],
+  "raceAttributes": {
+    "Artisan": {
+      "hpModifier": 1.2,
+      "armorModifier": 1.2,
+      "damageModifier": 1.3,
+      "compatibleClasses": [
+        "Warrior",
+        "Assassin",
+        "Alchemist",
+        "Priest",
+        "Gunslinger",
+        "Druid"
+      ],
+      "description": "Adaptable and versatile, artisans can learn abilities from other classes."
+    },
+    "Rockhewn": {
+      "hpModifier": 1.1,
+      "armorModifier": 1.5,
+      "damageModifier": 1.1,
+      "compatibleClasses": [
+        "Warrior",
+        "Oracle",
+        "Shaman",
+        "Barbarian",
+        "Pyromancer",
+        "Priest"
+      ],
+      "description": "Hardy and resilient, Rockhewn have stone armor that degrades with damage taken."
+    },
+    "Lich": {
+      "hpModifier": 1.0,
+      "armorModifier": 1.0,
+      "damageModifier": 1.7,
+      "compatibleClasses": [
+        "Assassin",
+        "Priest",
+        "Wizard",
+        "Gunslinger",
+        "Barbarian",
+        "Pyromancer"
+      ],
+      "description": "Undead and resilient, Lich can return to life once after being defeated."
+    },
+    "Orc": {
+      "hpModifier": 1.0,
+      "armorModifier": 1.0,
+      "damageModifier": 1.5,
+      "compatibleClasses": [
+        "Warrior",
+        "Barbarian",
+        "Oracle",
+        "Tracker",
+        "Gunslinger",
+        "Pyromancer"
+      ],
+      "description": "Fierce and mighty, orcs can boost their attack power at the cost of health."
+    },
+    "Crestfallen": {
+      "hpModifier": 1.2,
+      "armorModifier": 1.3,
+      "damageModifier": 1.3,
+      "compatibleClasses": [
+        "Assassin",
+        "Alchemist",
+        "Wizard",
+        "Tracker",
+        "Druid",
+        "Shaman"
+      ],
+      "description": "When wounded (below 80% HP), attacks against you reveal if the attacker is corrupted."
+    },
+    "Kinfolk": {
+      "hpModifier": 1.4,
+      "armorModifier": 1.1,
+      "damageModifier": 1.1,
+      "compatibleClasses": [
+        "Alchemist",
+        "Oracle",
+        "Shaman",
+        "Tracker",
+        "Druid",
+        "Wizard"
+      ],
+      "description": "At the end of each round, heal for 5% of the monster's remaining HP."
+    }
+  },
+  "racialAbilities": {
+    "Artisan": {
+      "type": "adaptability",
+      "name": "Adaptability",
+      "description": "Change one of your class abilities to another of the same level for the remainder of the game",
+      "usageLimit": "perGame",
+      "maxUses": 1,
+      "cooldown": 0,
+      "effect": "changeAbility",
+      "target": "Self",
+      "params": {}
+    },
+    "Rockhewn": {
+      "type": "stoneArmor",
+      "name": "Stone Armor",
+      "description": "Start with 10 armor that degrades by 1 with each hit taken. Can go negative for increased vulnerability.",
+      "usageLimit": "passive",
+      "maxUses": 0,
+      "cooldown": 0,
+      "effect": "stoneArmor",
+      "target": "Self",
+      "params": {
+        "initialArmor": 6,
+        "degradationPerHit": 1
+      }
+    },
+    "Crestfallen": {
+      "type": "moonbeam",
+      "name": "Moonbeam",
+      "description": "When wounded (below 50% HP), attacks against you reveal if the attacker is corrupted",
+      "usageLimit": "passive",
+      "maxUses": 0,
+      "cooldown": 0,
+      "effect": "moonbeam",
+      "target": "Self",
+      "params": {
+        "healthThreshold": 0.5
+      }
+    },
+    "Orc": {
+      "type": "bloodRage",
+      "name": "Blood Rage",
+      "description": "Double the damage of your next attack, but take 10 damage yourself",
+      "usageLimit": "perGame",
+      "maxUses": 3,
+      "cooldown": 3,
+      "effect": "doubleDamage",
+      "target": "Self",
+      "params": {
+        "selfDamage": 10
+      }
+    },
+    "Kinfolk": {
+      "type": "lifeBond",
+      "name": "Life Bond",
+      "description": "At the end of each round, heal for 5% of the monster's remaining HP",
+      "usageLimit": "passive",
+      "maxUses": 0,
+      "cooldown": 0,
+      "effect": "lifeBond",
+      "target": "Self",
+      "params": {
+        "healingPercent": 0.05
+      }
+    },
+    "Lich": {
+      "type": "undying",
+      "name": "Undying",
+      "description": "Return to 1 HP the first time you would die",
+      "usageLimit": "perGame",
+      "maxUses": 1,
+      "cooldown": 0,
+      "effect": "resurrect",
+      "target": "Self",
+      "params": {
+        "resurrectedHp": 1
+      }
+    }
+  }
+}
