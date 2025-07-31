@@ -31,6 +31,37 @@ module.exports = {
       ],
     },
 
+    // Client TypeScript tests - external to client codebase
+    {
+      displayName: 'client-ts',
+      testMatch: ['<rootDir>/tests/client/**/*.test.(ts|tsx)'],
+      testEnvironment: 'node',
+      setupFilesAfterEnv: ['<rootDir>/tests/setup/client.setup.js'],
+      preset: 'ts-jest',
+      moduleNameMapper: {
+        // Map to actual client source
+        '^@client/(.*)$': '<rootDir>/client/src/$1',
+        // Handle CSS and assets
+        '\\.(css|less|scss|sass)$': 'identity-obj-proxy',
+        '\\.(jpg|jpeg|png|gif|svg)$': '<rootDir>/tests/mocks/fileMock.js',
+      },
+      transform: {
+        '^.+\\.(ts|tsx)$': ['ts-jest', {
+          tsconfig: {
+            jsx: 'react-jsx',
+            esModuleInterop: true,
+            allowSyntheticDefaultImports: true,
+          },
+        }],
+      },
+      collectCoverageFrom: [
+        'client/src/**/*.{ts,tsx}',
+        '!client/src/index.tsx',
+        '!client/src/reportWebVitals.ts',
+        '!**/*.d.ts',
+      ],
+    },
+
     // Server tests - external to server codebase
     {
       displayName: 'server',
@@ -62,6 +93,42 @@ module.exports = {
         'server/**/*.js',
         '!server/index.js',
         '!server/config/environments/**',
+      ],
+    },
+
+    // Server TypeScript tests - external to server codebase
+    {
+      displayName: 'server-ts',
+      testMatch: ['<rootDir>/tests/server/**/*.test.ts'],
+      testEnvironment: 'node',
+      setupFilesAfterEnv: ['<rootDir>/tests/setup/server.setup.js'],
+      preset: 'ts-jest',
+      moduleNameMapper: {
+        // Map to actual server source with aliases - mixed JS/TS files
+        '^@config$': '<rootDir>/server/config/index.ts',
+        '^@config/(.*)$': '<rootDir>/server/config/$1',
+        '^@models$': '<rootDir>/server/models/index.js',
+        '^@models/(.*)$': '<rootDir>/server/models/$1',
+        '^@middleware$': '<rootDir>/server/middleware/index.js',
+        '^@middleware/(.*)$': '<rootDir>/server/middleware/$1',
+        '^@controllers$': '<rootDir>/server/controllers/index.js',
+        '^@controllers/(.*)$': '<rootDir>/server/controllers/$1',
+        '^@routes$': '<rootDir>/server/routes/index.js',
+        '^@routes/(.*)$': '<rootDir>/server/routes/$1',
+        '^@services$': '<rootDir>/server/services/index.js',
+        '^@services/(.*)$': '<rootDir>/server/services/$1',
+        '^@utils$': '<rootDir>/server/utils/index.js',
+        '^@utils/(.*)$': '<rootDir>/server/utils/$1',
+        '^@shared$': '<rootDir>/server/shared/index.js',
+        '^@shared/(.*)$': '<rootDir>/server/shared/$1',
+        // Direct path mapping
+        '^@server/(.*)$': '<rootDir>/server/$1',
+      },
+      collectCoverageFrom: [
+        'server/**/*.ts',
+        '!server/index.ts',
+        '!server/config/environments/**',
+        '!**/*.d.ts',
       ],
     },
 

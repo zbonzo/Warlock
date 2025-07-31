@@ -1,7 +1,7 @@
 /**
  * Setup for React/client-side tests
  */
-import '@testing-library/jest-dom';
+require('@testing-library/jest-dom');
 
 // Mock common browser APIs
 Object.defineProperty(window, 'matchMedia', {

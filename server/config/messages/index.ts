@@ -30,9 +30,10 @@ import serverMessages from './logs.js';
 const messages = {
   // Core messages
   success: coreMessages.success,
-  error: coreMessages.error,
+  errors: coreMessages.errors,
   events: coreMessages.events,
   winConditions: coreMessages.winConditions,
+  privateMessages: coreMessages.privateMessages,
 
   // Ability messages organized by category
   abilities: {
@@ -118,8 +119,10 @@ function getAbilityMessage(category: string, key: string): string {
 export default {
   // Message data
   success: messages.success,
-  error: messages.error,
+  errors: messages.errors,
   events: messages.events,
+  privateMessages: messages.privateMessages,
+  winConditions: messages.winConditions,
   abilities: messages.abilities,
   combat: messages.combat,
   statusEffects: messages.statusEffects,
@@ -128,7 +131,6 @@ export default {
   player: messages.player,
   ui: messages.ui,
   serverLogMessages: messages.serverLogMessages,
-  winConditions: messages.winConditions,
   
   // Helper functions
   formatMessage,
