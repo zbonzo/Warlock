@@ -158,3 +158,5 @@ export function isValidAction(obj: any): obj is PlayerAction {
 
 // Re-export schemas for runtime validation
 export { Schemas };
+
+// GameRoom is available through direct import from '../models/GameRoom'

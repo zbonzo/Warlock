@@ -6,19 +6,10 @@ import React, { useState, useRef } from 'react';
 import { useTheme } from '@contexts/ThemeContext';
 import useMediaQuery from '../../hooks/useMediaQuery';
 import { getPlayerCardSize } from '../../utils/playerCardUtils';
+import type { Player } from '../../types/shared';
 import './LobbyPage.css';
 import RuneButton from '../../components/ui/RuneButton';
 import PlayerCard from '../../components/common/PlayerCard/PlayerCard';
-
-interface Player {
-  id: string;
-  name: string;
-  race?: string;
-  class?: string;
-  isReady?: boolean;
-  hp?: number;
-  maxHp?: number;
-}
 
 interface LobbyPageProps {
   players: Player[];
@@ -183,19 +174,19 @@ const LobbyPage: React.FC<LobbyPageProps> = ({
         {/* Player Cards Grid */}
         <div className="lobby-players-grid">
           {players.map((player) => {
-            const isCurrentPlayer = player.id === currentPlayerId;
-            const isHostPlayer = player.id === players[0]?.id;
+            const isCurrentPlayer = player['id'] === currentPlayerId;
+            const isHostPlayer = player['id'] === players[0]?.['id'];
             
             return (
-              <div key={player.id} className="lobby-player-wrapper">
+              <div key={player['id']} className="lobby-player-wrapper">
                 {isHostPlayer && (
                   <div className="host-badge-card">HOST</div>
                 )}
                 <PlayerCard
                   player={{
                     ...player,
-                    hp: player.hp || 100,
-                    maxHp: player.maxHp || 100,
+                    hp: player['hp'] || 100,
+                    maxHp: player['maxHp'] || 100,
                     isAlive: true
                   }}
                   isCurrentPlayer={isCurrentPlayer}

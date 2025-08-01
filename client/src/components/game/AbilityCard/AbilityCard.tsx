@@ -239,7 +239,7 @@ function getCategoryColor(category: string, theme: any): string {
     Racial: '#8B5A00', // Bronze/Gold color for racial abilities
   };
 
-  return categoryColors[category] || categoryColors.Special;
+  return (categoryColors[category] || categoryColors['Special']) as string;
 }
 
 /**

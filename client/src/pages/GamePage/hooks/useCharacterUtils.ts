@@ -75,7 +75,7 @@ export const useCharacterUtils = (
   const getCharacterTitle = useCallback((): string => {
     if (!me) return 'Unknown Character';
     
-    const characterString = `${me.name} - ${me.race || 'Unknown'} ${me.class || 'Unknown'}`;
+    const characterString = `${me['name']} - ${me.race || 'Unknown'} ${me.class || 'Unknown'}`;
     
     // Apply Zalgo corruption if player is a warlock
     if (me.isWarlock) {
@@ -89,15 +89,15 @@ export const useCharacterUtils = (
    * Calculate health percentage
    */
   const healthPercent = useMemo((): number => {
-    if (!me?.hp || !me?.maxHp) return 0;
-    return (me.hp / me.maxHp) * 100;
-  }, [me?.hp, me?.maxHp]);
+    if (!me?.['hp'] || !me?.['maxHp']) return 0;
+    return (me['hp'] / me['maxHp']) * 100;
+  }, [me?.['hp'], me?.['maxHp']]);
 
   /**
    * Get alive players count
    */
   const alivePlayers = useMemo((): Player[] => {
-    return players.filter((p) => p.isAlive);
+    return players.filter((p) => p['isAlive']);
   }, [players]);
 
   /**

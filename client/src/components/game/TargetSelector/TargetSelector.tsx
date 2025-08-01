@@ -102,7 +102,7 @@ function drawMonsterBadge(canvas: HTMLCanvasElement, monster: Monster): void {
   ctx.clearRect(0, 0, size, size);
 
   // Create gradient background based on monster health
-  const healthPercent = monster.hp / monster.maxHp;
+  const healthPercent = monster['hp'] / monster['maxHp'];
   let gradient = ctx.createRadialGradient(cx, cy, 0, cx, cy, r);
 
   if (healthPercent > 0.7) {
@@ -187,7 +187,7 @@ const MonsterAvatar: React.FC<MonsterAvatarProps> = ({ monster }) => {
     if (!canvasRef.current) return;
 
     drawMonsterBadge(canvasRef.current, monster);
-  }, [monster.hp, monster.maxHp]); // Redraw when monster health changes
+  }, [monster['hp'], monster['maxHp']]); // Redraw when monster health changes
 
   return (
     <canvas
@@ -226,7 +226,7 @@ const CustomAvatar: React.FC<CustomAvatarProps> = ({ player, isCurrentPlayer }) 
     };
 
     const classEmoji = classEmojis[player.class || ''] || '❓';
-    const letter = player.name.charAt(0).toUpperCase();
+    const letter = player['name'].charAt(0).toUpperCase();
 
     // Get race color
     const raceColors: Record<string, string> = {
@@ -322,11 +322,11 @@ const TargetSelector: React.FC<TargetSelectorProps> = ({
           >
             <div className="player-name">Monster</div>
             <MonsterAvatar monster={monster} />
-            <div className="player-hp">{monster.hp}/{monster.maxHp}</div>
+            <div className="player-hp">{monster['hp']}/{monster['maxHp']}</div>
             <div className="health-bar-compact">
               <div 
-                className={`health-fill ${getHealthClass(getHealthPercent(monster.hp, monster.maxHp))}`}
-                style={{ width: `${getHealthPercent(monster.hp, monster.maxHp)}%` }}
+                className={`health-fill ${getHealthClass(getHealthPercent(monster['hp'], monster['maxHp']))}`}
+                style={{ width: `${getHealthPercent(monster['hp'], monster['maxHp'])}%` }}
               />
             </div>
           </div>
@@ -335,43 +335,43 @@ const TargetSelector: React.FC<TargetSelectorProps> = ({
         {/* Player targets grid */}
         <div className="player-targets-grid">
           {alivePlayers
-            .filter((player) => isValidTarget(player.id, 'player'))
+            .filter((player) => isValidTarget(player['id'], 'player'))
             .map((player) => {
-              const isValid = isValidTarget(player.id, 'player');
+              const isValid = isValidTarget(player['id'], 'player');
               
               return (
                 <div
-                  key={player.id}
+                  key={player['id']}
                   className={`
                     player-target-card 
-                    ${selectedTarget === player.id ? 'selected' : ''} 
+                    ${selectedTarget === player['id'] ? 'selected' : ''} 
                     ${(player as any).hasSubmittedAction ? 'ready' : ''}
-                    ${player.id === currentPlayerId ? 'self' : ''}
+                    ${player['id'] === currentPlayerId ? 'self' : ''}
                     ${!isValid ? 'invalid-target' : ''}
                   `}
-                  onClick={() => isValid && onSelectTarget(player.id)}
+                  onClick={() => isValid && onSelectTarget(player['id'])}
                 >
                   <div className="player-name">
-                    {player.name}
-                    {player.id === currentPlayerId && ' (You)'}
+                    {player['name']}
+                    {player['id'] === currentPlayerId && ' (You)'}
                   </div>
                   {player.race && player.class ? (
                     <CustomAvatar
                       player={player}
-                      isCurrentPlayer={player.id === currentPlayerId}
+                      isCurrentPlayer={player['id'] === currentPlayerId}
                     />
                   ) : (
                     <div className="target-avatar">
-                      {player.id === currentPlayerId
+                      {player['id'] === currentPlayerId
                         ? 'You'
-                        : player.name.charAt(0)}
+                        : player['name'].charAt(0)}
                     </div>
                   )}
-                  <div className="player-hp">{player.hp}/{player.maxHp}</div>
+                  <div className="player-hp">{player['hp']}/{player['maxHp']}</div>
                   <div className="health-bar-compact">
                     <div 
-                      className={`health-fill ${getHealthClass(getHealthPercent(player.hp, player.maxHp))}`}
-                      style={{ width: `${getHealthPercent(player.hp, player.maxHp)}%` }}
+                      className={`health-fill ${getHealthClass(getHealthPercent(player['hp'], player['maxHp']))}`}
+                      style={{ width: `${getHealthPercent(player['hp'], player['maxHp'])}%` }}
                     />
                   </div>
                 </div>

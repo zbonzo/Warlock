@@ -31,23 +31,31 @@
   margin-bottom: 16px;
 }
 
-/* Abilities grid - 2 columns for both desktop and mobile */
+/* Abilities grid - 2x2 grid for both desktop and mobile */
 .abilities-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
   gap: 12px;
   margin-bottom: 16px;
   width: 100%;
+  aspect-ratio: 1;
+  max-width: 400px;
+  margin: 0 auto 16px auto;
 }
 
 .abilities-grid.desktop-grid {
   grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
   gap: 16px;
+  max-width: 450px;
 }
 
 .abilities-grid.mobile-grid {
   grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
   gap: 12px;
+  max-width: 350px;
 }
 
 /* Unified ability card styles */
@@ -61,17 +69,20 @@
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  aspect-ratio: 1;
+  width: 100%;
+  height: 100%;
 }
 
 /* Size variants */
 .unified-ability-card.desktop-size {
-  min-height: 120px;
-  padding: 16px;
+  padding: 12px;
+  min-height: auto;
 }
 
 .unified-ability-card.mobile-size {
-  min-height: 100px;
-  padding: 12px;
+  padding: 10px;
+  min-height: auto;
 }
 
 /* Hover states */
@@ -113,17 +124,17 @@
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  font-size: 48px;
-  opacity: 0.3;
+  font-size: 32px;
+  opacity: 0.2;
   z-index: 1;
 }
 
 .unified-ability-card.desktop-size .ability-background-icon {
-  font-size: 60px;
+  font-size: 36px;
 }
 
 .unified-ability-card.mobile-size .ability-background-icon {
-  font-size: 40px;
+  font-size: 28px;
 }
 
 /* Content overlay */
@@ -133,46 +144,57 @@
   display: flex;
   flex-direction: column;
   flex: 1;
-  justify-content: space-between;
+  justify-content: flex-start;
+  height: 100%;
+  padding: 4px;
+  border-radius: 8px;
 }
 
 /* Ability name */
 .ability-name {
   font-weight: 700;
-  font-size: 14px;
-  margin-bottom: 4px;
+  font-size: 12px;
+  margin-bottom: 2px;
   color: var(--color-text);
-  line-height: 1.2;
+  line-height: 1.1;
+  text-align: center;
 }
 
 .unified-ability-card.desktop-size .ability-name {
-  font-size: 16px;
-  margin-bottom: 8px;
+  font-size: 13px;
+  margin-bottom: 4px;
 }
 
 /* Ability description */
 .ability-description {
-  font-size: 12px;
+  font-size: 9px;
   color: var(--color-text-secondary);
-  line-height: 1.3;
+  line-height: 1.2;
   margin-bottom: auto;
+  text-align: center;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
 }
 
 .unified-ability-card.desktop-size .ability-description {
-  font-size: 13px;
-  line-height: 1.4;
+  font-size: 10px;
+  line-height: 1.3;
+  -webkit-line-clamp: 4;
 }
 
 /* Ability damage */
 .ability-damage {
-  font-size: 11px;
+  font-size: 9px;
   font-weight: 600;
   color: var(--color-text);
-  margin-top: 4px;
+  margin-top: auto;
+  text-align: center;
 }
 
 .unified-ability-card.desktop-size .ability-damage {
-  font-size: 12px;
+  font-size: 10px;
 }
 
 /* Category-based color schemes */

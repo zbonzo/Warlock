@@ -3,7 +3,7 @@
  */
 import axios, { AxiosResponse } from 'axios';
 import { API_URL } from '../config/constants';
-import { PlayerClass, PlayerRace, Ability } from '../../../shared/types';
+import { PlayerClass, PlayerRace, Ability } from '../types/shared';
 
 interface BasicConfig {
   gameVersion: string;
@@ -25,6 +25,19 @@ interface ClassAttribute {
   [key: string]: any;
 }
 
+// Server response interfaces (what the API actually returns)
+interface ServerRacesResponse {
+  races: string[];
+  raceAttributes: Record<string, RaceAttribute>;
+  racialAbilities: Record<string, Ability>;
+}
+
+interface ServerClassesResponse {
+  classes: string[];
+  classAttributes: Record<string, ClassAttribute>;
+}
+
+// Client-side interfaces (what we want to use in the app)
 interface RacesConfig {
   races: PlayerRace[];
   raceAttributes: Record<string, RaceAttribute>;
@@ -97,8 +110,20 @@ const configService = {
     if (configCache.races) return configCache.races;
 
     try {
-      const response: AxiosResponse<RacesConfig> = await axios.get(`${API_URL}/config/races`);
-      configCache.races = response.data;
+      const response: AxiosResponse<ServerRacesResponse> = await axios.get(`${API_URL}/config/races`);
+      
+      // Transform server response to client format
+      const transformedData: RacesConfig = {
+        races: response.data.races.map(raceName => ({
+          id: raceName,
+          name: raceName,
+          description: response.data.raceAttributes[raceName]?.description || '',
+          attributes: response.data.raceAttributes[raceName] || {}
+        })),
+        raceAttributes: response.data.raceAttributes
+      };
+
+      configCache.races = transformedData;
       return configCache.races;
     } catch (error) {
       console.error('Failed to load races config:', error);
@@ -113,8 +138,21 @@ const configService = {
     if (configCache.classes) return configCache.classes;
 
     try {
-      const response: AxiosResponse<ClassesConfig> = await axios.get(`${API_URL}/config/classes`);
-      configCache.classes = response.data;
+      const response: AxiosResponse<ServerClassesResponse> = await axios.get(`${API_URL}/config/classes`);
+      
+      // Transform server response to client format
+      const transformedData: ClassesConfig = {
+        classes: response.data.classes.map(className => ({
+          id: className,
+          name: className,
+          description: response.data.classAttributes[className]?.description || '',
+          abilities: [], // Will be populated separately when needed
+          attributes: response.data.classAttributes[className] || {}
+        })),
+        classAttributes: response.data.classAttributes
+      };
+
+      configCache.classes = transformedData;
       return configCache.classes;
     } catch (error) {
       console.error('Failed to load classes config:', error);

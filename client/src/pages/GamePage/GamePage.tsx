@@ -81,7 +81,7 @@ const GamePage: React.FC<GamePageProps> = ({
     resetActionState: actionWizard.resetWizard,
     resetMobileWizard: actionWizard.resetWizard,
     showAdaptabilityModalWithAbilities: modalState.showAdaptabilityModalWithAbilities,
-    setPhase,
+    setPhase: (phase: string) => setPhase(phase as 'action' | 'results'),
     setReadyClicked,
     
     // State
@@ -125,7 +125,7 @@ const GamePage: React.FC<GamePageProps> = ({
       if (isBloodRageApplied) {
         socket?.emit('useRacialAbility', {
           gameCode,
-          targetId: me?.id,
+          targetId: me?.['id'],
           abilityType: 'bloodRage',
         });
         racialAbilities.setBloodRageActive(false);
@@ -178,7 +178,7 @@ const GamePage: React.FC<GamePageProps> = ({
   }
 
   return (
-    <div className="game-page" data-theme={theme.name}>
+    <div className="game-page" data-theme={theme.currentTheme}>
 
       {/* Unified Game Header - Always visible */}
       <div className={actionWizard.isMobile ? "mobile-header-container" : "desktop-header-container"}>
@@ -235,7 +235,7 @@ const GamePage: React.FC<GamePageProps> = ({
                 <h2 className="section-title">Round {lastEvent.turn} Results</h2>
                 
                 {/* Ready button */}
-                {me.isAlive && (
+                {me['isAlive'] && (
                   <button
                     className={`button ready-button ${readyClicked ? 'clicked' : ''}`}
                     onClick={handleReadyClick}
@@ -259,7 +259,7 @@ const GamePage: React.FC<GamePageProps> = ({
             isVisible={!actionWizard.isMobile || (actionWizard.activeTab === 'history' && !actionWizard.isWizardOpen)}
             eventsLog={eventsLog}
             lastEvent={lastEvent}
-            currentPlayerId={me?.id || ''}
+            currentPlayerId={me?.['id'] || ''}
             players={players}
             showAllEvents={false}
           />
@@ -269,7 +269,7 @@ const GamePage: React.FC<GamePageProps> = ({
           <MobileNavigation
             activeTab={actionWizard.activeTab}
             onTabChange={actionWizard.handleTabChange}
-            isAlive={me?.isAlive}
+            isAlive={me?.['isAlive']}
             isStunned={me?.statusEffects?.stunned}
           />
         )}
@@ -290,7 +290,7 @@ const GamePage: React.FC<GamePageProps> = ({
           // History column props
           eventsLog={eventsLog}
           lastEvent={lastEvent}
-          currentPlayerId={me?.id || ''}
+          currentPlayerId={me?.['id'] || ''}
         />
       )}
 
@@ -299,11 +299,10 @@ const GamePage: React.FC<GamePageProps> = ({
         <AdaptabilityModal
           isOpen={modalState.showAdaptabilityModal}
           onClose={modalState.closeAdaptabilityModal}
-          socket={socket}
+          socket={socket!}
           gameCode={gameCode}
-          className={me?.class || ''}
-          abilities={modalState.initialModalAbilities}
-          onReplaceAbility={handleReplaceAbility}
+          className={me?.class as any || ''}
+          initialAbilities={modalState.initialModalAbilities as any || undefined}
         />
       )}
 
@@ -314,10 +313,10 @@ const GamePage: React.FC<GamePageProps> = ({
           onClose={modalState.closeBattleResultsModal}
           events={modalState.battleResultsData.events || []}
           round={modalState.battleResultsData.round || 1}
-          currentPlayerId={me?.id}
+          currentPlayerId={me?.['id']}
           players={players}
           levelUp={modalState.battleResultsData.levelUp}
-          winner={modalState.battleResultsData.winner}
+          winner={modalState.battleResultsData.winner || undefined}
           trophyAward={modalState.battleResultsData.trophyAward}
         />
       )}
@@ -325,24 +324,13 @@ const GamePage: React.FC<GamePageProps> = ({
       {/* Damage Effects */}
       <DamageEffects 
         key={`damage-${lastEvent.turn}`}
-        eventsLog={eventsLog}
-        playerName={me?.name}
-        playerId={me?.id}
+        eventsLog={eventsLog.map(log => ({ ...log, round: log.turn })) as any}
+        playerName={me?.['name']}
+        playerId={me?.['id']}
       />
 
       {/* Reconnection Toggle */}
-      <ReconnectionToggle
-        gameCode={gameCode}
-        playerName={me?.name}
-        isConnected={socket?.connected}
-        onReconnectionChange={(enabled: boolean) => {
-          if (enabled) {
-            reconnectionStorage.setReconnectionData(gameCode, me?.name);
-          } else {
-            reconnectionStorage.clearReconnectionData();
-          }
-        }}
-      />
+      <ReconnectionToggle />
     </div>
   );
 };

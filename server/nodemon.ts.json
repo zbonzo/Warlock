@@ -1,0 +1,17 @@
+{
+  "watch": ["**/*.ts", "**/*.js"],
+  "ext": "ts,js,json",
+  "ignore": [
+    "dist/**/*",
+    "node_modules/**/*",
+    "tests/**/*",
+    "coverage/**/*",
+    "logs/**/*"
+  ],
+  "exec": "npx ts-node index.ts",
+  "env": {
+    "NODE_ENV": "development",
+    "PORT": "4001"
+  },
+  "delay": "2000"
+}

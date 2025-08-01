@@ -4,7 +4,7 @@
  */
 
 import config from '../../config/index.js';
-import messages from '../../config/messages/index.js';
+// Messages are now accessed through the config system
 import logger from '../../utils/logger.js';
 import type { Player } from '../../types/generated';
 

@@ -4,14 +4,30 @@
  */
 import React, { createContext, useContext, useReducer, useMemo, ReactNode } from 'react';
 import { GAME_PHASES } from '../config/constants';
-import { Player, Monster, PlayerRace, PlayerClass } from '../../../shared/types';
+import { Player, Monster, PlayerRace, PlayerClass } from '../types/shared';
+
+// Event log types
+interface GameEvent {
+  type: string;
+  targetId?: string;
+  targetName?: string;
+  damage?: number;
+  sourceId?: string;
+  sourceName?: string;
+  [key: string]: any;
+}
+
+interface EventsLogRound {
+  turn: number;
+  events: GameEvent[];
+}
 
 type GameScreen = typeof GAME_PHASES[keyof typeof GAME_PHASES];
 type Winner = 'Good' | 'Evil' | 'warlocks' | 'innocents' | null;
 type TrophyAward = {
-  playerId: string;
-  type: string;
-  description: string;
+  playerName: string;
+  trophyName: string;
+  trophyDescription: string;
 } | null;
 
 // State interface
@@ -21,8 +37,8 @@ interface AppState {
   playerName: string;
   isHost: boolean;
   players: Player[];
-  eventsLog: string[];
-  monster: Monster;
+  eventsLog: EventsLogRound[];
+  monster: Monster | null;
   winner: Winner;
   selectedRace: PlayerRace | null;
   selectedClass: PlayerClass | null;
@@ -57,9 +73,9 @@ type AppAction =
   | { type: 'SET_PLAYER_NAME'; payload: string }
   | { type: 'SET_IS_HOST'; payload: boolean }
   | { type: 'SET_PLAYERS'; payload: Player[] }
-  | { type: 'ADD_EVENT_LOG'; payload: string }
-  | { type: 'SET_EVENTS_LOG'; payload: string[] }
-  | { type: 'SET_MONSTER'; payload: Monster }
+  | { type: 'ADD_EVENT_LOG'; payload: EventsLogRound }
+  | { type: 'SET_EVENTS_LOG'; payload: EventsLogRound[] }
+  | { type: 'SET_MONSTER'; payload: Partial<Monster> }
   | { type: 'SET_WINNER'; payload: Winner }
   | { type: 'SET_SELECTED_RACE'; payload: PlayerRace | null }
   | { type: 'SET_SELECTED_CLASS'; payload: PlayerClass | null }
@@ -74,9 +90,9 @@ interface AppActions {
   setPlayerName: (name: string) => void;
   setIsHost: (isHost: boolean) => void;
   setPlayers: (players: Player[]) => void;
-  addEventLog: (eventLog: string) => void;
-  setEventsLog: (eventsLog: string[]) => void;
-  setMonster: (monster: Monster) => void;
+  addEventLog: (eventLog: EventsLogRound) => void;
+  setEventsLog: (eventsLog: EventsLogRound[]) => void;
+  setMonster: (monster: Partial<Monster>) => void;
   setWinner: (winner: Winner) => void;
   setSelectedRace: (race: PlayerRace | null) => void;
   setSelectedClass: (cls: PlayerClass | null) => void;
@@ -148,7 +164,10 @@ function appReducer(state: AppState, action: AppAction): AppState {
       };
     
     case ACTION_TYPES.SET_MONSTER:
-      return { ...state, monster: action.payload };
+      return { 
+        ...state, 
+        monster: state.monster ? { ...state.monster, ...action.payload } : action.payload as Monster
+      };
     
     case ACTION_TYPES.SET_WINNER:
       return { ...state, winner: action.payload };
@@ -217,17 +236,17 @@ export function AppProvider({ children }: AppProviderProps): React.ReactElement 
       payload: players 
     }),
     
-    addEventLog: (eventLog: string) => dispatch({ 
+    addEventLog: (eventLog: EventsLogRound) => dispatch({ 
       type: ACTION_TYPES.ADD_EVENT_LOG, 
       payload: eventLog 
     }),
     
-    setEventsLog: (eventsLog: string[]) => dispatch({
+    setEventsLog: (eventsLog: EventsLogRound[]) => dispatch({
       type: ACTION_TYPES.SET_EVENTS_LOG,
       payload: eventsLog
     }),
     
-    setMonster: (monster: Monster) => dispatch({ 
+    setMonster: (monster: Partial<Monster>) => dispatch({ 
       type: ACTION_TYPES.SET_MONSTER, 
       payload: monster 
     }),

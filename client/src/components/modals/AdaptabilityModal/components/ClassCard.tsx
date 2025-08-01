@@ -3,10 +3,10 @@
  */
 import React from 'react';
 import { useTheme } from '@contexts/ThemeContext';
-import type { PlayerClass } from '../../../../../shared/types';
+import type { PlayerClass } from '../../../../types/shared';
 import './ClassCard.css';
 
-const getClassIcon = (className: string): string => {
+const getClassIcon = (playerClass: PlayerClass): string => {
   const icons: Record<string, string> = {
     Warrior: '⚔️',
     Pyromancer: '🔥',
@@ -22,7 +22,7 @@ const getClassIcon = (className: string): string => {
     Druid: '🌿',
   };
 
-  return icons[className] || '📚';
+  return icons[playerClass.name] || '📚';
 };
 
 export interface ClassCardProps {
@@ -37,7 +37,7 @@ const ClassCard: React.FC<ClassCardProps> = ({ className, onSelect }) => {
   return (
     <div className="class-card" onClick={onSelect}>
       <div className="class-icon">{icon}</div>
-      <div className="class-name">{className}</div>
+      <div className="class-name">{className.name}</div>
     </div>
   );
 };

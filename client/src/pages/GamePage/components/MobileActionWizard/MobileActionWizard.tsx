@@ -4,7 +4,8 @@
 import React from 'react';
 import AbilitySelectionStep from './AbilitySelectionStep';
 import TargetSelectionStep from './TargetSelectionStep';
-import { Player, Monster, Ability, GameEvent } from '@/types/game';
+import { Player, Monster, Ability } from '../../../../types/shared';
+import { GameEvent } from '../../../../types/game';
 import './MobileActionWizard.css';
 
 interface LastEventData {
@@ -91,10 +92,10 @@ const MobileActionWizard: React.FC<MobileActionWizardProps> = ({
         {currentStep === 2 && (
           <TargetSelectionStep
             me={me}
-            monster={monster}
+            monster={monster || undefined}
             alivePlayers={alivePlayers}
-            selectedAbility={selectedAbility}
-            selectedTarget={selectedTarget}
+            selectedAbility={selectedAbility || undefined}
+            selectedTarget={selectedTarget || undefined}
             keenSensesActive={keenSensesActive}
             lastEvent={lastEvent}
             onTargetSelect={onTargetSelect}

@@ -4,7 +4,7 @@ import MobilePlayerHeader from './MobilePlayerHeader';
 import { useConfig } from '../../../../contexts/ConfigContext';
 import AbilityCard from '../../../../components/game/AbilityCard/AbilityCard';
 import RacialAbilityCard from '../../../../components/game/RacialAbilityCard/RacialAbilityCard';
-import type { Player, Ability } from '../../../../shared/types';
+import type { Player, Ability } from '../../../../types/shared';
 
 interface AbilitySelectionStepProps {
   me: Player;
@@ -60,7 +60,13 @@ const AbilitySelectionStep: React.FC<AbilitySelectionStepProps> = ({
     const fetchAllAbilities = async () => {
       try {
         setLoadingAbilities(true);
-        const abilities = await getClassAbilities(me.class);
+        const playerClass = me['class'];
+        if (!playerClass) {
+          console.warn('Player class is undefined');
+          setAllClassAbilities([]);
+          return;
+        }
+        const abilities = await getClassAbilities(playerClass);
         setAllClassAbilities(abilities || []);
       } catch (error) {
         console.error('Failed to fetch class abilities:', error);
@@ -156,11 +162,10 @@ const AbilitySelectionStep: React.FC<AbilitySelectionStepProps> = ({
         {racialAbility && !racialSelected && (
           <div className="racial-section">
             <RacialAbilityCard
-              ability={racialAbility}
+              ability={racialAbility as any}
               usesLeft={me.racialUsesLeft || 1}
               cooldown={me.racialCooldown || 0}
               onUse={() => onRacialAbilityUse(racialAbility.type)}
-              isMobile={true}
             />
           </div>
         )}
@@ -361,10 +366,9 @@ const MobileAbilityCard: React.FC<MobileAbilityCardProps> = ({
         <div className="ability-name">{ability.name}</div>
         
         {/* Show description for all abilities */}
-        {console.log('Ability data:', ability)}
-        {(ability.description || ability.flavorText) && (
+        {(ability.description || (ability as any).flavorText) && (
           <div className={`ability-description class-${player.class?.toLowerCase()}`}>
-            {ability.description || ability.flavorText}
+            {ability.description || (ability as any).flavorText}
           </div>
         )}
         

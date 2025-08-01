@@ -52,15 +52,15 @@ const EventsLog: React.FC<EventsLogProps> = ({
 
     // Select the appropriate message based on perspective
     let message = '';
-    if (event.attackerId === currentPlayerId) {
+    if (event['attackerId'] === currentPlayerId) {
       // Player is the attacker/actor
-      message = event.attackerMessage || event.message || '';
-    } else if (event.targetId === currentPlayerId) {
+      message = event['attackerMessage'] || event['message'] || '';
+    } else if (event['targetId'] === currentPlayerId) {
       // Player is the target
-      message = event.privateMessage || event.message || '';
+      message = event['privateMessage'] || event['message'] || '';
     } else {
       // Player is observing
-      message = event.message || '';
+      message = event['message'] || '';
     }
 
     // Process and return the message
@@ -87,8 +87,8 @@ const EventsLog: React.FC<EventsLogProps> = ({
 
       // Check if player is directly involved (attacker or target)
       if (
-        event.attackerId === currentPlayerId ||
-        event.targetId === currentPlayerId
+        event['attackerId'] === currentPlayerId ||
+        event['targetId'] === currentPlayerId
       ) {
         return true;
       }
@@ -119,9 +119,9 @@ const EventsLog: React.FC<EventsLogProps> = ({
     }
 
     // Add perspective-based classes
-    if (event.attackerId === currentPlayerId) {
+    if (event['attackerId'] === currentPlayerId) {
       classes.push('event-you-acted');
-    } else if (event.targetId === currentPlayerId) {
+    } else if (event['targetId'] === currentPlayerId) {
       classes.push('event-you-target');
     } else {
       classes.push('event-observer');
@@ -211,48 +211,48 @@ const processTemplate = (message: string, event: GameEvent | string, playersList
   const canLookupNames = validPlayersList.length > 0;
 
   // Add basic fields
-  if (event.targetId) {
-    data.targetId = event.targetId;
+  if (event['targetId']) {
+    data['targetId'] = event['targetId'];
     // Get target name
-    if (event.targetId === '__monster__') {
-      data.targetName = 'the Monster';
+    if (event['targetId'] === '__monster__') {
+      data['targetName'] = 'the Monster';
     } else if (canLookupNames) {
       const targetPlayer = validPlayersList.find(
-        (p) => p.id === event.targetId
+        (p) => p['id'] === event['targetId']
       );
-      data.targetName = targetPlayer ? targetPlayer.name : 'another player';
+      data['targetName'] = targetPlayer ? targetPlayer['name'] : 'another player';
     } else {
       // Fallback when players list is empty
-      data.targetName = 'another player';
+      data['targetName'] = 'another player';
     }
   }
 
-  if (event.attackerId) {
-    data.attackerId = event.attackerId;
+  if (event['attackerId']) {
+    data['attackerId'] = event['attackerId'];
     if (canLookupNames) {
       const attackerPlayer = validPlayersList.find(
-        (p) => p.id === event.attackerId
+        (p) => p['id'] === event['attackerId']
       );
-      data.attackerName = attackerPlayer ? attackerPlayer.name : 'a player';
+      data['attackerName'] = attackerPlayer ? attackerPlayer['name'] : 'a player';
     } else {
       // Fallback when players list is empty
-      data.attackerName = 'a player';
+      data['attackerName'] = 'a player';
     }
   }
 
   // Handle damage objects with special care
-  if (event.damage) {
+  if (event['damage']) {
     // If damage is a primitive value
-    if (typeof event.damage !== 'object') {
-      data.damage = event.damage;
+    if (typeof event['damage'] !== 'object') {
+      data['damage'] = event['damage'];
     }
     // If damage is an object, extract its properties
     else {
-      if (event.damage.final !== undefined) data.damage = event.damage.final;
-      if (event.damage.initial !== undefined)
-        data.initialDamage = event.damage.initial;
-      if (event.damage.reduction !== undefined)
-        data.reduction = event.damage.reduction;
+      if (event['damage']['final'] !== undefined) data['damage'] = event['damage']['final'];
+      if (event['damage']['initial'] !== undefined)
+        data['initialDamage'] = event['damage']['initial'];
+      if (event['damage']['reduction'] !== undefined)
+        data['reduction'] = event['damage']['reduction'];
     }
   }
 
@@ -265,10 +265,10 @@ const processTemplate = (message: string, event: GameEvent | string, playersList
   });
 
   // Add other important fields that might be needed
-  if (event.amount) data.amount = event.amount;
-  if (event.armor) data.armor = event.armor;
-  if (event.turns) data.turns = event.turns;
-  if (event.abilityName) data.abilityName = event.abilityName;
+  if (event['amount']) data['amount'] = event['amount'];
+  if (event['armor']) data['armor'] = event['armor'];
+  if (event['turns']) data['turns'] = event['turns'];
+  if (event['abilityName']) data['abilityName'] = event['abilityName'];
 
   // Process the template using our prepared data
   const result = message.replace(/{(\w+)}/g, (match, key) => {
@@ -283,8 +283,8 @@ const processTemplate = (message: string, event: GameEvent | string, playersList
 
 const getPlayerName = (playerId: string, playersList: Player[]): string => {
   if (!playerId || playerId === '__monster__') return 'the Monster';
-  const player = playersList.find((p) => p.id === playerId);
-  return player ? player.name : 'Unknown Player';
+  const player = playersList.find((p) => p['id'] === playerId);
+  return player ? player['name'] : 'Unknown Player';
 };
 
 export default EventsLog;

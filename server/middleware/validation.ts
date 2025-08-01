@@ -14,7 +14,7 @@ import {
 } from '../utils/errorHandler.js';
 import logger from '../utils/logger.js';
 import config from '../config/index.js';
-import messages from '../config/messages/index.js';
+// Messages are now accessed through the config system
 import type { GameRoom } from '../models/GameRoom.js';
 import type { Player } from '../models/Player.js';
 import type { Ability } from '../types/generated.js';
@@ -51,13 +51,13 @@ export const validateGameCode = (code: unknown): boolean => {
 export const validateGame = (socket: Socket, gameCode: string): boolean => {
   if (!validateGameCode(gameCode)) {
     logger.warn('InvalidGameCodeFormat', { gameCode, socketId: socket.id });
-    throwValidationError(messages.getError('gameCodeInvalid'));
+    throwValidationError(config.getError('gameCodeInvalid'));
   }
 
   const game = gameService.games.get(gameCode);
   if (!game) {
     logger.warn('GameNotFoundValidation', { gameCode, socketId: socket.id });
-    throwNotFoundError(messages.getError('gameNotFound'));
+    throwNotFoundError(config.getError('gameNotFound'));
   }
   return true;
 };
@@ -72,7 +72,7 @@ export const validatePlayer = (socket: Socket, gameCode: string): boolean => {
       socketId: socket.id,
       gameCode,
     });
-    throwPermissionError(messages.getError('playerNotInGame'));
+    throwPermissionError(config.getError('playerNotInGame'));
   }
   return true;
 };
@@ -88,7 +88,7 @@ export function validatePlayerName(
   if (!playerName || typeof playerName !== 'string') {
     return {
       isValid: false,
-      error: messages.getError('playerNameRequired'),
+      error: config.getError('playerNameRequired'),
       sanitizedName: '',
     };
   }
@@ -99,7 +99,7 @@ export function validatePlayerName(
   if (trimmedName.length < 2) {
     return {
       isValid: false,
-      error: messages.getError('playerNameTooShort'),
+      error: config.getError('playerNameTooShort'),
       sanitizedName: trimmedName,
     };
   }
@@ -107,7 +107,7 @@ export function validatePlayerName(
   if (trimmedName.length > 20) {
     return {
       isValid: false,
-      error: messages.getError('playerNameTooLong'),
+      error: config.getError('playerNameTooLong'),
       sanitizedName: trimmedName,
     };
   }
@@ -122,14 +122,14 @@ export function validatePlayerName(
     if (!hasLettersOrNumbers) {
       return {
         isValid: false,
-        error: messages.getError('playerNameNoLettersNumbers'),
+        error: config.getError('playerNameNoLettersNumbers'),
         sanitizedName: trimmedName.replace(/[^\p{L}\p{N}\s\-']/gu, ''),
       };
     }
 
     return {
       isValid: false,
-      error: messages.getError('playerNameInvalidChars'),
+      error: config.getError('playerNameInvalidChars'),
       sanitizedName: trimmedName.replace(/[^\p{L}\p{N}\s\-']/gu, ''),
     };
   }
@@ -146,7 +146,7 @@ export function validatePlayerName(
   if (dangerousPatterns.some((pattern) => pattern.test(trimmedName))) {
     return {
       isValid: false,
-      error: messages.getError('playerNameUnsafeChars'),
+      error: config.getError('playerNameUnsafeChars'),
       sanitizedName: trimmedName.replace(
         /[<>{}()&;|`$\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g,
         ''
@@ -158,7 +158,7 @@ export function validatePlayerName(
   if (trimmedName !== playerName.trim()) {
     return {
       isValid: false,
-      error: messages.getError('playerNameWhitespace'),
+      error: config.getError('playerNameWhitespace'),
       sanitizedName: trimmedName,
     };
   }
@@ -167,7 +167,7 @@ export function validatePlayerName(
   if (/\s{2,}/.test(trimmedName)) {
     return {
       isValid: false,
-      error: messages.getError('playerNameMultipleSpaces'),
+      error: config.getError('playerNameMultipleSpaces'),
       sanitizedName: trimmedName.replace(/\s+/g, ' '),
     };
   }
@@ -176,7 +176,7 @@ export function validatePlayerName(
   if (/^[\s\-']+$/.test(trimmedName)) {
     return {
       isValid: false,
-      error: messages.getError('playerNameOnlyPunctuation'),
+      error: config.getError('playerNameOnlyPunctuation'),
       sanitizedName: trimmedName,
     };
   }
@@ -379,7 +379,7 @@ export function validatePlayerName(
   if (reservedWords.includes(normalizedName)) {
     return {
       isValid: false,
-      error: messages.formatMessage(messages.getError('playerNameReserved'), {
+      error: config.formatMessage(config.getError('playerNameReserved'), {
         playerName: trimmedName,
       }),
       sanitizedName: trimmedName,
@@ -401,7 +401,7 @@ export function validatePlayerName(
   if (problematicPatterns.some((pattern) => pattern.test(normalizedName))) {
     return {
       isValid: false,
-      error: messages.getError('playerNameProblematicTerms'),
+      error: config.getError('playerNameProblematicTerms'),
       sanitizedName: trimmedName,
     };
   }
@@ -417,7 +417,7 @@ export function validatePlayerName(
   if (existingNormalizedNames.includes(normalizedName)) {
     return {
       isValid: false,
-      error: messages.formatMessage(messages.getError('playerNameTaken'), {
+      error: config.formatMessage(config.getError('playerNameTaken'), {
         playerName: trimmedName,
       }),
       sanitizedName: trimmedName,
@@ -515,14 +515,14 @@ export const validateGameState = (
 ): boolean => {
   const game = gameService.games.get(gameCode);
   if (!game) {
-    throwNotFoundError(messages.getError('gameNotFound'));
+    throwNotFoundError(config.getError('gameNotFound'));
   }
   
   if (shouldBeStarted && !game.gameState.started) {
-    throwGameStateError(messages.getError('gameNotStarted'));
+    throwGameStateError(config.getError('gameNotStarted'));
   }
   if (!shouldBeStarted && game.gameState.started) {
-    throwGameStateError(messages.getError('gameStarted'));
+    throwGameStateError(config.getError('gameStarted'));
   }
   return true;
 };
@@ -533,7 +533,7 @@ export const validateGameState = (
 export const validateHost = (socket: Socket, gameCode: string): boolean => {
   const game = gameService.games.get(gameCode);
   if (!game) {
-    throwNotFoundError(messages.getError('gameNotFound'));
+    throwNotFoundError(config.getError('gameNotFound'));
   }
   
   if (socket.id !== game.gameState.hostId) {
@@ -541,7 +541,7 @@ export const validateHost = (socket: Socket, gameCode: string): boolean => {
       socketId: socket.id,
       gameCode,
     });
-    throwPermissionError(messages.getError('notHost'));
+    throwPermissionError(config.getError('notHost'));
   }
   return true;
 };
@@ -588,19 +588,19 @@ export const validateAction = (
 ): boolean => {
   const game = gameService.games.get(gameCode);
   if (!game) {
-    throwNotFoundError(messages.getError('gameNotFound'));
+    throwNotFoundError(config.getError('gameNotFound'));
   }
   
   const player = game.gameState.players.get(socket.id);
   if (!player) {
-    throwPermissionError(messages.getError('playerNotInGame'));
+    throwPermissionError(config.getError('playerNotInGame'));
   }
 
   // Check if action type is valid for this player
   const validAction = player.unlockedAbilities.find((a: Ability) => a.type === actionType);
   if (!validAction) {
     socket.emit('errorMessage', {
-      message: messages.getError('invalidAction'),
+      message: config.getError('invalidAction'),
     });
     return false;
   }
@@ -612,7 +612,7 @@ export const validateAction = (
       return true; // Valid AOE ability with multi target
     } else {
       socket.emit('errorMessage', {
-        message: messages.formatMessage(messages.getError('actionNotAOE'), {
+        message: config.formatMessage(config.getError('actionNotAOE'), {
           actionType,
         }),
       });
@@ -629,7 +629,7 @@ export const validateAction = (
   // Handle player targets
   if (!game.gameState.players.has(targetId) || !game.gameState.players.get(targetId)!.isAlive) {
     socket.emit('errorMessage', {
-      message: messages.getError('invalidTarget'),
+      message: config.getError('invalidTarget'),
     });
     return false;
   }
@@ -648,19 +648,19 @@ export const validateActionWithCooldown = (
 ): boolean => {
   const game = gameService.games.get(gameCode);
   if (!game) {
-    throwNotFoundError(messages.getError('gameNotFound'));
+    throwNotFoundError(config.getError('gameNotFound'));
   }
   
   const player = game.gameState.players.get(socket.id);
   if (!player) {
-    throwPermissionError(messages.getError('playerNotInGame'));
+    throwPermissionError(config.getError('playerNotInGame'));
   }
 
   // Check if action type is valid for this player
   const validAction = player.unlockedAbilities.find((a: Ability) => a.type === actionType);
   if (!validAction) {
     socket.emit('errorMessage', {
-      message: messages.getError('invalidAction'),
+      message: config.getError('invalidAction'),
     });
     return false;
   }
@@ -669,7 +669,7 @@ export const validateActionWithCooldown = (
   if (player.isAbilityOnCooldown && player.isAbilityOnCooldown(actionType)) {
     const cooldownRemaining = player.getAbilityCooldown(actionType);
     socket.emit('errorMessage', {
-      message: messages.formatMessage(messages.getError('actionOnCooldown'), {
+      message: config.formatMessage(config.getError('actionOnCooldown'), {
         abilityName: actionType,
         turns: cooldownRemaining,
         s: cooldownRemaining > 1 ? 's' : '',
@@ -685,7 +685,7 @@ export const validateActionWithCooldown = (
       return true; // Valid AOE ability with multi target
     } else {
       socket.emit('errorMessage', {
-        message: messages.formatMessage(messages.getError('actionNotAOE'), {
+        message: config.formatMessage(config.getError('actionNotAOE'), {
           actionType,
         }),
       });
@@ -702,7 +702,7 @@ export const validateActionWithCooldown = (
   // Handle player targets
   if (!game.gameState.players.has(targetId) || !game.gameState.players.get(targetId)!.isAlive) {
     socket.emit('errorMessage', {
-      message: messages.getError('invalidTarget'),
+      message: config.getError('invalidTarget'),
     });
     return false;
   }
@@ -722,11 +722,33 @@ export const validatePlayerNameSocket = (
   let existingPlayers: Player[] = [];
   if (gameCode && gameService.games.has(gameCode)) {
     const game = gameService.games.get(gameCode)!;
-    existingPlayers = Array.from(game.gameState.players.values());
+    const allPlayers = Array.from(game.getPlayers());
+    // Filter out the current socket's player to avoid false duplicates
+    existingPlayers = allPlayers.filter(player => player.id !== socket.id);
+    
+    // DEBUG: Log name checking details for socket validation
+    logger.info('Socket name validation check:', {
+      attemptedName: playerName,
+      socketId: socket.id,
+      gameCode: gameCode,
+      totalPlayersInGame: allPlayers.length,
+      playersAfterFiltering: existingPlayers.length,
+      allPlayerNames: allPlayers.map(p => ({ id: p.id, name: p.name })),
+      existingPlayerNames: existingPlayers.map(p => ({ id: p.id, name: p.name })),
+      isCurrentSocketInGame: allPlayers.some(p => p.id === socket.id)
+    });
   }
 
   // Use the inclusive validation function
   const validation = validatePlayerName(playerName, existingPlayers);
+  
+  logger.info('Socket name validation result:', {
+    attemptedName: playerName,
+    gameCode: gameCode,
+    isValid: validation.isValid,
+    message: validation.message,
+    suggestion: validation.suggestion
+  });
 
   if (!validation.isValid) {
     logger.warn('InvalidPlayerNameValidation', {

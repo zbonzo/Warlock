@@ -43,7 +43,7 @@ export const useActionState = (
   // Derived values
   const unlocked = useMemo(() => (me as any)?.unlocked || [], [me]);
   const alivePlayers = useMemo(
-    () => players.filter((p) => p.isAlive),
+    () => players.filter((p) => p['isAlive']),
     [players]
   );
 
@@ -65,10 +65,10 @@ export const useActionState = (
 
     // Check if target is valid (alive player or monster)
     if (selectedTarget === '__monster__') {
-      return monster && monster.hp > 0; // Monster must be alive
+      return monster && monster['hp'] > 0; // Monster must be alive
     }
 
-    const targetPlayer = alivePlayers.find((p) => p.id === selectedTarget);
+    const targetPlayer = alivePlayers.find((p) => p['id'] === selectedTarget);
     return !!targetPlayer;
   }, [
     actionType,

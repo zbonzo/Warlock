@@ -10,6 +10,7 @@ import { abilityLoader } from './loaders/AbilityLoader';
 import { classLoader } from './loaders/ClassLoader';
 import { raceLoader } from './loaders/RaceLoader';
 import { gameBalanceLoader } from './loaders/GameBalanceLoader';
+import type { CorruptionLimitChecks } from './gameBalance';
 import { statusEffectsLoader } from './loaders/StatusEffectsLoader';
 import { messagesLoader } from './loaders/MessagesLoader';
 
@@ -280,12 +281,35 @@ const config = {
   calculateMonsterHp: (level: number) => gameBalanceLoader.calculateMonsterHp(level),
   calculateMonsterDamage: (age: number) => gameBalanceLoader.calculateMonsterDamage(age),
   calculateDamageReduction: (armor: number) => gameBalanceLoader.calculateDamageReduction(armor),
-  calculateConversionChance: (...args: any[]) => gameBalanceLoader.calculateConversionChance(...args),
+  calculateConversionChance: (
+    warlockCount: number,
+    totalPlayers: number,
+    modifier?: number,
+    limitChecks?: CorruptionLimitChecks,
+    recentlyDetected?: boolean
+  ) => gameBalanceLoader.calculateConversionChance(warlockCount, totalPlayers, modifier, limitChecks, recentlyDetected),
   calculateWarlockCount: (playerCount: number) => gameBalanceLoader.calculateWarlockCount(playerCount),
-  calculateThreatGeneration: (...args: any[]) => gameBalanceLoader.calculateThreatGeneration(...args),
-  calculateCoordinationBonus: (...args: any[]) => gameBalanceLoader.calculateCoordinationBonus(...args),
-  shouldActiveComebackMechanics: (...args: any[]) => gameBalanceLoader.shouldActiveComebackMechanics(...args),
-  applyComebackBonus: (...args: any[]) => gameBalanceLoader.applyComebackBonus(...args),
+  calculateThreatGeneration: (
+    damageToMonster?: number,
+    totalDamageDealt?: number,
+    healingDone?: number,
+    playerArmor?: number
+  ) => gameBalanceLoader.calculateThreatGeneration(damageToMonster, totalDamageDealt, healingDone, playerArmor),
+  calculateCoordinationBonus: (
+    baseAmount: number,
+    coordinatingPlayers: number,
+    type?: 'damage' | 'healing'
+  ) => gameBalanceLoader.calculateCoordinationBonus(baseAmount, coordinatingPlayers, type),
+  shouldActiveComebackMechanics: (
+    goodPlayersRemaining: number,
+    totalPlayersRemaining: number
+  ) => gameBalanceLoader.shouldActiveComebackMechanics(goodPlayersRemaining, totalPlayersRemaining),
+  applyComebackBonus: (
+    baseAmount: number,
+    type: 'damage' | 'healing' | 'armor',
+    isGoodPlayer: boolean,
+    comebackActive: boolean
+  ) => gameBalanceLoader.applyComebackBonus(baseAmount, type, isGoodPlayer, comebackActive),
   
   // Enhanced status effects functions
   getEffectDefaults: (effectName: string) => statusEffectsLoader.getEffectDefaults(effectName),

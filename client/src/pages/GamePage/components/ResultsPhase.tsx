@@ -43,10 +43,10 @@ const ResultsPhase: React.FC<ResultsPhaseProps> = ({
       
       <div className="results-content">
         {/* Events log for this round */}
-        <EventsLog events={lastEvent.events} />
+        <EventsLog events={lastEvent.events} currentPlayerId={me['id']} />
         
         {/* Ready button (only for alive players) */}
-        {me.isAlive && (
+        {me['isAlive'] && (
           <button
             className={`button ready-button ${readyClicked ? 'clicked' : ''}`}
             onClick={handleReadyClick}
@@ -68,10 +68,10 @@ const ResultsPhase: React.FC<ResultsPhaseProps> = ({
           <p>Players ready for next round will be shown here.</p>
           <div className="player-ready-indicators">
             {lastEvent.readyPlayers && lastEvent.readyPlayers.map(playerId => {
-              const player = lastEvent.players?.find(p => p.id === playerId);
+              const player = lastEvent.players?.find(p => p['id'] === playerId);
               return player ? (
                 <div key={playerId} className="player-ready-badge">
-                  {player.name.charAt(0)}
+                  {player['name'].charAt(0)}
                 </div>
               ) : null;
             })}

@@ -5,7 +5,7 @@
 
 import { v4 as uuidv4 } from 'uuid';
 import config from '../../config/index.js';
-import messages from '../../config/messages/index.js';
+// Messages are now accessed through the config system
 import logger from '../../utils/logger.js';
 
 interface Entity {
@@ -198,7 +198,7 @@ class StatusEffect {
     const actualDamage = oldHp - target.hp;
 
     // Log poison damage
-    const poisonMessage = messages.getEvent('poisonDamage', {
+    const poisonMessage = config.getEvent('poisonDamage', {
       playerName: target.name || 'Monster',
       damage: actualDamage,
     });
@@ -283,8 +283,8 @@ class StatusEffect {
     target.hp += actualHeal;
 
     // Log the healing
-    const healMessage = messages.getAbilityMessage('abilities.healing', 'heal');
-    log.push(messages.formatMessage(healMessage, {
+    const healMessage = config.getAbilityMessage('abilities.healing', 'heal');
+    log.push(config.formatMessage(healMessage, {
       playerName: target.name || 'Monster',
       amount: actualHeal,
     }));

@@ -5,7 +5,7 @@
  */
 
 import config from '../config/index.js';
-import messages from '../messages/index.js';
+// Messages are now accessed through the config system
 import logger from '../utils/logger.js';
 import { Player } from '../models/Player.js';
 import { BaseController } from './PlayerController.js';
@@ -352,7 +352,7 @@ export class MonsterController extends BaseController<Monster, any, Partial<Mons
     // Add combat log entry
     log.push({
       type: 'monster_attack',
-      message: messages.formatMessage(
+      message: config.formatMessage(
         'monsterAttacksPlayer',
         { 
           playerName: target.name, 
@@ -390,7 +390,7 @@ export class MonsterController extends BaseController<Monster, any, Partial<Mons
 
     log.push({
       type: 'monster_special',
-      message: messages.formatMessage(
+      message: config.formatMessage(
         'monsterUsesSpecialAbility',
         {
           targets: targets.map(t => t.name).join(', '),
@@ -419,7 +419,7 @@ export class MonsterController extends BaseController<Monster, any, Partial<Mons
 
     log.push({
       type: 'monster_heal',
-      message: messages.formatMessage(
+      message: config.formatMessage(
         'monsterHeals',
         { 
           healAmount: actualHealing,
@@ -463,7 +463,7 @@ export class MonsterController extends BaseController<Monster, any, Partial<Mons
 
     log.push({
       type: 'monster_enrage',
-      message: messages.formatMessage(
+      message: config.formatMessage(
         'monsterEnrages',
         {
           playerName: target.name,

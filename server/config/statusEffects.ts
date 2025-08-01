@@ -591,9 +591,22 @@ function isEffectRefreshable(effectName: string): boolean {
 }
 
 /**
+ * Interface for effect message context data
+ */
+interface EffectMessageData {
+  playerName?: string;
+  attackerName?: string;
+  damage?: number;
+  armor?: number;
+  turns?: number;
+  amount?: number;
+  [key: string]: any; // Allow additional properties
+}
+
+/**
  * Helper function to get effect message template
  */
-function getEffectMessage(effectName: string, messageType: string, data: Record<string, any> = {}): string {
+function getEffectMessage(effectName: string, messageType: string, data: EffectMessageData = {}): string {
   // Use local variables instead of referring to config
   const effects = {
     poison,
@@ -615,13 +628,14 @@ function getEffectMessage(effectName: string, messageType: string, data: Record<
   const template = (effects as any)[effectName]?.messages?.[messageType];
 
   if (!template) {
-    // Fallback messages
+    // Fallback messages with safe property access
+    const playerName = data?.playerName || 'Player';
     if (messageType === 'applied') {
-      return `${data.playerName} is affected by ${effectName}.`;
+      return `${playerName} is affected by ${effectName}.`;
     } else if (messageType === 'refreshed') {
-      return `${data.playerName}'s ${effectName} effect is refreshed.`;
+      return `${playerName}'s ${effectName} effect is refreshed.`;
     } else if (messageType === 'expired') {
-      return `The ${effectName} effect on ${data.playerName} has worn off.`;
+      return `The ${effectName} effect on ${playerName} has worn off.`;
     }
     return '';
   }
@@ -632,7 +646,7 @@ function getEffectMessage(effectName: string, messageType: string, data: Record<
 /**
  * Helper function to format effect message
  */
-function formatEffectMessage(template: string, data: Record<string, any> = {}): string {
+function formatEffectMessage(template: string, data: EffectMessageData = {}): string {
   if (!template) return '';
 
   return template.replace(/{(\w+)}/g, (match, key) => {

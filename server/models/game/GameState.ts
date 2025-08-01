@@ -93,7 +93,7 @@ export interface GamePlayer extends Player {
   getEffectiveArmor?(): number;
   stoneArmorIntact?: boolean;
   stoneArmorValue?: number;
-  stats?: any;
+  stats: any; // Required - Player class always has stats via playerStats
   hasSubmittedAction?: boolean;
   abilityCooldowns?: Record<string, number>;
 }
@@ -112,6 +112,10 @@ export class GameState {
   private aliveCount: number = 0;
   private disconnectedPlayers: DisconnectedPlayer[] = [];
   private monster: MonsterState;
+  private ended: boolean = false;
+  private winner: string | null = null;
+  private created: number = Date.now();
+  private startTime: number | null = null;
 
   /**
    * Create a new game state
@@ -148,8 +152,21 @@ export class GameState {
    * @returns Success status
    */
   addPlayer(player: GamePlayer): boolean {
-    if (this.players.has(player.id)) {
-      return false;
+    // If player with this ID already exists, update their name instead
+    const existingPlayer = this.players.get(player.id);
+    if (existingPlayer) {
+      // Update the existing player's name if it changed
+      if (existingPlayer.name !== player.name) {
+        const oldName = existingPlayer.name;
+        existingPlayer.name = player.name;
+        logger.debug('PlayerNameUpdated', {
+          gameCode: this.code,
+          playerId: player.id,
+          oldName: oldName,
+          newName: player.name
+        });
+      }
+      return true; // Still return success since player is in the game
     }
 
     this.players.set(player.id, player);
@@ -233,7 +250,24 @@ export class GameState {
    */
   startGame(): void {
     this.started = true;
+    this.startTime = Date.now();
     logger.info('GameStarted', { gameCode: this.code, playerCount: this.players.size });
+  }
+
+  /**
+   * Alias for startGame() for backward compatibility
+   */
+  start(): void {
+    this.startGame();
+  }
+
+  /**
+   * End the game
+   */
+  end(winner?: string): void {
+    this.ended = true;
+    this.winner = winner || null;
+    logger.info('GameEnded', { gameCode: this.code, winner: this.winner });
   }
 
   /**
@@ -417,6 +451,14 @@ export class GameState {
   }
 
   /**
+   * Set host ID
+   * @param hostId - New host player ID
+   */
+  setHostId(hostId: string | null): void {
+    this.hostId = hostId;
+  }
+
+  /**
    * Get current round
    * @returns Current round number
    */
@@ -462,6 +504,110 @@ export class GameState {
    */
   getAliveCount(): number {
     return this.aliveCount;
+  }
+
+  /**
+   * Get ended status
+   * @returns Whether the game has ended
+   */
+  getEnded(): boolean {
+    return this.ended;
+  }
+
+  /**
+   * Get winner
+   * @returns Winner of the game
+   */
+  getWinner(): string | null {
+    return this.winner;
+  }
+
+  /**
+   * Get created timestamp
+   * @returns When the game was created
+   */
+  getCreated(): number {
+    return this.created;
+  }
+
+  /**
+   * Get start time
+   * @returns When the game was started
+   */
+  getStartTime(): number | null {
+    return this.startTime;
+  }
+
+  /**
+   * Set started status
+   * @param started - Whether the game has started
+   */
+  setStarted(started: boolean): void {
+    this.started = started;
+  }
+
+  /**
+   * Set round number
+   * @param round - Current round number
+   */
+  setRound(round: number): void {
+    this.round = round;
+  }
+
+  /**
+   * Set level
+   * @param level - Current level
+   */
+  setLevel(level: number): void {
+    this.level = level;
+  }
+
+  /**
+   * Set alive count
+   * @param count - Number of alive players
+   */
+  setAliveCount(count: number): void {
+    this.aliveCount = count;
+  }
+
+  /**
+   * Get players map
+   * @returns Players map
+   */
+  getPlayersMap(): Map<string, GamePlayer> {
+    return this.players;
+  }
+
+  /**
+   * Set players map
+   * @param players - Players map
+   */
+  setPlayersMap(players: Map<string, GamePlayer>): void {
+    this.players = players;
+  }
+
+  /**
+   * Get disconnected players
+   * @returns Disconnected players array
+   */
+  getDisconnectedPlayers(): DisconnectedPlayer[] {
+    return this.disconnectedPlayers;
+  }
+
+  /**
+   * Set disconnected players
+   * @param players - Disconnected players array
+   */
+  setDisconnectedPlayers(players: DisconnectedPlayer[]): void {
+    this.disconnectedPlayers = players;
+  }
+
+  /**
+   * Set monster state
+   * @param monster - Monster state
+   */
+  setMonster(monster: MonsterState): void {
+    this.monster = monster;
   }
 
   /**

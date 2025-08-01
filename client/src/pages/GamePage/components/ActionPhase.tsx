@@ -51,7 +51,7 @@ const ActionPhase: React.FC<ActionPhaseProps> = ({
   if (!isVisible) return null;
   
   // If player is dead, show dead message
-  if (!me.isAlive) {
+  if (!me['isAlive']) {
     return (
       <div className="action-phase dead-player">
         <div className="dead-message card">
@@ -105,10 +105,10 @@ const ActionPhase: React.FC<ActionPhaseProps> = ({
         {me.racialAbility && (
           <RacialAbilityCard
             ability={me.racialAbility}
-            usesLeft={me.racialUsesLeft}
-            cooldown={me.racialCooldown}
+            usesLeft={me.racialUsesLeft ?? 0}
+            cooldown={me.racialCooldown ?? 0}
             disabled={submitted}
-            onUse={handleRacialAbilityUse}
+            onUse={() => handleRacialAbilityUse(me.racialAbility?.type || '')}
           />
         )}
 
@@ -151,8 +151,8 @@ const ActionPhase: React.FC<ActionPhaseProps> = ({
         <TargetSelector
           alivePlayers={alivePlayers}
           monster={monster}
-          currentPlayerId={me.id}
-          selectedTarget={selectedTarget}
+          currentPlayerId={me['id']}
+          selectedTarget={selectedTarget || undefined}
           onSelectTarget={setSelectedTarget}
           disableMonster={keenSensesActive} 
         />

@@ -4,20 +4,13 @@
  */
 import React, { useState, useEffect, useMemo } from 'react';
 import { useTheme } from '@contexts/ThemeContext';
+import type { Player as SharedPlayer } from '../../types/shared';
+import type { Socket } from 'socket.io-client';
 import Confetti from './components/Confetti';
 import FinalScoresTable from './components/FinalScoresTable';
 import HistoryColumn from '@pages/GamePage/components/HistoryColumn';
 import './EndPage.css';
 import RuneButton from '../../components/ui/RuneButton';
-
-interface Player {
-  id: string;
-  name: string;
-  race?: string;
-  class?: string;
-  isWarlock: boolean;
-  isAlive: boolean;
-}
 
 interface EventLogEntry {
   turn: number;
@@ -25,18 +18,26 @@ interface EventLogEntry {
 }
 
 interface TrophyAward {
-  playerName?: string;
-  trophyName?: string;
-  trophyDescription?: string;
+  playerName: string;
+  trophyName: string;
+  trophyDescription: string;
 }
 
-interface Socket {
-  emit: (event: string, data: any) => void;
+
+// Define a local Player interface that matches what components expect
+interface Player {
+  id: string;
+  name: string;
+  race?: string;
+  class?: string;
+  isWarlock: boolean;
+  isAlive: boolean;
+  stats?: any;
 }
 
 interface EndPageProps {
   winner: 'Good' | 'Evil';
-  players: Player[];
+  players: SharedPlayer[];
   eventsLog?: EventLogEntry[];
   gameCode?: string;
   playerName?: string;
@@ -50,7 +51,7 @@ interface EndPageProps {
  */
 const EndPage: React.FC<EndPageProps> = ({
   winner,
-  players,
+  players: rawPlayers,
   eventsLog = [],
   gameCode,
   playerName,
@@ -58,6 +59,18 @@ const EndPage: React.FC<EndPageProps> = ({
   trophyAward,
   onPlayAgain,
 }) => {
+  // Convert SharedPlayer to local Player format
+  const players: Player[] = useMemo(() => {
+    return rawPlayers.map(p => ({
+      id: p['id'],
+      name: p['name'],
+      race: p['race'],
+      class: p['class'],
+      isWarlock: p['role'] === 'Warlock' || p['role'] === 'Evil',
+      isAlive: p['status'] === 'alive',
+      stats: p['stats']
+    }));
+  }, [rawPlayers]);
   const handlePlayAgain = (): void => {
     if (!socket || !gameCode || !playerName) {
       console.error('Missing required data for play again');
@@ -136,7 +149,7 @@ const EndPage: React.FC<EndPageProps> = ({
     if (!trophyAward || !players || !winner) return null;
     
     // Find the trophy recipient
-    const recipient = players.find(p => p.name === trophyAward.playerName);
+    const recipient = players.find(p => p['name'] === trophyAward.playerName);
     if (!recipient) return null;
     
     // Check if trophy recipient is on the winning team
@@ -180,7 +193,7 @@ const EndPage: React.FC<EndPageProps> = ({
               <div className="trophy-avatar">
                 {/* Player Avatar - find the recipient player to get their avatar */}
                 {(() => {
-                  const recipient = players.find(p => p.name === displayTrophy.playerName);
+                  const recipient = players.find(p => p['name'] === displayTrophy.playerName);
                   
                   // Generate avatar image path
                   const getAvatarPath = (player?: Player): string => {
@@ -241,6 +254,7 @@ const EndPage: React.FC<EndPageProps> = ({
             <HistoryColumn
               isVisible={true}
               eventsLog={eventsLog}
+              lastEvent={{ turn: 0, events: [] }}
               currentPlayerId="unredacted" // Special ID for unredacted view
               players={players}
               showAllEvents={true} // Show all events without filtering

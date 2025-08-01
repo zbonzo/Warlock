@@ -1,13 +1,13 @@
 import React, { useEffect, useRef, useState } from 'react';
 import './TargetSelectionStep.css';
 import MobilePlayerHeader from './MobilePlayerHeader';
-import type { Player, Ability, Monster } from '../../../../shared/types';
+import type { Player, Ability, Monster } from '../../../../types/shared';
 
 interface TargetSelectionStepProps {
   me: Player;
   monster?: Monster;
   alivePlayers: Player[];
-  selectedAbility: Ability;
+  selectedAbility?: Ability;
   selectedTarget?: string;
   keenSensesActive: boolean;
   lastEvent?: {
@@ -96,7 +96,7 @@ function drawMonsterBadge(canvas: HTMLCanvasElement, monster: Monster): void {
   ctx.clearRect(0, 0, size, size);
 
   // Create gradient background based on monster health
-  const healthPercent = monster.hp / monster.maxHp;
+  const healthPercent = monster['hp'] / monster['maxHp'];
   let gradient = ctx.createRadialGradient(cx, cy, 0, cx, cy, r);
 
   if (healthPercent > 0.7) {
@@ -160,7 +160,7 @@ const MonsterAvatar: React.FC<MonsterAvatarProps> = ({ monster }) => {
   useEffect(() => {
     if (!canvasRef.current) return;
     drawMonsterBadge(canvasRef.current, monster);
-  }, [monster.hp, monster.maxHp]);
+  }, [monster['hp'], monster['maxHp']]);
 
   return (
     <canvas
@@ -194,8 +194,8 @@ const CustomAvatar: React.FC<CustomAvatarProps> = ({ player }) => {
       'Rogue': '🗡️'
     };
 
-    const classEmoji = classIcons[player.class] || '❓';
-    const letter = player.name.charAt(0).toUpperCase();
+    const classEmoji = classIcons[player['class'] || ''] || '❓';
+    const letter = player['name'].charAt(0).toUpperCase();
 
     // Get race color
     const raceColors: Record<string, string> = {
@@ -207,7 +207,7 @@ const CustomAvatar: React.FC<CustomAvatarProps> = ({ player }) => {
       Lich: '#36454F',
     };
 
-    const raceColor = raceColors[player.race] || '#666666';
+    const raceColor = raceColors[player['race'] || ''] || '#666666';
 
     drawPlayerBadge(canvasRef.current, classEmoji, letter, raceColor);
   }, [player]);
@@ -264,7 +264,8 @@ const TargetSelectionStep: React.FC<TargetSelectionStepProps> = ({
     }, 3000);
   };
   
-  const getAbilityIcon = (ability: Ability): string => {
+  const getAbilityIcon = (ability?: Ability): string => {
+    if (!ability) return '📜';
     const icons: Record<string, string> = {
       'Attack': '⚔️',
       'Defense': '🛡️',
@@ -290,7 +291,7 @@ const TargetSelectionStep: React.FC<TargetSelectionStepProps> = ({
     
     // Self-targeting abilities
     if (selectedAbility.target === 'Self') {
-      return targetId === me.id;
+      return targetId === me['id'];
     }
     
     // Healing abilities typically target allies
@@ -301,7 +302,7 @@ const TargetSelectionStep: React.FC<TargetSelectionStepProps> = ({
     // Attack abilities can target monster or enemies (but not self)
     if (selectedAbility.category === 'Attack') {
       if (targetType === 'player') {
-        return targetId !== me.id; // Can't attack yourself
+        return targetId !== me['id']; // Can't attack yourself
       }
       return true; // Can attack monster
     }
@@ -333,21 +334,23 @@ const TargetSelectionStep: React.FC<TargetSelectionStepProps> = ({
         <h2 className="step-title">Choose Your Target</h2>
         
         {/* Selected ability reminder */}
-        <div className="selected-ability-reminder">
-          <div className="ability-icon">{getAbilityIcon(selectedAbility)}</div>
-          <div className="ability-info">
-            <strong>{selectedAbility.name}</strong>
-            <div className="ability-category">{selectedAbility.category}</div>
+        {selectedAbility && (
+          <div className="selected-ability-reminder">
+            <div className="ability-icon">{getAbilityIcon(selectedAbility)}</div>
+            <div className="ability-info">
+              <strong>{selectedAbility.name}</strong>
+              <div className="ability-category">{selectedAbility.category}</div>
+            </div>
+            <button className="change-ability-btn" onClick={onBack}>
+              Change
+            </button>
           </div>
-          <button className="change-ability-btn" onClick={onBack}>
-            Change
-          </button>
-        </div>
+        )}
         
         {/* Target options */}
         <div className="targets-section">
           {/* Monster target */}
-          {!keenSensesActive && monster && monster.hp > 0 && isValidTarget('__monster__', 'monster') && (
+          {!keenSensesActive && monster && monster['hp'] > 0 && isValidTarget('__monster__', 'monster') && (
             <div 
               className={`monster-target-wide ${selectedTarget === '__monster__' ? 'selected' : ''}`}
               onClick={() => onTargetSelect('__monster__')}
@@ -356,13 +359,13 @@ const TargetSelectionStep: React.FC<TargetSelectionStepProps> = ({
               <div className="monster-info">
                 <div className="monster-name">Monster</div>
                 <div className="monster-stats">
-                  <span className="hp-text">{monster.hp}/{monster.maxHp}</span>
-                  {monster.nextAttack && <span className="next-attack">Next Attack: {monster.nextAttack}</span>}
+                  <span className="hp-text">{monster['hp']}/{monster['maxHp']}</span>
+                  {(monster as any).nextAttack && <span className="next-attack">Next Attack: {(monster as any).nextAttack}</span>}
                 </div>
                 <div className="health-bar-wide">
                   <div 
-                    className={`health-fill ${getHealthClass(getHealthPercent(monster.hp, monster.maxHp))}`}
-                    style={{ width: `${getHealthPercent(monster.hp, monster.maxHp)}%` }}
+                    className={`health-fill ${getHealthClass(getHealthPercent(monster['hp'], monster['maxHp']))}`}
+                    style={{ width: `${getHealthPercent(monster['hp'], monster['maxHp'])}%` }}
                   />
                 </div>
               </div>
@@ -372,27 +375,27 @@ const TargetSelectionStep: React.FC<TargetSelectionStepProps> = ({
           {/* Player targets */}
           <div className="player-targets-grid">
             {alivePlayers.map(player => {
-              const isValid = isValidTarget(player.id, 'player');
+              const isValid = isValidTarget(player['id'], 'player');
               
               return (
                 <div
-                  key={player.id}
+                  key={player['id']}
                   className={`
                     player-target-card 
-                    ${selectedTarget === player.id ? 'selected' : ''} 
-                    ${player.hasSubmittedAction ? 'ready' : ''}
-                    ${player.id === me.id ? 'self' : ''}
+                    ${selectedTarget === player['id'] ? 'selected' : ''} 
+                    ${player['hasSubmittedAction'] ? 'ready' : ''}
+                    ${player['id'] === me['id'] ? 'self' : ''}
                     ${!isValid ? 'invalid-target' : ''}
                   `}
-                  onClick={() => isValid && onTargetSelect(player.id)}
+                  onClick={() => isValid && onTargetSelect(player['id'])}
                 >
-                  <div className="player-name">{player.name}</div>
+                  <div className="player-name">{player['name']}</div>
                   <CustomAvatar player={player} />
-                  <div className="player-hp">{player.hp}/{player.maxHp}</div>
+                  <div className="player-hp">{player['hp']}/{player['maxHp']}</div>
                   <div className="health-bar-compact">
                     <div 
-                      className={`health-fill ${getHealthClass(getHealthPercent(player.hp, player.maxHp))}`}
-                      style={{ width: `${getHealthPercent(player.hp, player.maxHp)}%` }}
+                      className={`health-fill ${getHealthClass(getHealthPercent(player['hp'], player['maxHp']))}`}
+                      style={{ width: `${getHealthPercent(player['hp'], player['maxHp'])}%` }}
                     />
                   </div>
                 </div>

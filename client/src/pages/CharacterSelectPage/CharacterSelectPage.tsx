@@ -35,8 +35,8 @@ interface CharacterSelectPageProps {
   gameCode: string;
   selectedRace: string | null;
   selectedClass: string | null;
-  onSelectRace: (raceId: string) => void;
-  onSelectClass: (classId: string) => void;
+  onSelectRace: (raceId: string | null) => void;
+  onSelectClass: (classId: string | null) => void;
   onConfirm: (race: string, classId: string) => void;
 }
 
@@ -138,16 +138,22 @@ const CharacterSelectPage: React.FC<CharacterSelectPageProps> = ({
     if (!selectedRace && !selectedClass && config.compatibility) {
       const randomClass =
         config.classes[Math.floor(Math.random() * config.classes.length)];
-      const validRaces = config.compatibility.classToRaces[randomClass];
+      const randomClassName = randomClass?.name;
+      
+      if (randomClassName) {
+        const validRaces = config.compatibility.classToRaces[randomClassName];
 
-      if (validRaces && validRaces.length > 0) {
-        const randomRace =
-          validRaces[Math.floor(Math.random() * validRaces.length)];
+        if (validRaces && validRaces.length > 0) {
+          const randomRace =
+            validRaces[Math.floor(Math.random() * validRaces.length)];
 
-        setSuggestedRace(randomRace);
-        setSuggestedClass(randomClass);
-        onSelectRace(randomRace);
-        onSelectClass(randomClass);
+          if (randomRace && randomClassName) {
+            setSuggestedRace(randomRace);
+            setSuggestedClass(randomClassName);
+            onSelectRace(randomRace);
+            onSelectClass(randomClassName);
+          }
+        }
       }
     }
   }, [selectedRace, selectedClass, config, onSelectRace, onSelectClass]);
@@ -176,18 +182,18 @@ const CharacterSelectPage: React.FC<CharacterSelectPageProps> = ({
 
   // Get race and class data from configuration
   const races: Race[] =
-    config.races?.map((raceId) => ({
-      id: raceId,
-      label: raceId,
-      icon: ICONS.RACES[raceId] || '❓',
+    config.races?.map((race) => ({
+      id: race.name,
+      label: race.name,
+      icon: ICONS.RACES[race.name as keyof typeof ICONS.RACES] || '❓',
     })) || [];
 
   const classes: Class[] =
-    config.classes?.map((classId) => ({
-      id: classId,
-      label: classId,
-      icon: ICONS.CLASSES[classId] || '❓',
-      color: config.classAttributes?.[classId]?.color || '#888',
+    config.classes?.map((cls) => ({
+      id: cls.name,
+      label: cls.name,
+      icon: ICONS.CLASSES[cls.name as keyof typeof ICONS.CLASSES] || '❓',
+      color: config.classAttributes?.[cls.name]?.['color'] || '#888',
     })) || [];
 
   /**

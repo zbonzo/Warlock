@@ -3,12 +3,17 @@ import { z } from 'zod';
 // Schema for effect messages
 const EffectMessagesSchema = z.record(z.string(), z.string());
 
-// Schema for effect default parameters
-const EffectDefaultsSchema = z.record(z.string(), z.union([
-  z.string(),
-  z.number(),
-  z.boolean(),
-]));
+// Schema for effect default parameters with proper typing
+const EffectDefaultsSchema = z.object({
+  damage: z.number().default(0),
+  armor: z.number().default(0),
+  turns: z.number().default(1),
+  amount: z.number().optional(),
+  damageIncrease: z.number().optional(),
+  damageReduction: z.number().optional(),
+  healingPercent: z.number().optional(),
+  healthThreshold: z.number().optional(),
+}).passthrough(); // Allow additional properties
 
 // Base effect schema with common properties
 const BaseEffectSchema = z.object({

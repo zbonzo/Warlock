@@ -35,7 +35,7 @@ interface Trophy {
  * Trophy definitions for the random end-of-game trophy system
  * Each trophy has a name, description, and getWinner function that determines eligibility
  */
-const trophies: Trophy[] = [
+const trophies = [
   {
     name: "The Participant",
     description: "Participated in the game.",
@@ -52,10 +52,11 @@ const trophies: Trophy[] = [
       const alivePlayers = players.filter(p => p.stats);
       if (alivePlayers.length === 0) return null;
       
-      return alivePlayers.reduce((highest, player) => {
-        return player.stats.totalDamageDealt > (highest?.stats?.totalDamageDealt || 0) 
+      return alivePlayers.reduce((highest: Player | null, player: Player) => {
+        if (!highest) return player;
+        return player.stats.totalDamageDealt > highest.stats.totalDamageDealt 
           ? player : highest;
-      }, null as Player | null);
+      }, null);
     }
   },
   {
@@ -65,10 +66,11 @@ const trophies: Trophy[] = [
       const alivePlayers = players.filter(p => p.stats && p.stats.totalHealingDone > 0);
       if (alivePlayers.length === 0) return null;
       
-      return alivePlayers.reduce((highest, player) => {
-        return player.stats.totalHealingDone > (highest?.stats?.totalHealingDone || 0) 
+      return alivePlayers.reduce((highest: Player | null, player: Player) => {
+        if (!highest) return player;
+        return player.stats.totalHealingDone > highest.stats.totalHealingDone 
           ? player : highest;
-      }, null as Player | null);
+      }, null);
     }
   },
   {
@@ -78,10 +80,11 @@ const trophies: Trophy[] = [
       const alivePlayers = players.filter(p => p.stats && p.stats.damageTaken > 0);
       if (alivePlayers.length === 0) return null;
       
-      return alivePlayers.reduce((highest, player) => {
-        return player.stats.damageTaken > (highest?.stats?.damageTaken || 0) 
+      return alivePlayers.reduce((highest: Player | null, player: Player) => {
+        if (!highest) return player;
+        return player.stats.damageTaken > highest.stats.damageTaken 
           ? player : highest;
-      }, null as Player | null);
+      }, null);
     }
   },
   {
@@ -102,10 +105,11 @@ const trophies: Trophy[] = [
       const alivePlayers = players.filter(p => p.stats && p.stats.highestSingleHit > 0);
       if (alivePlayers.length === 0) return null;
       
-      return alivePlayers.reduce((highest, player) => {
-        return player.stats.highestSingleHit > (highest?.stats?.highestSingleHit || 0) 
+      return alivePlayers.reduce((highest: Player | null, player: Player) => {
+        if (!highest) return player;
+        return player.stats.highestSingleHit > highest.stats.highestSingleHit 
           ? player : highest;
-      }, null as Player | null);
+      }, null);
     }
   },
   {
@@ -131,10 +135,11 @@ const trophies: Trophy[] = [
       const healers = players.filter(p => p.stats && p.stats.selfHeals > 0);
       if (healers.length === 0) return null;
       
-      return healers.reduce((highest, player) => {
-        return player.stats.selfHeals > (highest?.stats?.selfHeals || 0) 
+      return healers.reduce((highest: Player | null, player: Player) => {
+        if (!highest) return player;
+        return player.stats.selfHeals > highest.stats.selfHeals 
           ? player : highest;
-      }, null as Player | null);
+      }, null);
     }
   },
   {
@@ -144,10 +149,11 @@ const trophies: Trophy[] = [
       const activePlayers = players.filter(p => p.stats && p.stats.abilitiesUsed > 0);
       if (activePlayers.length === 0) return null;
       
-      return activePlayers.reduce((highest, player) => {
-        return player.stats.abilitiesUsed > (highest?.stats?.abilitiesUsed || 0) 
+      return activePlayers.reduce((highest: Player | null, player: Player) => {
+        if (!highest) return player;
+        return player.stats.abilitiesUsed > highest.stats.abilitiesUsed 
           ? player : highest;
-      }, null as Player | null);
+      }, null);
     }
   },
   {
@@ -178,7 +184,7 @@ const trophies: Trophy[] = [
       return alivePlayers[0];
     }
   }
-] as const;
+] as Trophy[];
 
 export default trophies;
 export { trophies };

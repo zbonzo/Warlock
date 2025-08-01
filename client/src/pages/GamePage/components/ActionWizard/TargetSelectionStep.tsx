@@ -152,13 +152,13 @@ const TargetSelectionStep: React.FC<TargetSelectionStepProps> = ({
     (selectedAbility.category === 'Attack' || selectedAbility.category === 'Special');
 
   const targetablePlayers = alivePlayers.filter(player => {
-    if (canTargetSelf && player.id === me.id) return true;
-    if (canTargetOthers && player.id !== me.id) return true;
+    if (canTargetSelf && player['id'] === me['id']) return true;
+    if (canTargetOthers && player['id'] !== me['id']) return true;
     return false;
   });
 
   const handlePlayerSelect = (player: Player): void => {
-    onTargetSelect(player.id);
+    onTargetSelect(player['id']);
   };
 
   const handleMonsterSelect = (): void => {
@@ -199,14 +199,13 @@ const TargetSelectionStep: React.FC<TargetSelectionStepProps> = ({
               <div className="targets-grid">
                 {targetablePlayers.map(player => (
                   <div
-                    key={player.id}
-                    className={`target-option ${selectedTarget === player.id ? 'selected' : ''}`}
+                    key={player['id']}
+                    className={`target-option ${selectedTarget === player['id'] ? 'selected' : ''}`}
                     onClick={() => handlePlayerSelect(player)}
                   >
                     <PlayerCard
                       player={player}
-                      isCurrentPlayer={player.id === me.id}
-                      compact={isMobile}
+                      isCurrentPlayer={player['id'] === me['id']}
                     />
                   </div>
                 ))}
@@ -229,7 +228,7 @@ const TargetSelectionStep: React.FC<TargetSelectionStepProps> = ({
                     <div className="monster-health">
                       {monster.hp}/{monster.maxHp} HP
                     </div>
-                    {monster.nextDamage > 0 && (
+                    {monster.nextDamage && monster.nextDamage > 0 && (
                       <div className="monster-damage">
                         Next damage: {monster.nextDamage}
                       </div>

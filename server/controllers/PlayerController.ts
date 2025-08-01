@@ -11,7 +11,7 @@ import { validateGameAction } from '../shared/gameChecks.js';
 import logger from '../utils/logger.js';
 import errorHandler from '../utils/errorHandler.js';
 import config from '../config/index.js';
-import messages from '../messages/index.js';
+// Messages are now accessed through the config system
 import { GameRoom } from '../models/GameRoom.js';
 import { Player } from '../models/Player.js';
 import { 
@@ -109,7 +109,7 @@ export class PlayerController extends BaseController<Player, JoinGameRequest, Pa
       const joinResult = game.addPlayer(socket.id, sanitizedName);
       
       if (!joinResult.success) {
-        errorHandler.throwGameStateError(messages.getError('couldNotJoinGame'));
+        errorHandler.throwGameStateError(config.getError('couldNotJoinGame'));
         return {
           success: false,
           error: joinResult.error || 'Failed to join game'
@@ -154,8 +154,8 @@ export class PlayerController extends BaseController<Player, JoinGameRequest, Pa
       // Notify other players
       socket.to(gameCode).emit('player:joined', {
         player: player.toClientData(),
-        message: messages.formatMessage(
-          messages.getEvent('playerJoined'),
+        message: config.formatMessage(
+          config.getEvent('playerJoined'),
           { playerName: sanitizedName }
         )
       });
@@ -240,7 +240,7 @@ export class PlayerController extends BaseController<Player, JoinGameRequest, Pa
           class: playerClass,
           race
         },
-        message: messages.formatMessage(
+        message: config.formatMessage(
           'playerSelectedCharacter',
           { playerName: player.name, class: playerClass, race }
         )
@@ -385,8 +385,8 @@ export class PlayerController extends BaseController<Player, JoinGameRequest, Pa
         socket.to(gameCode).emit('player:disconnected', {
           playerId: socket.id,
           playerName,
-          message: messages.formatMessage(
-            messages.getEvent('playerDisconnected'),
+          message: config.formatMessage(
+            config.getEvent('playerDisconnected'),
             { playerName }
           )
         });
@@ -407,8 +407,8 @@ export class PlayerController extends BaseController<Player, JoinGameRequest, Pa
           socket.to(gameCode).emit('player:left', {
             playerId: socket.id,
             playerName,
-            message: messages.formatMessage(
-              messages.getEvent('playerLeft'),
+            message: config.formatMessage(
+              config.getEvent('playerLeft'),
               { playerName }
             )
           });
@@ -483,8 +483,8 @@ export class PlayerController extends BaseController<Player, JoinGameRequest, Pa
         socket.to(gameCode).emit('player:reconnected', {
           playerId: player.id,
           playerName,
-          message: messages.formatMessage(
-            messages.getEvent('playerReconnected'),
+          message: config.formatMessage(
+            config.getEvent('playerReconnected'),
             { playerName }
           )
         });

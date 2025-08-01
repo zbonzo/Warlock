@@ -7,10 +7,10 @@
 
 import { Player } from './Player.js';
 import config from '../config/index.js';
-import SystemsFactory from './systems/SystemsFactory.js';
+import { SystemsFactory } from './systems/SystemsFactory.js';
 import logger from '../utils/logger.js';
-import messages from '../messages/index.js';
-import { GameState } from './game/GameState.js';
+// Messages are now accessed through the config system
+import { GameState, DisconnectedPlayer } from './game/GameState.js';
 import { GamePhase } from './game/GamePhase.js';
 import { GameRules } from './game/GameRules.js';
 import { GameEventBus } from './events/GameEventBus.js';
@@ -72,6 +72,24 @@ export class GameRoom {
   public readonly gamePhase: GamePhase;
   public readonly gameRules: GameRules;
   
+  // Delegated properties (defined via Object.defineProperty in setupPropertyDelegation)
+  public players!: Map<string, Player>;
+  public hostId!: string | null;
+  public started!: boolean;  
+  public round!: number;
+  public level!: number;
+  public aliveCount!: number;
+  public disconnectedPlayers!: DisconnectedPlayer[];
+  public monster!: Monster;
+  public phase!: GamePhaseEnum;
+  public pendingActions!: Map<string, any>;
+  public pendingRacialActions!: Map<string, any>;
+  public nextReady!: boolean;
+  public ended!: boolean;
+  public winner!: string | null;
+  public created!: number;
+  public startTime!: number | null;
+  
   // Event system (Phase 4 enhancement)
   public readonly eventBus: GameEventBus;
   public readonly commandProcessor: CommandProcessor;
@@ -81,6 +99,7 @@ export class GameRoom {
   
   // Systems (initialized when game starts)
   public systems: any = null;
+
 
   constructor(code: GameCode, options: GameRoomOptions = {}) {
     this.code = code;
@@ -138,57 +157,59 @@ export class GameRoom {
   private setupPropertyDelegation(): void {
     // Delegate GameState properties
     Object.defineProperty(this, 'players', {
-      get: () => this.gameState.players,
-      set: (value: Map<string, Player>) => { this.gameState.players = value; },
+      get: () => this.gameState.getPlayersMap(),
+      set: (value: Map<string, Player>) => { this.gameState.setPlayersMap(value as any); },
       enumerable: true,
       configurable: true
     });
 
     Object.defineProperty(this, 'hostId', {
-      get: () => this.gameState.hostId,
-      set: (value: string) => { this.gameState.hostId = value; },
+      get: () => this.gameState.getHostId(),
+      set: (value: string | null) => { 
+        this.gameState.setHostId(value); 
+      },
       enumerable: true,
       configurable: true
     });
 
     Object.defineProperty(this, 'started', {
-      get: () => this.gameState.started,
-      set: (value: boolean) => { this.gameState.started = value; },
+      get: () => this.gameState.hasStarted(),
+      set: (value: boolean) => { this.gameState.setStarted(value); },
       enumerable: true,
       configurable: true
     });
 
     Object.defineProperty(this, 'round', {
-      get: () => this.gameState.round,
-      set: (value: number) => { this.gameState.round = value; },
+      get: () => this.gameState.getRound(),
+      set: (value: number) => { this.gameState.setRound(value); },
       enumerable: true,
       configurable: true
     });
 
     Object.defineProperty(this, 'level', {
-      get: () => this.gameState.level,
-      set: (value: number) => { this.gameState.level = value; },
+      get: () => this.gameState.getLevel(),
+      set: (value: number) => { this.gameState.setLevel(value); },
       enumerable: true,
       configurable: true
     });
 
     Object.defineProperty(this, 'aliveCount', {
-      get: () => this.gameState.aliveCount,
-      set: (value: number) => { this.gameState.aliveCount = value; },
+      get: () => this.gameState.getAliveCount(),
+      set: (value: number) => { this.gameState.setAliveCount(value); },
       enumerable: true,
       configurable: true
     });
 
     Object.defineProperty(this, 'disconnectedPlayers', {
-      get: () => this.gameState.disconnectedPlayers,
-      set: (value: Map<string, Player>) => { this.gameState.disconnectedPlayers = value; },
+      get: () => this.gameState.getDisconnectedPlayers(),
+      set: (value: DisconnectedPlayer[]) => { this.gameState.setDisconnectedPlayers(value); },
       enumerable: true,
       configurable: true
     });
 
     Object.defineProperty(this, 'monster', {
-      get: () => this.gameState.monster,
-      set: (value: Monster) => { this.gameState.monster = value; },
+      get: () => this.gameState.getMonster(),
+      set: (value: Monster) => { this.gameState.setMonster(value as any); },
       enumerable: true,
       configurable: true
     });
@@ -202,22 +223,47 @@ export class GameRoom {
     });
 
     Object.defineProperty(this, 'pendingActions', {
-      get: () => this.gamePhase.pendingActions,
-      set: (value: Map<string, any>) => { this.gamePhase.pendingActions = value; },
+      get: () => this.gamePhase.getPendingActions(),
+      set: (value: Map<string, any>) => { this.gamePhase.setPendingActions(value); },
       enumerable: true,
       configurable: true
     });
 
     Object.defineProperty(this, 'pendingRacialActions', {
-      get: () => this.gamePhase.pendingRacialActions,
-      set: (value: Map<string, any>) => { this.gamePhase.pendingRacialActions = value; },
+      get: () => this.gamePhase.getPendingRacialActions(),
+      set: (value: Map<string, any>) => { this.gamePhase.setPendingRacialActions(value); },
       enumerable: true,
       configurable: true
     });
 
     Object.defineProperty(this, 'nextReady', {
-      get: () => this.gamePhase.nextReady,
-      set: (value: boolean) => { this.gamePhase.nextReady = value; },
+      get: () => this.gamePhase.getNextReady(),
+      set: (value: boolean) => { this.gamePhase.setNextReady(value); },
+      enumerable: true,
+      configurable: true
+    });
+
+    // Add delegation for new GameState properties
+    Object.defineProperty(this, 'ended', {
+      get: () => this.gameState.getEnded(),
+      enumerable: true,
+      configurable: true
+    });
+
+    Object.defineProperty(this, 'winner', {
+      get: () => this.gameState.getWinner(),
+      enumerable: true,
+      configurable: true
+    });
+
+    Object.defineProperty(this, 'created', {
+      get: () => this.gameState.getCreated(),
+      enumerable: true,
+      configurable: true
+    });
+
+    Object.defineProperty(this, 'startTime', {
+      get: () => this.gameState.getStartTime(),
       enumerable: true,
       configurable: true
     });

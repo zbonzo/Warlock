@@ -139,31 +139,47 @@ const UnifiedAbilityCard: React.FC<UnifiedAbilityCardProps> = ({
 
   return (
     <div
-      className={`unified-ability-card ${selected ? 'selected' : ''} ${isDisabled ? 'disabled' : ''} ${isMobile ? 'mobile' : 'desktop'}`}
+      className={`unified-ability-card ${selected ? 'selected' : ''} ${isLocked ? 'locked on-cooldown' : ''} ${!isSelectable ? 'not-selectable' : ''} ${isMobile ? 'mobile-size' : 'desktop-size'}`}
       onClick={handleClick}
     >
-      <div className="ability-icon">
-        <img
-          src={`/images/abilities/${getAbilityIcon(ability)}`}
-          alt={ability.name}
-          onError={(e) => {
-            (e.target as HTMLImageElement).src = '/images/abilities/default.png';
-          }}
-        />
+      {/* Background icon */}
+      <div className="ability-background-icon">
+        {ability.category === 'Attack' ? '⚔️' : 
+         ability.category === 'Defense' ? '🛡️' : 
+         ability.category === 'Heal' ? '💚' : '✨'}
       </div>
       
-      <div className="ability-info">
-        <h4 className="ability-name">{ability.name}</h4>
+      {/* Content overlay */}
+      <div className={`ability-content-overlay ability-${ability.category?.toLowerCase()}`}>
+        <div className="ability-name">{ability.name}</div>
         {ability.description && (
-          <p className="ability-description">{ability.description}</p>
+          <div className="ability-description">{ability.description}</div>
         )}
-        
-        {currentCooldown > 0 && (
-          <div className="cooldown-indicator">
-            Cooldown: {currentCooldown} turns
-          </div>
+        {ability.params?.damage && (
+          <div className="ability-damage">Damage: {ability.params.damage}</div>
         )}
       </div>
+      
+      {/* Lock overlay for locked abilities */}
+      {locked && (
+        <div className="lock-overlay">
+          <div className="lock-icon">🔒</div>
+          <div className="unlock-text">Locked</div>
+        </div>
+      )}
+      
+      {/* Cooldown overlay */}
+      {currentCooldown > 0 && (
+        <div className="cooldown-overlay">
+          <div className="cooldown-number">{currentCooldown}</div>
+          <div className="cooldown-text">CD</div>
+        </div>
+      )}
+      
+      {/* Selection indicator */}
+      {selected && (
+        <div className="selection-indicator">✓</div>
+      )}
     </div>
   );
 };
@@ -192,7 +208,7 @@ const AbilitySelectionStep: React.FC<AbilitySelectionStepProps> = ({
     setShowEnhancements(bloodRageActive || keenSensesActive);
   }, [bloodRageActive, keenSensesActive]);
 
-  if (!me.isAlive) {
+  if (!me['isAlive']) {
     return (
       <div className="ability-selection-step dead-player">
         <div className="dead-message">
@@ -219,11 +235,11 @@ const AbilitySelectionStep: React.FC<AbilitySelectionStepProps> = ({
           <div className="racial-ability-section">
             <h3>Racial Ability</h3>
             <RacialAbilityCard
-              ability={racialAbility}
-              usesLeft={me.racialUsesLeft}
-              cooldown={me.racialCooldown}
+              ability={racialAbility as any}
+              usesLeft={me['racialUsesLeft'] || 0}
+              cooldown={me['racialCooldown'] || 0}
               disabled={false}
-              onUse={onRacialAbilityUse}
+              onUse={() => onRacialAbilityUse(racialAbility.type)}
             />
           </div>
         )}
@@ -249,17 +265,38 @@ const AbilitySelectionStep: React.FC<AbilitySelectionStepProps> = ({
         {/* Class Abilities Section */}
         <div className="class-abilities-section">
           <h3>Your Abilities</h3>
-          <div className="abilities-grid">
-            {unlocked.map(ability => (
-              <UnifiedAbilityCard
-                key={ability.type}
-                ability={ability}
-                selected={selectedAbility?.type === ability.type}
-                onSelect={onAbilitySelect}
-                player={me}
-                isMobile={isMobile}
-              />
-            ))}
+          <div className={`abilities-grid ${isMobile ? 'mobile-grid' : 'desktop-grid'}`}>
+            {/* Fill up to 4 slots for 2x2 grid */}
+            {Array.from({ length: 4 }, (_, index) => {
+              const ability = unlocked[index];
+              if (ability) {
+                return (
+                  <UnifiedAbilityCard
+                    key={ability.type}
+                    ability={ability}
+                    selected={selectedAbility?.type === ability.type}
+                    onSelect={onAbilitySelect}
+                    player={me}
+                    isMobile={isMobile}
+                    locked={false}
+                  />
+                );
+              } else {
+                // Show locked placeholder for empty slots
+                return (
+                  <div
+                    key={`locked-${index}`}
+                    className={`unified-ability-card locked ${isMobile ? 'mobile-size' : 'desktop-size'}`}
+                  >
+                    <div className="ability-background-icon">❓</div>
+                    <div className="lock-overlay">
+                      <div className="lock-icon">🔒</div>
+                      <div className="unlock-text">Level Up to Unlock</div>
+                    </div>
+                  </div>
+                );
+              }
+            })}
           </div>
         </div>
 

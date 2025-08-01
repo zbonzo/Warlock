@@ -40,7 +40,15 @@
     "dev:types": "npx tsc --build --watch --preserveWatchOutput",
     "analyze:types": "node scripts/type-coverage-analysis.js",
     "analyze:bundle": "npm run build:client -- --analyze",
-    "optimize:check": "npm run analyze:types && npm run analyze:bundle"
+    "optimize:check": "npm run analyze:types && npm run analyze:bundle",
+    "dev:ts": "concurrently \"npm:dev:ts:server\" \"npm:dev:ts:client\"",
+    "dev:ts:server": "PORT=4001 npm run dev:ts --workspace=server",
+    "dev:ts:client": "PORT=4000 npm run dev:ts --workspace=client",
+    "build:ts": "npm run build:ts --workspace=server && npm run build:ts --workspace=client",
+    "build:ts:server": "npm run build:ts --workspace=server",
+    "build:ts:client": "npm run build:ts --workspace=client",
+    "start:ts": "npm run start:ts --workspace=server",
+    "start:ts:server": "PORT=4001 npm run start:ts --workspace=server"
   },
   "devDependencies": {
     "@types/jest": "^30.0.0",

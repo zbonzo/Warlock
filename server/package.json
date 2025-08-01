@@ -9,7 +9,10 @@
     "dev-regular": "nodemon index.js",
     "test": "jest --selectProjects server",
     "test:watch": "jest --selectProjects server --watch",
-    "test:coverage": "jest --selectProjects server --coverage"
+    "test:coverage": "jest --selectProjects server --coverage",
+    "build:ts": "npx tsc --build",
+    "dev:ts": "nodemon --config nodemon.ts.json --exec \"npx ts-node index.ts\"",
+    "start:ts": "npx ts-node index.ts"
   },
   "dependencies": {
     "@babel/core": "^7.23.0",
@@ -21,12 +24,13 @@
     "module-alias": "^2.2.3",
     "nodemon": "^3.1.10",
     "socket.io": "^4.8.1",
-    "zod": "^4.0.10"
+    "zod": "^3.25.76"
   },
   "devDependencies": {
     "@babel/preset-typescript": "^7.27.1",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.3",
+    "@types/module-alias": "^2.0.4",
     "@types/node": "^24.1.0",
     "ts-node": "^10.9.2",
     "typescript": "^5.8.3"

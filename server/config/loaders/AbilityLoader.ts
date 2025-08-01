@@ -242,13 +242,13 @@ export class AbilityLoader {
     
     // Extract effect-specific parameters
     if (ability.effect === 'poison' && ability.params['poison']) {
-      effectParams.poison = ability.params['poison'];
+      effectParams['poison'] = ability.params['poison'];
     }
     if (ability.effect === 'bleed' && ability.params['bleed']) {
-      effectParams.bleed = ability.params['bleed'];
+      effectParams['bleed'] = ability.params['bleed'];
     }
     if (ability.effect === 'vulnerable' && ability.params['vulnerability']) {
-      effectParams.vulnerability = ability.params['vulnerability'];
+      effectParams['vulnerability'] = ability.params['vulnerability'];
     }
 
     return {

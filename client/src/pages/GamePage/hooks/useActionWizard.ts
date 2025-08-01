@@ -6,6 +6,8 @@ import { useState, useEffect, useCallback } from 'react';
 import { Player, Ability } from '@/types/game';
 import useMediaQuery from '../../../hooks/useMediaQuery';
 
+type TabType = 'action' | 'players' | 'history';
+
 interface ActionWizardState {
   // State
   isMobile: boolean;
@@ -14,11 +16,11 @@ interface ActionWizardState {
   selectedAbility: Ability | null;
   selectedTarget: string | null;
   submitted: boolean;
-  activeTab: string;
+  activeTab: TabType;
   showGameState: boolean;
   
   // Actions
-  handleTabChange: (tab: string) => void;
+  handleTabChange: (tab: TabType) => void;
   handleAbilitySelect: (ability: Ability) => void;
   handleTargetSelect: (targetId: string) => void;
   handleSubmitAction: () => void;
@@ -52,14 +54,14 @@ export const useActionWizard = (me: Player | null): ActionWizardState => {
   const [submitted, setSubmitted] = useState<boolean>(false);
 
   // Mobile-specific navigation state
-  const [activeTab, setActiveTab] = useState<string>('action');
+  const [activeTab, setActiveTab] = useState<TabType>('action');
   const [showGameState, setShowGameState] = useState<boolean>(false);
 
   // Open wizard when:
   // 1. Mobile user switches to action tab
   // 2. Desktop user is alive and not stunned (always show wizard)
   useEffect(() => {
-    const shouldShowWizard = me?.isAlive && !me?.statusEffects?.stunned;
+    const shouldShowWizard = me?.['isAlive'] && !me?.statusEffects?.stunned;
     
     if (isMobile) {
       // Mobile: show wizard when action tab is active and player can act
@@ -76,11 +78,11 @@ export const useActionWizard = (me: Player | null): ActionWizardState => {
         setCurrentStep(1);
       }
     }
-  }, [isMobile, activeTab, me?.isAlive, me?.statusEffects?.stunned]);
+  }, [isMobile, activeTab, me?.['isAlive'], me?.statusEffects?.stunned]);
 
   // Reset wizard state when player dies or gets stunned
   useEffect(() => {
-    if (!me?.isAlive || me?.statusEffects?.stunned) {
+    if (!me?.['isAlive'] || me?.statusEffects?.stunned) {
       setIsWizardOpen(false);
       setShowGameState(false);
       setCurrentStep(1);
@@ -93,7 +95,7 @@ export const useActionWizard = (me: Player | null): ActionWizardState => {
         setActiveTab('players');
       }
     }
-  }, [me?.isAlive, me?.statusEffects?.stunned, isMobile, activeTab]);
+  }, [me?.['isAlive'], me?.statusEffects?.stunned, isMobile, activeTab]);
 
   // Reset wizard state when submitted action is processed
   useEffect(() => {
@@ -107,12 +109,12 @@ export const useActionWizard = (me: Player | null): ActionWizardState => {
   /**
    * Handle tab change for mobile navigation
    */
-  const handleTabChange = useCallback((tab: string) => {
+  const handleTabChange = useCallback((tab: TabType) => {
     console.log('Tab change requested:', tab);
     
     if (tab === 'action') {
       // Check if player can take action
-      if (!me?.isAlive) {
+      if (!me?.['isAlive']) {
         console.log('Cannot switch to action tab - player is dead');
         return;
       }
@@ -126,7 +128,7 @@ export const useActionWizard = (me: Player | null): ActionWizardState => {
     } else {
       setActiveTab(tab);
     }
-  }, [me?.isAlive, me?.statusEffects?.stunned]);
+  }, [me?.['isAlive'], me?.statusEffects?.stunned]);
 
   /**
    * Handle ability selection

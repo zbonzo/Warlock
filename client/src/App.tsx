@@ -28,17 +28,17 @@ import { SOCKET_URL, GAME_PHASES } from './config/constants';
 import './styles/App.css';
 
 // Types
-import { Player, Monster, PlayerRace, PlayerClass } from '../../shared/types';
+import { Player, Monster, PlayerRace, PlayerClass } from './types/shared';
 
 type GameCode = string;
 type PlayerName = string;
 type SocketId = string;
 type Winner = 'Good' | 'Evil' | 'warlocks' | 'innocents' | null;
 type TrophyAward = {
-  playerId: string;
-  type: string;
-  description: string;
-} | null;
+  playerName: string;
+  trophyName: string;
+  trophyDescription: string;
+};
 
 interface GameCreatedEvent {
   gameCode: GameCode;
@@ -68,9 +68,19 @@ interface GameReconnectedEvent {
   host?: string;
 }
 
+interface GameEvent {
+  type: string;
+  targetId?: string;
+  targetName?: string;
+  damage?: number;
+  sourceId?: string;
+  sourceName?: string;
+  [key: string]: any;
+}
+
 interface RoundResultEvent {
   players: Player[];
-  eventsLog: any[];
+  eventsLog: GameEvent[];
   monster?: Monster;
   winner?: Winner;
   turn: number;
@@ -199,8 +209,7 @@ function AppContent(): React.ReactElement {
       // Update monster state if provided
       if (mPayload) {
         setMonster({
-          hp: mPayload.hp,
-          maxHp: mPayload.maxHp,
+          ...mPayload,
           nextDamage: mPayload.nextDamage,
         });
       }
@@ -224,8 +233,8 @@ function AppContent(): React.ReactElement {
       // Update monster if provided
       if (monsterData) {
         setMonster({
-          hp: monsterData.hp,
-          maxHp: monsterData.maxHp,
+          hp: monsterData['hp'],
+          maxHp: monsterData['maxHp'],
           nextDamage: monsterData.nextDamage,
         });
       }
@@ -267,8 +276,7 @@ function AppContent(): React.ReactElement {
       // Update monster if provided
       if (mPayload) {
         setMonster({
-          hp: mPayload.hp,
-          maxHp: mPayload.maxHp,
+          ...mPayload,
           nextDamage: mPayload.nextDamage,
         });
       }
@@ -325,7 +333,7 @@ function AppContent(): React.ReactElement {
 
   // Current player data (derived from players list)
   const currentPlayer = useMemo((): Player | null => {
-    return players.find((p) => p.id === socketId) || null;
+    return players.find((p) => p['id'] === socketId) || null;
   }, [players, socketId]);
 
   // Handler functions using useCallback
@@ -348,9 +356,9 @@ function AppContent(): React.ReactElement {
   );
 
   const handleConfirm = useCallback(
-    (race: PlayerRace, cls: PlayerClass) => {
-      setSelectedRace(race);
-      setSelectedClass(cls);
+    (race: string, cls: string) => {
+      setSelectedRace(race as unknown as PlayerRace);
+      setSelectedClass(cls as unknown as PlayerClass);
       emit('selectCharacter', {
         gameCode,
         race,
@@ -428,7 +436,7 @@ function AppContent(): React.ReactElement {
           <JoinGamePage
             onCreateGame={handleCreateGame}
             onJoinGame={handleJoinGame}
-            onReconnect={handleReconnect}
+            onReconnect={() => handleReconnect('', '')}
           />
         );
       case GAME_PHASES.CHARACTER_SELECT:
@@ -436,10 +444,10 @@ function AppContent(): React.ReactElement {
           <CharacterSelectPage
             playerName={playerName}
             gameCode={gameCode}
-            selectedRace={selectedRace}
-            selectedClass={selectedClass}
-            onSelectRace={setSelectedRace}
-            onSelectClass={setSelectedClass}
+            selectedRace={selectedRace as string | null}
+            selectedClass={selectedClass as string | null}
+            onSelectRace={(raceId: string | null) => setSelectedRace(raceId as unknown as PlayerRace)}
+            onSelectClass={(classId: string | null) => setSelectedClass(classId as unknown as PlayerClass)}
             onConfirm={handleConfirm}
           />
         );
@@ -448,8 +456,8 @@ function AppContent(): React.ReactElement {
           <LobbyPage
             players={players}
             gameCode={gameCode}
-            isHost={!!(currentPlayer && players[0]?.id === currentPlayer.id)}
-            currentPlayerId={currentPlayer?.id}
+            isHost={!!(currentPlayer && players[0]?.['id'] === currentPlayer['id'])}
+            currentPlayerId={currentPlayer?.['id']}
             onStartGame={handleStartGame}
           />
         );
@@ -468,13 +476,13 @@ function AppContent(): React.ReactElement {
       case GAME_PHASES.END:
         return (
           <EndPage
-            winner={winner}
+            winner={winner === 'warlocks' || winner === 'innocents' ? 'Evil' : (winner || 'Good')}
             players={players}
             eventsLog={eventsLog}
             gameCode={gameCode}
             playerName={playerName}
-            socket={socket}
-            trophyAward={trophyAward}
+            socket={socket || undefined}
+            trophyAward={trophyAward || undefined}
             onPlayAgain={handlePlayAgain}
           />
         );

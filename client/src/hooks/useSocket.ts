@@ -4,7 +4,7 @@
  */
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { io, Socket } from 'socket.io-client';
-import type { ClientToServerEvents, ServerToClientEvents } from '../../../shared/types';
+import type { ClientToServerEvents, ServerToClientEvents } from '../types/shared';
 
 // Global socket instance cache to prevent multiple connections
 const globalSocketCache = new Map<string, Socket>();

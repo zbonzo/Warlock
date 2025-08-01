@@ -7,7 +7,7 @@
 
 import config from '../../config/index.js';
 import logger from '../../utils/logger.js';
-import messages from '../../messages/index.js';
+// Messages are now accessed through the config system
 import { DamageCalculator } from './DamageCalculator.js';
 import { EffectManager } from './EffectManager.js';
 import { TurnResolver } from './TurnResolver.js';
@@ -451,7 +451,7 @@ export class CombatSystem extends AbstractGameSystem<GameRoom, GameEvent> implem
     // Add coordination log entry
     log.push({
       type: 'coordination',
-      message: messages.formatMessage(
+      message: config.formatMessage(
         'Coordinated {actionType} by {playerCount} players! (+{bonus}% effectiveness)',
         {
           actionType,

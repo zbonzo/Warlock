@@ -3,7 +3,7 @@
  */
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import configService from '../services/configService';
-import { PlayerClass, PlayerRace, Ability } from '../../../shared/types';
+import { PlayerClass, PlayerRace, Ability } from '../types/shared';
 
 interface RaceAttribute {
   name: string;

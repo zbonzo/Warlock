@@ -3,7 +3,7 @@
  */
 import { useState, useEffect, useCallback } from 'react';
 import useMediaQuery from '../../../hooks/useMediaQuery';
-import type { Player } from '../../../shared/types';
+import type { Player } from '../../../types/shared';
 
 interface UseMobileStateReturn {
   // State
@@ -43,7 +43,7 @@ export const useMobileState = (me?: Player): UseMobileStateReturn => {
   useEffect(() => {
     if (isMobile && activeTab === 'action' && !showMobileActionWizard) {
       // Don't open wizard if player is stunned or dead
-      if (!me?.isAlive || me?.statusEffects?.stunned) {
+      if (!me?.['isAlive'] || me?.['statusEffects']?.['stunned']) {
         console.log('Cannot open wizard - player is stunned or dead');
         setActiveTab('players'); // Redirect to players tab instead
         return;
@@ -59,12 +59,12 @@ export const useMobileState = (me?: Player): UseMobileStateReturn => {
       setShowMobileActionWizard(false);
     }
     // Close wizard if player becomes stunned or dies
-    else if (showMobileActionWizard && (!me?.isAlive || me?.statusEffects?.stunned)) {
+    else if (showMobileActionWizard && (!me?.['isAlive'] || me?.['statusEffects']?.['stunned'])) {
       console.log('Closing wizard - player became stunned or dead');
       setShowMobileActionWizard(false);
       setActiveTab('players'); // Switch to players tab
     }
-  }, [isMobile, activeTab, showMobileActionWizard, me?.isAlive, me?.statusEffects?.stunned]);
+  }, [isMobile, activeTab, showMobileActionWizard, me?.['isAlive'], me?.['statusEffects']?.['stunned']]);
 
   /**
    * Handle tab change for mobile navigation
@@ -75,12 +75,12 @@ export const useMobileState = (me?: Player): UseMobileStateReturn => {
     
     if (tab === 'action') {
       // Check if player can take action
-      if (!me?.isAlive) {
+      if (!me?.['isAlive']) {
         console.log('Cannot switch to action tab - player is dead');
         return;
       }
       
-      if (me?.statusEffects?.stunned) {
+      if (me?.['statusEffects']?.['stunned']) {
         console.log('Cannot switch to action tab - player is stunned');
         return;
       }
@@ -100,7 +100,7 @@ export const useMobileState = (me?: Player): UseMobileStateReturn => {
         setShowMobileActionWizard(false);
       }
     }
-  }, [isMobile, me?.isAlive, me?.statusEffects?.stunned, showMobileActionWizard]);
+  }, [isMobile, me?.['isAlive'], me?.['statusEffects']?.['stunned'], showMobileActionWizard]);
 
   /**
    * Close mobile action wizard

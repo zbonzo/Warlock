@@ -7,7 +7,7 @@
 import { Server as SocketIOServer } from 'socket.io';
 import { GameRoom } from '../models/GameRoom.js';
 import config from '../config/index.js';
-import messages from '../config/messages/index.js';
+// Messages are now accessed through the config system
 import {
   throwGameStateError,
   throwValidationError,
@@ -75,7 +75,7 @@ export function createGameTimeout(io: SocketIOServer, gameCode: string): void {
     logger.info('GameTimedOut', { gameCode });
     // Notify any connected players before deleting
     if (games.has(gameCode)) {
-      io.to(gameCode).emit(messages.getError('gameTimeout'));
+      io.to(gameCode).emit(config.getError('gameTimeout'));
     }
     // Clean up the game
     games.delete(gameCode);
@@ -104,7 +104,7 @@ export function createGame(gameCode: string): GameRoom | null {
   if (games.size >= maxGames) {
     // Prevent server overload
     throwGameStateError(
-      messages.getError('serverBusy')
+      config.getError('serverBusy')
     );
     return null;
   }
@@ -136,12 +136,8 @@ export function canPlayerJoinGame(game: GameRoom, playerId: string): boolean {
     return false;
   }
 
-  // Check if player is already in this game
-  if (game.gameState.players.has(playerId)) {
-    throwValidationError(messages.getError('playerExists'));
-    return false;
-  }
-
+  // Don't check if player already exists here - that's handled by name validation
+  // This allows reconnection and name changes
   return true;
 }
 
@@ -366,7 +362,16 @@ function awardRandomTrophy(game: GameRoom, gameResult: GameResult): TrophyAward 
 
     // FIXED: Refresh gameResult with current player data for trophy evaluation
     // The original gameResult.players was created earlier and may have empty stats
-    gameResult.players = (game as any).getPlayersInfo();
+    const playersInfo = (game as any).getPlayersInfo();
+    logger.info('getPlayersInfo returned:', {
+      playerCount: playersInfo?.length || 0,
+      playersHaveStats: playersInfo?.map(p => ({
+        name: p.name,
+        hasStats: !!p.stats,
+        statsKeys: p.stats ? Object.keys(p.stats) : []
+      }))
+    });
+    gameResult.players = playersInfo;
     
     // DEBUG: Log the player stats structure for trophy debugging
     logger.info('Trophy debug - getPlayersInfo structure:', {
@@ -549,7 +554,7 @@ export function createGameWithCode(gameCode: string): GameRoom | null {
   // Check if we already have too many games
   const maxGames = config.maxGames || 100;
   if (games.size >= maxGames) {
-    throwGameStateError(messages.getError('serverBusy'));
+    throwGameStateError(config.getError('serverBusy'));
     return null;
   }
 
@@ -557,6 +562,35 @@ export function createGameWithCode(gameCode: string): GameRoom | null {
   games.set(gameCode, game);
   logger.info(`Created replay game with code ${gameCode}`);
   return game;
+}
+
+/**
+ * Get a game by code
+ */
+export function getGame(gameCode: string): GameRoom | undefined {
+  return games.get(gameCode);
+}
+
+/**
+ * Cleanup a game by code
+ */
+export function cleanupGame(gameCode: string): boolean {
+  const game = games.get(gameCode);
+  if (!game) {
+    return false;
+  }
+
+  // Clear any existing timer
+  if (gameTimers.has(gameCode)) {
+    clearTimeout(gameTimers.get(gameCode)!);
+    gameTimers.delete(gameCode);
+  }
+
+  // Remove game
+  games.delete(gameCode);
+  
+  logger.info('GameCleanedup', { gameCode });
+  return true;
 }
 
 /**
@@ -606,6 +640,10 @@ export default {
   isInRoundResults,
   createGameWithCode,
   cleanupExpiredDisconnectedPlayers,
+  
+  // Game management functions
+  getGame,
+  cleanupGame,
 
   // Debug/utility functions
   getGameStats,

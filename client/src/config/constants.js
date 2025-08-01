@@ -7,7 +7,7 @@
 export const SOCKET_URL = (() => {
   const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
 
-  // In development with different ports for client (3000) and server (3001)
+  // In development with different ports for client (4000) and server (4001)
   if (process.env.NODE_ENV === 'development') {
     // Special case: If running on localhost with Webpack dev server
     if (
@@ -15,10 +15,10 @@ export const SOCKET_URL = (() => {
       window.location.hostname === '127.0.0.1'
     ) {
       // Force IPv4 to avoid IPv6 connection issues
-      return `${protocol === 'wss:' ? 'https:' : 'http:'}//127.0.0.1:3001`;
+      return `${protocol === 'wss:' ? 'https:' : 'http:'}//127.0.0.1:4001`;
     }
     // Otherwise, assume server is on same machine but different port
-    return `${protocol === 'wss:' ? 'https:' : 'http:'}//${window.location.hostname}:3001`;
+    return `${protocol === 'wss:' ? 'https:' : 'http:'}//${window.location.hostname}:4001`;
   }
 
   // In production, assume same origin
@@ -34,16 +34,16 @@ export const API_URL = (() => {
 
   // In development, use the hostname from the browser
   if (process.env.NODE_ENV === 'development') {
-    // Use the current hostname but with port 3001 for the API
+    // Use the current hostname but with port 4001 for the API
     const protocol = window.location.protocol;
     const hostname = window.location.hostname;
     
     // Force IPv4 for localhost to avoid IPv6 connection issues
     if (hostname === 'localhost' || hostname === '127.0.0.1') {
-      return `${protocol}//127.0.0.1:3001/api`;
+      return `${protocol}//127.0.0.1:4001/api`;
     }
     
-    return `${protocol}//${hostname}:3001/api`;
+    return `${protocol}//${hostname}:4001/api`;
   }
 
   // In production, use relative URL (same origin via nginx proxy)

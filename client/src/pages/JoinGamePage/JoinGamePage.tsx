@@ -19,9 +19,9 @@ interface ValidationResult {
 }
 
 interface NameCheckResponse {
-  isAvailable: boolean;
+  available: boolean;
   error?: string;
-  suggestion?: string;
+  suggestions?: string[];
 }
 
 interface ErrorMessage {
@@ -74,12 +74,12 @@ const JoinGamePage: React.FC<JoinGamePageProps> = ({ onCreateGame, onJoinGame, o
   useEffect(() => {
     if (!socket) return;
 
-    const handleNameCheckResponse = ({ isAvailable, error, suggestion }: NameCheckResponse): void => {
+    const handleNameCheckResponse = ({ available, error, suggestions }: NameCheckResponse): void => {
       setIsCheckingDuplicate(false);
 
-      if (!isAvailable) {
+      if (!available) {
         setNameError(error || 'Name is already taken in this game');
-        setNameSuggestion(suggestion || generateAlternativeName(name));
+        setNameSuggestion((suggestions && suggestions[0]) || generateAlternativeName(name));
         setIsNameValid(false);
       } else {
         // Name is available, set as valid
@@ -124,7 +124,7 @@ const JoinGamePage: React.FC<JoinGamePageProps> = ({ onCreateGame, onJoinGame, o
       if (!socket || !connected) return;
 
       setIsCheckingDuplicate(true);
-      socket.emit('checkNameAvailability', {
+      (socket as any).emit('checkNameAvailability', {
         playerName: nameToCheck,
         gameCode: gameCodeToCheck,
       });
@@ -289,7 +289,7 @@ const JoinGamePage: React.FC<JoinGamePageProps> = ({ onCreateGame, onJoinGame, o
     const char = e.key;
     if (char.length > 1) return;
 
-    const allowedPattern = /[\p{L}\p{N}\s\-']/u;
+    const allowedPattern = /[a-zA-Z0-9\s\-']/
     const dangerousPattern = /[<>{}()&;|`$]/;
 
     if (dangerousPattern.test(char)) {
@@ -367,18 +367,22 @@ const JoinGamePage: React.FC<JoinGamePageProps> = ({ onCreateGame, onJoinGame, o
     setTimeout(() => {
       const randomIndex = Math.floor(Math.random() * RANDOM_NAMES.length);
       const randomName = RANDOM_NAMES[randomIndex];
-      setName(randomName);
+      if (randomName) {
+        setName(randomName);
+      }
 
       // Validate and check duplicates for generated name
-      const validation = validateName(randomName);
-      if (validation.isValid && joinCode) {
-        checkDuplicateName(randomName, joinCode.trim());
-        setNameError('Checking name availability...');
-        setIsNameValid(false);
-      } else {
-        setIsNameValid(validation.isValid);
-        setNameError(validation.error);
-        setNameSuggestion(validation.suggestion);
+      if (randomName) {
+        const validation = validateName(randomName);
+        if (validation.isValid && joinCode) {
+          checkDuplicateName(randomName, joinCode.trim());
+          setNameError('Checking name availability...');
+          setIsNameValid(false);
+        } else {
+          setIsNameValid(validation.isValid);
+          setNameError(validation.error);
+          setNameSuggestion(validation.suggestion);
+        }
       }
 
       setIsGeneratingName(false);
@@ -386,7 +390,7 @@ const JoinGamePage: React.FC<JoinGamePageProps> = ({ onCreateGame, onJoinGame, o
   };
 
   const generateAlternativeName = (originalName: string): string => {
-    const letters = originalName.match(/\p{L}/gu);
+    const letters = originalName.match(/[a-zA-Z]/g);
     if (letters && letters.length >= 2) {
       const cleanName = letters.slice(0, 8).join('');
       return cleanName + Math.floor(Math.random() * 99);
@@ -404,8 +408,9 @@ const JoinGamePage: React.FC<JoinGamePageProps> = ({ onCreateGame, onJoinGame, o
       'Defender',
       'Striker',
     ];
+    const selectedAlternative = alternatives[Math.floor(Math.random() * alternatives.length)];
     return (
-      alternatives[Math.floor(Math.random() * alternatives.length)] +
+      (selectedAlternative || 'Player') +
       Math.floor(Math.random() * 99)
     );
   };

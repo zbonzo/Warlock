@@ -27,7 +27,7 @@ const PlayerCard: React.FC<PlayerCardProps> = ({
   canSeeWarlock = false 
 }) => {
   const theme = useTheme();
-  const healthPercent = (player.hp / player.maxHp) * 100;
+  const healthPercent = (player['hp'] / player['maxHp']) * 100;
 
   // Determine health bar color based on percentage
   const healthStatus =
@@ -178,17 +178,17 @@ const PlayerCard: React.FC<PlayerCardProps> = ({
   };
 
   // Create the character display string
-  const characterString = `${player.name} - ${player.race || 'Unknown'} ${player.class || 'Unknown'}`;
+  const characterString = `${player['name']} - ${player['race'] || 'Unknown'} ${player['class'] || 'Unknown'}`;  
 
   // Determine if we should show warlock text
-  const shouldShowAsWarlock = canSeeWarlock && player.isWarlock;
+  const shouldShowAsWarlock = canSeeWarlock && player['isWarlock'];
   const displayName = shouldShowAsWarlock
     ? toZalgo(characterString)
     : characterString;
 
   return (
     <div
-      className={`player-card ${isCurrentPlayer ? 'current-player' : ''} ${!player.isAlive ? 'dead' : ''} ${shouldShowAsWarlock ? 'warlock-player' : ''}`}
+      className={`player-card ${isCurrentPlayer ? 'current-player' : ''} ${!player['isAlive'] ? 'dead' : ''} ${shouldShowAsWarlock ? 'warlock-player' : ''}`}
     >
       {/* Character name and class at the top */}
       <div className="character-header">
@@ -203,7 +203,7 @@ const PlayerCard: React.FC<PlayerCardProps> = ({
       {/* Health display */}
       <div className="health-container">
         <div className="health-text">
-          HP: {player.hp}/{player.maxHp}
+          HP: {player['hp']}/{player['maxHp']}
         </div>
         <div className="health-bar">
           <div
@@ -214,17 +214,17 @@ const PlayerCard: React.FC<PlayerCardProps> = ({
       </div>
 
       {/* Armor display */}
-      {player.armor > 0 && (
+      {(player['armor'] || 0) > 0 && (
         <div className="armor-indicator">
           <span className="armor-icon">🛡️</span>
-          <span>Base Armor: {player.armor}</span>
+          <span>Base Armor: {player['armor']}</span>
         </div>
       )}
 
       {/* Status effects */}
-      {player.statusEffects && Object.keys(player.statusEffects).length > 0 && (
+      {player['statusEffects'] && Object.keys(player['statusEffects']).length > 0 && (
         <div className="status-effects-container">
-          {Object.entries(player.statusEffects).map(([effect, data]) => {
+          {Object.entries(player['statusEffects']).map(([effect, data]) => {
             const { icon, label } = getStatusEffectDetails(effect);
             const additionalInfo = getStatusEffectInfo(effect, data);
 
@@ -246,7 +246,7 @@ const PlayerCard: React.FC<PlayerCardProps> = ({
       )}
 
       {/* Dead overlay */}
-      {!player.isAlive && <div className="dead-overlay">💀 Dead</div>}
+      {!player['isAlive'] && <div className="dead-overlay">💀 Dead</div>}
     </div>
   );
 };
@@ -275,16 +275,16 @@ function getStatusEffectDetails(effect: string): StatusEffectDetails {
 function getStatusEffectInfo(effect: string, data: any): string {
   let additionalInfo = '';
 
-  if (effect === 'shielded' && data.armor) {
-    additionalInfo = ` +${data.armor} Armor`;
+  if (effect === 'shielded' && data['armor']) {
+    additionalInfo = ` +${data['armor']} Armor`;
   }
 
-  if (data.turns) {
-    additionalInfo += ` (${data.turns} turn${data.turns !== 1 ? 's' : ''})`;
+  if (data['turns']) {
+    additionalInfo += ` (${data['turns']} turn${data['turns'] !== 1 ? 's' : ''})`;
   }
 
-  if (effect === 'poison' && data.damage) {
-    additionalInfo += ` (${data.damage} dmg)`;
+  if (effect === 'poison' && data['damage']) {
+    additionalInfo += ` (${data['damage']} dmg)`;
   }
 
   return additionalInfo;

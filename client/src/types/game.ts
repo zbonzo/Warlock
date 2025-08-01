@@ -2,6 +2,8 @@
  * Shared type definitions for game objects used across React components
  */
 
+import type { Player, Monster } from './shared';
+
 export interface AbilityParams {
   damage?: number;
   damagePerHit?: number;
@@ -35,7 +37,7 @@ export interface Ability {
   type: string;
   name: string;
   category: 'Attack' | 'Defense' | 'Heal' | 'Special' | 'Racial';
-  effect?: 'poison' | 'shielded' | 'invisible' | 'stunned' | 'detect' | 'weakened';
+  effect?: 'poison' | 'shielded' | 'invisible' | 'stunned' | 'detect' | 'weakened' | 'vulnerable';
   target?: 'Single' | 'Multi' | 'Self';
   description?: string;
   flavorText?: string;
@@ -61,31 +63,11 @@ export interface StatusEffects {
   [key: string]: StatusEffectData | undefined;
 }
 
-export interface Player {
-  id: string;
-  name: string;
-  race?: string;
-  class?: string;
-  hp: number;
-  maxHp: number;
-  armor: number;
-  isAlive: boolean;
-  isWarlock: boolean;
-  statusEffects?: StatusEffects;
-  damageMod?: number;
-  racialAbility?: Ability;
-  racialUsesLeft?: number;
-  racialCooldown?: number;
-  abilityCooldowns?: Record<string, number>;
-}
+// Re-export Player from shared types to maintain compatibility
+export type { Player } from './shared';
 
-export interface Monster {
-  hp: number;
-  maxHp: number;
-  nextDamage: number;
-  name?: string;
-  type?: string;
-}
+// Re-export Monster from shared types to maintain compatibility
+export type { Monster } from './shared';
 
 export interface GameState {
   round: number;

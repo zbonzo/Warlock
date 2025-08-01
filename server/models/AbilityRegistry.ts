@@ -5,7 +5,7 @@
 
 import logger from '../utils/logger.js';
 import config from '../config/index.js';
-import messages from '../config/messages/index.js';
+// Messages are now accessed through the config system
 import type { Player, Monster, Ability } from '../types/generated';
 
 interface AbilityHandler {
@@ -201,7 +201,7 @@ class AbilityRegistry {
     if (outcome === 'crit' || outcome === 'ultraFail') {
       actor.tempCritMultiplier = critMultiplier;
       const categoryKey = ability.category.toLowerCase();
-      const critMsg = messages.getAbilityMessage(
+      const critMsg = config.getAbilityMessage(
         `abilities.${categoryKey}`,
         'abilityCrit'
       );
@@ -216,7 +216,7 @@ class AbilityRegistry {
         public: true,
         attackerId: actor.id,
         targetId: (finalTarget as any).id || finalTarget,
-        message: messages.formatMessage(critMsg, {
+        message: config.formatMessage(critMsg, {
           playerName: actor.name,
           abilityName: ability.name,
           targetName,

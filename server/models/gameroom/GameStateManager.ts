@@ -6,7 +6,7 @@
 
 import config from '../../config/index.js';
 import logger from '../../utils/logger.js';
-import messages from '../../config/messages/index.js';
+// Messages are now accessed through the config system
 import type { GameRoom } from '../GameRoom.js';
 import type { Player } from '../Player.js';
 import type { Ability } from '../../types/generated.js';

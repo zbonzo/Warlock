@@ -111,7 +111,7 @@ const CustomAvatar: React.FC<CustomAvatarProps> = ({ player, isCurrentPlayer }) 
     if (!canvasRef.current) return;
 
     const classEmoji = (ICONS.CLASSES as Record<string, string>)[player.class || ''] || '❓';
-    const letter = player.name.charAt(0).toUpperCase();
+    const letter = player['name'].charAt(0).toUpperCase();
 
     // Get race color
     const raceColors: Record<string, string> = {
@@ -327,6 +327,7 @@ const ActionColumn: React.FC<ActionColumnProps> = ({
       
       return () => clearTimeout(timeout);
     }
+    return undefined;
   }, [isSubmitting]);
 
   const validPlayers = Array.isArray(players) && players.length > 0
@@ -351,8 +352,8 @@ const ActionColumn: React.FC<ActionColumnProps> = ({
     if (selectedTarget === '__monster__') {
       return monster && monster.hp > 0;
     } else {
-      const targetPlayer = alivePlayers.find((p) => p.id === selectedTarget);
-      return targetPlayer && targetPlayer.isAlive;
+      const targetPlayer = alivePlayers.find((p) => p['id'] === selectedTarget);
+      return targetPlayer && targetPlayer['isAlive'];
     }
   };
 
@@ -366,17 +367,18 @@ const ActionColumn: React.FC<ActionColumnProps> = ({
       if (!selectedTarget) issues.push('Select a target');
 
       const selectedAbility = unlocked.find((a) => a.type === actionType);
-      if (selectedAbility && me?.abilityCooldowns?.[selectedAbility.type] > 0) {
+      const cooldownValue = me?.abilityCooldowns?.[selectedAbility?.type || ''] || 0;
+      if (selectedAbility && cooldownValue > 0) {
         issues.push(
-          `${selectedAbility.name} is on cooldown (${me.abilityCooldowns[selectedAbility.type]} turns)`
+          `${selectedAbility.name} is on cooldown (${cooldownValue} turns)`
         );
       }
 
       if (selectedTarget === '__monster__' && (!monster || monster.hp <= 0)) {
         issues.push('Monster is no longer a valid target');
       } else if (selectedTarget !== '__monster__') {
-        const targetPlayer = alivePlayers.find((p) => p.id === selectedTarget);
-        if (!targetPlayer || !targetPlayer.isAlive) {
+        const targetPlayer = alivePlayers.find((p) => p['id'] === selectedTarget);
+        if (!targetPlayer || !targetPlayer['isAlive']) {
           issues.push('Selected player is no longer alive or valid');
         }
       }
@@ -408,7 +410,7 @@ const ActionColumn: React.FC<ActionColumnProps> = ({
           </h2>
 
           {/* Dead player view */}
-          {!me.isAlive && (
+          {!me['isAlive'] && (
             <div className="dead-message card">
               <h3 className="section-title danger">You are dead</h3>
               <p>
@@ -419,7 +421,7 @@ const ActionColumn: React.FC<ActionColumnProps> = ({
           )}
 
           {/* Stunned player view */}
-          {me.isAlive && me.statusEffects?.stunned && (
+          {me['isAlive'] && me.statusEffects?.stunned && (
             <div className="stunned-message card">
               <h3 className="section-title warning">Stunned</h3>
               <div className="stun-icon">
@@ -433,7 +435,7 @@ const ActionColumn: React.FC<ActionColumnProps> = ({
           )}
 
           {/* Enhanced waiting for others view with detailed submission tracking */}
-          {me.isAlive &&
+          {me['isAlive'] &&
             !me.statusEffects?.stunned &&
             submitted &&
             !needsRevalidation() && (
@@ -447,18 +449,18 @@ const ActionColumn: React.FC<ActionColumnProps> = ({
                   {/* Player submission grid */}
                   <div className="player-targets-grid submission-grid">
                     {validPlayers
-                      .filter((player) => player.isAlive)
+                      .filter((player) => player['isAlive'])
                       .map((player) => (
                         <div
-                          key={player.id}
+                          key={player['id']}
                           className={`
                             player-target-card submission-card
                             ${(player as any).hasSubmittedAction ? 'ready' : ''} 
-                            ${player.id === me.id ? 'self' : ''}
+                            ${player['id'] === me['id'] ? 'self' : ''}
                           `}
                         >
-                          <div className="player-name">{player.name}</div>
-                          <CustomAvatar player={player} isCurrentPlayer={player.id === me.id} />
+                          <div className="player-name">{player['name']}</div>
+                          <CustomAvatar player={player} isCurrentPlayer={player['id'] === me['id']} />
                           <div className="submission-status-text">
                             {(player as any).hasSubmittedAction ? '✓ Ready' : '⋯ Waiting'}
                           </div>
@@ -472,7 +474,7 @@ const ActionColumn: React.FC<ActionColumnProps> = ({
             )}
 
           {/* Action selection view */}
-          {me.isAlive &&
+          {me['isAlive'] &&
             !me.statusEffects?.stunned &&
             (!submitted || needsRevalidation()) && (
               <div className="action-selection">
@@ -481,9 +483,9 @@ const ActionColumn: React.FC<ActionColumnProps> = ({
                   <div className="racial-ability-container">
                     <h3 className="section-title secondary">Racial Ability</h3>
                     <RacialAbilityCard
-                      ability={me.racialAbility}
-                      usesLeft={me.racialUsesLeft}
-                      cooldown={me.racialCooldown}
+                      ability={me.racialAbility as any}
+                      usesLeft={me.racialUsesLeft || 0}
+                      cooldown={me.racialCooldown || 0}
                       disabled={false}
                       onUse={() => onRacialAbilityUse(me.racialAbility!.type)}
                     />
@@ -540,8 +542,8 @@ const ActionColumn: React.FC<ActionColumnProps> = ({
                 <TargetSelector
                   alivePlayers={alivePlayers}
                   monster={monster}
-                  currentPlayerId={me.id}
-                  selectedTarget={selectedTarget}
+                  currentPlayerId={me['id']}
+                  selectedTarget={selectedTarget || undefined}
                   onSelectTarget={onSelectTarget}
                   disableMonster={keenSensesActive}
                   selectedAbility={unlocked.find((ability) => ability.type === actionType)}
@@ -549,7 +551,7 @@ const ActionColumn: React.FC<ActionColumnProps> = ({
 
                 {/* Enhanced submit button with dynamic atmospheric text */}
                 <RuneButton
-                  variant={getActionButtonVariant(actionType, submitted)}
+                  variant={getActionButtonVariant(actionType || '', submitted)}
                   onClick={handleSubmitAction}
                   disabled={!isCurrentSelectionValid() || isSubmitting}
                   title={
@@ -564,7 +566,7 @@ const ActionColumn: React.FC<ActionColumnProps> = ({
                     ? 'Casting...' 
                     : needsRevalidation() 
                     ? 'Update Action' 
-                    : getActionButtonText(actionType, submitted, isSubmitting)
+                    : getActionButtonText(actionType || '', submitted, isSubmitting)
                   }
                 </RuneButton>
               </div>
@@ -577,12 +579,12 @@ const ActionColumn: React.FC<ActionColumnProps> = ({
           {/* Event log */}
           <EventsLog
             events={lastEvent.events}
-            currentPlayerId={me.id}
+            currentPlayerId={me['id']}
             players={validPlayers}
           />
 
           {/* Ready button */}
-          {me.isAlive && (
+          {me['isAlive'] && (
             <button
               className={`button ready-button ${readyClicked ? 'clicked' : ''}`}
               onClick={onReadyClick}
@@ -606,13 +608,13 @@ const ActionColumn: React.FC<ActionColumnProps> = ({
             <p className="ready-info">Players ready for next round:</p>
             <div className="ready-indicators">
               {lastEvent.readyPlayers?.map((playerId) => {
-                const player = lastEvent.players?.find((p) => p.id === playerId);
+                const player = lastEvent.players?.find((p) => p['id'] === playerId);
                 return player ? (
                   <div key={playerId} className="ready-player">
                     <div className="ready-player-icon">
-                      {player.name.charAt(0)}
+                      {player['name'].charAt(0)}
                     </div>
-                    <div className="ready-player-name">{player.name}</div>
+                    <div className="ready-player-name">{player['name']}</div>
                   </div>
                 ) : null;
               })}

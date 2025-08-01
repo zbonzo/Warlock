@@ -4,7 +4,7 @@
  */
 import { RANDOM_NAMES } from '../pages/JoinGamePage/constants';
 import { CLASS_TO_RACES } from '../pages/CharacterSelectPage/constants';
-import { PlayerClass, PlayerRace } from '../../../shared/types';
+import { PlayerClass, PlayerRace } from '../types/shared';
 
 /**
  * Generate a random game code
@@ -28,8 +28,10 @@ export function isValidRaceClassCombo(race: PlayerRace | string, cls: PlayerClas
   if (!race || !cls) return false;
 
   // Check if this race is available for the selected class
-  const racesList = (CLASS_TO_RACES as any)[cls] as string[] | undefined;
-  if (racesList && Array.isArray(racesList) && racesList.includes(race)) {
+  const clsString = String(cls);
+  const raceString = String(race);
+  const racesList = CLASS_TO_RACES[clsString];
+  if (racesList && Array.isArray(racesList) && racesList.includes(raceString)) {
     return true;
   }
 

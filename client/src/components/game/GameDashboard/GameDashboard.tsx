@@ -18,7 +18,7 @@ interface GameDashboardProps {
  */
 const GameDashboard: React.FC<GameDashboardProps> = ({ round, alivePlayers, monster }) => {
   const theme = useTheme();
-  const healthPercent = (monster.hp / monster.maxHp) * 100;
+  const healthPercent = (monster['hp'] / monster['maxHp']) * 100;
   const isLowHealth = healthPercent < 30;
   
   return (
@@ -42,7 +42,7 @@ const GameDashboard: React.FC<GameDashboardProps> = ({ round, alivePlayers, mons
             style={{ width: `${healthPercent}%` }}
           />
           <div className="health-bar-text">
-            {monster.hp}/{monster.maxHp}
+            {monster['hp']}/{monster['maxHp']}
           </div>
         </div>
         <div className="damage-indicator">

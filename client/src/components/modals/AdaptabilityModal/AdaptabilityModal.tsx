@@ -6,7 +6,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useTheme } from '@contexts/ThemeContext';
 import { STEPS, type StepType } from './constants';
 import type { Socket } from 'socket.io-client';
-import type { Ability, PlayerClass } from '../../../../shared/types';
+import type { Ability, PlayerClass } from '../../../types/shared';
 import './AdaptabilityModal.css';
 
 export interface AdaptabilityModalProps {
@@ -116,10 +116,10 @@ const AdaptabilityModal: React.FC<AdaptabilityModalProps> = ({
         if (!playerAbilities || playerAbilities.length === 0) {
           console.warn('No abilities found, using fallback');
           playerAbilities = [
-            { type: 'attack', name: 'Slash', category: 'Attack', unlockAt: 1 } as Ability,
-            { type: 'shieldWall', name: 'Shield Wall', category: 'Defense', unlockAt: 2 } as Ability,
-            { type: 'bandage', name: 'Bandage', category: 'Heal', unlockAt: 3 } as Ability,
-            { type: 'battleCry', name: 'Battle Cry', category: 'Special', unlockAt: 4 } as Ability,
+            { id: 'slash', type: 'attack', name: 'Slash', category: 'Attack', description: 'Basic attack', unlockAt: 1 },
+            { id: 'shieldWall', type: 'shieldWall', name: 'Shield Wall', category: 'Defense', description: 'Defensive ability', unlockAt: 2 },
+            { id: 'bandage', type: 'bandage', name: 'Bandage', category: 'Heal', description: 'Healing ability', unlockAt: 3 },
+            { id: 'battleCry', type: 'battleCry', name: 'Battle Cry', category: 'Special', description: 'Special ability', unlockAt: 4 },
           ];
         }
 
@@ -127,10 +127,10 @@ const AdaptabilityModal: React.FC<AdaptabilityModalProps> = ({
       } catch (err) {
         console.error('Error processing abilities:', err);
         setAbilities([
-          { type: 'attack', name: 'Slash', category: 'Attack', unlockAt: 1 } as Ability,
-          { type: 'shieldWall', name: 'Shield Wall', category: 'Defense', unlockAt: 2 } as Ability,
-          { type: 'bandage', name: 'Bandage', category: 'Heal', unlockAt: 3 } as Ability,
-          { type: 'battleCry', name: 'Battle Cry', category: 'Special', unlockAt: 4 } as Ability,
+          { id: 'slash', type: 'attack', name: 'Slash', category: 'Attack', description: 'Basic attack', unlockAt: 1 },
+          { id: 'shieldWall', type: 'shieldWall', name: 'Shield Wall', category: 'Defense', description: 'Defensive ability', unlockAt: 2 },
+          { id: 'bandage', type: 'bandage', name: 'Bandage', category: 'Heal', description: 'Healing ability', unlockAt: 3 },
+          { id: 'battleCry', type: 'battleCry', name: 'Battle Cry', category: 'Special', description: 'Special ability', unlockAt: 4 },
         ]);
       }
 
@@ -156,7 +156,7 @@ const AdaptabilityModal: React.FC<AdaptabilityModalProps> = ({
 
       if (data && data.success && data.abilities && data.abilities.length > 0) {
         setNewAbilities(data.abilities);
-        console.log(`Setting ability: ${data.abilities[0].name}`);
+        console.log(`Setting ability: ${data.abilities[0]?.name || 'Unknown'}`);
       } else {
         setNewAbilities([]);
         console.log(
@@ -185,7 +185,7 @@ const AdaptabilityModal: React.FC<AdaptabilityModalProps> = ({
         'Gunslinger',
         'Tracker',
         'Druid',
-      ].filter((cls) => cls !== className) as PlayerClass[]
+      ].filter((cls) => cls !== (className as unknown as string)) as unknown as PlayerClass[]
     );
 
     return () => {
@@ -296,10 +296,10 @@ const AdaptabilityModal: React.FC<AdaptabilityModalProps> = ({
   if (!isOpen) return null;
 
   const fallbackAbilities: Ability[] = [
-    { type: 'attack', name: 'Slash', category: 'Attack', unlockAt: 1 } as Ability,
-    { type: 'shieldWall', name: 'Shield Wall', category: 'Defense', unlockAt: 2 } as Ability,
-    { type: 'bandage', name: 'Bandage', category: 'Heal', unlockAt: 3 } as Ability,
-    { type: 'battleCry', name: 'Battle Cry', category: 'Special', unlockAt: 4 } as Ability,
+    { id: 'slash', type: 'attack', name: 'Slash', category: 'Attack', description: 'Basic attack', unlockAt: 1 },
+    { id: 'shieldWall', type: 'shieldWall', name: 'Shield Wall', category: 'Defense', description: 'Defensive ability', unlockAt: 2 },
+    { id: 'bandage', type: 'bandage', name: 'Bandage', category: 'Heal', description: 'Healing ability', unlockAt: 3 },
+    { id: 'battleCry', type: 'battleCry', name: 'Battle Cry', category: 'Special', description: 'Special ability', unlockAt: 4 },
   ];
 
   return (
@@ -380,11 +380,11 @@ const AdaptabilityModal: React.FC<AdaptabilityModalProps> = ({
             <div className="class-list">
               {availableClasses.map((cls) => (
                 <div
-                  key={cls}
+                  key={cls as unknown as string}
                   className="class-card"
                   onClick={() => handleSelectClass(cls)}
                 >
-                  {cls}
+                  {cls.name}
                 </div>
               ))}
             </div>
@@ -399,7 +399,7 @@ const AdaptabilityModal: React.FC<AdaptabilityModalProps> = ({
           <div className="modal-step">
             <h3 className="step-title">
               Replace {selectedAbility?.name} (Level{' '}
-              {selectedAbility?.unlockAt || 1}) with a {selectedClass} ability:
+              {selectedAbility?.unlockAt || 1}) with a {selectedClass?.name} ability:
             </h3>
 
             <div className="ability-list">
@@ -409,7 +409,7 @@ const AdaptabilityModal: React.FC<AdaptabilityModalProps> = ({
                 </div>
               ) : newAbilities.length === 0 ? (
                 <div className="error-message">
-                  No {selectedClass} abilities available at level{' '}
+                  No {selectedClass?.name} abilities available at level{' '}
                   {selectedAbility?.unlockAt || 1}. Please select a different
                   class.
                 </div>
@@ -422,10 +422,10 @@ const AdaptabilityModal: React.FC<AdaptabilityModalProps> = ({
                   >
                     <div className="ability-header">
                       <span className="class-icon">
-                        {getClassIcon(selectedClass || '')}
+                        {getClassIcon(selectedClass?.name || '')}
                       </span>
                       <span className="ability-name">
-                        {ability.name || `${selectedClass} Ability`}
+                        {ability.name || `${selectedClass?.name} Ability`}
                       </span>
                       <span className="ability-category">
                         {getCategoryIcon(ability.category)}

@@ -13,8 +13,8 @@ import {
 import { validateGameAction } from '../shared/gameChecks.js';
 import logger from '../utils/logger.js';
 import config from '../config/index.js';
-import messages from '../messages/index.js';
-import { EventTypes } from '../models/events/EventTypes.js';
+// Messages are now accessed through the config system
+import { EventTypes, EventType } from '../models/events/EventTypes.js';
 import { GameRoom } from '../models/GameRoom.js';
 import type { Player } from '../models/Player.js';
 import { BaseController } from './PlayerController.js';
@@ -69,7 +69,7 @@ export interface GameControllerResult {
 function emitThroughEventBusOrSocket(
   socket: Socket, 
   gameCode: string, 
-  eventType: string, 
+  eventType: EventType, 
   eventData: any, 
   fallbackEvent: string, 
   fallbackData: any
@@ -90,6 +90,73 @@ function emitThroughEventBusOrSocket(
  */
 export class GameController extends BaseController<GameRoom, CreateGameRequest, UpdateGameInput> {
   protected model: GameRoom = {} as GameRoom; // Placeholder for abstract requirement
+
+  /**
+   * Handle checking if a player name is available in a game
+   */
+  async handleGameCheckName(
+    io: SocketIOServer,
+    socket: Socket, 
+    gameCode: string,
+    playerName: string
+  ): Promise<boolean> {
+    try {
+      // Check if game exists first, without throwing errors
+      const game = gameService.games.get(gameCode);
+
+      if (!game) {
+        // Game doesn't exist - send appropriate response
+        socket.emit('nameCheckResponse', {
+          isAvailable: false,
+          error: 'Game not found',
+          suggestion: null,
+        });
+        return false;
+      }
+
+      // Game exists, proceed with name validation
+      // Filter out current socket to avoid false duplicates
+      const allPlayers = Array.from(game.getPlayers());
+      const existingPlayers = allPlayers.filter(player => player.id !== socket.id);
+      
+      // DEBUG: Log name checking details
+      logger.info('Name availability check:', {
+        attemptedName: playerName,
+        socketId: socket.id,
+        gameCode: gameCode,
+        totalPlayersInGame: allPlayers.length,
+        playersAfterFiltering: existingPlayers.length,
+        allPlayerNames: allPlayers.map(p => ({ id: p.id, name: p.name })),
+        existingPlayerNames: existingPlayers.map(p => ({ id: p.id, name: p.name })),
+        isCurrentSocketInGame: allPlayers.some(p => p.id === socket.id)
+      });
+      
+      const validation = validatePlayerName(playerName, existingPlayers);
+      
+      logger.info('Name validation result:', {
+        attemptedName: playerName,
+        isValid: validation.isValid,
+        message: validation.message,
+        suggestion: validation.suggestion
+      });
+
+      socket.emit('nameCheckResponse', {
+        isAvailable: validation.isValid,
+        error: validation.isValid ? null : validation.message,
+        suggestion: validation.suggestion || null,
+      });
+
+      return validation.isValid;
+    } catch (error) {
+      logger.error('Error in handleGameCheckName:', error);
+      socket.emit('nameCheckResponse', {
+        isAvailable: false,
+        error: 'Internal server error',
+        suggestion: null,
+      });
+      return false;
+    }
+  }
 
   /**
    * Handle game creation request
@@ -135,7 +202,7 @@ export class GameController extends BaseController<GameRoom, CreateGameRequest, 
       }
 
       const hostPlayer = joinResult.player!;
-      game.gameState.hostId = hostPlayer.id;
+      game.hostId = hostPlayer.id;
 
       // Register game with service
       gameService.games.set(gameCode, game);
@@ -182,7 +249,7 @@ export class GameController extends BaseController<GameRoom, CreateGameRequest, 
       };
 
     } catch (error) {
-      logger.error('Error in handleGameCreate:', error);
+      logger.error('Error in handleGameCreate:', { error });
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Unknown error'
@@ -211,7 +278,7 @@ export class GameController extends BaseController<GameRoom, CreateGameRequest, 
       }
 
       // Check if player is host
-      if (game.gameState.hostId !== socket.id) {
+      if (game.hostId !== socket.id) {
         return {
           success: false,
           error: 'Only the host can start the game'
@@ -232,8 +299,8 @@ export class GameController extends BaseController<GameRoom, CreateGameRequest, 
         io.to(gameCode).emit('game:started', {
           success: true,
           game: game.toClientData(),
-          message: messages.formatMessage(
-            messages.getEvent('gameStarted'),
+          message: config.formatMessage(
+            config.getEvent('gameStarted'),
             { hostName: game.getPlayer(socket.id)?.name || 'Host' }
           )
         });
@@ -289,7 +356,7 @@ export class GameController extends BaseController<GameRoom, CreateGameRequest, 
       }
 
       // Validate game can accept new players
-      if (!game.gameRules.canAddPlayer(game.gameState.started, game.gameState.players.size)) {
+      if (!game.gameRules.canAddPlayer(game.started, game.gameState.getPlayerCount())) {
         return {
           success: false,
           error: 'Game is full or cannot accept new players'
@@ -356,7 +423,7 @@ export class GameController extends BaseController<GameRoom, CreateGameRequest, 
           stats,
           player: player?.toClientData({ 
             includePrivate: true, 
-            requestingPlayerId: player.id 
+            requestingPlayerId: player?.id 
           })
         }
       };
@@ -390,7 +457,7 @@ export class GameController extends BaseController<GameRoom, CreateGameRequest, 
 
       // Only host or system can end game
       const player = game.getPlayer(socket.id);
-      if (!player || (game.gameState.hostId !== socket.id && socket.id !== 'system')) {
+      if (!player || (game.hostId !== socket.id && socket.id !== 'system')) {
         return {
           success: false,
           error: 'Permission denied'
@@ -403,14 +470,14 @@ export class GameController extends BaseController<GameRoom, CreateGameRequest, 
         gameCode,
         winner,
         endedBy: player.name,
-        duration: Date.now() - (game.gameState.startTime || Date.now())
+        duration: 0 // TODO: Add startTime tracking
       });
 
       // Notify all players
       io.to(gameCode).emit('game:ended', {
         winner,
-        message: messages.formatMessage(
-          messages.getEvent('gameEnded'),
+        message: config.formatMessage(
+          config.getEvent('gameEnded'),
           { winner: winner || 'No one' }
         ),
         stats: game.getGameStats()
@@ -466,7 +533,7 @@ export class GameController extends BaseController<GameRoom, CreateGameRequest, 
       
       logger.info('RoundProcessed', {
         gameCode,
-        round: game.gameState.round,
+        round: game.round,
         success: result.success
       });
 
@@ -489,11 +556,11 @@ export class GameController extends BaseController<GameRoom, CreateGameRequest, 
       const games = Array.from(gameService.games.values()).map(game => ({
         code: game.code,
         playerCount: game.getPlayers().length,
-        started: game.gameState.started,
-        ended: game.gameState.ended,
-        round: game.gameState.round,
-        level: game.gameState.level,
-        hostId: game.gameState.hostId
+        started: game.started,
+        ended: false, // TODO: Add ended state to GameState
+        round: game.round,
+        level: game.level,
+        hostId: game.hostId
       }));
 
       return {

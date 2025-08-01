@@ -368,7 +368,7 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
 
 export function getTutorialStep(index: number): TutorialStep | null {
   if (index >= 0 && index < TUTORIAL_STEPS.length) {
-    return TUTORIAL_STEPS[index];
+    return TUTORIAL_STEPS[index]!;
   }
   return null;
 }

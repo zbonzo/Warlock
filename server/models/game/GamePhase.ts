@@ -202,6 +202,51 @@ export class GamePhase {
   }
 
   /**
+   * Set pending actions
+   * @param actions - Array of pending actions
+   */
+  setPendingActions(actions: PendingAction[] | Map<string, any>): void {
+    if (actions instanceof Map) {
+      // Convert Map to array format
+      this.pendingActions = Array.from(actions.values());
+    } else {
+      this.pendingActions = [...actions];
+    }
+  }
+
+  /**
+   * Set pending racial actions  
+   * @param actions - Array of pending racial actions
+   */
+  setPendingRacialActions(actions: PendingRacialAction[] | Map<string, any>): void {
+    if (actions instanceof Map) {
+      // Convert Map to array format
+      this.pendingRacialActions = Array.from(actions.values());
+    } else {
+      this.pendingRacialActions = [...actions];
+    }
+  }
+
+  /**
+   * Get next ready status as a boolean (for backward compatibility)
+   * @returns True if any players are ready for next phase
+   */
+  getNextReady(): boolean {
+    return this.nextReady.size > 0;
+  }
+
+  /**
+   * Set next ready status (for backward compatibility)
+   * @param ready - Ready status
+   */
+  setNextReady(ready: boolean): void {
+    if (!ready) {
+      this.nextReady.clear();
+    }
+    // If true, we keep the existing ready players
+  }
+
+  /**
    * Clear all pending actions
    */
   clearPendingActions(): void {

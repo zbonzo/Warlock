@@ -8,6 +8,8 @@
   "compilerOptions": {
     "composite": true,
     "declarationMap": true,
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "skipDefaultLibCheck": true,
+    "noEmitOnError": false
   }
 }

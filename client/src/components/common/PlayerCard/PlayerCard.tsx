@@ -3,7 +3,7 @@
  * Used across all player displays with consistent styling and avatar backgrounds
  */
 import React from 'react';
-import type { Player, StatusEffect } from '../../../../shared/types';
+import type { Player, StatusEffect } from '../../../types/shared';
 import './PlayerCard.css';
 
 export interface PlayerCardProps {
@@ -33,20 +33,20 @@ const PlayerCard: React.FC<PlayerCardProps> = ({
   customStyles = {},
 }) => {
   const getAvatarPath = (player: Player): string => {
-    if (!player?.race || !player?.class) {
+    if (!player?.['race'] || !player?.['class']) {
       return '/images/races/random.png';
     }
     
-    const race = player.race.toLowerCase();
-    const playerClass = player.class.toLowerCase();
+    const race = player['race'].toLowerCase();
+    const playerClass = player['class'].toLowerCase();
     
     return `/images/avatars/${race}/${playerClass}.png`;
   };
 
-  const isUnselectedPlayer = !player?.race || !player?.class;
+  const isUnselectedPlayer = !player?.['race'] || !player?.['class'];
 
-  const healthPercent = player?.hp && player?.maxHp 
-    ? (player.hp / player.maxHp) * 100 
+  const healthPercent = player?.['hp'] && player?.['maxHp'] 
+    ? (player['hp'] / player['maxHp']) * 100 
     : 0;
 
   const getHealthColor = (percent: number): string => {
@@ -56,7 +56,7 @@ const PlayerCard: React.FC<PlayerCardProps> = ({
   };
 
   const getArmorValue = (player: Player): number => {
-    return player?.armor || player?.baseArmor || 0;
+    return player?.['armor'] || player?.['baseArmor'] || 0;
   };
 
   const getStatusEffects = (player: Player): StatusEffectDisplay[] => {
@@ -69,8 +69,8 @@ const PlayerCard: React.FC<PlayerCardProps> = ({
       color: '#6b7280'
     });
 
-    if (player?.statusEffects) {
-      Object.entries(player.statusEffects).forEach(([effect, data]) => {
+    if (player?.['statusEffects']) {
+      Object.entries(player['statusEffects']).forEach(([effect, data]) => {
         if (data && typeof data === 'object' && 'active' in data && data.active !== false) {
           let icon = '✨';
           let color = '#8b5cf6';
@@ -99,7 +99,7 @@ const PlayerCard: React.FC<PlayerCardProps> = ({
           effects.push({
             type: effect,
             value: typeof data === 'object' && data !== null 
-              ? ('turns' in data ? data.turns : 'stacks' in data ? data.stacks : '') 
+              ? ('turns' in data ? (data as any).turns : 'stacks' in data ? (data as any).stacks : '') 
               : '',
             icon,
             color
@@ -122,7 +122,7 @@ const PlayerCard: React.FC<PlayerCardProps> = ({
         unified-player-card--${size}
         ${isSelected ? 'selected' : ''}
         ${isCurrentPlayer ? 'current-player' : ''}
-        ${!player?.isAlive ? 'dead' : ''}
+        ${!player?.['isAlive'] ? 'dead' : ''}
         ${onClick ? 'clickable' : ''}
       `}
       onClick={onClick}
@@ -144,7 +144,7 @@ const PlayerCard: React.FC<PlayerCardProps> = ({
         <div className="name-plate">
           <div className="name-bar">
             <span className="player-name">
-              {player?.name || 'Unknown'}
+              {player?.['name'] || 'Unknown'}
             </span>
             {isCurrentPlayer && <span className="current-indicator">YOU</span>}
           </div>
@@ -179,7 +179,7 @@ const PlayerCard: React.FC<PlayerCardProps> = ({
                 }}
               />
               <div className="health-text">
-                {player?.hp || 0}/{player?.maxHp || 0}
+                {player?.['hp'] || 0}/{player?.['maxHp'] || 0}
               </div>
             </div>
           </div>
@@ -192,7 +192,7 @@ const PlayerCard: React.FC<PlayerCardProps> = ({
         </div>
       )}
 
-      {!player?.isAlive && (
+      {!player?.['isAlive'] && (
         <div className="dead-overlay">
           <div className="dead-icon">💀</div>
         </div>

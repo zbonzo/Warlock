@@ -18,7 +18,7 @@ const MobilePlayerHeader: React.FC<MobilePlayerHeaderProps> = ({
   currentStep = 1, 
   totalSteps = 2 
 }) => {
-  const healthPercent = (me.hp / me.maxHp) * 100;
+  const healthPercent = (me['hp'] / me['maxHp']) * 100;
   
   const getHealthClass = (percent: number): string => {
     if (percent < 30) return 'health-low';
@@ -35,7 +35,7 @@ const MobilePlayerHeader: React.FC<MobilePlayerHeaderProps> = ({
       
       {/* Player info */}
       <div className="player-info">
-        <h3 className="player-name">{me.name}</h3>
+        <h3 className="player-name">{me['name']}</h3>
         <div className="player-details">
           {me.race} {me.class} • Level {(me as any).level || 1}
         </div>
@@ -43,7 +43,7 @@ const MobilePlayerHeader: React.FC<MobilePlayerHeaderProps> = ({
       
       {/* Health bar */}
       <div className="health-section">
-        <div className="health-text">{me.hp}/{me.maxHp} HP</div>
+        <div className="health-text">{me['hp']}/{me['maxHp']} HP</div>
         <div className="health-bar">
           <div 
             className={`health-fill ${getHealthClass(healthPercent)}`}
@@ -58,7 +58,7 @@ const MobilePlayerHeader: React.FC<MobilePlayerHeaderProps> = ({
           {Object.entries(me.statusEffects).map(([effect, data]) => (
             <div key={effect} className="status-effect-badge">
               {effect}
-              {data?.turns && ` (${data.turns})`}
+              {(data as any)?.turns && ` (${(data as any).turns})`}
             </div>
           ))}
         </div>

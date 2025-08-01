@@ -6,7 +6,7 @@
 
 import config from '../config/index.js';
 import logger from '../utils/logger.js';
-import messages from '../messages/index.js';
+// Messages are now accessed through the config system
 import { PlayerStats } from './player/PlayerStats.js';
 import { PlayerAbilities } from './player/PlayerAbilities.js';
 import { PlayerEffects } from './player/PlayerEffects.js';
@@ -281,7 +281,7 @@ export class Player {
     if (!this.isAlive) {
       return {
         success: false,
-        reason: messages.getError('playerDeadCannotAct'),
+        reason: config.getError('playerDeadCannotAct'),
         data: null,
       };
     }
@@ -539,12 +539,12 @@ export class Player {
         type: 'life_bond_healing',
         public: false,
         targetId: this.id,
-        message: messages.formatMessage(
-          messages.getEvent('kinfolkLifebondPublic'),
+        message: config.formatMessage(
+          config.getEvent('kinfolkLifebondPublic'),
           { playerName: this.name, healAmount: actualHeal }
         ),
-        privateMessage: messages.formatMessage(
-          messages.privateMessages?.kinfolkLifebondPrivate || '',
+        privateMessage: config.formatMessage(
+          config.privateMessages?.kinfolkLifebondPrivate || '',
           { healAmount: actualHeal }
         ),
         attackerMessage: '',

@@ -4,7 +4,7 @@
 import React from 'react';
 import { useTheme } from '@contexts/ThemeContext';
 import { ABILITY_CATEGORIES, DEFAULT_CATEGORY, type AbilityCategory } from '../constants';
-import type { Ability } from '../../../../../shared/types';
+import type { Ability } from '../../../../types/shared';
 import './AbilityCard.css';
 
 export interface AbilityCardProps {

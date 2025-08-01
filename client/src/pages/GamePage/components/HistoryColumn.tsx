@@ -36,7 +36,7 @@ const HistoryColumn: React.FC<HistoryColumnProps> = ({
   if (!isVisible) return null;
 
   // Get current player data
-  const currentPlayer = players.find((p) => p.id === currentPlayerId);
+  const currentPlayer = players.find((p) => p['id'] === currentPlayerId);
   const isWarlock = currentPlayer?.isWarlock || false;
 
   /**
@@ -56,35 +56,35 @@ const HistoryColumn: React.FC<HistoryColumnProps> = ({
 
     // Add basic fields
     if (event.targetId) {
-      data.targetId = event.targetId;
+      data['targetId'] = event.targetId;
       // Get target name
       if (event.targetId === '__monster__') {
-        data.targetName = 'the Monster';
+        data['targetName'] = 'the Monster';
       } else if (canLookupNames) {
-        const targetPlayer = validPlayersList.find((p) => p.id === event.targetId);
-        data.targetName = targetPlayer ? targetPlayer.name : 'another player';
+        const targetPlayer = validPlayersList.find((p) => p['id'] === event.targetId);
+        data['targetName'] = targetPlayer ? targetPlayer['name'] : 'another player';
       } else {
-        data.targetName = 'another player';
+        data['targetName'] = 'another player';
       }
     }
 
     if (event.attackerId) {
-      data.attackerId = event.attackerId;
+      data['attackerId'] = event.attackerId;
       if (canLookupNames) {
-        const attackerPlayer = validPlayersList.find((p) => p.id === event.attackerId);
-        data.attackerName = attackerPlayer ? attackerPlayer.name : 'a player';
+        const attackerPlayer = validPlayersList.find((p) => p['id'] === event.attackerId);
+        data['attackerName'] = attackerPlayer ? attackerPlayer['name'] : 'a player';
       } else {
-        data.attackerName = 'a player';
+        data['attackerName'] = 'a player';
       }
     }
 
     // Handle damage objects
     if (event.damage) {
       if (typeof event.damage !== 'object') {
-        data.damage = event.damage;
+        data['damage'] = event.damage;
       } else {
-        data.damage = (event.damage as any).final || (event.damage as any).initial || 0;
-        data.damageReduction = (event.damage as any).reduction || 0;
+        data['damage'] = (event.damage as any).final || (event.damage as any).initial || 0;
+        data['damageReduction'] = (event.damage as any).reduction || 0;
       }
     }
 

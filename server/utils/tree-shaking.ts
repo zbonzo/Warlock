@@ -119,7 +119,7 @@ export class ModuleRegistry {
  * Tree-shakable function registry
  * Allows conditional execution of functions based on runtime conditions
  */
-export class FunctionRegistry<T extends Record<string, Function>> {
+export class FunctionRegistry<T extends Record<string, (...args: any[]) => any>> {
   private functions = new Map<keyof T, T[keyof T]>();
 
   /**
@@ -127,7 +127,7 @@ export class FunctionRegistry<T extends Record<string, Function>> {
    */
   register(functions: T): void {
     Object.entries(functions).forEach(([name, fn]) => {
-      this.functions.set(name as keyof T, fn);
+      this.functions.set(name as keyof T, fn as T[keyof T]);
     });
   }
 
@@ -136,13 +136,13 @@ export class FunctionRegistry<T extends Record<string, Function>> {
    */
   execute<K extends keyof T>(
     name: K,
-    ...args: Parameters<T[K]>
-  ): ReturnType<T[K]> | undefined {
+    ...args: T[K] extends (...args: any[]) => any ? Parameters<T[K]> : never[]
+  ): T[K] extends (...args: any[]) => any ? ReturnType<T[K]> | undefined : undefined {
     const fn = this.functions.get(name);
-    if (fn) {
-      return fn(...args);
+    if (fn && typeof fn === 'function') {
+      return (fn as (...args: any[]) => any)(...args);
     }
-    return undefined;
+    return undefined as any;
   }
 
   /**
@@ -165,13 +165,13 @@ export class FunctionRegistry<T extends Record<string, Function>> {
  * Marks code paths that should be eliminated in production
  */
 export const DEV_ONLY = (code: () => void): void => {
-  if (process.env.NODE_ENV === 'development') {
+  if (process.env['NODE_ENV'] === 'development') {
     code();
   }
 };
 
 export const PROD_ONLY = (code: () => void): void => {
-  if (process.env.NODE_ENV === 'production') {
+  if (process.env['NODE_ENV'] === 'production') {
     code();
   }
 };
@@ -221,7 +221,7 @@ export const moduleRegistry = new ModuleRegistry();
 // Register common modules for lazy loading
 moduleRegistry.register('logger', () => import('../utils/logger.js'));
 moduleRegistry.register('config', () => import('../config/index.js'));
-moduleRegistry.register('messages', () => import('../messages/index.js'));
+// Note: Messages are accessed through the config system, not as a separate module
 
 /**
  * Example usage for ability handlers - lazy load heavy modules

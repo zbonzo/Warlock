@@ -129,7 +129,7 @@ const server = http.createServer(app);
 const io = new SocketIOServer(server, {
   cors: {
     origin: process.env.NODE_ENV === 'development' 
-      ? ['http://localhost:3000', 'http://127.0.0.1:3000', 'http://192.168.100.42:3000'] 
+      ? ['http://localhost:4000', 'http://127.0.0.1:4000', 'http://192.168.100.42:4000'] 
       : config.corsOrigins,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],

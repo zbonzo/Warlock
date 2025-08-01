@@ -5,7 +5,7 @@
 import React, { useState, useEffect } from 'react';
 import { useTheme } from '@contexts/ThemeContext';
 import EventsLog from '@components/game/EventsLog';
-import type { Player } from '../../../../shared/types';
+import type { Player } from '../../../types/shared';
 import './BattleResultsModal.css';
 
 export interface BattleResultsModalProps {

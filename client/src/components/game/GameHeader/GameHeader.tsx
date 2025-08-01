@@ -3,7 +3,7 @@
  * Replaces all header implementations with a single responsive header
  */
 import React from 'react';
-import type { Player } from '../../../../shared/types';
+import type { Player } from '../../../types/shared';
 import './GameHeader.css';
 
 export interface GameHeaderProps {
@@ -24,14 +24,14 @@ const GameHeader: React.FC<GameHeaderProps> = ({
   players = [], 
   isMobile = false 
 }) => {
-  const alivePlayers = players.filter(p => p.isAlive);
+  const alivePlayers = players.filter(p => p['isAlive']);
   const aliveCount = alivePlayers.length;
   
   const getWarlockInfo = (): WarlockInfo => {
     if (!player) return { count: 0, text: '0 Warlocks killed' };
     
-    const deadWarlocks = players.filter(p => !p.isAlive && p.isWarlock).length;
-    const aliveWarlocks = players.filter(p => p.isAlive && p.isWarlock).length;
+    const deadWarlocks = players.filter(p => !p['isAlive'] && p['isWarlock']).length;
+    const aliveWarlocks = players.filter(p => p['isAlive'] && p['isWarlock']).length;
     
     if (player.isWarlock) {
       return {
@@ -57,8 +57,8 @@ const GameHeader: React.FC<GameHeaderProps> = ({
     return `/images/avatars/${race}/${playerClass}.png`;
   };
 
-  const healthPercent = player?.hp && player?.maxHp 
-    ? (player.hp / player.maxHp) * 100 
+  const healthPercent = player?.['hp'] && player?.['maxHp'] 
+    ? (player['hp'] / player['maxHp']) * 100 
     : 0;
 
   const getHealthColor = (percent: number): string => {
@@ -111,7 +111,7 @@ const GameHeader: React.FC<GameHeaderProps> = ({
         )}
         
         <div className="player-name">
-          {player.name}
+          {player['name']}
         </div>
         <div className="player-details">
           <span className="player-class">{player.class}</span>
@@ -126,7 +126,7 @@ const GameHeader: React.FC<GameHeaderProps> = ({
       </div>
       
       <div className="level-info">
-        Level {player.level || 1}
+        Level {player['level'] || 1}
       </div>
 
       <div className="status-effects-section">
@@ -161,7 +161,7 @@ const GameHeader: React.FC<GameHeaderProps> = ({
               }}
             />
             <div className="health-text">
-              {player.hp || 0}/{player.maxHp || 0}
+              {player['hp'] || 0}/{player['maxHp'] || 0}
             </div>
           </div>
         </div>

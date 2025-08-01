@@ -236,6 +236,10 @@ const GameTutorialModal: React.FC<GameTutorialModalProps> = ({ isOpen, onComplet
 
   const currentStep = TUTORIAL_STEPS[step];
 
+  if (!currentStep) {
+    return null;
+  }
+
   return (
     <div className={`tutorial-overlay ${exiting ? 'exiting' : ''}`}>
       <div className="tutorial-modal">

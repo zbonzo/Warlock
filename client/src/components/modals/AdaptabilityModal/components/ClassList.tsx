@@ -3,7 +3,7 @@
  */
 import React from 'react';
 import ClassCard from './ClassCard';
-import type { PlayerClass } from '../../../../../shared/types';
+import type { PlayerClass } from '../../../../types/shared';
 import './ClassList.css';
 
 export interface ClassListProps {
@@ -16,7 +16,7 @@ const ClassList: React.FC<ClassListProps> = ({ classes, onClassSelect }) => {
     <div className="class-list">
       {classes.map(className => (
         <ClassCard
-          key={className}
+          key={className.id}
           className={className}
           onSelect={() => onClassSelect(className)}
         />

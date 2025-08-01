@@ -47,7 +47,7 @@ const server = http.createServer(app);
 // Initialize Socket.IO with CORS and transport configuration
 const io = new Server(server, {
   cors: {
-    origin: process.env.NODE_ENV === 'development' ? ['http://localhost:3000', 'http://127.0.0.1:3000', 'http://192.168.100.42:3000'] : config.corsOrigins,
+    origin: process.env.NODE_ENV === 'development' ? ['http://localhost:4000', 'http://127.0.0.1:4000', 'http://192.168.100.42:4000'] : config.corsOrigins,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
     credentials: false,

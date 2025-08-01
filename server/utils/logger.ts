@@ -18,7 +18,7 @@ const LOG_FILE_PATH = path.join(__dirname, '..', 'logs', 'application.log');
 
 interface LogContext {
   [key: string]: any;
-  error?: Error;
+  error?: unknown;
 }
 
 interface GameContext {
@@ -184,12 +184,13 @@ function processLog(level: string, eventKey: string, context: LogContext = {}, g
     }
   });
   
-  if (context.error && context.error instanceof Error) {
+  if (context.error) {
+    const errorObj = context.error instanceof Error ? context.error : new Error(String(context.error));
     fileLogEntry.error = {
-      message: context.error.message,
-      stack: context.error.stack,
-      type: (context.error as any).type,
-      ...context.error,
+      message: errorObj.message,
+      stack: errorObj.stack,
+      type: (errorObj as any).type,
+      name: errorObj.name,
     };
   }
 
@@ -244,12 +245,18 @@ function track(eventKey: string, properties: Record<string, any> = {}): void {
   // apmClient.trackEvent(eventKey, properties);
 }
 
+// Helper function for logging errors from catch blocks
+function logError(eventKey: string, error: unknown, gameContext: GameContext = {}): void {
+  logger.error(eventKey, { error }, gameContext);
+}
+
 const logger = {
   error,
   warn,
   info,
   debug,
   track,
+  logError,
 };
 
 export default logger;

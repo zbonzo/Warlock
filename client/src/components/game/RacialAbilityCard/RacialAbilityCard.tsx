@@ -4,7 +4,7 @@
  */
 import React from 'react';
 import { useTheme } from '@contexts/ThemeContext';
-import { Ability } from '@/types/game';
+import { Ability } from '../../../types/shared';
 import { RACE_TO_ABILITY, ABILITY_ICONS } from './racialAbilityData';
 import './RacialAbilityCard.css';
 
@@ -31,19 +31,19 @@ function getRacialAbilityIcon(ability: Ability): React.ReactElement | string {
   };
 
   // Check if we have a PNG for this racial ability
-  const imageName = racialImageMap[ability.type];
+  const imageName = racialImageMap[ability['type']];
   if (imageName) {
     return (
       <img 
         src={`/images/abilities/${imageName}`} 
-        alt={ability.name} 
+        alt={ability['name']} 
         style={{ width: '100%', height: '100%', objectFit: 'contain' }}
       />
     );
   }
 
   // Fallback to emoji icons
-  return ABILITY_ICONS[ability.type] || '✨';
+  return ABILITY_ICONS[ability['type']] || '✨';
 }
 
 /**
@@ -65,7 +65,7 @@ const RacialAbilityCard: React.FC<RacialAbilityCardProps> = ({
   const isAvailable = usesLeft > 0 && cooldown === 0 && !disabled;
   
   // Derive race from ability type
-  const race = getRaceFromAbilityType(ability.type);
+  const race = getRaceFromAbilityType(ability['type']);
   
   // Get status message
   const statusMessage = getStatusMessage(usesLeft, cooldown, disabled);
@@ -80,7 +80,7 @@ const RacialAbilityCard: React.FC<RacialAbilityCardProps> = ({
     >
       <div className="ability-header">
         <div className="ability-title" style={{ backgroundColor: raceColor }}>
-          {ability.name}
+          {ability['name']}
         </div>
         
         <div className="ability-icon-container" style={{ backgroundColor: `${raceColor}30` }}>
@@ -89,12 +89,12 @@ const RacialAbilityCard: React.FC<RacialAbilityCardProps> = ({
       </div>
       
       <div className="ability-description">
-        {ability.description}
+        {ability['description']}
       </div>
       
       <div className="ability-status">
         <div className="usage-limit">
-          <strong>Limit:</strong> {ability.usageLimit === 'perGame' ? 'Once per game' : 'Once per round'}
+          <strong>Limit:</strong> {ability['usageLimit'] === 'perGame' ? 'Once per game' : 'Once per round'}
         </div>
         
         <div className={`status-indicator ${isAvailable ? 'available' : 'unavailable'}`}>
@@ -102,7 +102,7 @@ const RacialAbilityCard: React.FC<RacialAbilityCardProps> = ({
         </div>
       </div>
       
-      {ability.usageLimit === 'perGame' && (
+      {ability['usageLimit'] === 'perGame' && (
         <div className="usage-indicators">
           <div className="usage-dots">
             {[...Array((ability as any).maxUses || 1)].map((_, i) => (

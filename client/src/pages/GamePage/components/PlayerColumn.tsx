@@ -36,7 +36,7 @@ const PlayerColumn: React.FC<PlayerColumnProps> = ({
   if (!isVisible) return null;
   
   // Filter players based on current player's warlock status
-  const otherPlayers = players.filter(p => p.id !== me.id);
+  const otherPlayers = players.filter(p => p['id'] !== me['id']);
   
   let warlockPlayers: Player[] = [];
   let regularPlayers: Player[] = [];
@@ -51,7 +51,7 @@ const PlayerColumn: React.FC<PlayerColumnProps> = ({
   }
 
   const handlePlayerSelect = (player: Player): void => {
-    onTargetSelect(player.id);
+    onTargetSelect(player['id']);
   };
 
   return (
@@ -63,14 +63,13 @@ const PlayerColumn: React.FC<PlayerColumnProps> = ({
           <div className="players-list">
             {warlockPlayers.map(player => (
               <PlayerCard 
-                key={player.id} 
+                key={player['id']} 
                 player={player} 
                 isCurrentPlayer={false}
                 size="medium"
                 showStatusEffects={true}
-                selectable={alivePlayers.includes(player)}
-                selected={selectedTarget === player.id}
-                onSelect={() => handlePlayerSelect(player)}
+                isSelected={selectedTarget === player['id']}
+                onClick={() => handlePlayerSelect(player)}
               />
             ))}
           </div>
@@ -84,14 +83,13 @@ const PlayerColumn: React.FC<PlayerColumnProps> = ({
           <div className="players-list">
             {regularPlayers.map(player => (
               <PlayerCard 
-                key={player.id} 
+                key={player['id']} 
                 player={player} 
                 isCurrentPlayer={false}
                 size="medium"
                 showStatusEffects={true}
-                selectable={alivePlayers.includes(player)}
-                selected={selectedTarget === player.id}
-                onSelect={() => handlePlayerSelect(player)}
+                isSelected={selectedTarget === player['id']}
+                onClick={() => handlePlayerSelect(player)}
               />
             ))}
           </div>
