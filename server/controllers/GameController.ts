@@ -92,73 +92,6 @@ export class GameController extends BaseController<GameRoom, CreateGameRequest, 
   protected model: GameRoom = {} as GameRoom; // Placeholder for abstract requirement
 
   /**
-   * Handle checking if a player name is available in a game
-   */
-  async handleGameCheckName(
-    io: SocketIOServer,
-    socket: Socket, 
-    gameCode: string,
-    playerName: string
-  ): Promise<boolean> {
-    try {
-      // Check if game exists first, without throwing errors
-      const game = gameService.games.get(gameCode);
-
-      if (!game) {
-        // Game doesn't exist - send appropriate response
-        socket.emit('nameCheckResponse', {
-          isAvailable: false,
-          error: 'Game not found',
-          suggestion: null,
-        });
-        return false;
-      }
-
-      // Game exists, proceed with name validation
-      // Filter out current socket to avoid false duplicates
-      const allPlayers = Array.from(game.getPlayers());
-      const existingPlayers = allPlayers.filter(player => player.id !== socket.id);
-      
-      // DEBUG: Log name checking details
-      logger.info('Name availability check:', {
-        attemptedName: playerName,
-        socketId: socket.id,
-        gameCode: gameCode,
-        totalPlayersInGame: allPlayers.length,
-        playersAfterFiltering: existingPlayers.length,
-        allPlayerNames: allPlayers.map(p => ({ id: p.id, name: p.name })),
-        existingPlayerNames: existingPlayers.map(p => ({ id: p.id, name: p.name })),
-        isCurrentSocketInGame: allPlayers.some(p => p.id === socket.id)
-      });
-      
-      const validation = validatePlayerName(playerName, existingPlayers);
-      
-      logger.info('Name validation result:', {
-        attemptedName: playerName,
-        isValid: validation.isValid,
-        message: validation.message,
-        suggestion: validation.suggestion
-      });
-
-      socket.emit('nameCheckResponse', {
-        isAvailable: validation.isValid,
-        error: validation.isValid ? null : validation.message,
-        suggestion: validation.suggestion || null,
-      });
-
-      return validation.isValid;
-    } catch (error) {
-      logger.error('Error in handleGameCheckName:', error);
-      socket.emit('nameCheckResponse', {
-        isAvailable: false,
-        error: 'Internal server error',
-        suggestion: null,
-      });
-      return false;
-    }
-  }
-
-  /**
    * Handle game creation request
    */
   async handleGameCreate(
@@ -249,7 +182,7 @@ export class GameController extends BaseController<GameRoom, CreateGameRequest, 
       };
 
     } catch (error) {
-      logger.error('Error in handleGameCreate:', { error });
+      logger.error('Error in handleGameCreate:', error instanceof Error ? error : new Error(String(error)));
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Unknown error'
@@ -541,7 +474,7 @@ export class GameController extends BaseController<GameRoom, CreateGameRequest, 
 
     } catch (error) {
       logger.error('Error in processRound:', error);
-      return {
+    return {
         success: false,
         error: error instanceof Error ? error.message : 'Unknown error'
       };
