@@ -53,18 +53,25 @@ export interface CombatLogEntry {
   targetId?: string;
   damage?: number;
   healing?: number;
-  public: boolean;
+  timestamp: number;
+  isPublic: boolean;
+  priority: 'low' | 'medium' | 'high' | 'critical';
+  public?: boolean;
   privateMessage?: string;
   attackerMessage?: string;
 }
 
 export interface RoundSummary {
+  totalDamageDealt: number;
   totalDamageToMonster: number;
   totalDamageToPlayers: number;
+  totalHealingApplied: number;
   totalHealing: number;
+  playersEliminated: string[];
   playersKilled: string[];
   abilitiesUsed: number;
   coordinatedActions: number;
+  monsterActionType?: string;
 }
 
 export interface CombatSystemDependencies {
@@ -168,9 +175,12 @@ export class CombatSystemRefactored extends AbstractGameSystem<GameRoom, GameEve
     const startTime = Date.now();
     const log: CombatLogEntry[] = [];
     const summary: RoundSummary = {
+      totalDamageDealt: 0,
       totalDamageToMonster: 0,
       totalDamageToPlayers: 0,
+      totalHealingApplied: 0,
       totalHealing: 0,
+      playersEliminated: [],
       playersKilled: [],
       abilitiesUsed: 0,
       coordinatedActions: 0
@@ -239,12 +249,14 @@ export class CombatSystemRefactored extends AbstractGameSystem<GameRoom, GameEve
       };
 
     } catch (error) {
-      logger.error('Error processing combat round:', error);
+      logger.error('Error processing combat round:', error as any);
       
       log.push({
         type: 'system',
         message: 'Combat round failed to process due to system error',
-        public: false
+        timestamp: Date.now(),
+        isPublic: false,
+        priority: 'critical'
       });
 
       return {
@@ -280,12 +292,14 @@ export class CombatSystemRefactored extends AbstractGameSystem<GameRoom, GameEve
       log.push({
         type: 'monster_action',
         message: 'Monster prepares to attack...',
-        public: true
+        timestamp: Date.now(),
+        isPublic: true,
+        priority: 'medium'
       });
 
       return monsterAction;
     } catch (error) {
-      logger.error('Error processing monster action:', error);
+      logger.error('Error processing monster action:', error as any);
       return null;
     }
   }
@@ -296,15 +310,15 @@ export class CombatSystemRefactored extends AbstractGameSystem<GameRoom, GameEve
   async process(state: GameRoom, event: GameEvent): Promise<GameRoom> {
     // Most event handling can now be delegated to the specific modules
     switch (event.type) {
-      case EventTypes.ACTION_SUBMITTED:
+      case EventTypes.ACTION.SUBMITTED:
         // Action processing is handled by ActionProcessor
         return state;
         
-      case EventTypes.ROUND_END:
+      case EventTypes.COMBAT.TURN_ENDED as any:
         // End of round is handled by EndOfRoundProcessor
         return state;
         
-      case EventTypes.GAME_STATE_UPDATE:
+      case EventTypes.GAME.ENDED:
         // Game state updates are handled by GameStateUpdater
         return state;
         
@@ -329,11 +343,14 @@ export class CombatSystemRefactored extends AbstractGameSystem<GameRoom, GameEve
    */
   getConfig(): SystemConfig {
     return {
-      name: this.name,
-      version: this.version,
       enabled: true,
-      priority: 1,
-      dependencies: ['players', 'monster', 'statusEffects']
+      debug: false,
+      settings: {
+        name: this.name,
+        version: this.version,
+        priority: 1,
+        dependencies: ['players', 'monster', 'statusEffects']
+      }
     };
   }
 
@@ -385,5 +402,93 @@ export class CombatSystemRefactored extends AbstractGameSystem<GameRoom, GameEve
         gameStateUpdater: !!this.gameStateUpdater
       }
     };
+  }
+
+  /**
+   * Abstract method implementations
+   */
+  validate(event: GameEvent): ValidationResult<GameEvent> {
+    // Basic event validation
+    const errors: string[] = [];
+    
+    if (!event.type) {
+      errors.push('Event type is required');
+    }
+    
+    return errors.length === 0
+      ? { success: true, data: event, errors: undefined as never }
+      : { success: false, data: undefined as never, errors };
+  }
+
+  canHandle(event: GameEvent): boolean {
+    // Handle combat-related events
+    return (
+      event.type.startsWith('action.') ||
+      event.type.startsWith('combat.') ||
+      event.type.startsWith('damage.') ||
+      event.type.startsWith('heal.')
+    );
+  }
+
+  /**
+   * EventDrivenSystem implementations
+   */
+  subscribedEvents(): EventType[] {
+    return [
+      EventTypes.ACTION.SUBMITTED as EventType,
+      EventTypes.COMBAT.TURN_ENDED as EventType,
+      EventTypes.DAMAGE.APPLIED as EventType,
+      EventTypes.HEAL.APPLIED as EventType
+    ];
+  }
+
+  getPriority(): number {
+    return 1; // High priority for combat system
+  }
+
+  /**
+   * CombatSystemInterface implementations
+   */
+  calculateDamage(_attacker: Player | Monster, _defender: Player | Monster, baseDamage: number): DamageCalculation {
+    // Create a proper DamageCalculation result
+    const calculation = this.damageCalculator.calculateDamage({
+      baseDamage,
+      target: _defender,
+      attacker: _attacker,
+      options: {},
+      log: []
+    });
+    return {
+      finalDamage: calculation.finalDamage,
+      baseDamage: baseDamage,
+      modifiers: [],
+      isCritical: calculation.critical,
+      isBlocked: false,
+      damageType: 'physical' as any
+    };
+  }
+
+  applyDamage<T extends Player | Monster>(target: T, damage: number): T {
+    const updated = JSON.parse(JSON.stringify(target)) as T;
+    (updated as any).hp = Math.max(0, (updated as any).hp - damage);
+    if ((updated as any).hp === 0) {
+      (updated as any).isAlive = false;
+    }
+    return updated;
+  }
+
+  calculateHealing(_healer: Player | Monster, _target: Player | Monster, baseHealing: number): number {
+    // Basic healing calculation with config modifiers
+    const healingModifier = config.gameBalance?.player?.healing?.modifierBase || 1;
+    return Math.floor(baseHealing * healingModifier);
+  }
+
+  canAttack(attacker: Player | Monster, target: Player | Monster): boolean {
+    // Basic attack validation
+    return (
+      (attacker as any).isAlive !== false &&
+      (target as any).isAlive !== false &&
+      attacker !== target
+    );
   }
 }

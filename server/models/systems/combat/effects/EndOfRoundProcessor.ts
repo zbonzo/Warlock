@@ -244,7 +244,9 @@ export class EndOfRoundProcessor {
       message: `${player.name} takes ${damage} damage from ${effect.name || effect.type}`,
       playerId: player.id,
       damage,
-      public: true
+      isPublic: true,
+      timestamp: Date.now(),
+      priority: 'medium' as const
     });
     
     summary.totalDamageToPlayers += damage;
@@ -258,7 +260,9 @@ export class EndOfRoundProcessor {
         type: 'player_death',
         message: `${player.name} dies from ${effect.name || effect.type}!`,
         playerId: player.id,
-        public: true
+        isPublic: true,
+        timestamp: Date.now(),
+        priority: 'critical' as const
       });
     }
   }
@@ -282,7 +286,9 @@ export class EndOfRoundProcessor {
         message: `${player.name} heals ${actualHealing} HP from ${effect.name || effect.type}`,
         playerId: player.id,
         healing: actualHealing,
-        public: true
+        isPublic: true,
+        timestamp: Date.now(),
+        priority: 'low' as const
       });
       
       summary.totalHealing += actualHealing;
@@ -350,7 +356,9 @@ export class EndOfRoundProcessor {
         message: `${player.name} regenerates ${actualHealing} HP (Lich passive)`,
         playerId: player.id,
         healing: actualHealing,
-        public: true
+        isPublic: true,
+        timestamp: Date.now(),
+        priority: 'low' as const
       });
       summary.totalHealing += actualHealing;
     }
@@ -379,7 +387,9 @@ export class EndOfRoundProcessor {
           type: 'racial_effect',
           message: `${player.name} gains ${rageStacks} rage stacks from taking damage (Orc passive)`,
           playerId: player.id,
-          public: true
+          isPublic: true,
+          timestamp: Date.now(),
+          priority: 'low' as const
         });
       }
     }
@@ -407,7 +417,9 @@ export class EndOfRoundProcessor {
         type: 'racial_effect',
         message: `${player.name} gains pack bond with ${nearbyAllies.length} allies (Kinfolk passive)`,
         playerId: player.id,
-        public: true
+        isPublic: true,
+        timestamp: Date.now(),
+        priority: 'low' as const
       });
     }
   }
@@ -456,7 +468,9 @@ export class EndOfRoundProcessor {
       message: `${player.name} takes ${damage} corruption damage`,
       playerId: player.id,
       damage,
-      public: true
+      isPublic: true,
+      timestamp: Date.now(),
+      priority: 'high' as const
     });
     
     summary.totalDamageToPlayers += damage;

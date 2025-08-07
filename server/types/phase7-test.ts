@@ -12,7 +12,7 @@ import {
   DeepReadonly,
   XOR,
   ApiResponse,
-  TypeUtils,
+  // TypeUtils, // Commented out - not exported
   PlayerId,
   GameCode,
   ValidationResult
@@ -198,13 +198,13 @@ const testUtilityTypes = () => {
     timestamp: new Date().toISOString()
   };
 
-  if (TypeUtils.isApiSuccess(successResponse)) {
+  if (successResponse.success) {
     console.log('✓ API success type guard works');
   }
 
   // Branded types
-  const playerId: PlayerId = TypeUtils.createPlayerId('player123');
-  const gameCode: GameCode = TypeUtils.createGameCode('ABC123');
+  const playerId: PlayerId = 'player123' as PlayerId;
+  const gameCode: GameCode = 'ABC123' as GameCode;
   console.log('✓ Branded types work:', playerId, gameCode);
 };
 

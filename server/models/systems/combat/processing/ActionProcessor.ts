@@ -80,7 +80,7 @@ export class ActionProcessor {
           });
         }
       } catch (error) {
-        logger.error(`Error validating action for ${playerId}:`, error);
+        logger.error(`Error validating action for ${playerId}:`, error as any);
         validationResults.push({
           playerId,
           player,
@@ -109,7 +109,9 @@ export class ActionProcessor {
       log.push({
         type: 'system',
         message: 'No valid actions this round',
-        public: true
+        isPublic: true,
+        timestamp: Date.now(),
+        priority: 'low' as const
       });
       return playerActions;
     }
@@ -123,11 +125,13 @@ export class ActionProcessor {
         const result = await this.processActionWithContext(actionData, log, summary);
         playerActions.set(actionData.playerId, result);
       } catch (error) {
-        logger.error(`Error processing action for ${actionData.playerId}:`, error);
+        logger.error(`Error processing action for ${actionData.playerId}:`, error as any);
         log.push({
           type: 'error',
           message: `Failed to process action for ${actionData.player?.name || actionData.playerId}`,
-          public: false
+          isPublic: false,
+          timestamp: Date.now(),
+          priority: 'medium' as const
         });
       }
     }
@@ -196,11 +200,13 @@ export class ActionProcessor {
       
       return result;
     } catch (error) {
-      logger.error(`Failed to process action for ${player.name}:`, error);
+      logger.error(`Failed to process action for ${player.name}:`, error as any);
       log.push({
         type: 'error',
         message: `${player.name}'s action failed to execute`,
-        public: true
+        isPublic: true,
+        timestamp: Date.now(),
+        priority: 'high' as const
       });
       return { success: false, error: error instanceof Error ? error.message : String(error) };
     }

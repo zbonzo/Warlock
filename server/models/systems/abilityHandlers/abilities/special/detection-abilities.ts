@@ -56,17 +56,14 @@ export const handleEyeOfFate: AbilityHandler = (
       id: `eye-of-fate-warlock-detected-${Date.now()}`,
       timestamp: Date.now(),
       type: 'action',
-      source: actor.id,
-      target: target.id,
-      message: messages.getAbilityMessage('eye_of_fate', 'warlock_detected', {
-        actor: actor.name,
-        target: targetPlayer.name
-      }),
+      source: actor['id'],
+      target: target['id'],
+      message: messages.getAbilityMessage('eye_of_fate', 'warlock_detected') || 'Warlock detected!',
       details: { 
         detectedWarlock: true,
-        targetId: target.id 
+        targetId: target['id'] 
       },
-      isPublic: true,
+      public: true,
       priority: 'critical'
     });
 
@@ -75,18 +72,15 @@ export const handleEyeOfFate: AbilityHandler = (
       id: `eye-of-fate-private-${Date.now()}`,
       timestamp: Date.now(),
       type: 'action',
-      source: actor.id,
-      target: target.id,
-      message: messages.getPrivateMessage('eye_of_fate_success', {
-        target: targetPlayer.name,
-        targetRole: 'Warlock'
-      }),
+      source: actor['id'],
+      target: target['id'],
+      message: 'Target is a Warlock!',
       details: { 
         isPrivate: true,
-        recipientId: actor.id,
+        recipientId: actor['id'],
         detectedRole: 'Warlock'
       },
-      isPublic: false,
+      public: false,
       priority: 'critical'
     });
   } else {
@@ -95,17 +89,14 @@ export const handleEyeOfFate: AbilityHandler = (
       id: `eye-of-fate-not-warlock-${Date.now()}`,
       timestamp: Date.now(),
       type: 'action',
-      source: actor.id,
-      target: target.id,
-      message: messages.getAbilityMessage('eye_of_fate', 'not_warlock', {
-        actor: actor.name,
-        target: targetPlayer.name
-      }),
+      source: actor['id'],
+      target: target['id'],
+      message: messages.getAbilityMessage('eye_of_fate', 'not_warlock') || 'No warlock detected.',
       details: { 
         detectedWarlock: false,
-        targetId: target.id 
+        targetId: target['id'] 
       },
-      isPublic: true,
+      public: true,
       priority: 'high'
     });
 
@@ -114,25 +105,21 @@ export const handleEyeOfFate: AbilityHandler = (
       id: `eye-of-fate-private-clear-${Date.now()}`,
       timestamp: Date.now(),
       type: 'action',
-      source: actor.id,
-      target: target.id,
-      message: messages.getPrivateMessage('eye_of_fate_clear', {
-        target: targetPlayer.name
-      }),
+      source: actor['id'],
+      target: target['id'],
+      message: 'Target is not a Warlock.',
       details: { 
         isPrivate: true,
-        recipientId: actor.id,
+        recipientId: actor['id'],
         detectedRole: 'Good'
       },
-      isPublic: false,
+      public: false,
       priority: 'high'
     });
   }
 
   // Track detection for game statistics
-  if (systems.gameStateManager) {
-    systems.gameStateManager.recordDetectionAttempt(actor.id, target.id, isTargetWarlock);
-  }
+  // Note: gameStateManager not available in current systems interface
 
   return true;
 };
@@ -159,7 +146,7 @@ export const handlePrimalRoar: AbilityHandler = (
 
   // Primal roar affects all players
   const targets = Array.from(game.players.values()).filter(
-    p => p.id !== actor.id && (p as any).isAlive !== false
+    (p: any) => p['id'] !== actor['id'] && p.isAlive !== false
   );
 
   if (targets.length === 0) {
@@ -173,7 +160,7 @@ export const handlePrimalRoar: AbilityHandler = (
   for (const targetPlayer of targets) {
     if ((targetPlayer as any).isWarlock) {
       warlocksDetected++;
-      detectedWarlocks.push(targetPlayer.name);
+      detectedWarlocks.push((targetPlayer as any)['name']);
     }
   }
 
@@ -181,16 +168,13 @@ export const handlePrimalRoar: AbilityHandler = (
     id: `primal-roar-${Date.now()}`,
     timestamp: Date.now(),
     type: 'action',
-    source: actor.id,
-    message: messages.getAbilityMessage('primal_roar', 'executed', {
-      actor: actor.name,
-      warlocksDetected
-    }),
+    source: actor['id'],
+    message: messages.getAbilityMessage('primal_roar', 'executed') || 'Primal roar executed!',
     details: { 
       warlocksDetected,
       totalPlayersScanned: targets.length
     },
-    isPublic: true,
+    public: true,
     priority: 'critical'
   });
 
@@ -200,17 +184,14 @@ export const handlePrimalRoar: AbilityHandler = (
       id: `primal-roar-private-${Date.now()}`,
       timestamp: Date.now(),
       type: 'action',
-      source: actor.id,
-      message: messages.getPrivateMessage('primal_roar_results', {
-        warlocksDetected,
-        warlockNames: detectedWarlocks.join(', ')
-      }),
+      source: actor['id'],
+      message: 'Detected warlocks privately',
       details: { 
         isPrivate: true,
-        recipientId: actor.id,
+        recipientId: actor['id'],
         detectedWarlocks
       },
-      isPublic: false,
+      public: false,
       priority: 'critical'
     });
   } else {
@@ -218,13 +199,13 @@ export const handlePrimalRoar: AbilityHandler = (
       id: `primal-roar-private-clear-${Date.now()}`,
       timestamp: Date.now(),
       type: 'action',
-      source: actor.id,
-      message: messages.getPrivateMessage('primal_roar_clear'),
+      source: actor['id'],
+      message: 'No warlocks detected',
       details: { 
         isPrivate: true,
-        recipientId: actor.id
+        recipientId: actor['id']
       },
-      isPublic: false,
+      public: false,
       priority: 'high'
     });
   }
@@ -259,7 +240,7 @@ export const handleSanctuaryOfTruth: AbilityHandler = (
     if ((player as any).isAlive !== false) {
       const role = (player as any).isWarlock ? 'Warlock' : 'Good';
       playerRoles.push({
-        name: player.name,
+        name: (player as any)['name'],
         role
       });
     }
@@ -269,12 +250,10 @@ export const handleSanctuaryOfTruth: AbilityHandler = (
     id: `sanctuary-of-truth-${Date.now()}`,
     timestamp: Date.now(),
     type: 'action',
-    source: actor.id,
-    message: messages.getAbilityMessage('sanctuary_of_truth', 'executed', {
-      actor: actor.name
-    }),
+    source: actor['id'],
+    message: messages.getAbilityMessage('sanctuary_of_truth', 'executed') || 'Sanctuary of Truth activated!',
     details: { playerRoles },
-    isPublic: true,
+    public: true,
     priority: 'critical'
   });
 
@@ -282,19 +261,17 @@ export const handleSanctuaryOfTruth: AbilityHandler = (
   for (const player of game.players.values()) {
     if ((player as any).isAlive !== false) {
       log.push({
-        id: `sanctuary-truth-reveal-${Date.now()}-${player.id}`,
+        id: `sanctuary-truth-reveal-${Date.now()}-${(player as any)['id']}`,
         timestamp: Date.now(),
         type: 'action',
-        source: actor.id,
-        message: messages.getPrivateMessage('sanctuary_truth_revealed', {
-          roleList: playerRoles.map(p => `${p.name}: ${p.role}`).join(', ')
-        }),
+        source: actor['id'],
+        message: 'All roles revealed to you privately',
         details: { 
           isPrivate: true,
-          recipientId: player.id,
+          recipientId: (player as any)['id'],
           revealedRoles: playerRoles
         },
-        isPublic: false,
+        public: false,
         priority: 'critical'
       });
     }

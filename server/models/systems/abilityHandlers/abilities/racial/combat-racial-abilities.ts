@@ -75,6 +75,7 @@ export const handleBloodRage: AbilityHandler = (
       message: messages.getAbilityMessage('racial', 'blood_rage_health_cost') || `${actor.name} pays ${healthCostResult?.finalDamage || healthCost} health to activate Blood Rage!`,
       details: { healthCost: healthCostResult.finalDamage },
       isPublic: true,
+      public: true,
       priority: 'medium'
     });
   }
@@ -98,17 +99,14 @@ export const handleBloodRage: AbilityHandler = (
       timestamp: Date.now(),
       type: 'action',
       source: actor.id,
-      message: messages.getAbilityMessage('blood_rage', 'success', {
-        actor: actor.name,
-        damageBonus: Math.round(damageBonus * 100),
-        duration
-      }),
+      message: messages.getAbilityMessage('blood_rage', 'success') || `${actor.name} enters Blood Rage! +${Math.round(damageBonus * 100)}% damage for ${duration} rounds`,
       details: {
         damageBonus,
         duration,
         healthCost: healthCostResult?.finalDamage || healthCost
       },
       isPublic: true,
+      public: true,
       priority: 'high'
     });
 
@@ -149,16 +147,13 @@ export const handleUndying: AbilityHandler = (
       timestamp: Date.now(),
       type: 'action',
       source: actor.id,
-      message: messages.getAbilityMessage('undying', 'health_too_high', {
-        actor: actor.name,
-        currentHealth: Math.round(healthRatio * 100),
-        requiredHealth: Math.round(healthThreshold * 100)
-      }),
+      message: messages.getAbilityMessage('undying', 'health_too_high') || `${actor.name} has too much health (${Math.round(healthRatio * 100)}%) to activate Undying (requires <${Math.round(healthThreshold * 100)}%)`,
       details: {
         currentHealthRatio: healthRatio,
         requiredThreshold: healthThreshold
       },
       isPublic: true,
+      public: true,
       priority: 'medium'
     });
     return false;
@@ -184,17 +179,14 @@ export const handleUndying: AbilityHandler = (
       timestamp: Date.now(),
       type: 'action',
       source: actor.id,
-      message: messages.getAbilityMessage('undying', 'success', {
-        actor: actor.name,
-        damageReduction: Math.round(damageReduction * 100),
-        duration
-      }),
+      message: messages.getAbilityMessage('undying', 'success') || `${actor.name} activates Undying! ${Math.round(damageReduction * 100)}% damage reduction for ${duration} rounds`,
       details: {
         damageReduction,
         duration,
         healthWhenActivated: healthRatio
       },
       isPublic: true,
+      public: true,
       priority: 'critical'
     });
 
@@ -246,18 +238,14 @@ export const handleStoneArmor: AbilityHandler = (
       timestamp: Date.now(),
       type: 'action',
       source: actor.id,
-      message: messages.getAbilityMessage('stone_armor', 'enhanced', {
-        actor: actor.name,
-        armorBonus,
-        damageReduction: Math.round(damageReduction * 100),
-        duration
-      }),
+      message: messages.getAbilityMessage('stone_armor', 'enhanced') || `${actor.name}'s Stone Armor enhanced! +${armorBonus} armor, ${Math.round(damageReduction * 100)}% damage reduction for ${duration} rounds`,
       details: {
         armorBonus,
         damageReduction,
         duration
       },
       isPublic: true,
+      public: true,
       priority: 'high'
     });
 

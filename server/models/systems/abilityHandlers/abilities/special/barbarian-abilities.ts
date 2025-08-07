@@ -293,7 +293,7 @@ export const handleSweepingStrike: AbilityHandler = (
   
   // Add all living players except the actor
   for (const player of game.players.values()) {
-    if (player.id !== actor.id && 
+    if ((player as any)['id'] !== (actor as any)['id'] && 
         (player as any).isAlive !== false && 
         (player as any).hp > 0) {
       // Skip invisible players

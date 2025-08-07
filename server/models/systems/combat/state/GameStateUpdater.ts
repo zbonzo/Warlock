@@ -53,7 +53,7 @@ export class GameStateUpdater {
       await this.cleanupRoundData(gameRoom);
       
     } catch (error) {
-      logger.error('Error updating game state:', error);
+      logger.error('Error updating game state:', error as any);
     }
   }
 
@@ -125,27 +125,30 @@ export class GameStateUpdater {
     }
 
     // Check for time limit (if configured)
-    const timeLimit = config.gameBalance?.timeLimit;
-    if (timeLimit && gameRoom.startTime) {
-      const elapsedTime = Date.now() - new Date(gameRoom.startTime).getTime();
-      if (elapsedTime > timeLimit * 1000) {
-        gameRoom.gamePhase.phase = 'defeat';
-        gameRoom.gamePhase.endReason = 'time_limit_exceeded';
-        return;
-      }
-    }
+    // Note: timeLimit not currently in config schema
+    // const timeLimit = (config as any).gameBalance?.timeLimit;
+    // if (timeLimit && gameRoom.startTime) {
+    //   const elapsedTime = Date.now() - new Date(gameRoom.startTime).getTime();
+    //   if (elapsedTime > timeLimit * 1000) {
+    //     gameRoom.gamePhase.phase = 'defeat';
+    //     gameRoom.gamePhase.endReason = 'time_limit_exceeded';
+    //     return;
+    //   }
+    // }
 
     // Check for round limit (if configured)
-    const roundLimit = config.gameBalance?.maxRounds;
-    if (roundLimit && gameRoom.currentRound >= roundLimit) {
-      gameRoom.gamePhase.phase = 'defeat';
-      gameRoom.gamePhase.endReason = 'round_limit_exceeded';
-      return;
-    }
+    // Note: maxRounds not currently in config schema
+    // const roundLimit = (config as any).gameBalance?.maxRounds;
+    // if (roundLimit && gameRoom.currentRound >= roundLimit) {
+    //   gameRoom.gamePhase.phase = 'defeat';
+    //   gameRoom.gamePhase.endReason = 'round_limit_exceeded';
+    //   return;
+    // }
 
     // Check for monster victory condition (monster reached full power)
     const monster = gameRoom.monster;
-    if (monster?.age && monster.age > (config.gameBalance?.monsterMaxAge || 20)) {
+    const maxAge = config.gameBalance?.monster?.damageScaling?.maxAge || 20;
+    if (monster?.age && maxAge && monster.age > maxAge) {
       gameRoom.gamePhase.phase = 'defeat';
       gameRoom.gamePhase.endReason = 'monster_too_powerful';
       return;

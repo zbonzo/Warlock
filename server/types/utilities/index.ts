@@ -257,12 +257,11 @@ export {
   deepFreeze,
   deepMerge,
   measureExecutionTime,
-  measureAsyncExecutionTime,
-  PerformanceUtils
+  measureAsyncExecutionTime
 } from './performance-utils.js';
 
 // Game-specific utility types for backward compatibility
-export type PartialPlayer = DeepPartial<import('../generated.js').Player>;
+export type PartialPlayer = Partial<import('../generated.js').Player>;
 export type RequiredPlayer = Required<import('../generated.js').Player>;
 export type ReadonlyPlayer = Readonly<import('../generated.js').Player>;
 export type PlayerUpdate = Pick<import('../generated.js').Player, 'health' | 'statusEffects' | 'abilities' | 'stats'>;
@@ -273,5 +272,5 @@ export type CreateGameInput = Omit<import('../generated.js').GameRoom, 'id' | 'g
 export type CreateMonsterInput = Omit<import('../generated.js').Monster, 'id' | 'isAlive'>;
 
 // Game room utility types
-export type PartialGameRoom = Partial<import('../generated.js').GameRoom>;
-export type GameRoomUpdate = Pick<import('../generated.js').GameRoom, 'players' | 'isActive' | 'lastUpdated'>;
+export type PartialGameRoom = Partial<import('../generated.js').GameRoomType>;
+export type GameRoomUpdate = Pick<import('../generated.js').GameRoomType, 'players' | 'gameCode'>;

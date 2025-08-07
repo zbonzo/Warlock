@@ -48,11 +48,9 @@ export const handlePackBond: AbilityHandler = (
       timestamp: Date.now(),
       type: 'action',
       source: actor.id,
-      message: messages.getAbilityMessage('pack_bond', 'no_kinfolk_allies', {
-        actor: actor.name
-      }),
+      message: messages.getAbilityMessage('pack_bond', 'no_kinfolk_allies') || 'No Kinfolk allies available for Pack Bond',
       details: { reason: 'no_kinfolk_allies' },
-      isPublic: true,
+      public: true,
       priority: 'medium'
     });
     return false;
@@ -95,19 +93,14 @@ export const handlePackBond: AbilityHandler = (
       timestamp: Date.now(),
       type: 'action',
       source: actor.id,
-      message: messages.getAbilityMessage('pack_bond', 'success', {
-        actor: actor.name,
-        packSize: bonusTargets.length,
-        bonusPercentage: Math.round(actualBonus * 100),
-        duration
-      }),
+      message: messages.getAbilityMessage('pack_bond', 'success') || 'Pack Bond activated successfully!',
       details: {
         packSize: bonusTargets.length,
         actualBonus,
         duration,
         successfulBonds
       },
-      isPublic: true,
+      public: true,
       priority: 'high'
     });
 
@@ -156,7 +149,7 @@ export const handleDespairAura: AbilityHandler = (
   // Apply despair to all other players
   for (const despairTarget of targets) {
     const statusResult = systems.statusEffectManager.applyStatusEffect(despairTarget, {
-      id: `despair-aura-${Date.now()}-${despairTarget.id}`,
+      id: `despair-aura-${Date.now()}-${(despairTarget as any).id}`,
       name: 'despair',
       type: 'debuff',
       duration,
@@ -191,20 +184,14 @@ export const handleDespairAura: AbilityHandler = (
       timestamp: Date.now(),
       type: 'action',
       source: actor.id,
-      message: messages.getAbilityMessage('despair_aura', 'success', {
-        actor: actor.name,
-        affectedTargets,
-        damagePenalty: Math.round(damagePenalty * 100),
-        selfBonus: Math.round(selfBonus * 100),
-        duration
-      }),
+      message: messages.getAbilityMessage('despair_aura', 'success') || 'Despair Aura activated!',
       details: {
         affectedTargets,
         damagePenalty,
         selfBonus,
         duration
       },
-      isPublic: true,
+      public: true,
       priority: 'high'
     });
 
@@ -287,16 +274,12 @@ export const handleArtisanCrafting: AbilityHandler = (
       timestamp: Date.now(),
       type: 'action',
       source: actor.id,
-      message: messages.getAbilityMessage('artisan_crafting', 'success', {
-        actor: actor.name,
-        itemName: craftedItem.name,
-        itemType: craftedItem.type
-      }),
+      message: messages.getAbilityMessage('artisan_crafting', 'success') || 'Item crafted successfully!',
       details: {
         craftedItem,
         craftingType
       },
-      isPublic: true,
+      public: true,
       priority: 'high'
     });
 
@@ -306,16 +289,13 @@ export const handleArtisanCrafting: AbilityHandler = (
       timestamp: Date.now(),
       type: 'action',
       source: actor.id,
-      message: messages.getPrivateMessage('crafting_item_details', {
-        itemName: craftedItem.name,
-        itemDetails: JSON.stringify(craftedItem, null, 2)
-      }),
+      message: 'Crafted item details sent privately',
       details: {
         isPrivate: true,
         recipientId: actor.id,
         craftedItem
       },
-      isPublic: false,
+      public: false,
       priority: 'medium'
     });
 

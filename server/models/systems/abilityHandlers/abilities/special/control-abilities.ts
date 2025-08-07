@@ -114,6 +114,7 @@ export const handleControlMonster: AbilityHandler = (
       monsterLevel: monster['level']
     },
     isPublic: true,
+    public: true,
     priority: 'high'
   });
 

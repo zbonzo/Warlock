@@ -79,7 +79,9 @@ export class CoordinationSystem {
       log.push({
         type: 'coordination',
         message: `${coordinatedActions.length} players coordinate their ${actionType} actions!`,
-        public: true
+        isPublic: true,
+        timestamp: Date.now(),
+        priority: 'medium' as const
       });
       
       // Process each coordinated action with bonus
@@ -125,13 +127,15 @@ export class CoordinationSystem {
         log.push({
           type: 'coordination_bonus',
           message: `${player.name} deals +${bonusDamage} bonus damage from coordination!`,
-          public: true
+          isPublic: true,
+          timestamp: Date.now(),
+          priority: 'medium' as const
         });
       }
       
       return result;
     } catch (error) {
-      logger.error(`Failed to process coordinated action for ${player.name}:`, error);
+      logger.error(`Failed to process coordinated action for ${player.name}:`, error as any);
       return { success: false, error: error instanceof Error ? error.message : String(error) };
     }
   }

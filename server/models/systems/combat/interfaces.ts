@@ -42,9 +42,14 @@ export interface CombatLogEntry {
  */
 export interface RoundSummary {
   totalDamageDealt: number;
+  totalDamageToMonster: number;
+  totalDamageToPlayers: number;
   totalHealingApplied: number;
+  totalHealing: number;
   playersEliminated: string[];
+  playersKilled: string[];
   coordinatedActions: number;
+  abilitiesUsed: number;
   monsterActionType?: string;
 }
 

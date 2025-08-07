@@ -55,7 +55,7 @@ export function register(registry: AbilityRegistry): void {
     'Heal',
     (actor, target, ability, log, systems, coordinationInfo) => {
       // Check if it's a multi-target heal
-      if (ability.target === 'Multi' || ability.target === 'All') {
+      if ((ability as any).target === 'Multi' || (ability as any).target === 'All') {
         return registry.executeClassAbility(
           'groupHeal',
           actor,

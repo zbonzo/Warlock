@@ -124,7 +124,7 @@ export const handleMultiProtection: AbilityHandler = (
   // Apply protection to all living allies
   for (const protectionTarget of targets) {
     const statusResult = systems.statusEffectManager?.applyStatusEffect?.(protectionTarget as Player, {
-      id: `${effectName}-${Date.now()}-${protectionTarget.id}`,
+      id: `${effectName}-${Date.now()}-${(protectionTarget as any).id}`,
       name: 'protected',
       type: 'buff',
       duration,

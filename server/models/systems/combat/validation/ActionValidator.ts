@@ -42,7 +42,7 @@ export class ActionValidator {
       return validationResults;
 
     } catch (error) {
-      logger.error('Error validating submitted actions:', error);
+      logger.error('Error validating submitted actions:', error as any);
       return [];
     }
   }
@@ -71,8 +71,9 @@ export class ActionValidator {
     }
 
     // Ability-specific validation
-    if (action.abilityId) {
-      const abilityValidation = await this.validateAbility(player, action.abilityId);
+    const abilityId = (action.actionData as any)?.abilityId;
+    if (abilityId) {
+      const abilityValidation = await this.validateAbility(player, abilityId);
       errors.push(...abilityValidation.errors);
       warnings.push(...abilityValidation.warnings);
     }
@@ -135,7 +136,7 @@ export class ActionValidator {
    */
   private isValidActionType(action: PlayerAction): boolean {
     const validTypes = ['ability', 'skip', 'surrender'];
-    return validTypes.includes(action.type || '');
+    return validTypes.includes(action.actionType || '');
   }
 
   /**
@@ -181,7 +182,7 @@ export class ActionValidator {
 
     } catch (error) {
       errors.push(`Error validating ability: ${abilityId}`);
-      logger.error('Ability validation error:', error);
+      logger.error('Ability validation error:', error as any);
     }
 
     return { errors, warnings };

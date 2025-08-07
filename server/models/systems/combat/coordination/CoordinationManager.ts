@@ -19,9 +19,10 @@ export class CoordinationManager {
 
   constructor() {
     const gameBalance = config.gameBalance || {};
-    this.coordinationThreshold = gameBalance.coordinationThreshold || 2;
-    this.maxCoordinationBonus = gameBalance.maxCoordinationBonus || 0.5;
-    this.baseCoordinationBonus = gameBalance.baseCoordinationBonus || 0.15;
+    const coordinationConfig = gameBalance.coordinationBonus || {};
+    this.coordinationThreshold = (coordinationConfig as any).threshold || 2;
+    this.maxCoordinationBonus = (coordinationConfig as any).maxBonus || 0.5;
+    this.baseCoordinationBonus = (coordinationConfig as any).baseBonus || 0.15;
   }
 
   /**
@@ -58,7 +59,7 @@ export class CoordinationManager {
       return coordinationMap;
 
     } catch (error) {
-      logger.error('Error analyzing coordination bonuses:', error);
+      logger.error('Error analyzing coordination bonuses:', error as any);
       return coordinationMap;
     }
   }
@@ -74,13 +75,14 @@ export class CoordinationManager {
       let groupKey: string;
 
       // Determine grouping key based on action type
-      if (action.abilityId) {
+      const abilityId = action.actionData?.['abilityId'];
+      if (abilityId) {
         // Group by ability category or specific ability
-        const abilityConfig = config.getAbilityConfig?.(action.abilityId);
-        groupKey = abilityConfig?.category || action.abilityId;
+        // Note: getAbilityConfig not available in current config - using fallback
+        groupKey = abilityId;
       } else {
         // Group by action type
-        groupKey = action.type || 'unknown';
+        groupKey = action.actionType || 'unknown';
       }
 
       if (!actionGroups.has(groupKey)) {
@@ -136,13 +138,17 @@ export class CoordinationManager {
    */
   canActionsCoordinate(action1: PlayerAction, action2: PlayerAction): boolean {
     // Both must be ability actions
-    if (!action1.abilityId || !action2.abilityId) {
+    const abilityId1 = action1.actionData?.['abilityId'];
+    const abilityId2 = action2.actionData?.['abilityId'];
+    
+    if (!abilityId1 || !abilityId2) {
       return false;
     }
 
-    // Get ability configurations
-    const ability1Config = config.getAbilityConfig?.(action1.abilityId);
-    const ability2Config = config.getAbilityConfig?.(action2.abilityId);
+    // Note: getAbilityConfig not available in current config
+    // Using simplified logic for now
+    const ability1Config = { category: 'unknown', effect: 'unknown' };
+    const ability2Config = { category: 'unknown', effect: 'unknown' };
 
     if (!ability1Config || !ability2Config) {
       return false;

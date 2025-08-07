@@ -104,7 +104,7 @@ export const handleAdaptability: AbilityHandler = (
         timestamp: Date.now(),
         type: 'action',
         source: actor.id,
-        message: messages.privateMessages?.adaptability_abilities || `You can now use: ${selectedClass.abilities.map((a: any) => a.name).join(', ')}`,
+        message: (messages as any).privateMessages?.adaptability_abilities || `You can now use: ${selectedClass.abilities.map((a: any) => a.name).join(', ')}`,
         details: {
           isPrivate: true,
           recipientId: actor.id,
