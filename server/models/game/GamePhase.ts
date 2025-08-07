@@ -5,8 +5,8 @@
  */
 
 import { z } from 'zod';
-import logger from '@utils/logger';
-import type { GameCode, PlayerAction } from '../../types/generated';
+import logger from '../../utils/logger.js';
+import type { GameCode, PlayerAction } from '../../types/generated.js';
 
 // Action schemas
 const PendingActionSchema = z.object({
@@ -80,6 +80,14 @@ export class GamePhase {
    */
   getCurrentPhase(): GamePhaseType {
     return this.phase;
+  }
+
+  /**
+   * Get current phase (alias for getCurrentPhase)
+   * @returns Current phase
+   */
+  getPhase(): GamePhaseType {
+    return this.getCurrentPhase();
   }
 
   /**

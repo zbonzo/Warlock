@@ -3,9 +3,9 @@
  * Handles armor reduction, damage modifiers, and various damage types
  */
 
-import config from '@config';
-import logger from '@utils/logger';
-import messages from '@messages';
+import config from '../../../config/index.js';
+import logger from '../../../utils/logger.js';
+import messages from '../../../config/messages/index.js';
 
 type DamageType = 'physical' | 'magical' | 'poison' | 'fire' | 'holy' | 'dark' | 'recoil';
 
@@ -147,8 +147,8 @@ class DamageCalculator {
     }
 
     // Apply target vulnerability
-    if (target && target.statusEffects && target.statusEffects.vulnerable) {
-      const vulnerabilityMultiplier = 1 + (target.statusEffects.vulnerable.damageIncrease || 0);
+    if (target && target.statusEffects && target.statusEffects['vulnerable']) {
+      const vulnerabilityMultiplier = 1 + (target.statusEffects['vulnerable'].damageIncrease || 0);
       modifiers.targetVulnerability = vulnerabilityMultiplier;
       finalDamage = Math.floor(finalDamage * vulnerabilityMultiplier);
     }
@@ -209,13 +209,13 @@ class DamageCalculator {
     let totalArmor = target.armor || 0;
 
     // Add armor from status effects
-    if (target.statusEffects && target.statusEffects.shielded) {
-      totalArmor += target.statusEffects.shielded.armor || 0;
+    if (target.statusEffects && target.statusEffects['shielded']) {
+      totalArmor += target.statusEffects['shielded'].armor || 0;
     }
 
     // Add armor from racial effects
-    if (target.racialEffects && target.racialEffects.stoneArmor) {
-      totalArmor += target.racialEffects.stoneArmor.armor || 0;
+    if (target.racialEffects && target.racialEffects['stoneArmor']) {
+      totalArmor += target.racialEffects['stoneArmor'].armor || 0;
     }
 
     return totalArmor;

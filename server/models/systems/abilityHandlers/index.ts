@@ -4,15 +4,15 @@
  * Migrated to TypeScript for Phase 6
  */
 
-import type { AbilityRegistry, AllAbilitiesResponse } from './abilityRegistryUtils';
-import { getAllAbilities } from './abilityRegistryUtils';
+import type { AbilityRegistry, AllAbilitiesResponse } from './abilityRegistryUtils.js';
+import { getAllAbilities } from './abilityRegistryUtils.js';
 
-// Import handler modules - these will be migrated progressively
-const attackAbilities = require('./attackAbilities');
-const healAbilities = require('./healAbilities');
-const defenseAbilities = require('./defenseAbilities');
-const specialAbilities = require('./specialAbilities');
-const racialAbilities = require('./racialAbilities');
+// Import handler modules - migrated to ES modules
+import * as attackAbilities from './attackAbilities.js';
+import * as healAbilities from './healAbilities.js';
+import * as defenseAbilities from './defenseAbilities.js';
+import * as specialAbilities from './specialAbilities.js';
+import * as racialAbilities from './racialAbilities.js';
 
 /**
  * Debug information interface
@@ -61,8 +61,8 @@ export function registerAbilityHandlers(registry: AbilityRegistry): DebugInfo {
   const debugInfo = registry.getDebugInfo();
   
   return {
-    registeredHandlers: Array.isArray(debugInfo.handlers) ? debugInfo.handlers : [],
-    totalHandlers: typeof debugInfo.total === 'number' ? debugInfo.total : 0,
+    registeredHandlers: Array.isArray(debugInfo['handlers']) ? debugInfo['handlers'] : [],
+    totalHandlers: typeof debugInfo['total'] === 'number' ? debugInfo['total'] : 0,
     unregisteredAbilities,
     timestamp: Date.now()
   };
@@ -152,9 +152,9 @@ export function validateAbilityHandlerModules(): boolean {
 // Re-export types for external use
 export type { 
   AbilityRegistry,
-  AbilityHandlerModule,
+  AbilityHandler,
   AllAbilitiesResponse
-} from './abilityRegistryUtils';
+} from './abilityRegistryUtils.js';
 
-// Default export for CommonJS compatibility
-module.exports = { registerAbilityHandlers };
+// ES module exports
+export default { registerAbilityHandlers };

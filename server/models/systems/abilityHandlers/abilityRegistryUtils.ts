@@ -4,9 +4,9 @@
  * Migrated to TypeScript for Phase 6
  */
 
-import type { Player, Monster, Ability } from '../../../types/generated';
-import type { GameSystems } from '../../../types/systems';
-const config = require('@config');
+import type { Player, Monster, Ability } from '../../../types/generated.js';
+import type { GameSystems } from '../SystemsFactory.js';
+import config from '../../../config/index.js';
 
 /**
  * Coordination information for ability execution
@@ -20,20 +20,30 @@ export interface CoordinationInfo {
   defenseBonus?: number;
   coordinatedUtility?: boolean;
   utilityBonus?: number;
+  isActive?: boolean;
+  bonusMultiplier?: number;
+  participantCount?: number;
+  participantNames?: string[];
 }
 
 /**
  * Event log entry interface
  */
 export interface LogEntry {
-  type: string;
+  id?: string;
+  type: 'status' | 'damage' | 'heal' | 'system' | 'phase' | 'action' | 'level_up' | 'ability_unlock' | 'level_up_bonus' | 'monster_enhancement' | 'player_death' | 'kinfolk_pack_hunting' | 'class_effect' | 'class_level_up' | 'game_victory' | 'game_defeat' | 'ranger_tracking' | string;
   public: boolean;
+  isPublic?: boolean; // For backward compatibility
+  source?: string;
   attackerId?: string;
   targetId?: string;
+  target?: string;
   message: string;
   privateMessage?: string;
   attackerMessage?: string;
   timestamp?: number;
+  details?: Record<string, any>;
+  priority?: 'low' | 'medium' | 'high' | 'critical';
 }
 
 /**
@@ -56,6 +66,17 @@ export interface AbilityRegistry {
   registerClassAbilities(abilityTypes: string[], handler: AbilityHandler): void;
   hasClassAbility(abilityType: string): boolean;
   executeClassAbility(
+    abilityType: string,
+    actor: Player,
+    target: Player | Monster | string,
+    ability: Ability,
+    log: LogEntry[],
+    systems: GameSystems,
+    coordinationInfo?: CoordinationInfo
+  ): boolean;
+  registerRacialAbility(abilityType: string, handler: AbilityHandler): void;
+  hasRacialAbility(abilityType: string): boolean;
+  executeRacialAbility(
     abilityType: string,
     actor: Player,
     target: Player | Monster | string,
@@ -275,7 +296,7 @@ export function getAllAbilities(): AllAbilitiesResponse {
         if (!abilities.byEffect[ability.effect]) {
           abilities.byEffect[ability.effect] = [];
         }
-        abilities.byEffect[ability.effect].push(ability.type);
+        abilities.byEffect[ability.effect]?.push(ability.type);
       }
 
       // Add to target

@@ -2,7 +2,7 @@
  * @fileoverview Development environment configuration
  * Overrides for local development
  */
-import { EnvironmentConfig } from './types';
+import { EnvironmentConfig } from './types.js';
 
 const config: EnvironmentConfig = {
   // Logging

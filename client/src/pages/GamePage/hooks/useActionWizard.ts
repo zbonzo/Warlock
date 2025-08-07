@@ -63,22 +63,39 @@ export const useActionWizard = (me: Player | null): ActionWizardState => {
   useEffect(() => {
     const shouldShowWizard = me?.['isAlive'] && !me?.statusEffects?.stunned;
     
+    console.log('🔍 useActionWizard effect:', {
+      shouldShowWizard,
+      isMobile,
+      activeTab,
+      submitted,
+      currentStep,
+      isAlive: me?.['isAlive'],
+      stunned: me?.statusEffects?.stunned,
+      trigger: 'wizard visibility check'
+    });
+    
     if (isMobile) {
       // Mobile: show wizard when action tab is active and player can act
       if (activeTab === 'action' && shouldShowWizard) {
         setIsWizardOpen(true);
-        setCurrentStep(1);
+        // Only reset to step 1 if not already submitted
+        if (!submitted) {
+          console.log('🔍 Mobile: Resetting to step 1 (not submitted)');
+          setCurrentStep(1);
+        }
       } else {
         setIsWizardOpen(false);
       }
     } else {
       // Desktop: always show wizard when player can act
       setIsWizardOpen(shouldShowWizard);
-      if (shouldShowWizard) {
+      if (shouldShowWizard && !submitted) {
+        // Only reset to step 1 if not already submitted
+        console.log('🔍 Desktop: Resetting to step 1 (not submitted)');
         setCurrentStep(1);
       }
     }
-  }, [isMobile, activeTab, me?.['isAlive'], me?.statusEffects?.stunned]);
+  }, [isMobile, activeTab, me?.['isAlive'], me?.statusEffects?.stunned, submitted]);
 
   // Reset wizard state when player dies or gets stunned
   useEffect(() => {
@@ -97,14 +114,8 @@ export const useActionWizard = (me: Player | null): ActionWizardState => {
     }
   }, [me?.['isAlive'], me?.statusEffects?.stunned, isMobile, activeTab]);
 
-  // Reset wizard state when submitted action is processed
-  useEffect(() => {
-    if (submitted) {
-      setCurrentStep(1);
-      setSelectedAbility(null);
-      setSelectedTarget(null);
-    }
-  }, [submitted]);
+  // Don't reset wizard state when submitted - keep it open for waiting
+  // The wizard will be reset when the round actually processes
 
   /**
    * Handle tab change for mobile navigation
@@ -131,13 +142,12 @@ export const useActionWizard = (me: Player | null): ActionWizardState => {
   }, [me?.['isAlive'], me?.statusEffects?.stunned]);
 
   /**
-   * Handle ability selection
+   * Handle ability selection (don't auto-advance to step 2 - use Continue button)
    */
   const handleAbilitySelect = useCallback((ability: Ability) => {
     console.log('Ability selected:', ability);
     setSelectedAbility(ability);
-    // Move to step 2 automatically after ability selection
-    setCurrentStep(2);
+    // Don't automatically move to step 2 - wait for Continue button
   }, []);
 
   /**
@@ -149,18 +159,20 @@ export const useActionWizard = (me: Player | null): ActionWizardState => {
   }, []);
 
   /**
-   * Handle action submission
+   * Handle action submission (keep wizard open for waiting state)
    */
   const handleSubmitAction = useCallback(() => {
-    console.log('Action submitted:', { ability: selectedAbility, target: selectedTarget });
+    console.log('🔍 handleSubmitAction called:', { 
+      ability: selectedAbility?.name || 'none', 
+      target: selectedTarget,
+      currentStep,
+      wasSubmitted: submitted
+    });
     setSubmitted(true);
     
-    // On mobile, close wizard and switch to players tab
-    if (isMobile) {
-      setIsWizardOpen(false);
-      setActiveTab('players');
-    }
-  }, [selectedAbility, selectedTarget, isMobile]);
+    // Keep wizard open to show waiting state
+    // Don't switch away from action tab - let player see the waiting state
+  }, [selectedAbility, selectedTarget, currentStep, submitted]);
 
   /**
    * Show GameState drawer (mobile only) - replaces close/cancel
@@ -215,12 +227,19 @@ export const useActionWizard = (me: Player | null): ActionWizardState => {
    * Reset wizard state (called externally)
    */
   const resetWizard = useCallback(() => {
+    console.log('🔍 resetWizard called!', {
+      previousStep: currentStep,
+      previousAbility: selectedAbility?.name || 'none',
+      previousTarget: selectedTarget,
+      previousSubmitted: submitted,
+      stackTrace: new Error().stack
+    });
     setCurrentStep(1);
     setSelectedAbility(null);
     setSelectedTarget(null);
     setSubmitted(false);
     setShowGameState(false);
-  }, []);
+  }, [currentStep, selectedAbility, selectedTarget, submitted]);
 
   /**
    * Step change handler

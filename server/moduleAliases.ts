@@ -6,6 +6,11 @@
 
 import * as path from 'path';
 import * as moduleAlias from 'module-alias';
+import { fileURLToPath } from 'url';
+
+// Get __dirname equivalent in ES modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Define path aliases
 moduleAlias.addAliases({

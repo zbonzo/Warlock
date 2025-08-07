@@ -3,4 +3,4 @@
  * Re-exports the component for cleaner imports
  */
 
-export { default } from './GamePage.jsx';
+export { default } from './GamePage';

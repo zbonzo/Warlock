@@ -2,20 +2,20 @@
  * @fileoverview Centralized configuration loader (TypeScript)
  * Exports all game configuration with type safety and validation
  */
-import path from 'path';
-import fs from 'fs';
+import * as path from 'path';
+import * as fs from 'fs';
 
 // Import all the new loaders
-import { abilityLoader } from './loaders/AbilityLoader';
-import { classLoader } from './loaders/ClassLoader';
-import { raceLoader } from './loaders/RaceLoader';
-import { gameBalanceLoader } from './loaders/GameBalanceLoader';
-import type { CorruptionLimitChecks } from './gameBalance';
-import { statusEffectsLoader } from './loaders/StatusEffectsLoader';
-import { messagesLoader } from './loaders/MessagesLoader';
+import { abilityLoader } from './loaders/AbilityLoader.js';
+import { classLoader } from './loaders/ClassLoader.js';
+import { raceLoader } from './loaders/RaceLoader.js';
+import { gameBalanceLoader } from './loaders/GameBalanceLoader.js';
+import type { CorruptionLimitChecks } from './gameBalance.js';
+import { statusEffectsLoader } from './loaders/StatusEffectsLoader.js';
+import { messagesLoader } from './loaders/MessagesLoader.js';
 
 // Import remaining JavaScript configs (legacy)
-const characterConfig = require('./character'); // Contains consolidated exports
+import characterConfig from './character/index.js'; // Contains consolidated exports
 
 /**
  * Default configuration values
@@ -50,26 +50,31 @@ const defaultConfig = {
   logLevel: 'info',
 } as const;
 
+// Import environment configurations
+import developmentConfig from './environments/development.js';
+import productionConfig from './environments/production.js';
+import stagingConfig from './environments/staging.js';
+import testConfig from './environments/test.js';
+
 /**
  * Load environment-specific configuration
  */
 const loadEnvConfig = (): Record<string, any> => {
   const env = process.env['NODE_ENV'] || 'development';
-  const configPath = path.join(__dirname, 'environments', `${env}.js`);
-
-  try {
-    if (fs.existsSync(configPath)) {
-      const envConfig = require(configPath);
-      return envConfig;
-    }
-  } catch (err: any) {
-    console.warn(
-      `Failed to load environment configuration for ${env}:`,
-      err.message
-    );
+  
+  switch (env) {
+    case 'development':
+      return developmentConfig;
+    case 'production':
+      return productionConfig;
+    case 'staging':
+      return stagingConfig;
+    case 'test':
+      return testConfig;
+    default:
+      console.warn(`Unknown environment: ${env}, using development config`);
+      return developmentConfig;
   }
-
-  return {};
 };
 
 /**
@@ -440,5 +445,5 @@ export type AbilityTarget = 'Single' | 'Self' | 'Multi';
 export type ClassCategory = 'Melee' | 'Caster' | 'Ranged';
 export type UsageLimit = 'passive' | 'perGame' | 'perRound' | 'perTurn';
 
-// Default export for backwards compatibility
+// Default export for ES modules
 export default config;

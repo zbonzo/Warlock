@@ -1,7 +1,7 @@
 /**
  * @fileoverview Staging environment configuration
  */
-import { EnvironmentConfig } from './types';
+import { EnvironmentConfig } from './types.js';
 
 const config: EnvironmentConfig = {
   logLevel: 'info',

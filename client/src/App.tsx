@@ -155,7 +155,9 @@ function AppContent(): React.ReactElement {
   const isInLobby = screen === GAME_PHASES.LOBBY || screen === GAME_PHASES.CHARACTER_SELECT;
   
   // Show warning during active game or when in lobby/character select with other players
-  const shouldWarn = isInActiveGame || (isInLobby && players.length > 1);
+  // But disable in development mode for easier testing
+  const shouldWarn = process.env['NODE_ENV'] !== 'development' && 
+    (isInActiveGame || (isInLobby && players.length > 1));
   
   const getWarningMessage = useCallback((): string | undefined => {
     if (isInActiveGame) {
@@ -215,6 +217,17 @@ function AppContent(): React.ReactElement {
       }
 
       setScreen(GAME_PHASES.GAME);
+    });
+
+    // Handle game state updates (e.g., after action submission)
+    const unsubscribeGameStateUpdate = on('gameStateUpdate', (payload: any) => {
+      if (payload.players) {
+        setPlayers(payload.players);
+      }
+      if (payload.monster) {
+        setMonster(payload.monster);
+      }
+      // Don't change screen here - let the game page handle UI transitions
     });
 
     const unsubscribeGameReconnected = on('gameReconnected', (payload: GameReconnectedEvent) => {
@@ -310,6 +323,7 @@ function AppContent(): React.ReactElement {
       unsubscribeGameCreated();
       unsubscribePlayerList();
       unsubscribeGameStarted();
+      unsubscribeGameStateUpdate();
       unsubscribeRoundResult();
       unsubscribeErrorMessage();
       unsubscribePrivateEvent();

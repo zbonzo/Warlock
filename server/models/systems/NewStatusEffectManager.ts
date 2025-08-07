@@ -2,10 +2,9 @@
  * @fileoverview New Status Effect Manager for individual effect instances
  * Manages collections of StatusEffect instances with proper stacking and calculations
  */
-import StatusEffect from './StatusEffect';
-import config from '../../config';
-import messages from '../../config/messages';
-import logger from '../../utils/logger';
+import StatusEffect from './StatusEffect.js';
+import config from '../../config/index.js';
+import logger from '../../utils/logger.js';
 
 interface Entity {
   id: string;
@@ -146,7 +145,7 @@ class NewStatusEffectManager {
     }
 
     // Get effect configuration
-    const effectConfig = config.statusEffects[effectType] as EffectConfig;
+    const effectConfig = config.statusEffects?.effects?.[effectType] as EffectConfig;
     if (!effectConfig) {
       logger.warn(`Unknown effect type: ${effectType}`);
       return null;
@@ -171,13 +170,15 @@ class NewStatusEffectManager {
     } else if (effectConfig.refreshable && sameTypeEffects.length > 0) {
       // Refresh existing effect
       const existingEffect = sameTypeEffects[0]; // Take the first one
-      existingEffect.refresh(params, effectConfig.stackable);
-      newEffect = existingEffect;
+      if (existingEffect) {
+        existingEffect.refresh(params, effectConfig.stackable);
+        newEffect = existingEffect;
+      }
       this.logEffectMessage(effectType, 'refreshed', target, actualLog, params, actualSourceName);
     } else if (sameTypeEffects.length > 0) {
       // Effect exists and is not stackable or refreshable - do nothing
       logger.debug(`Effect ${effectType} already exists on ${targetId} and is not stackable/refreshable`);
-      return sameTypeEffects[0];
+      return sameTypeEffects[0] || null;
     } else {
       // Apply new effect
       newEffect = new StatusEffect(effectType, params, actualSourceId, actualSourceName, targetId);
@@ -186,7 +187,9 @@ class NewStatusEffectManager {
     }
 
     // Handle special effect application logic
-    this.handleSpecialEffectApplication(target, effectType, params, newEffect);
+    if (newEffect) {
+      this.handleSpecialEffectApplication(target, effectType, params, newEffect);
+    }
 
     this.totalEffectsApplied++;
     logger.debug(`Applied ${effectType} to ${targetId} (total effects: ${this.getTotalActiveEffects()})`);
@@ -204,10 +207,15 @@ class NewStatusEffectManager {
     if (effectIndex === -1) return false;
 
     const effect = effects[effectIndex];
-    effect.onExpired(this.entities.get(targetId)!, log);
-    effects.splice(effectIndex, 1);
+    if (effect) {
+      // Mark effect as expired and let normal processing handle removal
+      effect.isActive = false;
+      effects.splice(effectIndex, 1);
+    }
 
-    logger.debug(`Removed effect ${effect.type} (${effectId}) from ${targetId}`);
+    if (effect) {
+      logger.debug(`Removed effect ${effect.type} (${effectId}) from ${targetId}`);
+    }
     return true;
   }
 
@@ -253,7 +261,9 @@ class NewStatusEffectManager {
       .sort((a, b) => a.priority - b.priority);
 
     for (const effect of sortedEffects) {
-      const result = effect.processTurn(entity, log);
+      // Ensure entity has proper isAlive property
+      const entityWithAlive = { ...entity, isAlive: entity.isAlive ?? true };
+      const result = effect.processTurn(entityWithAlive, log);
       
       // Handle any side effects
       for (const sideEffect of result.effects || []) {
@@ -334,7 +344,7 @@ class NewStatusEffectManager {
    * Apply racial passive effects to an entity
    */
   applyRacialPassives(entityId: string, race: string, log: any[] = []): void {
-    const racialConfig = config.raceAttributes[race];
+    const racialConfig = (config as any)['races']?.[race] || (config as any)['raceAttributes']?.[race];
     if (!racialConfig) return;
 
     // Apply racial passive effects based on race
@@ -397,7 +407,7 @@ class NewStatusEffectManager {
         if (params.healerId && params.healerName) {
           effect.params.healerId = params.healerId;
           effect.params.healerName = params.healerName;
-          effect.params.isWarlock = params.isWarlock || false;
+          effect.params['isWarlock'] = params['isWarlock'] || false;
         }
         break;
     }
@@ -438,15 +448,16 @@ class NewStatusEffectManager {
    * @private
    */
   private logEffectMessage(effectType: string, messageType: string, target: Entity, log: any[], params: LegacyEffectParams, sourceName: string | null): void {
-    const message = config.statusEffects.getEffectMessage(effectType, messageType, {
-      playerName: target.name || 'Monster',
-      sourceName: sourceName || 'Unknown',
-      damage: params.damage,
-      armor: params.armor,
-      turns: params.turns || params.duration,
-      amount: params.amount,
-      damageIncrease: params.damageIncrease,
-    });
+    // Create a simple status effect message
+    const playerName = target.name || 'Monster';
+    let message = `${playerName} ${messageType} ${effectType}`;
+    
+    if (params.damage) {
+      message += ` (${params.damage} damage)`;
+    }
+    if (params.turns) {
+      message += ` for ${params.turns} turns`;
+    }
 
     if (message) {
       log.push({
@@ -505,13 +516,13 @@ class NewStatusEffectManager {
         if (!entitiesWithEffect[effect.type]) {
           entitiesWithEffect[effect.type] = new Set();
         }
-        entitiesWithEffect[effect.type].add(entityId);
+        entitiesWithEffect[effect.type]?.add(entityId);
       }
     }
 
     // Convert sets to counts
     for (const effectType of Object.keys(entitiesWithEffect)) {
-      entitiesCounts[effectType] = entitiesWithEffect[effectType].size;
+      entitiesCounts[effectType] = entitiesWithEffect[effectType]?.size || 0;
     }
 
     return {
@@ -671,7 +682,7 @@ class NewStatusEffectManager {
         // Count entities with specific effect types
         if (stats.playersCounts.hasOwnProperty(effect.type)) {
           if (!entitiesWithEffects.has(`${entityId}-${effect.type}`)) {
-            stats.playersCounts[effect.type]++;
+            stats.playersCounts[effect.type] = (stats.playersCounts[effect.type] || 0) + 1;
             entitiesWithEffects.add(`${entityId}-${effect.type}`);
           }
         }

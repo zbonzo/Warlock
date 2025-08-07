@@ -8,7 +8,7 @@
     "coverage/**/*",
     "logs/**/*"
   ],
-  "exec": "npx ts-node index.ts",
+  "exec": "tsx index.ts",
   "env": {
     "NODE_ENV": "development",
     "PORT": "4001"

@@ -41,8 +41,11 @@ export const validateString = (str: unknown, maxLength: number = 30): boolean =>
  * Validate game code format
  */
 export const validateGameCode = (code: unknown): boolean => {
-  if (!code || typeof code !== 'string') return false;
-  return /^\d{4}$/.test(code);
+  if (!code) return false;
+  
+  // Handle both string and number game codes
+  const codeStr = String(code);
+  return /^\d{4}$/.test(codeStr);
 };
 
 /**
@@ -67,7 +70,7 @@ export const validateGame = (socket: Socket, gameCode: string): boolean => {
  */
 export const validatePlayer = (socket: Socket, gameCode: string): boolean => {
   const game = gameService.games.get(gameCode);
-  if (!game || !game.gameState.players.has(socket.id)) {
+  if (!game || !(game.gameState as any).players.has(socket.id)) {
     logger.warn('PlayerNotInGameValidation', {
       socketId: socket.id,
       gameCode,
@@ -408,7 +411,7 @@ export function validatePlayerName(
 
   // ENHANCED: Check for duplicate names using normalized comparison
   const existingNormalizedNames = existingPlayers.map((p) =>
-    p.name
+    (p as any).name
       .toLowerCase()
       .normalize('NFD')
       .replace(/[\u0300-\u036f]/g, '')
@@ -497,7 +500,7 @@ export function suggestValidName(originalName: string): string {
         'Knight',
       ];
       suggestion =
-        randomNames[Math.floor(Math.random() * randomNames.length)] +
+        (randomNames[Math.floor(Math.random() * randomNames.length)] || 'Player') +
         Math.floor(Math.random() * 999);
     }
   }
@@ -518,10 +521,10 @@ export const validateGameState = (
     throwNotFoundError(config.getError('gameNotFound'));
   }
   
-  if (shouldBeStarted && !game.gameState.started) {
+  if (shouldBeStarted && !(game.gameState as any).started) {
     throwGameStateError(config.getError('gameNotStarted'));
   }
-  if (!shouldBeStarted && game.gameState.started) {
+  if (!shouldBeStarted && (game.gameState as any).started) {
     throwGameStateError(config.getError('gameStarted'));
   }
   return true;
@@ -536,7 +539,7 @@ export const validateHost = (socket: Socket, gameCode: string): boolean => {
     throwNotFoundError(config.getError('gameNotFound'));
   }
   
-  if (socket.id !== game.gameState.hostId) {
+  if (socket.id !== game.gameState.getHostId()) {
     logger.warn('NonHostActionAttempt', {
       socketId: socket.id,
       gameCode,
@@ -554,10 +557,10 @@ export function isAOEAbility(ability: Ability | null | undefined): boolean {
 
   // Check multiple indicators that an ability is AOE
   return (
-    ability.target === 'Multi' ||
+    (ability as any).target === 'Multi' ||
     (ability as any).isAOE === true ||
     (ability as any).targetType === 'multi' ||
-    ability.category === 'AOE' ||
+    ability['category'] === 'AOE' ||
     // Check specific ability types that are known to be AOE
     [
       'massHeal',
@@ -591,13 +594,13 @@ export const validateAction = (
     throwNotFoundError(config.getError('gameNotFound'));
   }
   
-  const player = game.gameState.players.get(socket.id);
+  const player = (game.gameState as any).players.get(socket.id);
   if (!player) {
     throwPermissionError(config.getError('playerNotInGame'));
   }
 
   // Check if action type is valid for this player
-  const validAction = player.unlockedAbilities.find((a: Ability) => a.type === actionType);
+  const validAction = (player as any).unlockedAbilities.find((a: Ability) => a.type === actionType);
   if (!validAction) {
     socket.emit('errorMessage', {
       message: config.getError('invalidAction'),
@@ -627,7 +630,7 @@ export const validateAction = (
   }
 
   // Handle player targets
-  if (!game.gameState.players.has(targetId) || !game.gameState.players.get(targetId)!.isAlive) {
+  if (!(game.gameState as any).players.has(targetId) || !(game.gameState as any).players.get(targetId)!.isAlive) {
     socket.emit('errorMessage', {
       message: config.getError('invalidTarget'),
     });
@@ -651,13 +654,13 @@ export const validateActionWithCooldown = (
     throwNotFoundError(config.getError('gameNotFound'));
   }
   
-  const player = game.gameState.players.get(socket.id);
+  const player = (game.gameState as any).players.get(socket.id);
   if (!player) {
     throwPermissionError(config.getError('playerNotInGame'));
   }
 
   // Check if action type is valid for this player
-  const validAction = player.unlockedAbilities.find((a: Ability) => a.type === actionType);
+  const validAction = (player as any).unlockedAbilities.find((a: Ability) => a.type === actionType);
   if (!validAction) {
     socket.emit('errorMessage', {
       message: config.getError('invalidAction'),
@@ -666,8 +669,8 @@ export const validateActionWithCooldown = (
   }
 
   // Check if ability is on cooldown
-  if (player.isAbilityOnCooldown && player.isAbilityOnCooldown(actionType)) {
-    const cooldownRemaining = player.getAbilityCooldown(actionType);
+  if ((player as any).isAbilityOnCooldown && (player as any).isAbilityOnCooldown(actionType)) {
+    const cooldownRemaining = (player as any).getAbilityCooldown(actionType);
     socket.emit('errorMessage', {
       message: config.formatMessage(config.getError('actionOnCooldown'), {
         abilityName: actionType,
@@ -700,7 +703,7 @@ export const validateActionWithCooldown = (
   }
 
   // Handle player targets
-  if (!game.gameState.players.has(targetId) || !game.gameState.players.get(targetId)!.isAlive) {
+  if (!(game.gameState as any).players.has(targetId) || !(game.gameState as any).players.get(targetId)!.isAlive) {
     socket.emit('errorMessage', {
       message: config.getError('invalidTarget'),
     });
@@ -733,8 +736,8 @@ export const validatePlayerNameSocket = (
       gameCode: gameCode,
       totalPlayersInGame: allPlayers.length,
       playersAfterFiltering: existingPlayers.length,
-      allPlayerNames: allPlayers.map(p => ({ id: p.id, name: p.name })),
-      existingPlayerNames: existingPlayers.map(p => ({ id: p.id, name: p.name })),
+      allPlayerNames: allPlayers.map(p => ({ id: p.id, name: (p as any).name })),
+      existingPlayerNames: existingPlayers.map(p => ({ id: p.id, name: (p as any).name })),
       isCurrentSocketInGame: allPlayers.some(p => p.id === socket.id)
     });
   }
@@ -746,8 +749,7 @@ export const validatePlayerNameSocket = (
     attemptedName: playerName,
     gameCode: gameCode,
     isValid: validation.isValid,
-    message: validation.message,
-    suggestion: validation.suggestion
+    error: validation.error
   });
 
   if (!validation.isValid) {

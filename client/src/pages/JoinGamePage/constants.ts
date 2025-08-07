@@ -103,7 +103,7 @@ export const RANDOM_NAMES: string[] = [
   'Pine',
   'Elm',
   'Fury',
-  'Rage',
+  'Wrath',
   'Scar',
   'Blade',
   'War',

@@ -3,9 +3,9 @@
  * Handles tracking and calculating coordination bonuses when multiple players target the same enemy
  */
 
-import config from '@config';
-import logger from '@utils/logger';
-import messages from '@messages';
+import config from '../../../config/index.js';
+import logger from '../../../utils/logger.js';
+import messages from '../../../config/messages/index.js';
 
 interface CoordinationBonus {
   bonus: number;
@@ -81,8 +81,8 @@ class CoordinationTracker {
     }
 
     // Calculate bonus based on number of other attackers
-    const bonusPerAttacker = config.gameBalance.coordination.bonusPerAttacker || 0.15;
-    const maxBonus = config.gameBalance.coordination.maxBonus || 0.5;
+    const bonusPerAttacker = config.gameBalance.coordinationBonus.damageBonus / 100 || 0.15;
+    const maxBonus = config.gameBalance.coordinationBonus.maxBonusTargets || 0.5;
     
     const rawBonus = otherAttackers * bonusPerAttacker;
     const bonus = Math.min(rawBonus, maxBonus);
@@ -174,3 +174,4 @@ class CoordinationTracker {
 }
 
 export default CoordinationTracker;
+export type { CoordinationStats };

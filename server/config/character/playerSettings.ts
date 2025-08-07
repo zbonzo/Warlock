@@ -133,5 +133,5 @@ export function isReconnectionAllowed(
   );
 }
 
-// Default export for CommonJS compatibility
+// Default export for ES modules
 export default playerSettings;

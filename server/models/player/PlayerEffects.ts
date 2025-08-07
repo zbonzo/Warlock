@@ -5,10 +5,10 @@
  */
 
 import { z } from 'zod';
-import logger from '@utils/logger';
-import messages from '@messages';
-import config from '@config';
-import type { StatusEffect, PlayerClass } from '../../types/generated';
+import logger from '../../utils/logger.js';
+import messages from '../../config/messages/index.js';
+import config from '../../config/index.js';
+import type { StatusEffect, PlayerClass } from '../../types/generated.js';
 
 // Status effect schemas
 const VulnerabilityEffectSchema = z.object({

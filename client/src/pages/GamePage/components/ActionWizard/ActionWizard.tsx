@@ -31,6 +31,7 @@ interface ActionWizardProps {
   selectedAbility?: Ability | null;
   selectedTarget?: string | null;
   submitted?: boolean;
+  submittedPlayers?: string[];
   
   // Racial ability state
   bloodRageActive?: boolean;
@@ -69,6 +70,7 @@ const ActionWizard: React.FC<ActionWizardProps> = ({
   selectedAbility,
   selectedTarget,
   submitted = false,
+  submittedPlayers = [],
   
   // Racial ability state
   bloodRageActive = false,
@@ -89,24 +91,60 @@ const ActionWizard: React.FC<ActionWizardProps> = ({
   const [currentStep, setCurrentStep] = useState<number>(initialStep);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
-  // Reset step when wizard opens
+  // Reset step when wizard opens (but not if already submitted)
   useEffect(() => {
-    if (isOpen && currentStep !== 1) {
-      setCurrentStep(1);
+    const serverHasSubmittedAction = me?.['hasSubmittedAction'] || false;
+    
+    console.log('🔍 useEffect[isOpen,submitted,selectedAbility]:', {
+      isOpen,
+      submitted,
+      currentStep,
+      selectedAbility: selectedAbility?.name || 'none',
+      serverHasSubmittedAction,
+      trigger: 'wizard open effect'
+    });
+    
+    if (isOpen && !submitted && !serverHasSubmittedAction) {
+      // Only reset to step 1 if we're not in a submitted state (local or server)
+      if (currentStep !== 1 && !selectedAbility) {
+        console.warn('⚠️ Resetting to step 1 from useEffect', {
+          reason: 'Wizard opened without ability selected',
+          currentStep,
+          selectedAbility: (selectedAbility as any)?.name || 'none',
+          serverHasSubmittedAction
+        });
+        setCurrentStep(1);
+      }
+    } else if (serverHasSubmittedAction && currentStep === 1) {
+      // If server says we submitted but we're on step 1, force to step 2
+      console.log('🔍 Server has submission, forcing step 2');
+      setCurrentStep(2);
     }
-  }, [isOpen]);
+  }, [isOpen, submitted, selectedAbility, me]);
 
-  // Reset submitting state when submitted changes
+  // Reset submitting state when submitted changes and ensure we stay on step 2
   useEffect(() => {
+    console.log('🔍 useEffect[submitted,currentStep]:', {
+      submitted,
+      currentStep,
+      isSubmitting,
+      trigger: 'submitted state change'
+    });
+    
     if (submitted) {
       setIsSubmitting(false);
+      // Keep the wizard on step 2 (target selection) after submission
+      if (currentStep !== 2) {
+        console.log('🔍 Forcing step 2 due to submitted state');
+        setCurrentStep(2);
+      }
     }
-  }, [submitted]);
+  }, [submitted, currentStep]);
 
   // Handle step changes with validation
   const handleStepChange = useCallback((step: number): void => {
-    // Validate step transitions
-    if (step === 2 && !selectedAbility) {
+    // Validate step transitions (allow if already submitted)
+    if (step === 2 && !selectedAbility && !submitted) {
       console.warn('ActionWizard: Cannot go to step 2 without selecting ability');
       setCurrentStep(1);
       return;
@@ -116,20 +154,26 @@ const ActionWizard: React.FC<ActionWizardProps> = ({
     if (onStepChange) {
       onStepChange(step);
     }
-  }, [onStepChange, selectedAbility]);
+  }, [onStepChange, selectedAbility, submitted]);
 
-  // Handle ability selection and move to next step
+  // Handle ability selection (don't auto-advance)
   const handleAbilitySelect = useCallback((ability: Ability): void => {
     onAbilitySelect(ability);
-    handleStepChange(2);
-  }, [onAbilitySelect, handleStepChange]);
+  }, [onAbilitySelect]);
+
+  // Handle Continue button click
+  const handleContinue = useCallback((): void => {
+    if (selectedAbility) {
+      handleStepChange(2);
+    }
+  }, [selectedAbility, handleStepChange]);
 
   // Handle going back to ability selection
   const handleBack = useCallback((): void => {
     handleStepChange(1);
   }, [handleStepChange]);
 
-  // Handle submission with loading state
+  // Handle submission with loading state (but don't close wizard)
   const handleSubmit = useCallback((): void => {
     if (isSubmitting) return;
     
@@ -140,16 +184,62 @@ const ActionWizard: React.FC<ActionWizardProps> = ({
     setTimeout(() => {
       setIsSubmitting(false);
     }, 3000);
+    
+    // Don't close the wizard - stay on target selection step
+    // The wizard should remain open until all players have submitted
   }, [isSubmitting, onSubmitAction]);
 
   // Don't render if not open
   if (!isOpen) return null;
 
-  // Validate current step and reset if invalid
-  const validatedStep = currentStep === 2 && !selectedAbility ? 1 : currentStep;
-  if (validatedStep !== currentStep) {
-    console.warn('ActionWizard: Invalid step detected, resetting to step 1');
-    setCurrentStep(1);
+  // DEBUG: Log all relevant state before validation
+  console.log('🔍 ActionWizard Render Debug:', {
+    currentStep,
+    selectedAbility: selectedAbility?.name || 'none',
+    selectedTarget,
+    submitted,
+    isOpen,
+    isSubmitting,
+    meId: me?.['id'],
+    meName: me?.['name'],
+    hasSubmittedAction: me?.['hasSubmittedAction'],
+    timestamp: new Date().toISOString()
+  });
+
+  // Validate current step and reset if invalid (but not if already submitted)
+  let validatedStep = currentStep;
+  
+  // Only validate and potentially reset if not submitted AND not hasSubmittedAction
+  const serverHasSubmittedAction = me?.['hasSubmittedAction'] || false;
+  
+  if (!submitted && !serverHasSubmittedAction) {
+    const shouldReset = currentStep === 2 && !selectedAbility;
+    console.log('🔍 Step Validation:', {
+      currentStep,
+      hasSelectedAbility: !!selectedAbility,
+      shouldReset,
+      submitted,
+      serverHasSubmittedAction
+    });
+    
+    validatedStep = shouldReset ? 1 : currentStep;
+    if (validatedStep !== currentStep) {
+      console.warn('⚠️ ActionWizard: Invalid step detected, resetting to step 1', {
+        reason: 'No ability selected for step 2',
+        currentStep,
+        validatedStep,
+        selectedAbility: selectedAbility?.name || 'none',
+        stackTrace: new Error().stack
+      });
+      setCurrentStep(1);
+    }
+  } else {
+    // If submitted OR server says hasSubmittedAction, always stay on step 2 to show the waiting state
+    console.log('🔍 Submitted/HasSubmittedAction state - forcing step 2', {
+      submitted,
+      serverHasSubmittedAction
+    });
+    validatedStep = 2;
   }
 
   // Determine container class based on mobile/desktop
@@ -171,17 +261,18 @@ const ActionWizard: React.FC<ActionWizardProps> = ({
           onAbilitySelect={handleAbilitySelect}
           onRacialAbilityUse={onRacialAbilityUse}
           onClose={onClose}
+          onContinue={handleContinue}
           isMobile={isMobile}
         />
       )}
 
       {/* Step 2: Target Selection */}
-      {validatedStep === 2 && selectedAbility && (
+      {validatedStep === 2 && (selectedAbility || submitted) && (
         <TargetSelectionStep
           me={me}
           monster={monster}
           alivePlayers={alivePlayers}
-          selectedAbility={selectedAbility}
+          selectedAbility={selectedAbility || null}
           selectedTarget={selectedTarget}
           keenSensesActive={keenSensesActive}
           lastEvent={lastEvent}
@@ -191,6 +282,8 @@ const ActionWizard: React.FC<ActionWizardProps> = ({
           onClose={onClose}
           isMobile={isMobile}
           isSubmitting={isSubmitting}
+          submitted={submitted}
+          submittedPlayers={submittedPlayers}
         />
       )}
     </div>

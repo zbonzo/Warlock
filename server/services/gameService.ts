@@ -15,6 +15,7 @@ import {
 import logger from '../utils/logger.js';
 import trophies from '../config/trophies.js';
 import type { Player } from '../models/Player.js';
+import { createDebugLogger } from '../config/debug.config.js';
 
 /**
  * Game result interface
@@ -100,7 +101,7 @@ export function refreshGameTimeout(io: SocketIOServer, gameCode: string): void {
  */
 export function createGame(gameCode: string): GameRoom | null {
   // Check if we already have too many games
-  const maxGames = config.maxGames || 100; // Default max games
+  const maxGames = (config as any).maxGames || 100; // Default max games
   if (games.size >= maxGames) {
     // Prevent server overload
     throwGameStateError(
@@ -131,7 +132,7 @@ export function generateGameCode(): string {
  */
 export function canPlayerJoinGame(game: GameRoom, playerId: string): boolean {
   // Check if game is full based on config max players
-  if (game.gameState.players.size >= config.maxPlayers) {
+  if (game.gameState.getPlayersMap().size >= config.maxPlayers) {
     throwGameStateError(`Game is full (${config.maxPlayers} players max).`);
     return false;
   }
@@ -149,17 +150,25 @@ export function broadcastPlayerList(io: SocketIOServer, gameCode: string): void 
   if (game) {
     io.to(gameCode).emit('playerList', {
       players: (game as any).getPlayersInfo(),
-      host: game.gameState.hostId,
+      host: game.gameState.getHostId(),
     });
   }
 }
+
+// Debug logger for game service
+const gameServiceDebug = createDebugLogger('roundResults', 'GameService');
 
 /**
  * Process game round with proper phase management
  */
 export async function processGameRound(io: SocketIOServer, gameCode: string): Promise<GameResult | null> {
+  gameServiceDebug.info(`\ud83c\udfae Processing game round for ${gameCode}...`);
+  
   const game = games.get(gameCode);
-  if (!game) return null;
+  if (!game) {
+    gameServiceDebug.error(`\u274c Game ${gameCode} not found for round processing`);
+    return null;
+  }
 
   // Process pending commands before changing phase (Phase 2 enhancement)
   if (game.commandProcessor) {
@@ -174,7 +183,7 @@ export async function processGameRound(io: SocketIOServer, gameCode: string): Pr
   }
 
   // Set phase to results before processing
-  game.gamePhase.phase = 'results';
+  game.gamePhase.setPhase('results');
 
   // Process the round
   const result = (game as any).processRound() as GameResult;
@@ -182,39 +191,57 @@ export async function processGameRound(io: SocketIOServer, gameCode: string): Pr
   logger.info(`=== ROUND ${result.turn} STATS ===`);
   
   // Debug: Check that stats are being tracked correctly
-  const actualPlayers = Array.from(game.gameState.players.values());
+  const actualPlayers = Array.from(game.gameState.getPlayersMap().values());
   logger.info(`Round ${result.turn} stats (${actualPlayers.length} players):`);
   actualPlayers.forEach(player => {
     if ((player as any).stats.totalDamageDealt > 0 || (player as any).stats.totalHealingDone > 0 || (player as any).stats.abilitiesUsed > 0) {
-      logger.info(`${player.name}: ${(player as any).stats.totalDamageDealt} dmg, ${(player as any).stats.abilitiesUsed} abilities, ${(player as any).stats.monsterKills} kills`);
+      logger.info(`${player['name']}: ${(player as any).stats.totalDamageDealt} dmg, ${(player as any).stats.abilitiesUsed} abilities, ${(player as any).stats.monsterKills} kills`);
     }
   });
   logger.info('=== END ROUND STATS ===');
 
   // Broadcast the results with phase information
+  gameServiceDebug.info(`📢 Broadcasting roundResult event to game ${gameCode}`);
+  gameServiceDebug.verbose('Round result data being broadcast:', {
+    turn: result.turn,
+    hasLog: !!(result as any).log,
+    logLength: (result as any).log?.length || 0,
+    hasWinner: !!result.winner,
+    winner: result.winner,
+    hasPlayers: !!result.players,
+    playerCount: result.players?.length || 0,
+    hasLevelUp: !!result.levelUp,
+    phase: game.gamePhase.getPhase()
+  });
+  
   io.to(gameCode).emit('roundResult', {
     ...result,
-    phase: game.gamePhase.phase, // Include current phase
+    phase: game.gamePhase.getPhase(), // Include current phase
   });
+  
+  gameServiceDebug.info(`✅ roundResult event broadcasted to game ${gameCode}`);
 
   // Broadcast phase update specifically
+  gameServiceDebug.verbose(`Broadcasting gamePhaseUpdate event to game ${gameCode}`);
   io.to(gameCode).emit('gamePhaseUpdate', {
-    phase: game.gamePhase.phase,
+    phase: game.gamePhase.getPhase(),
     round: result.turn,
   });
 
   // If there was a level-up, emit a specific event
   if (result.levelUp) {
+    gameServiceDebug.info(`🎆 Level up detected for game ${gameCode}, broadcasting levelUp event`);
     io.to(gameCode).emit('levelUp', {
       level: result.level,
       oldLevel: result.levelUp.oldLevel,
       players: result.players,
-      phase: game.gamePhase.phase,
+      phase: game.gamePhase.getPhase(),
     });
   }
 
   // Check if game is over
   if (result.winner) {
+    gameServiceDebug.info(`🏆 Game ${gameCode} ended with winner: ${result.winner}`);
     logger.info('GameEnded', { gameCode, winner: result.winner });
     
     // Trophy system: Award a random trophy
@@ -349,10 +376,10 @@ function awardRandomTrophy(game: GameRoom, gameResult: GameResult): TrophyAward 
     // Debug: Check the game state first
     logger.info('Game state during trophy evaluation:', {
       gameCode: game.code,
-      hasPlayers: !!game.gameState.players,
-      playersMapSize: game.gameState.players ? game.gameState.players.size : 'undefined',
-      gameStarted: game.gameState.started,
-      gamePhase: game.gamePhase.phase
+      hasPlayers: !!game.gameState.getPlayers(),
+      playersMapSize: game.gameState.getPlayers() ? game.gameState.getPlayers().size : 'undefined',
+      gameStarted: game.gameState.getStarted(),
+      gamePhase: game.gamePhase.getPhase()
     });
 
     logger.info('Trophy evaluation started', {
@@ -365,7 +392,7 @@ function awardRandomTrophy(game: GameRoom, gameResult: GameResult): TrophyAward 
     const playersInfo = (game as any).getPlayersInfo();
     logger.info('getPlayersInfo returned:', {
       playerCount: playersInfo?.length || 0,
-      playersHaveStats: playersInfo?.map(p => ({
+      playersHaveStats: playersInfo?.map((p: any) => ({
         name: p.name,
         hasStats: !!p.stats,
         statsKeys: p.stats ? Object.keys(p.stats) : []
@@ -411,13 +438,17 @@ function awardRandomTrophy(game: GameRoom, gameResult: GameResult): TrophyAward 
             });
           }
           
-          const winner = trophy.getWinner(gameResultPlayers, gameResult);
-          logger.info(`Trophy "${trophy.name}" evaluation: ${winner ? `${winner.name} wins!` : 'No winner'}`);
+          // Convert gameResult.winner to trophy system format
+          const trophyGameResult = {
+            winner: gameResult.winner === 'good' ? 'Good' as const : 'Evil' as const
+          };
+          const winner = trophy.getWinner(gameResultPlayers, trophyGameResult);
+          logger.info(`Trophy "${trophy.name}" evaluation: ${winner ? `${(winner as any).name} wins!` : 'No winner'}`);
           
           if (winner) {
             earnedTrophiesFromResult.push({
               trophy: trophy,
-              winner: winner
+              winner: winner as any
             });
           }
         } catch (error: any) {
@@ -438,6 +469,11 @@ function awardRandomTrophy(game: GameRoom, gameResult: GameResult): TrophyAward 
 
       // Randomly select one trophy from the earned trophies
       const selectedTrophy = earnedTrophiesFromResult[Math.floor(Math.random() * earnedTrophiesFromResult.length)];
+      
+      if (!selectedTrophy) {
+        logger.info('No trophy selected (empty earned trophies list)');
+        return null;
+      }
       
       const trophyAward: TrophyAward = {
         playerName: selectedTrophy.winner.name,
@@ -481,7 +517,7 @@ function awardRandomTrophy(game: GameRoom, gameResult: GameResult): TrophyAward 
  * Determine if players are waiting for actions
  */
 export function isWaitingForActions(game: GameRoom): boolean {
-  if (!game.gameState.started) return false;
+  if (!game.gameState.getStarted()) return false;
 
   const alivePlayers = (game as any).getAlivePlayers();
   const unstunnedPlayers = alivePlayers.filter(
@@ -495,7 +531,7 @@ export function isWaitingForActions(game: GameRoom): boolean {
  * Determine if the game is currently showing round results
  */
 export function isInRoundResults(game: GameRoom): boolean {
-  if (!game.gameState.started) return false;
+  if (!game.gameState.getStarted()) return false;
 
   // This is tricky to determine without additional state
   // For now, we'll assume if actions are submitted but not processed, we're in results
@@ -552,7 +588,7 @@ export function createGameWithCode(gameCode: string): GameRoom | null {
   }
 
   // Check if we already have too many games
-  const maxGames = config.maxGames || 100;
+  const maxGames = (config as any).maxGames || 100;
   if (games.size >= maxGames) {
     throwGameStateError(config.getError('serverBusy'));
     return null;
@@ -600,6 +636,10 @@ export function cleanupExpiredDisconnectedPlayers(io?: SocketIOServer): void {
   let totalCleaned = 0;
   
   for (const [gameCode, game] of games.entries()) {
+    // TODO: Re-enable when cleanupDisconnectedPlayers is implemented
+    if (typeof (game as any).cleanupDisconnectedPlayers !== 'function') {
+      continue;
+    }
     const cleanedPlayerNames = (game as any).cleanupDisconnectedPlayers();
     totalCleaned += cleanedPlayerNames.length;
     

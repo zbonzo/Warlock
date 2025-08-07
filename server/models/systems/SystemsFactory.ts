@@ -4,43 +4,37 @@
  * Migrated to TypeScript for Phase 6
  */
 
-import type { Player, Monster } from '../../types/generated';
-import type { AbilityRegistry } from './abilityHandlers/abilityRegistryUtils';
-import { registerAbilityHandlers } from './abilityHandlers';
+import type { Player, Monster } from '../../types/generated.js';
+import type { MonsterState } from '../game/GameState.js';
+import type { AbilityRegistry as AbilityRegistryInterface } from './abilityHandlers/abilityRegistryUtils.js';
+import { registerAbilityHandlers } from './abilityHandlers/index.js';
 
-const GameStateUtils = require('./GameStateUtils');
-const StatusEffectManager = require('./StatusEffectManager'); // Legacy - will be replaced
-const NewStatusEffectManager = require('./NewStatusEffectManager');
-const StatusEffectSystemFactory = require('./StatusEffectSystemFactory');
-const RacialAbilitySystem = require('./RacialAbilitySystem'); // Keep using JS version for now
-const WarlockSystem = require('./WarlockSystem');
-const MonsterController = require('@controllers/MonsterController');
-const CombatSystem = require('./CombatSystem');
-const AbilityRegistry = require('../AbilityRegistry');
-const messages = require('@messages');
-
-/**
- * Game event bus interface
- */
-interface GameEventBus {
-  emit(event: string, ...args: any[]): void;
-  on(event: string, listener: (...args: any[]) => void): void;
-  off(event: string, listener: (...args: any[]) => void): void;
-}
+import GameStateUtils from './GameStateUtils.js';
+import StatusEffectManager from './StatusEffectManager.js'; // Legacy - will be replaced
+import NewStatusEffectManager from './NewStatusEffectManager.js';
+import StatusEffectSystemFactory from './StatusEffectSystemFactory.js';
+import RacialAbilitySystemClass from './RacialAbilitySystem.js';
+import WarlockSystem from './WarlockSystem.js';
+import MonsterController from '../../controllers/MonsterController.js';
+import CombatSystem from './CombatSystem.js';
+import AbilityRegistryClass from '../AbilityRegistry.js';
+import messages from '../../config/messages/index.js';
+import { GameEventBus } from '../events/GameEventBus.js';
 
 /**
  * Status effect system interface
  */
 interface StatusEffectSystem {
   manager: any;
+  hasEffect: (targetId: string, effectType: string) => boolean;
   applyEffect(
     targetId: string,
-    effectType: string,
-    effectData: Record<string, any>,
-    sourceId?: string,
-    sourceName?: string,
-    log?: any[]
-  ): void;
+    type: string,
+    params: any,
+    sourceId: string | null,
+    sourceName: string | null,
+    log: any[]
+  ): any;
 }
 
 /**
@@ -55,7 +49,15 @@ export interface GameSystems {
   racialAbilitySystem: any;
   monsterController: any;
   combatSystem: any;
-  abilityRegistry: AbilityRegistry;
+  abilityRegistry: AbilityRegistryInterface;
+  monster: {
+    hp: number;
+  };
+  game?: any; // Game state or context
+  calculateDamageModifiers?: (actor: Player, target: Player | Monster, ability: any) => number;
+  comebackMechanics?: {
+    getBonus: (playerId: string) => number;
+  };
 }
 
 /**
@@ -89,32 +91,33 @@ export class SystemsFactory {
     // Use the new status effect manager
     const statusEffectManager = newStatusEffectSystem.manager;
     
-    const racialAbilitySystem = new RacialAbilitySystem(
+    const racialAbilitySystem = new RacialAbilitySystemClass(
       players,
+      gameStateUtils,
       statusEffectManager
     );
 
     // Create enhanced MonsterController with threat system
-    const monsterController = new MonsterController(
+    const monsterController = new MonsterController({
       monster,
       players,
       statusEffectManager,
       racialAbilitySystem,
       gameStateUtils
-    );
+    });
 
-    const combatSystem = new CombatSystem(
+    const combatSystem = new CombatSystem({
       players,
       monsterController,
       statusEffectManager,
       racialAbilitySystem,
       warlockSystem,
       gameStateUtils,
-      eventBus
-    );
+      eventBus: eventBus || undefined
+    });
 
     // Create AbilityRegistry and register all handlers
-    const abilityRegistry: AbilityRegistry = new AbilityRegistry();
+    const abilityRegistry: AbilityRegistryInterface = new AbilityRegistryClass();
 
     // IMPORTANT: Store systems reference in the registry for handler access
     (abilityRegistry as any).systems = {
@@ -142,6 +145,7 @@ export class SystemsFactory {
       monsterController,
       combatSystem,
       abilityRegistry,
+      monster: { hp: monster.hp },
     };
   }
 
@@ -166,7 +170,8 @@ export class SystemsFactory {
       'racialAbilitySystem',
       'monsterController',
       'combatSystem',
-      'abilityRegistry'
+      'abilityRegistry',
+      'monster'
     ];
 
     for (const systemName of requiredSystems) {
@@ -215,16 +220,8 @@ export class SystemsFactory {
     const cleanupPromises: Promise<void>[] = [];
 
     // Cleanup systems that support async cleanup
-    if (systems.abilityRegistry?.cleanup) {
-      cleanupPromises.push(systems.abilityRegistry.cleanup());
-    }
-
     if (systems.combatSystem?.cleanup) {
       cleanupPromises.push(systems.combatSystem.cleanup());
-    }
-
-    if (systems.statusEffectSystem?.cleanup) {
-      cleanupPromises.push(systems.statusEffectSystem.cleanup());
     }
 
     await Promise.all(cleanupPromises);
@@ -232,4 +229,4 @@ export class SystemsFactory {
 }
 
 // Default export for CommonJS compatibility
-module.exports = SystemsFactory;
+export default SystemsFactory;

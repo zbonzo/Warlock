@@ -11,18 +11,8 @@ import {
 } from '../middleware/validation.js';
 import gameService from '../services/gameService.js';
 import type { GameCode } from '../types/generated.js';
-
-interface Socket {
-  id: string;
-  playerId?: string;
-}
-
-interface GameRoom {
-  code: GameCode;
-  started: boolean;
-  players: any[];
-  host?: string;
-}
+import type { GameRoom } from '../models/GameRoom.js';
+import { Socket } from 'socket.io';
 
 /**
  * Standard validation for most game actions
@@ -51,7 +41,11 @@ export function validateGameAction(
   }
 
   // Return the game object for convenience
-  return gameService.games.get(gameCode);
+  const game = gameService.games.get(gameCode);
+  if (!game) {
+    throw new Error(`Game ${gameCode} not found after validation`);
+  }
+  return game;
 }
 
 export default {

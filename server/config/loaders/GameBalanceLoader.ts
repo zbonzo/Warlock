@@ -1,5 +1,6 @@
-import fs from 'fs';
-import path from 'path';
+import * as fs from 'fs';
+import * as path from 'path';
+import { fileURLToPath } from 'url';
 import { 
   GameBalanceConfig, 
   MonsterConfig,
@@ -8,7 +9,11 @@ import {
   CombatConfig,
   validateGameBalanceConfig,
   safeValidateGameBalanceConfig 
-} from '../schemas/gameBalance.schema';
+} from '../schemas/gameBalance.schema.js';
+
+// ES module __dirname equivalent
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 export interface BalanceCalculationContext {
   level?: number;

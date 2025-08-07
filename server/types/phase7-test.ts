@@ -3,7 +3,7 @@
  * Tests type guards, utility types, conditional types, and system interfaces
  */
 
-import { TypeGuards, assertPlayer } from './guards';
+import { TypeGuards, assertPlayer } from './guards.js';
 import {
   PartialPlayer,
   PlayerUpdate,
@@ -14,8 +14,9 @@ import {
   ApiResponse,
   TypeUtils,
   PlayerId,
-  GameCode
-} from './utilities';
+  GameCode,
+  ValidationResult
+} from './utilities.js';
 import {
   DamageEvents,
   PlayerByRole,
@@ -25,16 +26,16 @@ import {
   PickByValue,
   CamelToSnakeCase,
   createEventTypePredicate
-} from './conditionals';
+} from './conditionals.js';
 import {
   GameSystem,
   CombatSystemInterface,
   AbstractGameSystem,
   isCombatSystem
-} from './systems';
-import { CombatSystem } from '../models/systems/CombatSystem';
-import { EventTypes } from '../models/events/EventTypes';
-import type { Player, GameState, GameEvent } from './generated';
+} from './systems.js';
+import { CombatSystem } from '../models/systems/CombatSystem.js';
+import { EventTypes } from '../models/events/EventTypes.js';
+import type { Player, GameState, GameEvent } from './generated.js';
 
 // Test 1: Type Guards
 console.log('=== Testing Type Guards ===');
@@ -125,7 +126,8 @@ const testUtilityTypes = () => {
 
   // Update types
   const playerUpdate: PlayerUpdate = {
-    status: 'alive',
+    health: 75,
+    abilities: ['attack', 'heal'],
     statusEffects: [],
     stats: {
       hp: 75,
@@ -309,17 +311,19 @@ const testSystemInterfaces = async () => {
   const priority = combatSystem.getPriority();
   console.log('✓ System priority:', priority);
 
-  // Test validation
-  const validationResult = combatSystem.validate({
-    type: EventTypes.DAMAGE.APPLIED,
+  // Test validation - using any to avoid complex type conflicts in test file
+  const testEvent: any = {
+    type: 'damage.applied',
     payload: { 
+      sourceId: 'attacker',
       targetId: 'test',
-      damageAmount: 10,
-      targetHpBefore: 100,
-      targetHpAfter: 90
+      damage: 10,
+      damageType: 'physical',
+      timestamp: new Date().toISOString()
     }
-  } as GameEvent);
-  console.log('✓ Validation result:', validationResult.valid);
+  };
+  const validationResult = combatSystem.validate(testEvent);
+  console.log('✓ Validation result:', validationResult.success);
 
   // Test combat-specific methods
   const canAttack = combatSystem.canAttack(
@@ -343,20 +347,18 @@ class TestGameSystem extends AbstractGameSystem<GameState, GameEvent> {
   readonly name = 'TestSystem';
   readonly version = '1.0.0';
 
-  async process(state: GameState, event: GameEvent): Promise<GameState> {
+  async process(state: GameState, _event: GameEvent): Promise<GameState> {
     return state;
   }
 
-  validate(event: GameEvent) {
+  validate(_event: GameEvent): ValidationResult<GameEvent> {
     return {
-      valid: true,
-      errors: [],
-      warnings: [],
-      score: 100
+      success: true,
+      data: _event
     };
   }
 
-  canHandle(event: GameEvent): boolean {
+  canHandle(_event: GameEvent): boolean {
     return true;
   }
 }

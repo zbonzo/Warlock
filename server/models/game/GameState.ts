@@ -5,8 +5,8 @@
  */
 
 import { z } from 'zod';
-import logger from '@utils/logger';
-import type { Player, Monster, GameCode } from '../../types/generated';
+import logger from '../../utils/logger.js';
+import type { Player, Monster, GameCode } from '../../types/generated.js';
 
 // Monster schema for type safety
 const MonsterStateSchema = z.object({
@@ -124,12 +124,12 @@ export class GameState {
   constructor(code: GameCode) {
     this.code = code;
     
-    // Initialize monster state
+    // Initialize monster state with valid default values
     this.monster = MonsterStateSchema.parse({
-      hp: 0,
-      maxHp: 0,
-      baseDmg: 0,
-      age: 0,
+      hp: 1,      // Changed from 0 to 1 (valid HP)
+      maxHp: 1,   // Changed from 0 to 1 (minimum required by schema)
+      baseDmg: 0, // 0 is valid for damage
+      age: 0,     // 0 is valid for age
     });
   }
 
@@ -153,27 +153,27 @@ export class GameState {
    */
   addPlayer(player: GamePlayer): boolean {
     // If player with this ID already exists, update their name instead
-    const existingPlayer = this.players.get(player.id);
+    const existingPlayer = this.players.get(player['id']);
     if (existingPlayer) {
       // Update the existing player's name if it changed
-      if (existingPlayer.name !== player.name) {
-        const oldName = existingPlayer.name;
-        existingPlayer.name = player.name;
+      if (existingPlayer['name'] !== player['name']) {
+        const oldName = existingPlayer['name'];
+        existingPlayer['name'] = player['name'];
         logger.debug('PlayerNameUpdated', {
           gameCode: this.code,
-          playerId: player.id,
+          playerId: player['id'],
           oldName: oldName,
-          newName: player.name
+          newName: player['name']
         });
       }
       return true; // Still return success since player is in the game
     }
 
-    this.players.set(player.id, player);
+    this.players.set(player['id'], player);
     this.aliveCount++;
 
     if (!this.hostId) {
-      this.hostId = player.id;
+      this.hostId = player['id'];
     }
 
     return true;
@@ -190,7 +190,7 @@ export class GameState {
       return null;
     }
 
-    if (player.status === 'alive') {
+    if (player['status'] === 'alive') {
       this.aliveCount--;
     }
 
@@ -199,7 +199,7 @@ export class GameState {
     // Update host if needed
     if (this.hostId === playerId) {
       const remainingPlayers = Array.from(this.players.keys());
-      this.hostId = remainingPlayers.length > 0 ? remainingPlayers[0] : null;
+      this.hostId = remainingPlayers.length > 0 ? remainingPlayers[0]! : null;
     }
 
     return player;
@@ -227,7 +227,7 @@ export class GameState {
    * @returns Array of alive players
    */
   getAlivePlayers(): GamePlayer[] {
-    return Array.from(this.players.values()).filter(p => p.status === 'alive');
+    return Array.from(this.players.values()).filter(p => p['status'] === 'alive');
   }
 
   /**
@@ -251,7 +251,15 @@ export class GameState {
   startGame(): void {
     this.started = true;
     this.startTime = Date.now();
-    logger.info('GameStarted', { gameCode: this.code, playerCount: this.players.size });
+    
+    // Calculate warlock count for log message template
+    const warlockCount = Array.from(this.players.values()).filter((p: any) => p.isWarlock).length;
+    
+    logger.info('GameStarted', { 
+      gameCode: this.code, 
+      playerCount: this.players.size,
+      warlockCount: warlockCount
+    });
   }
 
   /**
@@ -325,7 +333,7 @@ export class GameState {
     this.players.delete(oldId);
 
     // Update player's ID
-    player.id = newId;
+    player['id'] = newId;
 
     // Add to new ID
     this.players.set(newId, player);
@@ -339,7 +347,7 @@ export class GameState {
       gameCode: this.code,
       oldId,
       newId,
-      playerName: player.name
+      playerName: player['name']
     });
 
     return true;
@@ -351,8 +359,8 @@ export class GameState {
    */
   addDisconnectedPlayer(player: GamePlayer): void {
     const disconnectedPlayer = DisconnectedPlayerSchema.parse({
-      id: player.id,
-      name: player.name,
+      id: player['id'],
+      name: player['name'],
       disconnectedAt: Date.now(),
     });
     
@@ -385,23 +393,23 @@ export class GameState {
    */
   getPlayersInfo(): PlayerInfo[] {
     return Array.from(this.players.values()).map(p => ({
-      id: p.id,
-      name: p.name,
-      race: p.race,
-      class: p.class,
+      id: p['id'],
+      name: p['name'],
+      race: p['race'],
+      class: p['class'],
       hp: p.stats.hp,
       maxHp: p.stats.maxHp,
       armor: p.stats.defensePower,
       damageMod: p.stats.attackPower / 10, // Convert to modifier
-      isWarlock: p.role === 'Warlock',
-      isAlive: p.status === 'alive',
-      isReady: p.isReady,
-      unlocked: p.abilities.filter(a => a.unlocked),
-      racialAbility: p.abilities.find(a => a.type === 'racial'),
+      isWarlock: p['role'] === 'Warlock',
+      isAlive: p['status'] === 'alive',
+      isReady: p['isReady'],
+      unlocked: p['abilities'].filter((a: any) => a.unlocked),
+      racialAbility: p['abilities'].find((a: any) => a.type === 'racial'),
       racialUsesLeft: 0, // TODO: Extract from abilities system
       racialCooldown: 0, // TODO: Extract from abilities system
       level: this.level,
-      statusEffects: p.statusEffects,
+      statusEffects: p['statusEffects'],
       abilityCooldowns: p.abilityCooldowns || {},
       hasSubmittedAction: p.hasSubmittedAction || false,
       submissionStatus: p.getSubmissionStatus ? p.getSubmissionStatus() : 'none',
@@ -480,6 +488,22 @@ export class GameState {
    */
   getMonster(): MonsterState {
     return { ...this.monster };
+  }
+
+  /**
+   * Get players map
+   * @returns Map of players
+   */
+  getPlayers(): Map<string, GamePlayer> {
+    return this.players;
+  }
+
+  /**
+   * Get started status
+   * @returns Whether the game has started
+   */
+  getStarted(): boolean {
+    return this.started;
   }
 
   /**

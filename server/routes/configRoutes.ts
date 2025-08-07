@@ -100,7 +100,7 @@ router.get('/classes', (req: Request, res: Response) => {
  */
 router.get('/compatibility', (req: Request, res: Response) => {
   // Build inverse mapping if not already available in config
-  const racesToClasses: Record<string, string[]> = Object.entries(config.classRaceCompatibility).reduce(
+  const racesToClasses: Record<string, string[]> = Object.entries(config.classRaceCompatibility as Record<string, string[]>).reduce(
     (acc: Record<string, string[]>, [cls, races]: [string, string[]]) => {
       races.forEach((race: string) => {
         if (!acc[race]) acc[race] = [];
@@ -123,14 +123,15 @@ router.get('/compatibility', (req: Request, res: Response) => {
  * GET /api/config/abilities/:className
  * Returns abilities for a specific class
  */
-router.get('/abilities/:className', (req: Request, res: Response) => {
+router.get('/abilities/:className', (req: Request, res: Response): void => {
   const { className } = req.params;
 
-  if (!config.classes.includes(className)) {
-    return res.status(404).json({ error: 'Class not found' });
+  if (!className || !config.classes.includes(className)) {
+    res.status(404).json({ error: 'Class not found' });
+    return;
   }
 
-  const abilities = config.getClassAbilities(className);
+  const abilities = config.getClassAbilities(className) || [];
 
   const response: AbilityResponse = {
     className,
@@ -169,11 +170,11 @@ router.get('/warlock-scaling', (req: Request, res: Response) => {
     scalingMethod: scalingConfig.scalingMethod,
     // Include examples of warlock counts for different player counts
     examples: {
-      4: config.gameBalance.calculateWarlockCount(4),
-      8: config.gameBalance.calculateWarlockCount(8),
-      12: config.gameBalance.calculateWarlockCount(12),
-      16: config.gameBalance.calculateWarlockCount(16),
-      20: config.gameBalance.calculateWarlockCount(20),
+      4: config.calculateWarlockCount(4),
+      8: config.calculateWarlockCount(8),
+      12: config.calculateWarlockCount(12),
+      16: config.calculateWarlockCount(16),
+      20: config.calculateWarlockCount(20),
     },
   };
 

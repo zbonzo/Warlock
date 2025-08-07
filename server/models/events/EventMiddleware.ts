@@ -3,9 +3,9 @@
  * Provides logging, validation, authorization, and other cross-cutting concerns
  * Part of Phase 4 refactoring - TypeScript Migration with proper event flow typing
  */
-import { GameEvent, EventType, validateEventData, isValidEventType } from './EventTypes';
+import { GameEvent, EventType, validateEventData, isValidEventType } from './EventTypes.js';
 
-const logger = require('@utils/logger');
+import logger from '../../utils/logger.js';
 
 /**
  * Middleware function type
@@ -106,12 +106,12 @@ export class EventMiddleware {
 
       // Add payload data if requested
       if (logData && 'payload' in event) {
-        logEntry.payload = event.payload;
+        logEntry['payload'] = event['payload'];
       }
 
       // Legacy support for data field
       if (logData && 'data' in event) {
-        logEntry.data = (event as any).data;
+        logEntry['data'] = (event as any)['data'];
       }
 
       logger.info(`Event emitted: ${event.type}`, logEntry);
@@ -345,11 +345,11 @@ export class EventMiddleware {
     return (event: GameEvent, next) => {
       const debugInfo: Record<string, unknown> = {
         middlewareTimestamp: new Date().toISOString(),
-        nodeEnv: process.env.NODE_ENV
+        nodeEnv: process.env['NODE_ENV']
       };
 
       if (addStackTrace) {
-        debugInfo.stackTrace = new Error().stack;
+        debugInfo['stackTrace'] = new Error().stack;
       }
 
       // Add debug info to event (cast as any to allow debug property)
@@ -415,5 +415,5 @@ export class EventMiddleware {
   }
 }
 
-// Export for backward compatibility
+// ES module export
 export default EventMiddleware;

@@ -42,7 +42,7 @@ const trophies = [
     getWinner: (players: Player[]): Player | null => {
       // Always award to a random player as a fallback
       if (players.length === 0) return null;
-      return players[Math.floor(Math.random() * players.length)];
+      return players[Math.floor(Math.random() * players.length)] || null;
     }
   },
   {
@@ -95,7 +95,7 @@ const trophies = [
       if (pacifists.length === 0) return null;
       
       // Return a random pacifist if multiple exist
-      return pacifists[Math.floor(Math.random() * pacifists.length)];
+      return pacifists[Math.floor(Math.random() * pacifists.length)] || null;
     }
   },
   {
@@ -125,7 +125,7 @@ const trophies = [
       });
       
       if (winners.length === 0) return null;
-      return winners[Math.floor(Math.random() * winners.length)];
+      return winners[Math.floor(Math.random() * winners.length)] || null;
     }
   },
   {
@@ -169,7 +169,7 @@ const trophies = [
       );
       
       if (unrevealedWarlocks.length === 0) return null;
-      return unrevealedWarlocks[Math.floor(Math.random() * unrevealedWarlocks.length)];
+      return unrevealedWarlocks[Math.floor(Math.random() * unrevealedWarlocks.length)] || null;
     }
   },
   {
@@ -181,7 +181,7 @@ const trophies = [
       const alivePlayers = players.filter(p => p.isAlive);
       if (alivePlayers.length !== 1) return null;
       
-      return alivePlayers[0];
+      return alivePlayers[0] || null;
     }
   }
 ] as Trophy[];

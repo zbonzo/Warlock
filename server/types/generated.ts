@@ -5,7 +5,7 @@
  */
 
 import { z } from 'zod';
-import * as Schemas from '../models/validation/ZodSchemas';
+import * as Schemas from '../models/validation/ZodSchemas.js';
 
 // Base types
 export type PlayerId = z.infer<typeof Schemas.BaseSchemas.playerId>;
@@ -51,6 +51,11 @@ export type ErrorMessageData = z.infer<typeof Schemas.SocketSchemas.errorMessage
 // Configuration types
 export type ServerConfig = z.infer<typeof Schemas.ConfigSchemas.serverConfig>;
 export type GameConfig = z.infer<typeof Schemas.ConfigSchemas.gameConfig>;
+
+// Additional derived types for type guards
+export type PlayerAbilities = Ability[];
+export type PlayerEffects = StatusEffect[];
+export type GameRoomType = z.infer<typeof Schemas.GameRoomSchema>;
 
 // Union types for discriminated unions
 export type GameEvent = 
@@ -159,4 +164,12 @@ export function isValidAction(obj: any): obj is PlayerAction {
 // Re-export schemas for runtime validation
 export { Schemas };
 
+// Additional type exports
+export type Class = z.infer<typeof Schemas.BaseSchemas.playerClass>;
+export type Race = z.infer<typeof Schemas.BaseSchemas.playerRace>;
+
+// Import and re-export complex types that need direct imports
+export type { RacialAbility } from '../config/schemas/race.schema.js';
+
 // GameRoom is available through direct import from '../models/GameRoom'
+export type { GameRoom } from '../models/GameRoom.js';

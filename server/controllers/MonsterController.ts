@@ -50,10 +50,10 @@ export interface MonsterStats {
 export interface ThreatConfig {
   damageMultiplier: number;
   healingMultiplier: number;
-  abilityThreatBase: number;
   decayRate: number;
-  maxHistory: number;
-  baseRandomness: number;
+  avoidLastTargetRounds: number;
+  enableTiebreaker: boolean;
+  fallbackToLowestHp: boolean;
 }
 
 /**
@@ -97,10 +97,10 @@ export class MonsterController extends BaseController<Monster, any, Partial<Mons
     this.threatConfig = {
       damageMultiplier: config.gameBalance?.monster?.threat?.damageMultiplier || 1.0,
       healingMultiplier: config.gameBalance?.monster?.threat?.healingMultiplier || 0.5,
-      abilityThreatBase: config.gameBalance?.monster?.threat?.abilityThreatBase || 10,
       decayRate: config.gameBalance?.monster?.threat?.decayRate || 0.95,
-      maxHistory: config.gameBalance?.monster?.threat?.maxHistory || 3,
-      baseRandomness: config.gameBalance?.monster?.threat?.baseRandomness || 0.2
+      avoidLastTargetRounds: config.gameBalance?.monster?.threat?.avoidLastTargetRounds || 1,
+      enableTiebreaker: config.gameBalance?.monster?.threat?.enableTiebreaker || true,
+      fallbackToLowestHp: config.gameBalance?.monster?.threat?.fallbackToLowestHp || true
     };
 
     logger.debug('MonsterController initialized with threat system:', {
@@ -182,7 +182,7 @@ export class MonsterController extends BaseController<Monster, any, Partial<Mons
       return action;
 
     } catch (error) {
-      logger.error('Error processing monster action:', error);
+      logger.error('Error processing monster action:', { error: error instanceof Error ? error.message : String(error) });
       return null;
     }
   }
@@ -230,7 +230,7 @@ export class MonsterController extends BaseController<Monster, any, Partial<Mons
    * Add threat based on ability use
    */
   addAbilityThreat(playerId: string, abilityType: string): void {
-    const threatAmount = this.threatConfig.abilityThreatBase;
+    const threatAmount = 10; // Base threat for abilities
     this.addThreat(playerId, threatAmount, `ability:${abilityType}`);
   }
 
@@ -347,13 +347,13 @@ export class MonsterController extends BaseController<Monster, any, Partial<Mons
 
     const baseDamage = this.monster.attackPower || 20;
     const damage = this.calculateDamage(baseDamage, target);
-    const finalDamage = target.takeDamage(damage, 'monster');
+    const finalDamage = target.takeDamage(damage);
 
     // Add combat log entry
     log.push({
       type: 'monster_attack',
       message: config.formatMessage(
-        'monsterAttacksPlayer',
+        'The {monsterName} attacks {playerName} for {damage} damage!',
         { 
           playerName: target.name, 
           damage: finalDamage,
@@ -384,14 +384,14 @@ export class MonsterController extends BaseController<Monster, any, Partial<Mons
 
     for (const target of targets) {
       const damage = this.calculateDamage(baseDamage, target);
-      const finalDamage = target.takeDamage(damage, 'monster');
+      const finalDamage = target.takeDamage(damage);
       totalDamage += finalDamage;
     }
 
     log.push({
       type: 'monster_special',
       message: config.formatMessage(
-        'monsterUsesSpecialAbility',
+        'The Monster unleashes a special attack on {targets} for {damage} damage each!',
         {
           targets: targets.map(t => t.name).join(', '),
           damage: Math.floor(totalDamage / targets.length)
@@ -456,7 +456,7 @@ export class MonsterController extends BaseController<Monster, any, Partial<Mons
     }
 
     const damage = this.calculateDamage(this.monster.attackPower, target);
-    const finalDamage = target.takeDamage(damage, 'monster');
+    const finalDamage = target.takeDamage(damage);
 
     // Remove damage boost after attack
     this.monster.attackPower -= damageBoost;
@@ -494,13 +494,13 @@ export class MonsterController extends BaseController<Monster, any, Partial<Mons
 
     if (threatEntries.length === 0) {
       // Fallback to random selection
-      return alivePlayers[Math.floor(Math.random() * alivePlayers.length)];
+      return alivePlayers[Math.floor(Math.random() * alivePlayers.length)] || null;
     }
 
     // Calculate selection weights based on threat
     const weights = threatEntries.map(entry => {
       const baseThreat = Math.max(1, entry.threatValue);
-      const randomness = this.threatConfig.baseRandomness;
+      const randomness = 0.2; // Base randomness for threat calculations
       return baseThreat * (1 + (Math.random() - 0.5) * randomness);
     });
 
@@ -509,15 +509,17 @@ export class MonsterController extends BaseController<Monster, any, Partial<Mons
     let random = Math.random() * totalWeight;
 
     for (let i = 0; i < threatEntries.length; i++) {
-      random -= weights[i];
+      random -= weights[i] || 0;
       if (random <= 0) {
-        const selectedPlayerId = threatEntries[i].playerId;
-        return alivePlayers.find(p => p.id === selectedPlayerId) || null;
+        const selectedPlayerId = threatEntries[i]?.playerId;
+        if (selectedPlayerId) {
+          return alivePlayers.find(p => p.id === selectedPlayerId) || null;
+        }
       }
     }
 
     // Fallback
-    return alivePlayers[0];
+    return alivePlayers[0] || null;
   }
 
   /**
@@ -556,8 +558,9 @@ export class MonsterController extends BaseController<Monster, any, Partial<Mons
     this.lastTargets.push(...targets);
     
     // Keep only recent history
-    if (this.lastTargets.length > this.threatConfig.maxHistory) {
-      this.lastTargets.splice(0, this.lastTargets.length - this.threatConfig.maxHistory);
+    const maxHistory = 3; // Maximum target history to track
+    if (this.lastTargets.length > maxHistory) {
+      this.lastTargets.splice(0, this.lastTargets.length - maxHistory);
     }
   }
 

@@ -4,11 +4,12 @@
 import { useEffect, useRef } from 'react';
 import { Socket } from 'socket.io-client';
 import { Player, Ability, GameEvent } from '@/types/game';
+import { useAppContext } from '@contexts/AppContext';
 
 interface GameEventsParams {
   // Callbacks
   showBattleResultsModal: (data: BattleResultsData) => void;
-  updateBattleResultsData: (data: any) => void;
+  updateBattleResultsData: (data: BattleResultsData) => void;
   resetActionState: () => void;
   resetMobileWizard: () => void;
   showAdaptabilityModalWithAbilities: (abilities: Ability[]) => void;
@@ -21,12 +22,49 @@ interface GameEventsParams {
   me: Player | null;
 }
 
+interface LevelUpData {
+  playerId: string;
+  newLevel: number;
+  abilities?: Ability[];
+}
+
+interface RoundResultData {
+  events?: GameEvent[];
+  eventsLog?: GameEvent[];
+  round?: number;
+  turn?: number;
+  winner: string | null;
+  players: Player[];
+  levelUp?: LevelUpData;
+}
+
+interface TrophyData {
+  playerId: string;
+  trophyId: string;
+  trophyName: string;
+  playerName?: string;
+  trophyDescription?: string;
+}
+
+interface GameStateUpdateData {
+  players?: Player[];
+  monster?: any;
+  phase?: string;
+  round?: number;
+}
+
+interface PhaseChangedData {
+  phase: string;
+  timestamp?: string;
+}
+
 interface BattleResultsData {
   events: GameEvent[];
   round: number;
-  levelUp: any;
+  levelUp: LevelUpData | null;
   winner: string | null;
   players: Player[];
+  trophyAward?: TrophyData;
 }
 
 interface GameEventsReturn {
@@ -41,6 +79,7 @@ export const useGameEvents = (
   socket: Socket | null, 
   params: GameEventsParams
 ): GameEventsReturn => {
+  const { addEventLog } = useAppContext();
   const {
     // Callbacks
     showBattleResultsModal,
@@ -70,7 +109,7 @@ export const useGameEvents = (
   useEffect(() => {
     if (!socket) return;
 
-    const handlePlayerDisconnected = (data: any) => {
+    const handlePlayerDisconnected = (data: { playerId: string; playerName: string; message?: string }) => {
       console.log('Player disconnected:', data);
       console.log(`${data.playerName} has left the game: ${data.message}`);
     };
@@ -88,13 +127,27 @@ export const useGameEvents = (
     if ((me as any)?.submissionStatus) {
       const { hasSubmitted, isValid, validationState } = (me as any).submissionStatus;
 
+      console.log('🔍 Submission status changed:', {
+        hasSubmitted,
+        isValid,
+        validationState,
+        meId: me?.['id'],
+        meName: me?.['name'],
+        trigger: 'submissionStatus effect'
+      });
+
       // If player has submitted and it's valid, show submitted state
       if (hasSubmitted && isValid && validationState === 'valid') {
+        console.log('🔍 Valid submission detected - keeping current state');
         // This will be handled by the action state hook
       }
       // If player submitted but it's now invalid, reset to selection
       else if (hasSubmitted && (!isValid || validationState === 'invalid')) {
-        console.log('Action became invalid, resetting to selection...');
+        console.log('⚠️ Action became invalid, resetting to selection...', {
+          hasSubmitted,
+          isValid,
+          validationState
+        });
         resetActionState();
         setPhase('action');
 
@@ -102,12 +155,14 @@ export const useGameEvents = (
         if (lastValidActionRef.current) {
           const timeSinceValid = Date.now() - lastValidActionRef.current.timestamp;
           if (timeSinceValid < 30000) {
+            console.log('🔍 Recent valid action found, could restore');
             // Will be handled by action state hook
           }
         }
       }
       // If player hasn't submitted, ensure we're in selection mode
       else if (!hasSubmitted) {
+        console.log('🔍 No submission yet - selection mode');
         // Will be handled by action state hook
       }
     }
@@ -117,13 +172,13 @@ export const useGameEvents = (
   useEffect(() => {
     if (!socket) return;
 
-    const handleRoundResult = (data: any) => {
+    const handleRoundResult = (data: RoundResultData) => {
       console.log('Received round results:', data);
 
       // Show the battle results modal
       showBattleResultsModal({
-        events: data.eventsLog || [],
-        round: data.turn || 1,
+        events: data.eventsLog || data.events || [],
+        round: data.turn || data.round || 1,
         levelUp: data.levelUp || null,
         winner: data.winner || null,
         players: data.players || [],
@@ -152,7 +207,7 @@ export const useGameEvents = (
   useEffect(() => {
     if (!socket) return;
 
-    const handleTrophyAwarded = (trophyData: any) => {
+    const handleTrophyAwarded = (trophyData: TrophyData) => {
       console.log('🏆 CLIENT RECEIVED trophyAwarded event:', trophyData);
       console.log('🏆 Trophy data structure:', {
         playerName: trophyData?.playerName,
@@ -163,7 +218,14 @@ export const useGameEvents = (
       });
       
       // Update the battle results modal with trophy data
-      updateBattleResultsData({ trophyAward: trophyData });
+      updateBattleResultsData({ 
+        events: [], 
+        round: 0, 
+        levelUp: null, 
+        winner: null, 
+        players: [], 
+        trophyAward: trophyData 
+      });
       console.log('🏆 Updated battle results with trophy data');
     };
 
@@ -190,12 +252,94 @@ export const useGameEvents = (
       }
     };
 
-    const handleGameStateUpdate = (data: any) => {
+    const handleGameStateUpdate = (data: GameStateUpdateData) => {
       console.log('Game state update received:', data);
+      
+      // Find the current player in the updated game state
+      const currentPlayerId = me?.['id'];
+      const updatedPlayerData = data.players?.find((p: Player) => p['id'] === currentPlayerId);
+      const hasSubmittedAction = updatedPlayerData?.['hasSubmittedAction'] || false;
+      
+      console.log('🔍 Game state update - player status:', {
+        playerId: currentPlayerId,
+        hasSubmittedAction,
+        localSubmitted: me?.['hasSubmittedAction'],
+        phase: data.phase
+      });
+      
       if (data.phase) {
         setPhase(data.phase);
       }
-      if (data.phase === 'action') {
+      
+      // Only reset if we're in action phase AND the player hasn't submitted yet
+      if (data.phase === 'action' && !hasSubmittedAction) {
+        console.log('🔍 Resetting action state - player has not submitted');
+        resetActionState();
+        setReadyClicked(false);
+        
+        // Reset mobile wizard to ability selection
+        if (isMobile && showMobileActionWizard) {
+          resetMobileWizard();
+        }
+      } else if (data.phase === 'action' && hasSubmittedAction) {
+        console.log('🔍 Keeping current state - player already submitted');
+      }
+    };
+
+    const handlePhaseChanged = (data: PhaseChangedData) => {
+      console.log('Phase changed:', data);
+      if (data.phase) {
+        setPhase(data.phase);
+      }
+    };
+
+    const handleRoundResults = (data: any) => {
+      console.log('🎯 [CLIENT] Round results received:', data);
+      console.log('🎯 [CLIENT] Round results structure:', {
+        hasResults: !!data.results,
+        hasLog: !!data.results?.log,
+        logLength: data.results?.log?.length || 0,
+        hasPlayers: !!data.results?.players,
+        playersCount: data.results?.players?.length || 0,
+        roundSummary: data.results?.roundSummary,
+        success: data.results?.success,
+        playerActions: data.results?.playerActions,
+        monsterAction: data.results?.monsterAction
+      });
+      
+      if (data.results && data.results.log) {
+        console.log('🎯 [CLIENT] Showing battle results modal with events:', data.results.log);
+        
+        // Extract round number from server data - try different sources
+        const roundNumber = data.results.round || data.round || 1;
+        console.log('🎯 [CLIENT] Round number extracted:', { 
+          fromResults: data.results.round, 
+          fromData: data.round, 
+          final: roundNumber 
+        });
+        
+        // Add to events log for history
+        addEventLog({ 
+          turn: roundNumber, 
+          events: data.results.log 
+        });
+        console.log('🎯 [CLIENT] Added events to log for round:', roundNumber);
+        
+        // Show battle results
+        showBattleResultsModal({
+          events: data.results.log,
+          round: roundNumber,
+          levelUp: data.results.levelUp || null,
+          winner: data.results.winner || null,
+          players: data.results.players || [],
+        });
+      } else {
+        console.warn('⚠️ [CLIENT] No log data in round results!');
+      }
+      
+      // Reset states for new round (if no winner)
+      if (!data.results?.winner) {
+        console.log('🎯 [CLIENT] No winner, resetting for next round');
         resetActionState();
         setReadyClicked(false);
         
@@ -204,16 +348,25 @@ export const useGameEvents = (
           resetMobileWizard();
         }
       }
+      
+      if (data.newPhase) {
+        console.log('🎯 [CLIENT] Setting phase to:', data.newPhase);
+        setPhase(data.newPhase);
+      }
     };
 
     socket.on('resumeGame', handleResume);
     socket.on('gameStateUpdate', handleGameStateUpdate);
+    socket.on('phase:changed', handlePhaseChanged);
+    socket.on('round:results', handleRoundResults);
 
     return () => {
       socket.off('resumeGame', handleResume);
       socket.off('gameStateUpdate', handleGameStateUpdate);
+      socket.off('phase:changed', handlePhaseChanged);
+      socket.off('round:results', handleRoundResults);
     };
-  }, [socket, setPhase, resetActionState, setReadyClicked, isMobile, showMobileActionWizard, resetMobileWizard]);
+  }, [socket, setPhase, resetActionState, setReadyClicked, isMobile, showMobileActionWizard, resetMobileWizard, showBattleResultsModal, me]);
 
   // Handle adaptability modal events
   useEffect(() => {

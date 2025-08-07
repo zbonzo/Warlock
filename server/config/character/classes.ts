@@ -4,8 +4,8 @@
  */
 
 import { getAbility } from './abilities.js';
-import type { Ability } from '../schemas/ability.schema';
-import type { ClassesConfig, ClassAttributes, AbilityProgression, ClassCategory } from '../schemas/class.schema';
+import type { Ability } from '../schemas/ability.schema.js';
+import type { ClassesConfig, ClassAttributes, AbilityProgression, ClassCategory } from '../schemas/class.schema.js';
 
 /**
  * Available player classes

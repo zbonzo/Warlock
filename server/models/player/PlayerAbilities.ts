@@ -5,10 +5,10 @@
  */
 
 import { z } from 'zod';
-import logger from '@utils/logger';
-import messages from '@messages';
-import config from '@config';
-import type { Ability, PlayerAction } from '../../types/generated';
+import logger from '../../utils/logger.js';
+import messages from '../../config/messages/index.js';
+import config from '../../config/index.js';
+import type { Ability, PlayerAction } from '../../types/generated.js';
 
 // Ability-related schemas
 const ActionSubmissionSchema = z.object({
@@ -382,11 +382,11 @@ export class PlayerAbilities {
     const expiredCooldowns: string[] = [];
 
     for (const abilityType in this.abilityCooldowns) {
-      if (this.abilityCooldowns[abilityType] > 0) {
-        this.abilityCooldowns[abilityType]--;
+      if (this.abilityCooldowns[abilityType] != null && this.abilityCooldowns[abilityType] > 0) {
+        this.abilityCooldowns[abilityType]!--;
 
         // Remove cooldown if it reaches 0
-        if (this.abilityCooldowns[abilityType] <= 0) {
+        if (this.abilityCooldowns[abilityType]! <= 0) {
           expiredCooldowns.push(abilityType);
           delete this.abilityCooldowns[abilityType];
         }
@@ -538,14 +538,8 @@ export class PlayerAbilities {
       showModified: baseDamage !== modifiedDamage,
       displayText:
         baseDamage === modifiedDamage
-          ? messages.formatMessage(messages.ui.abilityDamageSimple, {
-              damage: baseDamage,
-            })
-          : messages.formatMessage(messages.ui.abilityDamageModified, {
-              modifiedDamage,
-              baseDamage,
-              modifier: modifier.toFixed(1),
-            }),
+          ? `${baseDamage} damage`
+          : `${modifiedDamage} damage (${baseDamage} × ${modifier.toFixed(1)})`,
     };
   }
 
@@ -627,6 +621,20 @@ export class PlayerAbilities {
     abilities.actionValidationState = data.actionValidationState || 'none';
     
     return abilities;
+  }
+
+  /**
+   * Get whether player has submitted an action
+   */
+  getHasSubmittedAction(): boolean {
+    return this.hasSubmittedAction;
+  }
+
+  /**
+   * Get the submitted action
+   */
+  getSubmittedAction(): ActionSubmission | null {
+    return this.submittedAction;
   }
 }
 

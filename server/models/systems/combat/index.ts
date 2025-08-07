@@ -235,6 +235,9 @@ class RefactoredCombatSystem {
   // ... (other methods would be delegated to the original CombatSystem or reimplemented)
 }
 
+// Export types from CoordinationTracker
+export type { CoordinationStats } from './CoordinationTracker.js';
+
 export {
   RefactoredCombatSystem,
   CoordinationTracker,

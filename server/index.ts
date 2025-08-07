@@ -5,7 +5,7 @@
  */
 
 // Register module aliases - THIS MUST BE FIRST
-import './moduleAliases.js';
+// import './moduleAliases.js'; // ES modules don't support module-alias
 
 // Start the server
 import './server.js';

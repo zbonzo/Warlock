@@ -9,15 +9,7 @@ export const SOCKET_URL = (() => {
 
   // In development with different ports for client (4000) and server (4001)
   if (process.env['NODE_ENV'] === 'development') {
-    // Special case: If running on localhost with Webpack dev server
-    if (
-      window.location.hostname === 'localhost' ||
-      window.location.hostname === '127.0.0.1'
-    ) {
-      // Force IPv4 to avoid IPv6 connection issues
-      return `${protocol === 'wss:' ? 'https:' : 'http:'}//127.0.0.1:4001`;
-    }
-    // Otherwise, assume server is on same machine but different port
+    // Always use the current hostname with port 4001 for the socket server
     return `${protocol === 'wss:' ? 'https:' : 'http:'}//${window.location.hostname}:4001`;
   }
 
@@ -38,11 +30,7 @@ export const API_URL = (() => {
     const protocol = window.location.protocol;
     const hostname = window.location.hostname;
     
-    // Force IPv4 for localhost to avoid IPv6 connection issues
-    if (hostname === 'localhost' || hostname === '127.0.0.1') {
-      return `${protocol}//127.0.0.1:4001/api`;
-    }
-    
+    // Always use the current hostname with port 4001
     return `${protocol}//${hostname}:4001/api`;
   }
 

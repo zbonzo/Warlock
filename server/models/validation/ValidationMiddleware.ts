@@ -11,8 +11,8 @@ import {
   GameSchemas, 
   SocketSchemas,
   ConfigSchemas 
-} from './ZodSchemas';
-import logger from '../../utils/logger';
+} from './ZodSchemas.js';
+import logger from '../../utils/logger.js';
 import { Request, Response, NextFunction } from 'express';
 import { Socket } from 'socket.io';
 
@@ -160,7 +160,7 @@ class ValidationMiddleware {
       
       // Replace the data with validated/sanitized version
       (req as any)[target] = result.data;
-      next();
+      return next();
     };
   }
 
@@ -319,20 +319,20 @@ export const ValidationUtils = {
   /**
    * Create a partial schema validator (allows missing optional fields)
    */
-  createPartialValidator<T extends z.ZodRawShape>(schema: z.ZodObject<T>): z.ZodObject<T> {
+  createPartialValidator<T extends z.ZodRawShape>(schema: z.ZodObject<T>): any {
     return schema.partial();
   },
 
   /**
    * Create a deep partial schema validator
    */
-  createDeepPartialValidator<T extends z.ZodRawShape>(schema: z.ZodObject<T>): z.ZodObject<T> {
+  createDeepPartialValidator<T extends z.ZodRawShape>(schema: z.ZodObject<T>): any {
     return schema.deepPartial();
   }
 };
 
 // Main export
-export default ValidationMiddleware;
+export { ValidationMiddleware };
 
 // Export schemas for direct use
 export const schemas = {

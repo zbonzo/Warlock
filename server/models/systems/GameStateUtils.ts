@@ -3,9 +3,9 @@
  * Provides common operations and queries on the game state
  */
 
-import config from '@config';
-import messages from '@messages';
-import logger from '@utils/logger';
+import config from '../../config/index.js';
+import messages from '../../config/messages/index.js';
+import logger from '../../utils/logger.js';
 
 interface Player {
   id: string;
@@ -76,6 +76,15 @@ class GameStateUtils {
   }
 
   /**
+   * Get alive players excluding specified IDs
+   */
+  getAlivePlayersExcept(excludeIds: string[]): Player[] {
+    return Array.from(this.players.values()).filter(
+      (p) => p.isAlive && !excludeIds.includes(p.id)
+    );
+  }
+
+  /**
    * Check if a player is alive
    */
   isPlayerAlive(playerId: string): boolean {
@@ -110,7 +119,7 @@ class GameStateUtils {
 
     // Add monster if allowed and alive
     if (includeMonster && monsterRef && monsterRef.hp > 0 && !onlyPlayers) {
-      possibleTargets.push(config.MONSTER_ID);
+      possibleTargets.push((config as any)['MONSTER_ID'] || '__monster__');
     }
 
     // If no valid targets found, consider alternate options
@@ -128,7 +137,7 @@ class GameStateUtils {
 
       // Last resort: monster if allowed
       if (includeMonster && monsterRef && monsterRef.hp > 0) {
-        return config.MONSTER_ID;
+        return (config as any)['MONSTER_ID'] || '__monster__';
       }
 
       // No valid targets at all
@@ -136,7 +145,11 @@ class GameStateUtils {
     }
 
     // Select a random target from the list
-    return possibleTargets[Math.floor(Math.random() * possibleTargets.length)];
+    if (possibleTargets.length === 0) {
+      return null;
+    }
+    const selectedTarget = possibleTargets[Math.floor(Math.random() * possibleTargets.length)];
+    return selectedTarget || null;
   }
 
   /**
@@ -158,15 +171,15 @@ class GameStateUtils {
     }
     
     // Use win conditions from config
-    const winConditions = config.gameBalance.warlock.winConditions;
+    const winConditions = (config as any)['gameBalance']?.['warlock']?.['winConditions'] || {};
 
     // Good players win if all warlocks are eliminated
     if (numWarlocks <= 0 && aliveCount > 0)
-      return winConditions.allWarlocksGone || 'Good';
+      return winConditions['allWarlocksGone'] || 'Good';
 
     // Warlocks win if all remaining players are warlocks
     if (numWarlocks > 0 && numWarlocks === aliveCount)
-      return winConditions.allPlayersWarlocks || 'Evil';
+      return winConditions['allPlayersWarlocks'] || 'Evil';
 
     // Game continues
     return null;
@@ -191,7 +204,7 @@ class GameStateUtils {
    * Check if a player has an active Undying ability
    */
   hasActiveUndying(player: Player): boolean {
-    return (
+    return !!(
       player.race === 'Lich' &&
       player.racialEffects &&
       player.racialEffects.resurrect &&
@@ -401,12 +414,12 @@ class GameStateUtils {
 
     // Verify the old ability matches the specified level
     const oldAbility = player.abilities[oldAbilityIndex];
-    if (oldAbility.unlockAt !== level) return false;
+    if (!oldAbility || oldAbility.unlockAt !== level) return false;
 
     // Find the new ability in the class abilities
     const newAbilityTemplate = config
-      .getClassAbilitiesByLevel(player.class!, level)
-      .find((a: Ability) => a.type === newAbilityType);
+      .getClassAbilities(player.class!)
+      .find((a: Ability) => a.type === newAbilityType && a.unlockAt === level);
 
     if (!newAbilityTemplate) {
       return false;

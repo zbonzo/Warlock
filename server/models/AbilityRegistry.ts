@@ -6,7 +6,7 @@
 import logger from '../utils/logger.js';
 import config from '../config/index.js';
 // Messages are now accessed through the config system
-import type { Player, Monster, Ability } from '../types/generated';
+import type { Player, Monster, Ability } from '../types/generated.js';
 
 interface AbilityHandler {
   (
@@ -46,7 +46,7 @@ interface RegistrationStats {
   totalAbilities: number;
 }
 
-interface DebugInfo {
+interface DebugInfo extends Record<string, unknown> {
   classAbilities: string[];
   racialAbilities: string[];
   totalRegistered: number;
@@ -83,9 +83,9 @@ class AbilityRegistry {
   }
 
   /**
-   * Register a racial ability handler
+   * Register a racial ability handler (interface-compatible version)
    */
-  registerRacialAbility(abilityType: string, handler: RacialAbilityHandler): void {
+  registerRacialAbility(abilityType: string, handler: any): void {
     this.racialAbilities.set(abilityType, handler);
     logger.debug(`Registered racial ability handler: ${abilityType}`);
   }
@@ -105,9 +105,63 @@ class AbilityRegistry {
   }
 
   /**
-   * Execute a class ability with enhanced coordination support
+   * Execute a class ability (interface-compatible version)
    */
   executeClassAbility(
+    abilityType: string,
+    actor: any,
+    target: any,
+    ability: any,
+    log: any[],
+    systems: any,
+    coordinationInfo?: any
+  ): boolean {
+    const handler = this.classAbilities.get(abilityType);
+    if (!handler) {
+      const errorMsg = `No handler registered for class ability: ${abilityType}`;
+      logger.error(errorMsg);
+      throw new Error(errorMsg);
+    }
+
+    try {
+      return handler(ability, actor, target, null, systems, null, log, coordinationInfo);
+    } catch (error) {
+      logger.error(`Error executing class ability ${abilityType}:`, error as any);
+      throw error;
+    }
+  }
+
+  /**
+   * Execute a racial ability (interface-compatible version)
+   */
+  executeRacialAbility(
+    abilityType: string,
+    actor: any,
+    target: any,
+    ability: any,
+    log: any[],
+    systems: any,
+    coordinationInfo?: any
+  ): boolean {
+    const handler = this.racialAbilities.get(abilityType);
+    if (!handler) {
+      const errorMsg = `No handler registered for racial ability: ${abilityType}`;
+      logger.error(errorMsg);
+      throw new Error(errorMsg);
+    }
+
+    try {
+      return handler(actor, target, null, systems, null, log);
+    } catch (error) {
+      logger.error(`Error executing racial ability ${abilityType}:`, error as any);
+      throw error;
+    }
+  }
+
+  /**
+   * Execute a class ability with enhanced coordination support (legacy version)
+   */
+  executeClassAbilityLegacy(
     abilityType: string,
     ability: Ability,
     actor: Player,
@@ -139,17 +193,17 @@ class AbilityRegistry {
     let outcome = 'normal';
 
     // Critical hit calculation (5% chance)
-    if (Math.random() < config.gameBalance.criticalHitChance) {
-      critMultiplier = config.gameBalance.criticalHitMultiplier;
+    if (Math.random() < config.gameBalance.abilityVariance.critChance) {
+      critMultiplier = config.gameBalance.abilityVariance.critMultiplier;
       outcome = 'crit';
       logger.info(`Critical hit! ${actor.name} using ${ability.name}`);
     }
 
     // Ultra fail calculation (1% chance)
-    if (Math.random() < config.gameBalance.ultraFailChance && target !== 'multi') {
+    if (Math.random() < config.gameBalance.abilityVariance.ultraFailChance && target !== 'multi') {
       // Ultra fail: hit random target instead
       outcome = 'ultraFail';
-      critMultiplier = config.gameBalance.criticalHitMultiplier;
+      critMultiplier = config.gameBalance.abilityVariance.critMultiplier;
 
       if (target === config.MONSTER_ID) {
         // Was targeting monster, now hit random player
@@ -200,7 +254,7 @@ class AbilityRegistry {
     // Log critical hits
     if (outcome === 'crit' || outcome === 'ultraFail') {
       actor.tempCritMultiplier = critMultiplier;
-      const categoryKey = ability.category.toLowerCase();
+      const categoryKey = (ability['category'] as string)?.toLowerCase() || 'general';
       const critMsg = config.getAbilityMessage(
         `abilities.${categoryKey}`,
         'abilityCrit'
@@ -215,14 +269,14 @@ class AbilityRegistry {
         type: 'ability_crit',
         public: true,
         attackerId: actor.id,
-        targetId: (finalTarget as any).id || finalTarget,
-        message: config.formatMessage(critMsg, {
+        targetId: (finalTarget as any)?.id || (typeof finalTarget === 'string' ? finalTarget : null),
+        message: config.formatMessage(critMsg || '', {
           playerName: actor.name,
           abilityName: ability.name,
           targetName,
-          amount: ability.params.amount ||
-                 ability.params.damage ||
-                 ability.params.armor ||
+          amount: (ability['params'] as any)?.['amount'] ||
+                 (ability['params'] as any)?.['damage'] ||
+                 (ability['params'] as any)?.['armor'] ||
                  '',
         }),
         privateMessage: '',
@@ -244,15 +298,15 @@ class AbilityRegistry {
         comeback
       );
     } catch (error) {
-      logger.error(`Error executing class ability ${abilityType}:`, error);
+      logger.error(`Error executing class ability ${abilityType}:`, error as any);
       throw error;
     }
   }
 
   /**
-   * Execute a racial ability
+   * Execute a racial ability (legacy version)
    */
-  executeRacialAbility(
+  executeRacialAbilityLegacy(
     abilityType: string,
     actor: Player,
     target: Player | Monster | string,
@@ -271,7 +325,7 @@ class AbilityRegistry {
     try {
       return handler(actor, target, game, systems, eventBus, log);
     } catch (error) {
-      logger.error(`Error executing racial ability ${abilityType}:`, error);
+      logger.error(`Error executing racial ability ${abilityType}:`, error as any);
       throw error;
     }
   }

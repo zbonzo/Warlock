@@ -4,7 +4,7 @@
  * Part of Phase 7 - Advanced Type Features & Optimization
  */
 
-import type { GameEvent, EventType, EventPayload } from '../models/events/EventTypes';
+import type { GameEvent, EventType, EventPayload } from '../models/events/EventTypes.js';
 import type {
   Player,
   GameRoom,
@@ -14,7 +14,7 @@ import type {
   StatusEffect,
   GamePhase,
   PlayerAction
-} from './generated';
+} from './generated.js';
 
 /**
  * Event-specific conditional types
@@ -87,8 +87,8 @@ export type ExtractEffectType<T extends StatusEffect['type'], Effects extends St
 /**
  * Game phase conditional types
  */
-export type GameInPhase<Phase extends GamePhase['current']> = GameRoom & {
-  phase: GamePhase & { current: Phase }
+export type GameInPhase<Phase extends GamePhase> = GameRoom & {
+  phase: Phase
 };
 
 export type SetupGame = GameInPhase<'setup'>;
@@ -146,7 +146,8 @@ export type Split<S extends string, D extends string> =
 
 export type Join<T extends readonly string[], D extends string> =
   T extends readonly [] ? '' :
-  T extends readonly [infer F] ? F :
+  T extends readonly [infer F] ? 
+    F extends string ? F : never :
   T extends readonly [infer F, ...infer R] ?
     F extends string ? 
       R extends readonly string[] ? 

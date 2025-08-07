@@ -84,7 +84,7 @@ export class SocketValidationMiddleware {
       return (eventData: any, callback?: Function): any => {
         try {
           // Use partial validation if requested
-          const validationSchema = allowPartial ? schema.partial() : schema;
+          const validationSchema = allowPartial && schema instanceof z.ZodObject ? schema.partial() : schema;
           const result = this.validator.validate(eventData, validationSchema);
 
           if (!result.success) {

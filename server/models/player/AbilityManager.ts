@@ -3,8 +3,8 @@
  * Handles ability unlocking, cooldowns, and usage tracking
  */
 
-import config from '@config';
-import logger from '@utils/logger';
+import config from '../../config/index.js';
+import logger from '../../utils/logger.js';
 import type { 
   Ability, 
   Player as PlayerType,
@@ -62,11 +62,11 @@ class AbilityManager {
    * Initialize abilities based on class
    */
   initializeAbilities(className: PlayerClass): void {
-    const classStats = config.classStats[className];
-    if (classStats && classStats.abilities) {
-      this.abilities = [...classStats.abilities];
-      this.unlockedAbilities = classStats.abilities.filter(
-        (ability: Ability) => ability.unlockAt <= 1
+    const classAbilities = config.getClassAbilities(className);
+    if (classAbilities && classAbilities.length > 0) {
+      this.abilities = classAbilities as any;
+      this.unlockedAbilities = (classAbilities as any).filter(
+        (ability: any) => (ability['unlockAt'] as number ?? 1) <= 1
       );
     }
   }
@@ -159,7 +159,7 @@ class AbilityManager {
         a => a.type === ability.type
       );
       
-      if (ability.unlockAt <= level && !alreadyUnlocked) {
+      if ((ability['unlockAt'] as number ?? 1) <= level && !alreadyUnlocked) {
         this.unlockedAbilities.push(ability);
         newlyUnlocked.push(ability);
       }

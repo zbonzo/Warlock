@@ -111,7 +111,7 @@ class StatusEffect {
     this.targetId = targetId; // Who this effect is on
     
     // Get defaults from config and merge with provided params
-    const defaults = config.statusEffects.getEffectDefaults(type) || {};
+    const defaults = config.getEffectDefaults(type) || {};
     this.params = { ...defaults, ...params };
     
     // Effect state
@@ -235,8 +235,8 @@ class StatusEffect {
     const actualDamage = oldHp - target.hp;
 
     // Log bleed damage
-    const bleedMessage = config.statusEffects.formatEffectMessage(
-      config.statusEffects.getEffectMessage('bleed', 'damage'),
+    const bleedMessage = config.formatEffectMessage(
+      config.getEffectMessage('bleed', 'damage'),
       {
         playerName: target.name || 'Monster',
         damage: actualDamage,
@@ -284,7 +284,7 @@ class StatusEffect {
 
     // Log the healing
     const healMessage = config.getAbilityMessage('abilities.healing', 'heal');
-    log.push(config.formatMessage(healMessage, {
+    log.push(config.formatMessage(healMessage || '{playerName} healed for {amount} HP', {
       playerName: target.name || 'Monster',
       amount: actualHeal,
     }));
@@ -338,7 +338,7 @@ class StatusEffect {
     }
 
     // Log expiration message
-    const expirationMessage = config.statusEffects.getEffectMessage(
+    const expirationMessage = config.getEffectMessage(
       this.type,
       'expired',
       {

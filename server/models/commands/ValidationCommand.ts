@@ -3,10 +3,10 @@
  * Provides reusable validation logic for various game actions
  * Part of Phase 4 refactoring - TypeScript Migration with strong typing for command processing
  */
-import { PlayerActionCommand, CommandOptions, GameContext, CommandResult } from './PlayerActionCommand';
-import { EventTypes } from '../events/EventTypes';
+import { PlayerActionCommand, CommandOptions, GameContext, CommandResult } from './PlayerActionCommand.js';
+import { EventTypes } from '../events/EventTypes.js';
 
-const logger = require('@utils/logger');
+import logger from '../../utils/logger.js';
 
 /**
  * Validation types enumeration
@@ -513,5 +513,5 @@ export class ValidationCommand extends PlayerActionCommand {
   }
 }
 
-// Export for backward compatibility
+// ES module export
 export default ValidationCommand;

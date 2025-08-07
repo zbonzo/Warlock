@@ -68,6 +68,7 @@ const JoinGamePage: React.FC<JoinGamePageProps> = ({ onCreateGame, onJoinGame, o
     localStorage.removeItem('lastPlayerName');
   }, []);
 
+
   /**
    * Socket event listeners for name checking
    */
@@ -581,31 +582,33 @@ const JoinGamePage: React.FC<JoinGamePageProps> = ({ onCreateGame, onJoinGame, o
             </div>
           )}
 
-          <input
-            type="text"
-            className="code-input"
-            placeholder="4-digit mystic code"
-            value={joinCode}
-            onChange={handleCodeChange}
-          />
-          {joinCode && (
-            <button
-              className="clear-code-button"
-              onClick={() => {
-                setJoinCode('');
-                // Reset validation state since we're no longer checking a specific game
-                if (name.trim()) {
-                  const validation = validateName(name);
-                  setIsNameValid(validation.isValid);
-                  setNameError(validation.error);
-                  setNameSuggestion(validation.suggestion);
-                }
-              }}
-              aria-label="Clear game code"
-            >
-              ✕
-            </button>
-          )}
+          <div className="code-input-wrapper">
+            <input
+              type="text"
+              className="code-input"
+              placeholder="4-digit mystic code"
+              value={joinCode}
+              onChange={handleCodeChange}
+            />
+            {joinCode && (
+              <button
+                className="clear-code-button"
+                onClick={() => {
+                  setJoinCode('');
+                  // Reset validation state since we're no longer checking a specific game
+                  if (name.trim()) {
+                    const validation = validateName(name);
+                    setIsNameValid(validation.isValid);
+                    setNameError(validation.error);
+                    setNameSuggestion(validation.suggestion);
+                  }
+                }}
+                aria-label="Clear game code"
+              >
+                ✕
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Join game button */}

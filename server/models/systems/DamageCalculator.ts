@@ -5,10 +5,10 @@
  */
 
 import { z } from 'zod';
-import config from '@config';
-import logger from '@utils/logger';
-import messages from '@messages';
-import type { Player } from '../../types/generated';
+import config from '../../config/index.js';
+import logger from '../../utils/logger.js';
+import messages from '../../config/messages/index.js';
+import type { Player } from '../../types/generated.js';
 
 // Damage calculation schemas
 const DamageOptionsSchema = z.object({
@@ -115,7 +115,7 @@ export class DamageCalculator {
     }
 
     // Apply combo multiplier
-    if (options.comboMultiplier > 1) {
+    if (options.comboMultiplier && options.comboMultiplier > 1) {
       damage *= options.comboMultiplier;
       modifiers.push(`Combo (x${options.comboMultiplier})`);
       calculationLog.push(`Combo multiplier: ${damage}`);

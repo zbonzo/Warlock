@@ -2,16 +2,16 @@
  * @fileoverview Entry point for character configuration
  * Exports all character-related configuration with new ability system
  */
-import * as races from './races';
-import * as classes from './classes';
-import * as abilities from './abilities';
-import * as playerSettings from './playerSettings';
+import * as races from './races.js';
+import * as classes from './classes.js';
+import * as abilities from './abilities.js';
+import * as playerSettings from './playerSettings.js';
 
 /**
  * Character configuration module
  * Exports all race, class, ability, and player configuration in a single object
  */
-export default {
+const characterConfig = {
   // Race-related exports
   races: races.availableRaces,
   raceAttributes: races.raceAttributes,
@@ -35,7 +35,7 @@ export default {
   classRaceCompatibility: races.classRaceCompatibility,
   
   // Player settings
-  player: playerSettings.default,
+  player: playerSettings,
   
   // Helper methods
   getRacialAbility: races.getRacialAbility,
@@ -52,8 +52,10 @@ export default {
   }
 };
 
+export default characterConfig;
+
 // Also export individual modules for direct imports
-export * from './races';
-export * from './classes';
-export * from './abilities';
-export { default as playerSettings } from './playerSettings';
+export * from './races.js';
+export * from './classes.js';
+export * from './abilities.js';
+export { playerSettings };

@@ -122,7 +122,8 @@ const initialState: AppState = {
     defensePower: 0,
     abilities: [],
     statusEffects: [],
-    isAlive: true
+    isAlive: true,
+    race: 'Monster'
   },
   winner: null,
   selectedRace: null,

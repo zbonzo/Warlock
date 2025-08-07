@@ -3,9 +3,9 @@
  * Provides bonuses to the good team when they're struggling
  */
 
-import config from '@config';
-import logger from '@utils/logger';
-import messages from '@messages';
+import config from '../../../config/index.js';
+import logger from '../../../utils/logger.js';
+import messages from '../../../config/messages/index.js';
 
 interface Player {
   id: string;
@@ -44,8 +44,8 @@ class ComebackMechanics {
 
   constructor(players: Map<string, Player>) {
     this.players = players;
-    this.comebackThreshold = config.gameBalance.comeback.threshold || 0.3;
-    this.comebackBonus = config.gameBalance.comeback.bonus || 0.2;
+    this.comebackThreshold = config.gameBalance.comebackMechanics.threshold || 0.3;
+    this.comebackBonus = config.gameBalance.comebackMechanics.damageIncrease / 100 || 0.2;
   }
 
   /**

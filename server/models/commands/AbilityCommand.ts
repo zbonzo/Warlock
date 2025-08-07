@@ -4,11 +4,11 @@
  * Part of Phase 4 refactoring - TypeScript Migration with strong typing for command processing
  * Enhanced with Zod validation for runtime data integrity
  */
-import { PlayerActionCommand, CommandOptions, GameContext, CommandResult } from './PlayerActionCommand';
-import { EventTypes } from '../events/EventTypes';
+import { PlayerActionCommand, CommandOptions, GameContext, CommandResult } from './PlayerActionCommand.js';
+import { EventTypes } from '../events/EventTypes.js';
 
-const { lenientValidator } = require('../validation/ValidationMiddleware');
-const logger = require('@utils/logger');
+import { lenientValidator } from '../validation/ValidationMiddleware.js';
+import logger from '../../utils/logger.js';
 
 /**
  * Ability-specific command options
@@ -498,5 +498,5 @@ export class AbilityCommand extends PlayerActionCommand {
   }
 }
 
-// Export for backward compatibility
+// ES module export
 export default AbilityCommand;

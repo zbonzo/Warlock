@@ -5,9 +5,9 @@
  */
 
 import { z } from 'zod';
-import logger from '@utils/logger';
-import messages from '@messages';
-import type { Player, PlayerAction, GameCode } from '../../types/generated';
+import logger from '../../utils/logger.js';
+import messages from '../../config/messages/index.js';
+import type { Player, PlayerAction, GameCode } from '../../types/generated.js';
 
 // Turn resolution schemas
 const ActionResultSchema = z.object({

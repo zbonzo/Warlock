@@ -198,3 +198,57 @@
 .target-option.monster {
   order: -1; /* Ensures monster always appears first */
 }
+
+/* Override mobile styles for desktop target selector */
+.target-selector .player-target-card {
+  min-height: auto;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
+.target-selector .player-targets-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.target-selector .player-name {
+  font-size: 0.9rem;
+}
+
+.target-selector .player-hp {
+  font-size: 0.8rem;
+}
+
+.target-selector .health-bar-compact {
+  width: 80px;
+  height: 3px;
+}
+
+/* Monster target card styling */
+.target-selector .monster-target {
+  display: flex;
+  align-items: center;
+  padding: 10px;
+  gap: 12px;
+  cursor: pointer;
+  background: linear-gradient(135deg, rgba(139, 0, 0, 0.2) 0%, rgba(45, 0, 0, 0.3) 100%);
+  border: 2px solid #8B0000;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.target-selector .monster-target:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(139, 0, 0, 0.3);
+}
+
+.target-selector .monster-target.selected {
+  background: rgba(139, 0, 0, 0.3);
+  border-color: #FF0000;
+}

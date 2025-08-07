@@ -532,18 +532,27 @@ describe('GameRoom (TypeScript)', () => {
         combatSystem: {
           processRound: jest.fn().mockResolvedValue({ roundResult: 'success' })
         },
-        winConditionSystem: {
-          checkWinConditions: jest.fn().mockReturnValue({ gameEnded: false })
+        warlockSystem: {
+          getWarlockCount: jest.fn().mockReturnValue(1)
+        },
+        gameStateUtils: {
+          checkWinConditions: jest.fn().mockReturnValue(null)
         }
       };
       gameRoom.systems = mockSystems;
+      
+      // Mock gameState.getAliveCount
+      (gameRoom as any).gameState = {
+        getAliveCount: jest.fn().mockReturnValue(3)
+      };
 
       const result: ActionResult = await gameRoom.processRound();
 
       expect(result.success).toBe(true);
       expect(result.data).toEqual({ roundResult: 'success' });
       expect(mockSystems.combatSystem.processRound).toHaveBeenCalledWith(gameRoom);
-      expect(mockSystems.winConditionSystem.checkWinConditions).toHaveBeenCalledWith(gameRoom);
+      expect(mockSystems.warlockSystem.getWarlockCount).toHaveBeenCalled();
+      expect(mockSystems.gameStateUtils.checkWinConditions).toHaveBeenCalled();
     });
 
     it('should end game when win conditions are met', async () => {
@@ -551,20 +560,25 @@ describe('GameRoom (TypeScript)', () => {
         combatSystem: {
           processRound: jest.fn().mockResolvedValue({})
         },
-        winConditionSystem: {
-          checkWinConditions: jest.fn().mockReturnValue({ 
-            gameEnded: true, 
-            winner: 'players' 
-          })
+        warlockSystem: {
+          getWarlockCount: jest.fn().mockReturnValue(0)
+        },
+        gameStateUtils: {
+          checkWinConditions: jest.fn().mockReturnValue('Good')
         }
       };
       gameRoom.systems = mockSystems;
+      
+      // Mock gameState.getAliveCount
+      (gameRoom as any).gameState = {
+        getAliveCount: jest.fn().mockReturnValue(2)
+      };
       
       const endGameSpy = jest.spyOn(gameRoom, 'endGame').mockImplementation();
 
       await gameRoom.processRound();
 
-      expect(endGameSpy).toHaveBeenCalledWith('players');
+      expect(endGameSpy).toHaveBeenCalledWith('Good');
     });
 
     it('should handle round processing failure', async () => {

@@ -3,7 +3,7 @@
  * All abilities are defined here and referenced by classes
  */
 
-import type { Ability, AbilitiesMap } from '../schemas/ability.schema';
+import type { Ability, AbilitiesMap } from '../schemas/ability.schema.js';
 
 /**
  * Master ability registry containing all abilities in the game

@@ -3,10 +3,10 @@
  * Provides decoupled communication between game systems
  * Part of Phase 4 refactoring - TypeScript Migration with generic type-safe event handling
  */
-import { GameEvent, EventType, EventHandler, EventPayload } from './EventTypes';
+import { GameEvent, EventType, EventHandler, EventPayload } from './EventTypes.js';
 
-const logger = require('@utils/logger');
-const messages = require('@messages');
+import logger from '../../utils/logger.js';
+import messages from '../../config/messages/index.js';
 
 /**
  * Type-safe event listener configuration
@@ -490,5 +490,5 @@ export class GameEventBus {
   }
 }
 
-// Export for backward compatibility
+// ES module export
 export default GameEventBus;

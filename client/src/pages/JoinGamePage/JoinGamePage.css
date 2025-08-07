@@ -236,6 +236,7 @@
   margin-bottom: 8px;
 }
 
+
 .help-button {
   width: 24px;
   height: 24px;
@@ -265,9 +266,15 @@
   border: 1px solid var(--color-border);
 }
 
+.code-input-wrapper {
+  position: relative;
+  width: 100%;
+}
+
 .code-input {
   width: 100%;
   padding: 12px 16px;
+  padding-right: 40px; /* Space for clear button when visible */
   border: 2px solid var(--color-border);
   border-radius: 8px;
   font-size: 18px;
@@ -283,6 +290,7 @@
   border-color: var(--color-primary);
   box-shadow: 0 0 0 3px rgba(var(--color-primary-rgb), 0.1);
 }
+
 
 .clear-code-button {
   position: absolute;

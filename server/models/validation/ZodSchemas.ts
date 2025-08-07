@@ -20,8 +20,8 @@ export const BaseSchemas = {
   turn: z.number().int().min(1).max(20),
   
   // Game enums
-  playerClass: z.enum(['Paladin', 'Knight', 'Archer', 'Wizard']),
-  playerRace: z.enum(['Human', 'Elf', 'Dwarf', 'Halfling']),
+  playerClass: z.enum(['Alchemist', 'Assassin', 'Barbarian', 'Druid', 'Gunslinger', 'Oracle', 'Priest', 'Pyromancer', 'Shaman', 'Tracker', 'Warrior', 'Wizard', 'Paladin']),
+  playerRace: z.enum(['Human', 'Elf', 'Dwarf', 'Halfling', 'Orc', 'Kinfolk', 'Crestfallen', 'Artisan', 'Lich', 'Rockhewn']),
   playerRole: z.enum(['Good', 'Evil', 'Warlock']),
   gamePhase: z.enum(['setup', 'day', 'night', 'voting', 'ended']),
   
@@ -80,7 +80,7 @@ export const PlayerSchemas = {
       effect: z.string().optional(),
       blockedBy: z.array(z.string()).optional()
     }).optional()
-  }),
+  }).passthrough(), // Allow additional properties for backward compatibility
   
   // Status effects
   statusEffect: z.object({
@@ -104,7 +104,7 @@ export const PlayerSchemas = {
   }),
   
   // Full player object
-  player: z.lazy(() => z.object({
+  player: z.lazy((): z.ZodType<any> => z.object({
     id: BaseSchemas.playerId,
     name: z.string().min(1).max(30),
     class: BaseSchemas.playerClass,
@@ -188,6 +188,7 @@ export const GameSchemas = {
     abilities: z.array(z.string()),
     statusEffects: z.array(PlayerSchemas.statusEffect),
     isAlive: z.boolean(),
+    race: z.literal('Monster'), // Required for system compatibility
     metadata: z.record(z.any()).optional()
   }),
   
@@ -215,7 +216,7 @@ export const GameSchemas = {
   }),
   
   // Complete game state
-  gameState: z.lazy(() => z.object({
+  gameState: z.lazy((): z.ZodType<any> => z.object({
     gameCode: BaseSchemas.gameCode,
     players: z.record(PlayerSchemas.player),
     monster: GameSchemas.monster.optional(),
@@ -249,7 +250,7 @@ export const SocketSchemas = {
   }),
   
   // Outgoing socket events
-  gameUpdate: z.lazy(() => z.object({
+  gameUpdate: z.lazy((): z.ZodType<any> => z.object({
     type: z.string().min(1),
     gameState: GameSchemas.gameState.optional(),
     players: z.record(PlayerSchemas.player).optional(),
@@ -290,7 +291,7 @@ export const ConfigSchemas = {
   }),
   
   // Game configuration
-  gameConfig: z.lazy(() => z.object({
+  gameConfig: z.lazy((): z.ZodType<any> => z.object({
     defaultRules: GameSchemas.gameRules,
     abilityConfigs: z.record(PlayerSchemas.ability),
     classConfigs: z.record(z.object({
@@ -337,3 +338,46 @@ export type ErrorMessageData = z.infer<typeof SocketSchemas.errorMessage>;
 
 export type ServerConfig = z.infer<typeof ConfigSchemas.serverConfig>;
 export type GameConfig = z.infer<typeof ConfigSchemas.gameConfig>;
+
+// Individual schema exports for guards.ts and other consumers
+export const PlayerSchema = PlayerSchemas.player;
+export const PlayerStatsSchema = PlayerSchemas.playerStats;
+export const AbilitySchema = PlayerSchemas.ability;
+export const StatusEffectSchema = PlayerSchemas.statusEffect;
+
+export const PlayerActionSchema = ActionSchemas.playerAction;
+export const AbilityActionSchema = ActionSchemas.abilityAction;
+export const ValidationResultSchema = ActionSchemas.validationResult;
+export const CommandResultSchema = ActionSchemas.commandResult;
+
+export const MonsterSchema = GameSchemas.monster;
+export const GamePhaseSchema = GameSchemas.gamePhase;
+export const GameRulesSchema = GameSchemas.gameRules;
+export const GameStateSchema = GameSchemas.gameState;
+
+// For now, create placeholder schemas for missing types that don't have direct mappings
+export const PlayerAbilitiesSchema = z.array(z.object({
+  id: z.string().min(1),
+  name: z.string().min(1),
+  type: z.enum(['class', 'racial', 'special']),
+  unlocked: z.boolean()
+}));
+export const PlayerEffectsSchema = z.array(z.object({
+  id: z.string().min(1),
+  name: z.string().min(1),
+  type: z.enum(['buff', 'debuff', 'status', 'immunity']),
+  duration: z.number().int().min(-1)
+}));
+export const GameRoomSchema = z.object({
+  gameCode: z.string().length(6),
+  players: z.record(z.any()),
+  isActive: z.boolean(),
+  created: z.string(),
+  lastUpdated: z.string()
+});
+export const GameEventSchema = z.object({
+  type: z.string(),
+  payload: z.any(),
+  timestamp: BaseSchemas.timestamp,
+  gameCode: BaseSchemas.gameCode.optional()
+});

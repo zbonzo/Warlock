@@ -376,3 +376,17 @@
 [data-theme="dark"] .lock-overlay {
   background: rgba(0, 0, 0, 0.8);
 }
+
+/* Continue button section */
+.continue-section {
+  display: flex;
+  justify-content: center;
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--color-border);
+}
+
+.continue-section .rune-button {
+  min-width: 120px;
+  padding: 12px 24px;
+}

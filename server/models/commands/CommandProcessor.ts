@@ -3,11 +3,12 @@
  * Handles command queuing, validation, execution, and coordination
  * Part of Phase 4 refactoring - TypeScript Migration with strong typing for command processing
  */
-import { PlayerActionCommand, GameContext, CommandSummary } from './PlayerActionCommand';
-import { AbilityCommand } from './AbilityCommand';
-import { EventTypes } from '../events/EventTypes';
+import { PlayerActionCommand, GameContext, CommandSummary } from './PlayerActionCommand.js';
+import { AbilityCommand } from './AbilityCommand.js';
+import ValidationCommand, { ValidationType } from './ValidationCommand.js';
+import { EventTypes } from '../events/EventTypes.js';
 
-const logger = require('@utils/logger');
+import logger from '../../utils/logger.js';
 
 /**
  * Command processor statistics
@@ -23,19 +24,7 @@ export interface ProcessorStats {
   isProcessing: boolean;
 }
 
-/**
- * Game room interface (basic typing for now)
- */
-interface GameRoom {
-  code: string;
-  getEventBus(): any;
-  getPlayerById(playerId: string): any;
-  phase: string;
-  gamePhase?: {
-    clearPendingActions(): void;
-  };
-  systems?: any;
-}
+import type { GameRoom } from '../GameRoom.js';
 
 /**
  * Processes and executes player action commands
@@ -69,7 +58,7 @@ export class CommandProcessor {
    */
   constructor(gameRoom: GameRoom) {
     this.gameRoom = gameRoom;
-    this.eventBus = gameRoom.getEventBus();
+    this.eventBus = gameRoom.eventBus;
 
     // Set up event listeners
     this._setupEventListeners();
@@ -126,15 +115,17 @@ export class CommandProcessor {
       const commandIndex = queue.findIndex(cmd => cmd.id === commandId);
       if (commandIndex !== -1) {
         const command = queue[commandIndex];
-        command.cancel();
-        queue.splice(commandIndex, 1);
-        
-        this.eventBus.emit(EventTypes.ACTION.CANCELLED, {
-          playerId: command.playerId,
-          actionType: command.actionType,
-          commandId: command.id,
-          timestamp: new Date().toISOString()
-        });
+        if (command) {
+          command.cancel();
+          queue.splice(commandIndex, 1);
+          
+          this.eventBus.emit(EventTypes.ACTION.CANCELLED, {
+            playerId: command.playerId,
+            actionType: command.actionType,
+            commandId: command.id,
+            timestamp: new Date().toISOString()
+          });
+        }
 
         return true;
       }
@@ -409,9 +400,8 @@ export class CommandProcessor {
    * @param options - Validation options
    * @returns Command ID
    */
-  async submitValidationCommand(playerId: string, validationType: string, actionData: Record<string, unknown>, options: Record<string, unknown> = {}): Promise<string> {
-    const ValidationCommandModule = require('./ValidationCommand');
-    const command = ValidationCommandModule.create(playerId, validationType, actionData, options);
+  async submitValidationCommand(playerId: string, validationType: ValidationType, actionData: Record<string, unknown>, options: Record<string, unknown> = {}): Promise<string> {
+    const command = ValidationCommand.create(playerId, validationType, actionData, options);
     return await this.submitCommand(command);
   }
 
@@ -424,7 +414,7 @@ export class CommandProcessor {
   async submitActionData(playerId: string, actionData: Record<string, unknown>): Promise<string> {
     let command: PlayerActionCommand;
 
-    switch (actionData.actionType) {
+    switch (actionData['actionType']) {
       case 'ability':
         command = AbilityCommand.fromActionData(playerId, actionData);
         break;
@@ -486,7 +476,9 @@ export class CommandProcessor {
     // Trim history if too large
     if (this.completedCommands.size > this.maxHistorySize) {
       const oldestKey = this.completedCommands.keys().next().value;
-      this.completedCommands.delete(oldestKey);
+      if (oldestKey !== undefined) {
+        this.completedCommands.delete(oldestKey);
+      }
     }
   }
 
@@ -533,5 +525,5 @@ export class CommandProcessor {
   }
 }
 
-// Export for backward compatibility
+// ES module export
 export default CommandProcessor;

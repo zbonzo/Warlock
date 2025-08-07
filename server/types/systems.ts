@@ -4,9 +4,9 @@
  * Part of Phase 7 - Advanced Type Features & Optimization
  */
 
-import type { GameEvent, EventType, EventPayload } from '../models/events/EventTypes';
-import type { GameRoom, Player, Monster } from './generated';
-import type { ValidationResult, ApiResponse } from './utilities';
+import type { GameEvent, EventType, EventPayload } from '../models/events/EventTypes.js';
+import type { GameRoom, Player, Monster } from './generated.js';
+import type { ValidationResult, ApiResponse } from './utilities.js';
 
 /**
  * Base system interface

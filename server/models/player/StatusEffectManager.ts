@@ -3,8 +3,8 @@
  * Handles status effects, buffs, debuffs, and their durations
  */
 
-import config from '@config';
-import logger from '@utils/logger';
+import config from '../../config/index.js';
+import logger from '../../utils/logger.js';
 import type { 
   StatusEffect, 
   PlayerRace,
@@ -159,7 +159,7 @@ class StatusEffectManager {
     const existing = this.statusEffects[effectType];
     
     // Handle stacking effects
-    if (effectData.stacks && existing.stacks) {
+    if (effectData.stacks && existing && existing.stacks) {
       effectData.stacks = Math.min(
         existing.stacks + effectData.stacks,
         effectData.maxStacks || 10
@@ -167,7 +167,7 @@ class StatusEffectManager {
     }
 
     // Handle duration refresh
-    if (effectData.duration) {
+    if (effectData.duration && existing) {
       effectData.duration = Math.max(existing.duration || 0, effectData.duration);
     }
 
@@ -226,9 +226,9 @@ class StatusEffectManager {
     }
 
     // Check temporary immunities
-    if (this.statusEffects.immune && 
-        this.statusEffects.immune.effectTypes &&
-        this.statusEffects.immune.effectTypes.includes(effectType)) {
+    if (this.statusEffects['immune'] && 
+        this.statusEffects['immune'].effectTypes &&
+        this.statusEffects['immune'].effectTypes.includes(effectType)) {
       return true;
     }
 
@@ -315,8 +315,8 @@ class StatusEffectManager {
     }
 
     // Add effect armor
-    if (this.statusEffects.shielded) {
-      totalArmor += this.statusEffects.shielded.armor || 0;
+    if (this.statusEffects['shielded']) {
+      totalArmor += this.statusEffects['shielded'].armor || 0;
     }
 
     // Add class armor bonuses
@@ -334,18 +334,18 @@ class StatusEffectManager {
     let modifier = 1.0;
 
     // Apply vulnerability
-    if (this.statusEffects.vulnerable) {
-      modifier *= 1 + (this.statusEffects.vulnerable.damageIncrease || 0.5);
+    if (this.statusEffects['vulnerable']) {
+      modifier *= 1 + (this.statusEffects['vulnerable'].damageIncrease || 0.5);
     }
 
     // Apply weakness
-    if (this.statusEffects.weakened) {
-      modifier *= 1 - (this.statusEffects.weakened.damageReduction || 0.3);
+    if (this.statusEffects['weakened']) {
+      modifier *= 1 - (this.statusEffects['weakened'].damageReduction || 0.3);
     }
 
     // Apply empowered
-    if (this.statusEffects.empowered) {
-      modifier *= 1 + (this.statusEffects.empowered.damageBonus || 0.3);
+    if (this.statusEffects['empowered']) {
+      modifier *= 1 + (this.statusEffects['empowered'].damageBonus || 0.3);
     }
 
     // Apply class modifiers

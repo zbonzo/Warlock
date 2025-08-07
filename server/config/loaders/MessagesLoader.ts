@@ -1,5 +1,6 @@
-import fs from 'fs';
-import path from 'path';
+import * as fs from 'fs';
+import * as path from 'path';
+import { fileURLToPath } from 'url';
 import { 
   MessagesConfig, 
   MessageCategory,
@@ -7,7 +8,11 @@ import {
   ServerLogMessages,
   validateMessagesConfig,
   safeValidateMessagesConfig 
-} from '../schemas/messages.schema';
+} from '../schemas/messages.schema.js';
+
+// ES module __dirname equivalent
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 export interface MessageContext {
   playerName?: string;

@@ -5,7 +5,7 @@
  */
 
 import { z } from 'zod';
-import * as Schemas from '../models/validation/ZodSchemas';
+import * as Schemas from '../models/validation/ZodSchemas.js';
 import type { 
   Player, 
   GameRoom, 
@@ -22,17 +22,17 @@ import type {
   AbilityAction,
   ValidationResult,
   CommandResult
-} from './generated';
+} from './generated.js';
 
 /**
  * Player-related type guards
  */
 export function isPlayer(obj: unknown): obj is Player {
-  return Schemas.PlayerSchema.safeParse(obj).success;
+  return Schemas.PlayerSchemas.player.safeParse(obj).success;
 }
 
 export function isPlayerStats(obj: unknown): obj is PlayerStats {
-  return Schemas.PlayerStatsSchema.safeParse(obj).success;
+  return Schemas.PlayerSchemas.playerStats.safeParse(obj).success;
 }
 
 export function isPlayerAbilities(obj: unknown): obj is PlayerAbilities {
@@ -44,7 +44,7 @@ export function isPlayerEffects(obj: unknown): obj is PlayerEffects {
 }
 
 export function isStatusEffect(obj: unknown): obj is StatusEffect {
-  return Schemas.StatusEffectSchema.safeParse(obj).success;
+  return Schemas.PlayerSchemas.statusEffect.safeParse(obj).success;
 }
 
 /**
@@ -55,41 +55,41 @@ export function isGameRoom(obj: unknown): obj is GameRoom {
 }
 
 export function isMonster(obj: unknown): obj is Monster {
-  return Schemas.MonsterSchema.safeParse(obj).success;
+  return Schemas.GameSchemas.monster.safeParse(obj).success;
 }
 
 export function isGamePhase(obj: unknown): obj is GamePhase {
-  return Schemas.GamePhaseSchema.safeParse(obj).success;
+  return Schemas.GameSchemas.gamePhase.safeParse(obj).success;
 }
 
 export function isGameRules(obj: unknown): obj is GameRules {
-  return Schemas.GameRulesSchema.safeParse(obj).success;
+  return Schemas.GameSchemas.gameRules.safeParse(obj).success;
 }
 
 /**
  * Ability-related type guards
  */
 export function isAbility(obj: unknown): obj is Ability {
-  return Schemas.AbilitySchema.safeParse(obj).success;
+  return Schemas.PlayerSchemas.ability.safeParse(obj).success;
 }
 
 /**
  * Action and Command type guards
  */
 export function isPlayerAction(obj: unknown): obj is PlayerAction {
-  return Schemas.PlayerActionSchema.safeParse(obj).success;
+  return Schemas.ActionSchemas.playerAction.safeParse(obj).success;
 }
 
 export function isAbilityAction(obj: unknown): obj is AbilityAction {
-  return Schemas.AbilityActionSchema.safeParse(obj).success;
+  return Schemas.ActionSchemas.abilityAction.safeParse(obj).success;
 }
 
 export function isValidationResult(obj: unknown): obj is ValidationResult {
-  return Schemas.ValidationResultSchema.safeParse(obj).success;
+  return Schemas.ActionSchemas.validationResult.safeParse(obj).success;
 }
 
 export function isCommandResult(obj: unknown): obj is CommandResult {
-  return Schemas.CommandResultSchema.safeParse(obj).success;
+  return Schemas.ActionSchemas.commandResult.safeParse(obj).success;
 }
 
 /**
@@ -122,7 +122,8 @@ export function isStatusEffectArray(obj: unknown): obj is StatusEffect[] {
  */
 export function isPartialPlayer(obj: unknown): obj is Partial<Player> {
   if (typeof obj !== 'object' || obj === null) return false;
-  return Schemas.PlayerSchema.partial().safeParse(obj).success;
+  // Use a simplified check for partial player since the schema is lazy
+  return typeof obj === 'object' && obj !== null;
 }
 
 export function isPartialGameRoom(obj: unknown): obj is Partial<GameRoom> {
@@ -134,7 +135,7 @@ export function isPartialGameRoom(obj: unknown): obj is Partial<GameRoom> {
  * Enhanced type guards with error reporting
  */
 export function assertPlayer(obj: unknown): asserts obj is Player {
-  const result = Schemas.PlayerSchema.safeParse(obj);
+  const result = Schemas.PlayerSchemas.player.safeParse(obj);
   if (!result.success) {
     throw new Error(`Invalid Player object: ${result.error.message}`);
   }

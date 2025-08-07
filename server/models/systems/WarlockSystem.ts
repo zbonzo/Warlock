@@ -4,9 +4,10 @@
  */
 
 import config from '../../config/index.js';
+import { calculateWarlockCount } from '../../config/gameBalance.js';
 // Messages are now accessed through the config system
 import logger from '../../utils/logger.js';
-import type { Player } from '../../types/generated';
+import type { Player } from '../../types/generated.js';
 
 interface GameStateUtils {
   getAlivePlayers(): Player[];
@@ -124,7 +125,7 @@ class WarlockSystem {
     this.detectedWarlocks.add(playerId);
     
     // Apply detection penalty
-    const penaltyDuration = config.gameBalance.warlockSystem.detectionPenaltyDuration;
+    const penaltyDuration = config.gameBalance.warlock.corruption.detectionPenaltyDuration;
     this.detectionPenalties.set(playerId, penaltyDuration);
     
     logger.info('WarlockDetected', { 
@@ -152,7 +153,7 @@ class WarlockSystem {
    */
   assignInitialWarlocks(preferredPlayerIds: string[] = []): WarlockAssignmentResult[] {
     const alivePlayers = this.gameStateUtils.getAlivePlayers();
-    const targetWarlocks = config.gameBalance.getWarlockCount(alivePlayers.length);
+    const targetWarlocks = calculateWarlockCount(alivePlayers.length);
     
     if (targetWarlocks === 0) {
       logger.info('NoWarlocksAssigned', { playerCount: alivePlayers.length });
@@ -213,7 +214,7 @@ class WarlockSystem {
   attemptCorruption(
     warlockId: string,
     targetId: string,
-    baseChance: number = config.gameBalance.warlockSystem.corruptionChance
+    baseChance: number = config.gameBalance.warlock.conversion.baseChance
   ): CorruptionResult {
     const warlock = this.players.get(warlockId);
     const target = this.players.get(targetId);
@@ -245,20 +246,20 @@ class WarlockSystem {
 
     // Check detection penalty
     if (this.hasDetectionPenalty(warlockId)) {
-      const penaltyReduction = config.gameBalance.warlockSystem.detectionPenaltyReduction;
+      const penaltyReduction = config.gameBalance.warlock.corruption.detectionDamagePenalty / 100;
       baseChance *= (1 - penaltyReduction);
       logger.debug('CorruptionPenaltyApplied', { warlockId, reduction: penaltyReduction });
     }
 
     // Check round corruption limits
-    const maxCorruptionsPerRound = config.gameBalance.warlockSystem.maxCorruptionsPerRound;
+    const maxCorruptionsPerRound = config.gameBalance.warlock.conversion.maxCorruptionsPerRound;
     if (this.roundCorruptions >= maxCorruptionsPerRound) {
       return { success: false, reason: 'Round corruption limit reached' };
     }
 
     // Check per-player corruption limits
     const playerCorruptions = this.playerCorruptions.get(warlockId) || 0;
-    const maxPerPlayer = config.gameBalance.warlockSystem.maxCorruptionsPerPlayerPerRound;
+    const maxPerPlayer = config.gameBalance.warlock.conversion.maxCorruptionsPerPlayer;
     if (playerCorruptions >= maxPerPlayer) {
       return { success: false, reason: 'Player corruption limit reached' };
     }
@@ -267,7 +268,7 @@ class WarlockSystem {
     let totalResistance = 0;
 
     // Base race resistance
-    const raceResistance = config.gameBalance.warlockSystem.corruptionResistance / 100;
+    const raceResistance = config.gameBalance.comebackMechanics.corruptionResistance / 100;
     totalResistance += raceResistance;
 
     // Comeback mechanics resistance
@@ -302,7 +303,7 @@ class WarlockSystem {
       this.totalCorruptionsThisGame++;
 
       // Apply corruption cooldown
-      const cooldownDuration = config.gameBalance.warlockSystem.corruptionCooldown;
+      const cooldownDuration = config.gameBalance.warlock.conversion.corruptionCooldown;
       this.corruptionCooldowns.set(warlockId, cooldownDuration);
 
       logger.info('CorruptionSuccessful', {
@@ -320,7 +321,7 @@ class WarlockSystem {
       };
     } else {
       // Apply cooldown even on failure to prevent spam
-      const cooldownDuration = config.gameBalance.warlockSystem.corruptionCooldown;
+      const cooldownDuration = config.gameBalance.warlock.conversion.corruptionCooldown;
       this.corruptionCooldowns.set(warlockId, cooldownDuration);
 
       return { 
@@ -382,7 +383,7 @@ class WarlockSystem {
    * Check if corruption is possible this round
    */
   canCorruptThisRound(): boolean {
-    const maxCorruptionsPerRound = config.gameBalance.warlockSystem.maxCorruptionsPerRound;
+    const maxCorruptionsPerRound = config.gameBalance.warlock.conversion.maxCorruptionsPerRound;
     return this.roundCorruptions < maxCorruptionsPerRound;
   }
 
@@ -393,7 +394,7 @@ class WarlockSystem {
     const alivePlayers = this.gameStateUtils.getAlivePlayers();
     const goodPlayers = alivePlayers.filter((p) => !p.isWarlock);
 
-    const comebackActive = config.gameBalance.shouldActiveComebackMechanics(
+    const comebackActive = config.shouldActiveComebackMechanics(
       goodPlayers.length,
       alivePlayers.length
     );
@@ -412,7 +413,7 @@ class WarlockSystem {
   assignInitialWarlock(preferredPlayerId: string | null = null): WarlockAssignmentResult | null {
     const preferredIds = preferredPlayerId ? [preferredPlayerId] : [];
     const warlocks = this.assignInitialWarlocks(preferredIds);
-    return warlocks.length > 0 ? warlocks[0] : null;
+    return warlocks.length > 0 ? warlocks[0]! : null;
   }
 }
 

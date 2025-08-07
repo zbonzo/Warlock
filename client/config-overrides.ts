@@ -11,5 +11,10 @@ module.exports = override(
     '@services': path.resolve(__dirname, 'src/services'),
     '@config': path.resolve(__dirname, 'src/config'),
     '@styles': path.resolve(__dirname, 'src/styles'),
-  })
+  }),
+  (config: any) => {
+    // Ensure TypeScript entry point is resolved correctly
+    config.entry = path.resolve(__dirname, 'src/index.tsx');
+    return config;
+  }
 );

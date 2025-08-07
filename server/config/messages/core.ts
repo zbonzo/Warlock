@@ -212,6 +212,7 @@ const events = {
   stoneArmorDegraded: "{playerName}'s Stone Armor weakens from the attack!",
 
   // Game progression
+  gameStarted: 'Game started by {hostName}!',
   levelUp: 'The party has advanced to level {level}!',
   nextRound: 'Round {round} begins!',
   gameEnding: 'Game ending...',

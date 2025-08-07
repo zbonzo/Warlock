@@ -4,7 +4,7 @@
  * These types are automatically inferred from the Zod validation schemas
  */
 import { z } from 'zod';
-import * as Schemas from '../models/validation/ZodSchemas';
+import * as Schemas from '../models/validation/ZodSchemas.js';
 export type PlayerId = z.infer<typeof Schemas.BaseSchemas.playerId>;
 export type GameCode = z.infer<typeof Schemas.BaseSchemas.gameCode>;
 export type Timestamp = z.infer<typeof Schemas.BaseSchemas.timestamp>;
@@ -134,5 +134,5 @@ export declare function isPlayer(obj: any): obj is Player;
 export declare function isGameState(obj: any): obj is GameState;
 export declare function isValidAction(obj: any): obj is PlayerAction;
 export { Schemas };
-export { GameRoom } from '../models/GameRoom';
+export { GameRoom } from '../models/GameRoom.js';
 //# sourceMappingURL=generated.d.ts.map

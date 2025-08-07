@@ -3,7 +3,7 @@
  * Consolidated race definitions, compatibility, and racial abilities
  */
 
-import type { RacesConfig, RaceAttributes, RacialAbility, UsageLimit, AbilityTarget } from '../schemas/race.schema';
+import type { RacesConfig, RaceAttributes, RacialAbility, UsageLimit, AbilityTarget } from '../schemas/race.schema.js';
 
 /**
  * Available player races

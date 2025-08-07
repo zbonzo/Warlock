@@ -61,6 +61,18 @@ const GamePage: React.FC<GamePageProps> = ({
   const [phase, setPhase] = useState<'action' | 'results'>('action');
   const [readyClicked, setReadyClicked] = useState<boolean>(false);
 
+  // Debug logging for re-renders
+  useEffect(() => {
+    console.log('🔍 GamePage render:', {
+      meId: me?.['id'],
+      meName: me?.['name'],
+      hasSubmittedAction: me?.['hasSubmittedAction'],
+      submissionStatus: me?.['submissionStatus'],
+      phase,
+      trigger: 'GamePage render'
+    });
+  });
+
   // Custom hooks for state management
   const racialAbilities = useRacialAbilities();
   const modalState = useModalState();
@@ -227,6 +239,9 @@ const GamePage: React.FC<GamePageProps> = ({
               onClose={actionWizard.handleCloseWizard}
               initialStep={actionWizard.currentStep}
               onStepChange={actionWizard.handleStepChange}
+              submittedPlayers={characterUtils.alivePlayers
+                .filter(player => player?.submissionStatus?.hasSubmitted || (player as any)?.hasSubmittedAction)
+                .map(player => player['id'])}
             />
             
             {/* Results phase for desktop when not in wizard */}

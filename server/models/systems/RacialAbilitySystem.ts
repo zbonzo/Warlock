@@ -2,9 +2,9 @@
  * @fileoverview System for managing racial abilities and their usage
  * Handles validation, queuing, and processing of racial ability effects
  */
-const config = require('@config');
-const logger = require('@utils/logger');
-const messages = require('@messages');
+import config from '../../config/index.js';
+import logger from '../../utils/logger.js';
+import messages from '../../config/messages/index.js';
 
 // Type definitions for racial ability system
 
@@ -145,7 +145,8 @@ export class RacialAbilitySystem {
 
     // Handle target for player-specific abilities
     let finalTargetId = targetId;
-    if (targetId !== config.MONSTER_ID && targetId !== actorId) {
+    const monsterId = (config as any)['MONSTER_ID'] || '__monster__';
+    if (targetId !== monsterId && targetId !== actorId) {
       const targetPlayer = this.players.get(targetId);
 
       // Validate target player exists and is alive
@@ -158,16 +159,18 @@ export class RacialAbilitySystem {
         targetPlayer.hasStatusEffect &&
         targetPlayer.hasStatusEffect('invisible')
       ) {
-        finalTargetId = this.gameStateUtils.getRandomTarget({
+        const redirectTarget = this.gameStateUtils.getRandomTarget({
           actorId,
           excludeIds: [targetId],
           onlyPlayers: true,
         });
 
         // If no valid redirect target, fail
-        if (!finalTargetId) {
+        if (!redirectTarget) {
           return false;
         }
+        
+        finalTargetId = redirectTarget;
       }
     }
 
@@ -212,17 +215,14 @@ export class RacialAbilitySystem {
       player.racialCooldown--;
       if (player.racialCooldown === 0) {
         // Use private message from config
-        const racialReadyMessage = messages.getMessage(
-          'private',
-          'racialAbilityReady'
-        );
+        const racialReadyMessage = (messages as any)['getRacialMessage']?.('racialAbilityReady') || 'Your racial ability is ready!';
 
         const cooldownLog: LogEntry = {
           type: 'racial_cooldown',
           public: false,
           targetId: player.id,
           message: '',
-          privateMessage: racialReadyMessage,
+          privateMessage: racialReadyMessage || '',
           attackerMessage: '',
         };
         log.push(cooldownLog);
@@ -251,12 +251,15 @@ export class RacialAbilitySystem {
       const actualHeal = player.hp - oldHp;
 
       if (actualHeal > 0) {
-        log.push(
-          messages.getEvent('playerHealed', {
-            playerName: player.name,
-            amount: actualHeal,
-          })
-        );
+        const healLog: LogEntry = {
+          type: 'heal_over_time',
+          public: true,
+          targetId: player.id,
+          message: `${player.name} healed for ${actualHeal} HP`,
+          privateMessage: '',
+          attackerMessage: '',
+        };
+        log.push(healLog);
       }
     }
 

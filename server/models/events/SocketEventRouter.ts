@@ -5,13 +5,13 @@
  */
 
 import { Server as SocketIOServer, Socket } from 'socket.io';
-import { EventTypes } from './EventTypes';
-import { SocketValidationMiddleware } from '../../middleware/socketValidation';
-import { CommandProcessor } from '../commands/CommandProcessor';
-import { PlayerActionCommand } from '../commands/PlayerActionCommand';
-import { AbilityCommand } from '../commands/AbilityCommand';
+import { EventTypes } from './EventTypes.js';
+import { SocketValidationMiddleware } from '../../middleware/socketValidation.js';
+import { CommandProcessor } from '../commands/CommandProcessor.js';
+import { PlayerActionCommand } from '../commands/PlayerActionCommand.js';
+import { AbilityCommand } from '../commands/AbilityCommand.js';
 
-const logger = require('@utils/logger');
+import logger from '../../utils/logger.js';
 
 /**
  * Socket event configuration interface
@@ -39,14 +39,7 @@ interface RouterStats {
   mappedPlayers: number;
 }
 
-/**
- * Game room interface (temporary until full migration)
- */
-interface GameRoom {
-  getEventBus(): any;
-  getGameCode(): string;
-  getPlayerBySocketId(socketId: string): any;
-}
+import type { GameRoom } from '../GameRoom.js';
 
 /**
  * Event data interface for socket events
@@ -108,9 +101,9 @@ export class SocketEventRouter {
    */
   constructor(gameRoom: GameRoom, io: SocketIOServer) {
     this.gameRoom = gameRoom;
-    this.eventBus = gameRoom.getEventBus();
+    this.eventBus = gameRoom.eventBus;
     this.io = io;
-    this.gameCode = gameRoom.getGameCode();
+    this.gameCode = gameRoom.code;
     
     // Socket validation middleware
     this.validator = new SocketValidationMiddleware({
@@ -245,14 +238,14 @@ export class SocketEventRouter {
       // Action Events
       [EventTypes.ACTION.SUBMITTED, 'actionSubmitted'],
       [EventTypes.ACTION.EXECUTED, 'actionExecuted'],
-      [EventTypes.ACTION.FAILED, 'actionFailed'],
-      [EventTypes.ACTION.RACIAL_ABILITY, 'racialAbilityUsed'],
-      [EventTypes.ACTION.ADAPTABILITY, 'adaptabilityComplete'],
+      [EventTypes.ABILITY.FAILED, 'actionFailed'],
+      [EventTypes.ABILITY.USED, 'racialAbilityUsed'],
+      [EventTypes.ABILITY.EXECUTED, 'adaptabilityComplete'],
       
       // Combat Events
-      [EventTypes.COMBAT.DAMAGE_APPLIED, 'damageApplied'],
-      [EventTypes.COMBAT.HEALING_APPLIED, 'healingApplied'],
-      [EventTypes.COMBAT.EFFECT_APPLIED, 'effectApplied'],
+      [EventTypes.DAMAGE.APPLIED, 'damageApplied'],
+      [EventTypes.HEAL.APPLIED, 'healingApplied'],
+      [EventTypes.EFFECT.APPLIED, 'effectApplied'],
       
       // Error Events
       [EventTypes.GAME.ERROR, 'errorMessage'],
@@ -528,20 +521,18 @@ export class SocketEventRouter {
       // Create and submit command through command processor
       let command: PlayerActionCommand | AbilityCommand;
       if (actionType === 'ability') {
-        command = new AbilityCommand({
-          playerId: socket.id,
-          abilityName: targetId!, // For abilities, targetId contains ability name
-          gameCode: gameCode!,
-          timestamp: new Date().toISOString()
-        });
+        command = new AbilityCommand(
+          socket.id,
+          targetId! // For abilities, targetId contains ability name
+        );
       } else {
-        command = new PlayerActionCommand({
-          playerId: socket.id,
-          actionType: actionType!,
-          targetId,
-          gameCode: gameCode!,
-          timestamp: new Date().toISOString()
-        });
+        command = new PlayerActionCommand(
+          socket.id,
+          actionType!,
+          {
+            targetId
+          }
+        );
       }
 
       // Submit command for processing
@@ -585,7 +576,7 @@ export class SocketEventRouter {
       const { gameCode } = data;
       
       // Emit racial ability event through EventBus
-      this.eventBus.emit(EventTypes.ACTION.RACIAL_ABILITY, {
+      this.eventBus.emit(EventTypes.ABILITY.USED, {
         socketId: socket.id,
         playerId: socket.id,
         gameCode,
@@ -618,7 +609,7 @@ export class SocketEventRouter {
       const { gameCode, abilityName } = data;
       
       // Emit adaptability event through EventBus
-      this.eventBus.emit(EventTypes.ACTION.ADAPTABILITY, {
+      this.eventBus.emit(EventTypes.ABILITY.EXECUTED, {
         socketId: socket.id,
         playerId: socket.id,
         abilityName,

@@ -3,16 +3,19 @@
  * Outputs human-readable messages to console and structured JSON to a log file.
  */
 
-import fs from 'fs';
-import path from 'path';
+import * as fs from 'fs';
+import * as path from 'path';
+import { fileURLToPath } from 'url';
 
+// ES module __dirname equivalent
+const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Import server log messages
 import serverLogMessages from '../config/messages/logs.js';
 
 // STRETCH GOAL: Placeholder for an APM/Analytics client
-// import apmClient from './apm-client.js';
+// import apmClient from './apm-client';
 
 const LOG_FILE_PATH = path.join(__dirname, '..', 'logs', 'application.log');
 
@@ -260,4 +263,6 @@ const logger = {
 };
 
 export default logger;
-export type { LogContext, GameContext, LogLevel };
+
+// Type exports (for TypeScript only - not affecting runtime)
+// export type { LogContext, GameContext, LogLevel };

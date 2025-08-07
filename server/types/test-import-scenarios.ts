@@ -3,8 +3,8 @@
  * Ensures types can be imported from JavaScript files
  */
 
-import { Player, GameState, isPlayer } from './generated';
-import { PlayerSchemas } from '../models/validation/ZodSchemas';
+import { Player, GameState, isPlayer } from './generated.js';
+import { PlayerSchemas } from '../models/validation/ZodSchemas.js';
 import { z } from 'zod';
 
 // Test 1: Using Zod schema directly for validation

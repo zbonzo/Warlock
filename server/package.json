@@ -1,8 +1,9 @@
 {
   "name": "warlock-game-server",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "Server for the Warlock multiplayer game",
   "main": "index.js",
+  "type": "module",
   "scripts": {
     "start": "babel-node index.js --trace-warnings",
     "dev": "nodemon --exec babel-node index.js",
@@ -11,8 +12,8 @@
     "test:watch": "jest --selectProjects server --watch",
     "test:coverage": "jest --selectProjects server --coverage",
     "build:ts": "npx tsc --build",
-    "dev:ts": "nodemon --config nodemon.ts.json --exec \"npx ts-node index.ts\"",
-    "start:ts": "npx ts-node index.ts"
+    "dev:ts": "nodemon --config nodemon.ts.json --exec \"tsx index.ts\"",
+    "start:ts": "tsx index.ts"
   },
   "dependencies": {
     "@babel/core": "^7.23.0",

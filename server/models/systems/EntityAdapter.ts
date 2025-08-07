@@ -4,7 +4,8 @@
  */
 
 import logger from '../../utils/logger.js';
-import config from '@config';
+import config from '../../config/index.js';
+import NewStatusEffectManager from './NewStatusEffectManager.js';
 
 interface BaseEntity {
   id: string;
@@ -47,9 +48,6 @@ interface Monster extends BaseEntity {
 
 type Entity = Player | Monster;
 
-interface NewStatusEffectManager {
-  applyEffect(targetId: string, effectType: string, params: any, sourceId: string, sourceName: string, log: any[]): any;
-}
 
 /**
  * EntityAdapter provides a unified interface for entities (players/monsters)
@@ -170,8 +168,8 @@ class EntityAdapter {
     (entity as any).clearActionSubmission = function(this: Entity) {
       if (this.hasSubmittedAction) {
         this.hasSubmittedAction = false;
-        this.submittedAction = null;
-        this.actionSubmissionTime = null;
+        this.submittedAction = undefined;
+        this.actionSubmissionTime = undefined;
         this.actionValidationState = 'none';
       }
     };
@@ -219,8 +217,8 @@ class EntityAdapter {
 
     // Monster damage calculation
     (monster as any).calculateAttackDamage = function(this: Monster) {
-      return config.gameBalance.calculateMonsterDamage
-        ? config.gameBalance.calculateMonsterDamage(this.age!)
+      return config.calculateMonsterDamage
+        ? config.calculateMonsterDamage(this.age!)
         : (this.baseDmg || 20) * ((this.age || 1) + 1);
     };
   }

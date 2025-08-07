@@ -8,12 +8,9 @@ import config from '../../config/index.js';
 import logger from '../../utils/logger.js';
 import type { GameRoom } from '../GameRoom.js';
 import type { Player } from '../Player.js';
-import type { Monster } from '../Monster.js';
+import type { Monster } from '../../types/generated.js';
 import type { 
-  Ability, 
-  AbilityAction,
-  ActionResult,
-  ValidationResult 
+  Ability
 } from '../../types/generated.js';
 
 /**
@@ -125,20 +122,20 @@ export class ActionProcessor {
     targetId: string, 
     options: Partial<PendingAction> = {}
   ): boolean {
-    if (!this.gameRoom.gameState.started) return false;
+    if (!this.gameRoom.gameState.hasStarted()) return false;
 
-    const actor = this.gameRoom.gameState.players.get(actorId);
-    if (!actor || !actor.isAlive) return false;
+    const actor = this.gameRoom.gameState.getPlayersMap().get(actorId);
+    if (!actor || !(actor as any)['isAlive']) return false;
 
     // Prevent duplicate actions
-    if (actor.hasSubmittedAction) return false;
+    if ((actor as any).hasSubmittedAction) return false;
 
     // Check if ability exists and is unlocked
-    const ability = actor.getAbility(actionType);
+    const ability = (actor as any)['getAbility'](actionType);
     if (!ability) return false;
 
     // Check cooldown
-    if (actor.isAbilityOnCooldown(actionType)) {
+    if ((actor as any).isAbilityOnCooldown(actionType)) {
       return false;
     }
 
@@ -166,7 +163,7 @@ export class ActionProcessor {
     }
 
     // Submit the action
-    const submissionResult = actor.submitAction(actionType, finalTargetId, ability);
+    const submissionResult = (actor as any).submitAction(actionType, finalTargetId, ability);
     if (!submissionResult.success) {
       return false;
     }
@@ -177,7 +174,7 @@ export class ActionProcessor {
       actionType,
       targetId: finalTargetId,
       ability,
-      priority: ability.priority || 0,
+      priority: (ability as any)['priority'] || 0,
       ...options
     });
 
@@ -188,10 +185,10 @@ export class ActionProcessor {
    * Add a racial ability action for a player
    */
   addRacialAction(actorId: string, targetId: string): boolean {
-    if (!this.gameRoom.gameState.started) return false;
+    if (!this.gameRoom.gameState.hasStarted()) return false;
 
-    const actor = this.gameRoom.gameState.players.get(actorId);
-    if (!actor || !actor.isAlive || !actor.canUseRacialAbility()) return false;
+    const actor = this.gameRoom.gameState.getPlayersMap().get(actorId);
+    if (!actor || !(actor as any)['isAlive'] || !(actor as any).canUseRacialAbility()) return false;
 
     // Prevent duplicate racial actions
     if (this.pendingRacialActions.some(a => a.actorId === actorId)) {
@@ -199,10 +196,10 @@ export class ActionProcessor {
     }
 
     // Validate racial ability exists
-    if (!actor.racialAbility || !actor.racialAbility.name) return false;
+    if (!(actor as any)['racialAbility'] || !(actor as any)['racialAbility'].name) return false;
 
     // Validate target
-    const validationResult = this.validateRacialTarget(actorId, targetId, actor.racialAbility);
+    const validationResult = this.validateRacialTarget(actorId, targetId, (actor as any)['racialAbility']);
     if (!validationResult.success) {
       return false;
     }
@@ -210,7 +207,7 @@ export class ActionProcessor {
     this.pendingRacialActions.push({
       actorId,
       targetId: validationResult.targetId,
-      racialAbility: actor.racialAbility
+      racialAbility: (actor as any)['racialAbility']
     });
 
     return true;
@@ -224,8 +221,8 @@ export class ActionProcessor {
     const invalidActions: Array<{ action: PendingAction; reason: string }> = [];
 
     for (const action of this.pendingActions) {
-      const actor = this.gameRoom.gameState.players.get(action.actorId);
-      if (!actor || !actor.isAlive) {
+      const actor = this.gameRoom.gameState.getPlayersMap().get(action.actorId);
+      if (!actor || !(actor as any)['isAlive']) {
         invalidActions.push({ action, reason: 'Actor not alive' });
         continue;
       }
@@ -315,10 +312,10 @@ export class ActionProcessor {
       results.push(result);
 
       // Apply cooldown if action was successful
-      if (result.success && action.ability.cooldown > 0) {
-        const actor = this.gameRoom.gameState.players.get(action.actorId);
+      if (result.success && (action.ability as any)['cooldown'] > 0) {
+        const actor = this.gameRoom.gameState.getPlayersMap().get(action.actorId);
         if (actor) {
-          actor.applyCooldown(action.actionType, action.ability.cooldown);
+          (actor as any).applyCooldown(action.actionType, (action.ability as any)['cooldown']);
         }
       }
     }
@@ -331,15 +328,15 @@ export class ActionProcessor {
    */
   processRacialAbilities(log: string[]): void {
     for (const action of this.pendingRacialActions) {
-      const actor = this.gameRoom.gameState.players.get(action.actorId);
-      if (!actor || !actor.isAlive) {
+      const actor = this.gameRoom.gameState.getPlayersMap().get(action.actorId);
+      if (!actor || !(actor as any)['isAlive']) {
         continue;
       }
 
-      let target: Player | null = null;
+      let target: any = null;
       if (action.targetId !== config.MONSTER_ID) {
-        target = this.gameRoom.gameState.players.get(action.targetId) || null;
-        if (!target || !target.isAlive) {
+        target = this.gameRoom.gameState.getPlayersMap().get(action.targetId) || null;
+        if (!target || !(target as any)['isAlive']) {
           continue;
         }
       }
@@ -354,7 +351,7 @@ export class ActionProcessor {
       );
 
       if (success) {
-        actor.markRacialAbilityUsed();
+        (actor as any).markRacialAbilityUsed();
       }
     }
   }
@@ -379,32 +376,32 @@ export class ActionProcessor {
 
   // Private helper methods
   private isAreaOfEffectAbility(ability: Ability): boolean {
-    return ability.target === 'Multi' || ability.category === 'AOE';
+    return (ability as any)['target'] === 'Multi' || (ability as any)['category'] === 'AOE';
   }
 
   private isDamageAbility(ability: Ability): boolean {
-    return ability.category === 'Attack' || ability.effect === 'damage';
+    return (ability as any)['category'] === 'Attack' || (ability as any)['effect'] === 'damage';
   }
 
   private isHealingAbility(ability: Ability): boolean {
-    return ability.category === 'Heal' || ability.effect === 'heal';
+    return (ability as any)['category'] === 'Heal' || (ability as any)['effect'] === 'heal';
   }
 
   private validateSingleTarget(actorId: string, targetId: string, ability: Ability): TargetValidationResult {
     // Handle targeting logic
     if (targetId !== config.MONSTER_ID && targetId !== actorId) {
-      const targetPlayer = this.gameRoom.gameState.players.get(targetId);
-      if (targetPlayer && targetPlayer.hasStatusEffect('invisible')) {
+      const targetPlayer = this.gameRoom.gameState.getPlayersMap().get(targetId);
+      if (targetPlayer && (targetPlayer as any).hasStatusEffect('invisible')) {
         // Handle invisible target redirection
-        const potentialTargets = Array.from(this.gameRoom.gameState.players.values())
-          .filter(p => p.isAlive && p.id !== actorId && !p.hasStatusEffect('invisible'));
+        const potentialTargets = Array.from(this.gameRoom.gameState.getPlayersMap().values())
+          .filter(p => (p as any)['isAlive'] && (p as any).id !== actorId && !(p as any).hasStatusEffect('invisible'));
         
         if (potentialTargets.length === 0) {
           return { success: false, targetId: '', reason: 'No valid targets available' };
         }
         
         const redirectTarget = potentialTargets[Math.floor(Math.random() * potentialTargets.length)];
-        return { success: true, targetId: redirectTarget.id };
+        return { success: true, targetId: (redirectTarget as any).id };
       }
     }
 
@@ -418,8 +415,8 @@ export class ActionProcessor {
   ): TargetValidationResult {
     // Validate racial ability target
     if (targetId !== config.MONSTER_ID && targetId !== actorId) {
-      const target = this.gameRoom.gameState.players.get(targetId);
-      if (!target || !target.isAlive) {
+      const target = this.gameRoom.gameState.getPlayersMap().get(targetId);
+      if (!target || !(target as any)['isAlive']) {
         return { success: false, targetId: '', reason: 'Invalid target' };
       }
     }
@@ -428,8 +425,8 @@ export class ActionProcessor {
   }
 
   private validateActionAtExecution(action: PendingAction): ActionValidationResult {
-    const actor = this.gameRoom.gameState.players.get(action.actorId);
-    if (!actor || !actor.isAlive) {
+    const actor = this.gameRoom.gameState.getPlayersMap().get(action.actorId);
+    if (!actor || !(actor as any)['isAlive']) {
       return { isValid: false, reason: 'Actor not alive' };
     }
 
@@ -457,8 +454,8 @@ export class ActionProcessor {
   }
 
   private processIndividualAction(action: PendingAction, log: string[]): ActionProcessingResult {
-    const actor = this.gameRoom.gameState.players.get(action.actorId);
-    if (!actor || !actor.isAlive) {
+    const actor = this.gameRoom.gameState.getPlayersMap().get(action.actorId);
+    if (!actor || !(actor as any)['isAlive']) {
       return { success: false, reason: 'Actor not alive' };
     }
 
@@ -472,34 +469,34 @@ export class ActionProcessor {
     }
   }
 
-  private getValidMultiTargets(action: PendingAction): Array<Player | Monster> {
+  private getValidMultiTargets(action: PendingAction): Array<any> {
     // Get valid targets for multi-target abilities
     const ability = action.ability;
-    if (ability.target === 'Multi') {
+    if ((ability as any)['target'] === 'Multi') {
       return this.gameRoom.systems.combatSystem.getEnemyTargets(
-        this.gameRoom.gameState.players.get(action.actorId)
+        this.gameRoom.gameState.getPlayersMap().get(action.actorId)
       );
     }
     return [];
   }
 
-  private getSingleTarget(targetId: string): Player | Monster | null {
+  private getSingleTarget(targetId: string): any {
     if (targetId === config.MONSTER_ID) {
-      return this.gameRoom.gameState.monster;
+      return this.gameRoom.gameState.getMonster();
     }
-    return this.gameRoom.gameState.players.get(targetId) || null;
+    return this.gameRoom.gameState.getPlayersMap().get(targetId) || null;
   }
 
   private processSingleTargetAction(
     action: PendingAction, 
-    target: Player | Monster | null, 
+    target: any, 
     log: string[]
   ): ActionProcessingResult {
     if (!target) {
       return { success: false, reason: 'Target not found' };
     }
 
-    const actor = this.gameRoom.gameState.players.get(action.actorId);
+    const actor = this.gameRoom.gameState.getPlayersMap().get(action.actorId);
     if (!actor) {
       return { success: false, reason: 'Actor not found' };
     }
@@ -522,7 +519,7 @@ export class ActionProcessor {
       
       return { success, action, target };
     } catch (error) {
-      logger.error(`Error executing ability ${action.actionType}:`, error);
+      logger.error(`Error executing ability ${action.actionType}:`, { error, context: 'ActionProcessor' });
       return { 
         success: false, 
         reason: 'Execution error', 
@@ -533,14 +530,14 @@ export class ActionProcessor {
 
   private processMultiTargetAction(
     action: PendingAction, 
-    targets: Array<Player | Monster>, 
+    targets: Array<any>, 
     log: string[]
   ): ActionProcessingResult {
     // Process multi-target action implementation
     const results: ActionProcessingResult[] = [];
     for (const target of targets) {
       const result = this.processSingleTargetAction(
-        { ...action, targetId: target.id }, 
+        { ...action, targetId: (target as any).id }, 
         target, 
         log
       );

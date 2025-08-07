@@ -2,9 +2,9 @@
  * @fileoverview Enhanced Status Effect Manager with healing detection for warlock anti-detection
  * Manages all temporary effects on players with detection chances during healing over time
  */
-import config from '@config';
-import messages from '@messages';
-import logger from '@utils/logger';
+import config from '../../config/index.js';
+import messages from '../../config/messages/index.js';
+import logger from '../../utils/logger.js';
 
 interface Player {
   id: string;
@@ -93,7 +93,7 @@ class StatusEffectManager {
     if (!player || !player.isAlive) return false;
 
     // Get effect defaults from config
-    const effectDefaults = config.getStatusEffectDefaults(effectName);
+    const effectDefaults = config.getEffectDefaults(effectName);
     if (!effectDefaults) {
       logger.warn(`Unknown effect: ${effectName}`);
       return false;
@@ -333,7 +333,8 @@ class StatusEffectManager {
       }
 
       // Log poison damage
-      const poisonMessage = messages.getEvent('poisonDamage', {
+      const poisonTemplate = messages.getEvent('poisonDamage');
+      const poisonMessage = messages.formatMessage(poisonTemplate, {
         playerName: player.name,
         damage: actualDamage,
       });
@@ -466,7 +467,7 @@ class StatusEffectManager {
    * @private
    */
   private logEffectMessage(effectName: string, messageType: string, player: Player, log: any[], effectData: EffectData): void {
-    const message = config.statusEffects.getEffectMessage(effectName, messageType, {
+    const message = config.getEffectMessage(effectName, messageType, {
       playerName: player.name,
       damage: effectData.damage,
       armor: effectData.armor,
@@ -559,7 +560,7 @@ class StatusEffectManager {
         stunned: 0,
         vulnerable: 0,
         healingOverTime: 0,
-      } as Record<string, number>,
+      },
     };
 
     for (const player of this.players.values()) {
@@ -569,8 +570,8 @@ class StatusEffectManager {
         stats.totalEffects++;
         stats.effectsByType[effectName] = (stats.effectsByType[effectName] || 0) + 1;
 
-        if (stats.playersCounts.hasOwnProperty(effectName)) {
-          stats.playersCounts[effectName]++;
+        if (effectName in stats.playersCounts) {
+          stats.playersCounts[effectName as keyof typeof stats.playersCounts]++;
         }
       }
     }

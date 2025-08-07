@@ -21,7 +21,7 @@ import {
   EventType,
   EventPayload,
   DeepPartial
-} from './generated';
+} from './generated.js';
 
 // Test 1: Basic type usage
 const testPlayer: Player = {

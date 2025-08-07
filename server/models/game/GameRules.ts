@@ -5,9 +5,9 @@
  */
 
 import { z } from 'zod';
-import config from '@config';
-import logger from '@utils/logger';
-import type { GameCode, Player } from '../../types/generated';
+import config from '../../config/index.js';
+import logger from '../../utils/logger.js';
+import type { GameCode, Player } from '../../types/generated.js';
 
 // Validation result schema
 const ValidationResultSchema = z.object({

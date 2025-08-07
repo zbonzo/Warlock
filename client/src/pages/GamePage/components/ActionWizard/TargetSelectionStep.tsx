@@ -4,6 +4,8 @@
  */
 import React, { useEffect, useRef } from 'react';
 import { PlayerCard } from '../../../../components/common/PlayerCard';
+import RuneButton from '../../../../components/ui/RuneButton';
+import { getActionButtonText } from '../../../../utils/actionButtonText';
 import { Player, Monster, Ability, GameEvent } from '@/types/game';
 import './TargetSelectionStep.css';
 
@@ -21,7 +23,7 @@ interface TargetSelectionStepProps {
   me: Player;
   monster: Monster | null;
   alivePlayers: Player[];
-  selectedAbility: Ability;
+  selectedAbility: Ability | null;
   selectedTarget?: string | null;
   keenSensesActive: boolean;
   lastEvent: LastEventData;
@@ -31,6 +33,8 @@ interface TargetSelectionStepProps {
   onClose: () => void;
   isMobile: boolean;
   isSubmitting: boolean;
+  submitted?: boolean;
+  submittedPlayers?: string[];
 }
 
 /**
@@ -48,7 +52,7 @@ function drawMonsterBadge(canvas: HTMLCanvasElement, monster: Monster): void {
   ctx.clearRect(0, 0, size, size);
 
   // Create gradient background based on monster health
-  const healthPercent = monster.hp / monster.maxHp;
+  const healthPercent = monster['hp'] / monster['maxHp'];
   const gradient = ctx.createRadialGradient(cx, cy, 0, cx, cy, r);
 
   if (healthPercent > 0.7) {
@@ -112,7 +116,7 @@ const MonsterAvatar: React.FC<MonsterAvatarProps> = ({ monster }) => {
   useEffect(() => {
     if (!canvasRef.current) return;
     drawMonsterBadge(canvasRef.current, monster);
-  }, [monster.hp, monster.maxHp]);
+  }, [monster['hp'], monster['maxHp']]);
 
   return (
     <canvas
@@ -141,24 +145,51 @@ const TargetSelectionStep: React.FC<TargetSelectionStepProps> = ({
   onSubmit,
   onClose,
   isMobile,
-  isSubmitting
+  isSubmitting,
+  submitted = false,
+  submittedPlayers = []
 }) => {
-  const canTargetSelf = selectedAbility.target === 'Self' || 
-    (selectedAbility.target === 'Single' && selectedAbility.category === 'Heal');
+  // Handle case where selectedAbility might be null after submission
+  if (!selectedAbility && !submitted) {
+    return (
+      <div className={`target-selection-step ${isMobile ? 'mobile' : 'desktop'}`}>
+        <div className="step-content">
+          <p>No ability selected. Please go back and select an ability.</p>
+        </div>
+      </div>
+    );
+  }
+
+  const canTargetSelf = selectedAbility?.target === 'Self' || 
+    (selectedAbility?.target === 'Single' && selectedAbility?.category === 'Heal');
   
-  const canTargetOthers = selectedAbility.target === 'Single' || selectedAbility.target === 'Multi';
+  const canTargetOthers = selectedAbility?.target === 'Single' || selectedAbility?.target === 'Multi';
   
   const canTargetMonster = monster && !keenSensesActive && 
-    (selectedAbility.category === 'Attack' || selectedAbility.category === 'Special');
+    (selectedAbility?.category === 'Attack' || selectedAbility?.category === 'Special');
 
-  const targetablePlayers = alivePlayers.filter(player => {
-    if (canTargetSelf && player['id'] === me['id']) return true;
-    if (canTargetOthers && player['id'] !== me['id']) return true;
-    return false;
-  });
+  // Show all players, but determine if they can be targeted
+  const getPlayerTargetability = (player: Player): { canTarget: boolean; reason?: string } => {
+    const isSelf = player['id'] === me['id'];
+    
+    if (isSelf && canTargetSelf) return { canTarget: true };
+    if (!isSelf && canTargetOthers) return { canTarget: true };
+    
+    if (isSelf && !canTargetSelf) {
+      return { canTarget: false, reason: 'Cannot target yourself with this ability' };
+    }
+    if (!isSelf && !canTargetOthers) {
+      return { canTarget: false, reason: 'This ability cannot target other players' };
+    }
+    
+    return { canTarget: false };
+  };
 
   const handlePlayerSelect = (player: Player): void => {
-    onTargetSelect(player['id']);
+    const targetability = getPlayerTargetability(player);
+    if (targetability.canTarget) {
+      onTargetSelect(player['id']);
+    }
   };
 
   const handleMonsterSelect = (): void => {
@@ -184,31 +215,61 @@ const TargetSelectionStep: React.FC<TargetSelectionStepProps> = ({
       )}
       
       <div className="step-content">
-        <div className="selected-ability-info">
-          <h3>Using: {selectedAbility.name}</h3>
-          {selectedAbility.description && (
-            <p>{selectedAbility.description}</p>
-          )}
-        </div>
+        {selectedAbility && (
+          <div className="selected-ability-info">
+            <h3>Using: {selectedAbility.name}</h3>
+            {selectedAbility.description && (
+              <p>{selectedAbility.description}</p>
+            )}
+          </div>
+        )}
+
+        {submitted && !selectedAbility && (
+          <div className="selected-ability-info">
+            <h3>Action Submitted</h3>
+            <p>Waiting for other players to complete their turn...</p>
+          </div>
+        )}
 
         <div className="target-selection-area">
           {/* Player targets */}
-          {targetablePlayers.length > 0 && (
+          {alivePlayers.length > 0 && (
             <div className="player-targets">
               <h4>Players</h4>
               <div className="targets-grid">
-                {targetablePlayers.map(player => (
-                  <div
-                    key={player['id']}
-                    className={`target-option ${selectedTarget === player['id'] ? 'selected' : ''}`}
-                    onClick={() => handlePlayerSelect(player)}
-                  >
-                    <PlayerCard
-                      player={player}
-                      isCurrentPlayer={player['id'] === me['id']}
-                    />
-                  </div>
-                ))}
+                {alivePlayers.map(player => {
+                  const targetability = getPlayerTargetability(player);
+                  return (
+                    <div
+                      key={player['id']}
+                      className={`target-option ${selectedTarget === player['id'] ? 'selected' : ''} ${!targetability.canTarget ? 'non-targetable' : ''}`}
+                      onClick={() => handlePlayerSelect(player)}
+                      title={!targetability.canTarget ? targetability.reason : undefined}
+                    >
+                      <PlayerCard
+                        player={player}
+                        isCurrentPlayer={player['id'] === me['id']}
+                        size="medium"
+                        customStyles={{ 
+                          width: '150px', 
+                          height: '200px',
+                          opacity: !targetability.canTarget ? 0.5 : 1,
+                          filter: !targetability.canTarget ? 'grayscale(50%)' : 'none'
+                        }}
+                      />
+                      {submitted && submittedPlayers.includes(player['id']) && (
+                        <div className="submitted-indicator">
+                          <div className="check-mark">✓</div>
+                        </div>
+                      )}
+                      {!targetability.canTarget && (
+                        <div className="non-targetable-overlay">
+                          <div className="non-targetable-icon">🚫</div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             </div>
           )}
@@ -224,9 +285,9 @@ const TargetSelectionStep: React.FC<TargetSelectionStepProps> = ({
                 <div className="monster-card">
                   <MonsterAvatar monster={monster} />
                   <div className="monster-info">
-                    <h5>{monster.name || 'Monster'}</h5>
+                    <h5>{monster['name'] || 'Monster'}</h5>
                     <div className="monster-health">
-                      {monster.hp}/{monster.maxHp} HP
+                      {monster['hp']}/{monster['maxHp']} HP
                     </div>
                     {monster.nextDamage && monster.nextDamage > 0 && (
                       <div className="monster-damage">
@@ -241,24 +302,32 @@ const TargetSelectionStep: React.FC<TargetSelectionStepProps> = ({
         </div>
 
         <div className="step-actions">
-          {!isMobile && (
+          {!isMobile && !submitted && (
             <button className="back-button" onClick={onBack}>
               Back
             </button>
           )}
           
-          <button
-            className={`submit-button ${!selectedTarget ? 'disabled' : ''}`}
+          <RuneButton
             onClick={handleSubmit}
-            disabled={!selectedTarget || isSubmitting}
+            disabled={(!selectedTarget || isSubmitting) && !submitted}
+            variant={submitted ? 'secondary' : 'primary'}
           >
-            {isSubmitting ? 'Submitting...' : 'Submit Action'}
-          </button>
+            {isSubmitting ? 'Submitting...' : 
+             submitted ? (selectedAbility ? getActionButtonText(selectedAbility.type, true) : 'Action Locked') :
+             (selectedAbility ? getActionButtonText(selectedAbility.type, false) : 'Submit Action')}
+          </RuneButton>
         </div>
 
-        {!selectedTarget && (
+        {!selectedTarget && !submitted && (
           <div className="selection-hint">
             Please select a target for your ability.
+          </div>
+        )}
+
+        {submitted && (
+          <div className="waiting-message">
+            <p>Action submitted! Waiting for other players...</p>
           </div>
         )}
       </div>

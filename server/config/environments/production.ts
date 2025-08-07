@@ -2,7 +2,7 @@
  * @fileoverview Production environment configuration
  * Optimized settings for production deployment
  */
-import { EnvironmentConfig } from './types';
+import { EnvironmentConfig } from './types.js';
 
 const config: EnvironmentConfig = {
   // Logging

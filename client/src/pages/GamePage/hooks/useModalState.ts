@@ -67,17 +67,10 @@ export const useModalState = (): ModalState => {
    * Update battle results data (e.g., for trophy awards)
    */
   const updateBattleResultsData = useCallback((updatedData: Partial<BattleResultsData>) => {
-    console.log('🏆 updateBattleResultsData called with:', updatedData);
-    setBattleResultsData(prev => {
-      const newData = {
-        ...prev,
-        ...updatedData,
-      };
-      console.log('🏆 Previous battleResultsData:', prev);
-      console.log('🏆 New battleResultsData:', newData);
-      console.log('🏆 Trophy in new data:', newData.trophyAward);
-      return newData;
-    });
+    setBattleResultsData(prev => ({
+      ...prev,
+      ...updatedData,
+    }));
   }, []);
 
   /**

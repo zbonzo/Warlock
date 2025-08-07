@@ -333,3 +333,103 @@
   background: var(--color-background-secondary);
   border-color: var(--color-border);
 }
+
+/* Submitted indicator styles */
+.submitted-indicator {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  background: var(--color-success);
+  border: 3px solid var(--color-background);
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 10;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.check-mark {
+  color: white;
+  font-size: 16px;
+  font-weight: bold;
+  line-height: 1;
+}
+
+/* Target option wrapper for positioning */
+.target-option {
+  position: relative;
+  cursor: pointer;
+}
+
+.target-option.selected .unified-player-card {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px var(--color-primary-light);
+}
+
+/* Targets grid - ensure proper sizing for 150x200 cards */
+.targets-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  justify-content: center;
+}
+
+.targets-grid .target-option {
+  flex-shrink: 0;
+}
+
+/* Waiting message styles */
+.waiting-message {
+  text-align: center;
+  padding: 20px;
+  background: var(--color-info-light);
+  border: 1px solid var(--color-info);
+  border-radius: 8px;
+  margin-top: 16px;
+}
+
+.waiting-message p {
+  margin: 0;
+  color: var(--color-info-dark);
+  font-weight: 600;
+  font-size: 14px;
+}
+
+[data-theme="dark"] .waiting-message {
+  background: var(--color-info-dark);
+  border-color: var(--color-info);
+}
+
+[data-theme="dark"] .waiting-message p {
+  color: var(--color-info-light);
+}
+
+/* Non-targetable player styling */
+.target-option.non-targetable {
+  cursor: not-allowed;
+}
+
+.non-targetable-overlay {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  background: rgba(220, 53, 69, 0.9);
+  border: 2px solid white;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 10;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.non-targetable-icon {
+  color: white;
+  font-size: 16px;
+  line-height: 1;
+}

@@ -2,7 +2,7 @@
  * @fileoverview Test environment configuration
  * Settings optimized for automated testing
  */
-import { EnvironmentConfig } from './types';
+import { EnvironmentConfig } from './types.js';
 
 const config: EnvironmentConfig = {
   // Logging

@@ -52,7 +52,9 @@ export const EventTypes = {
     STAT_CHANGED: 'player.stat.changed',
     STATUS_UPDATED: 'player.status.updated',
     RACE_SELECTED: 'player.race.selected',
-    CLASS_SELECTED: 'player.class.selected'
+    CLASS_SELECTED: 'player.class.selected',
+    NAME_CHECK: 'player.name.check',
+    CLASS_ABILITIES_REQUEST: 'player.class.abilities.request'
   },
 
   // Action Events
@@ -153,8 +155,7 @@ export const EventTypes = {
   }
 } as const;
 
-// Extract all event type values for type safety
-type EventTypeValues = typeof EventTypes[keyof typeof EventTypes][keyof typeof EventTypes[keyof typeof EventTypes]];
+// Extract all event type values for type safety - definitions are below with the schemas
 
 /**
  * Zod Schemas for Event Payloads
@@ -188,6 +189,13 @@ const PlayerJoinedEventSchema = BaseEventDataSchema.extend({
   playerId: z.string(),
   playerName: z.string(),
   gameCode: z.string()
+});
+
+const PlayerLeftEventSchema = BaseEventDataSchema.extend({
+  playerId: z.string(),
+  playerName: z.string(),
+  gameCode: z.string(),
+  reason: z.enum(['disconnect', 'quit', 'kicked']).optional()
 });
 
 const PlayerDiedEventSchema = BaseEventDataSchema.extend({
@@ -298,6 +306,7 @@ export type GameEvent =
   | { type: typeof EventTypes.GAME.STARTED; payload: z.infer<typeof GameStartedEventSchema> }
   | { type: typeof EventTypes.GAME.ENDED; payload: z.infer<typeof GameEndedEventSchema> }
   | { type: typeof EventTypes.PLAYER.JOINED; payload: z.infer<typeof PlayerJoinedEventSchema> }
+  | { type: typeof EventTypes.PLAYER.LEFT; payload: z.infer<typeof PlayerLeftEventSchema> }
   | { type: typeof EventTypes.PLAYER.DIED; payload: z.infer<typeof PlayerDiedEventSchema> }
   | { type: typeof EventTypes.ACTION.SUBMITTED; payload: z.infer<typeof ActionSubmittedEventSchema> }
   | { type: typeof EventTypes.ACTION.VALIDATED; payload: z.infer<typeof ActionSubmittedEventSchema> }
@@ -348,6 +357,7 @@ export const EventSchemas = {
   [EventTypes.GAME.STARTED]: GameStartedEventSchema,
   [EventTypes.GAME.ENDED]: GameEndedEventSchema,
   [EventTypes.PLAYER.JOINED]: PlayerJoinedEventSchema,
+  [EventTypes.PLAYER.LEFT]: PlayerLeftEventSchema,
   [EventTypes.PLAYER.DIED]: PlayerDiedEventSchema,
   [EventTypes.ACTION.SUBMITTED]: ActionSubmittedEventSchema,
   [EventTypes.DAMAGE.CALCULATED]: DamageCalculatedEventSchema,

@@ -65,3 +65,7 @@ build/Release
 # Simulation Reports
 /simulation/web-interface/reports
 
+
+
+#Ignore vscode AI rules
+.github/copilot-instructions.md

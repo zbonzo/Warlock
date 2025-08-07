@@ -203,14 +203,14 @@ const attackPatterns: AttackPatterns = {
  * Get monster configuration for a given level
  */
 function getMonsterForLevel(level: number): MonsterType {
-  return monsterTypes[level] || monsterTypes[7];  // Cap at level 7
+  return monsterTypes[level] || monsterTypes[7]!;  // Cap at level 7
 }
 
 /**
  * Get attack pattern details
  */
 function getAttackPattern(patternName: string): AttackPattern {
-  return attackPatterns[patternName] || attackPatterns.single;
+  return attackPatterns[patternName] || attackPatterns['single']!;
 }
 
 export default {

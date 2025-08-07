@@ -3,8 +3,10 @@ import { z } from 'zod';
 // Schema for message templates (all strings with potential placeholders)
 const MessageTemplateSchema = z.string().min(1);
 
-// Schema for nested message categories
-const MessageCategorySchema = z.record(z.string(), MessageTemplateSchema);
+// Schema for nested message categories - allows recursive nesting
+const MessageCategorySchema: z.ZodType<Record<string, any>> = z.lazy(() => 
+  z.record(z.string(), z.union([MessageTemplateSchema, MessageCategorySchema]))
+);
 
 // Schema for ability messages (nested structure)
 const AbilityMessagesSchema = z.object({

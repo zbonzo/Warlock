@@ -5,6 +5,7 @@
 import React, { useState, useEffect } from 'react';
 import { useConfig } from '../../../../contexts/ConfigContext';
 import RacialAbilityCard from '../../../../components/game/RacialAbilityCard/RacialAbilityCard';
+import RuneButton from '../../../../components/ui/RuneButton';
 import { Player, Ability, GameEvent } from '@/types/game';
 import './AbilitySelectionStep.css';
 
@@ -37,6 +38,7 @@ interface AbilitySelectionStepProps {
   onAbilitySelect: (ability: Ability) => void;
   onRacialAbilityUse: (abilityType: string) => void;
   onClose: () => void;
+  onContinue?: () => void;
   isMobile: boolean;
 }
 
@@ -199,6 +201,7 @@ const AbilitySelectionStep: React.FC<AbilitySelectionStepProps> = ({
   onAbilitySelect,
   onRacialAbilityUse,
   onClose,
+  onContinue,
   isMobile
 }) => {
   const config = useConfig();
@@ -300,7 +303,18 @@ const AbilitySelectionStep: React.FC<AbilitySelectionStepProps> = ({
           </div>
         </div>
 
-        {!isMobile && (
+        {/* Continue Button */}
+        <div className="continue-section">
+          <RuneButton
+            onClick={onContinue}
+            disabled={!selectedAbility}
+            variant="primary"
+          >
+            Continue
+          </RuneButton>
+        </div>
+
+        {!isMobile && !selectedAbility && (
           <div className="step-instructions">
             <p>Select an ability to continue to target selection.</p>
           </div>

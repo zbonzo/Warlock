@@ -5,9 +5,9 @@
  */
 
 import { z } from 'zod';
-import logger from '@utils/logger';
-import messages from '@messages';
-import type { Player, StatusEffect } from '../../types/generated';
+import logger from '../../utils/logger.js';
+import messages from '../../config/messages/index.js';
+import type { Player, StatusEffect } from '../../types/generated.js';
 
 // Effect schemas
 const EffectDataSchema = z.object({
@@ -211,24 +211,24 @@ export class EffectManager {
       const stacks = Math.max(1, effect.stacks);
       
       // Apply modifiers based on effect type and metadata
-      if (effect.metadata.damageModifier) {
-        modifiers.damage = (modifiers.damage ?? 1) * (1 + effect.metadata.damageModifier * stacks);
+      if (effect.metadata['damageModifier']) {
+        modifiers.damage = (modifiers.damage ?? 1) * (1 + effect.metadata['damageModifier'] * stacks);
       }
       
-      if (effect.metadata.healingModifier) {
-        modifiers.healing = (modifiers.healing ?? 1) * (1 + effect.metadata.healingModifier * stacks);
+      if (effect.metadata['healingModifier']) {
+        modifiers.healing = (modifiers.healing ?? 1) * (1 + effect.metadata['healingModifier'] * stacks);
       }
       
-      if (effect.metadata.armorBonus) {
-        modifiers.armor = (modifiers.armor ?? 0) + effect.metadata.armorBonus * stacks;
+      if (effect.metadata['armorBonus']) {
+        modifiers.armor = (modifiers.armor ?? 0) + effect.metadata['armorBonus'] * stacks;
       }
       
-      if (effect.metadata.resistance) {
-        modifiers.resistance = Math.min((modifiers.resistance ?? 0) + effect.metadata.resistance * stacks, 0.8);
+      if (effect.metadata['resistance']) {
+        modifiers.resistance = Math.min((modifiers.resistance ?? 0) + effect.metadata['resistance'] * stacks, 0.8);
       }
       
-      if (effect.metadata.vulnerability) {
-        modifiers.vulnerability = (modifiers.vulnerability ?? 0) + effect.metadata.vulnerability * stacks;
+      if (effect.metadata['vulnerability']) {
+        modifiers.vulnerability = (modifiers.vulnerability ?? 0) + effect.metadata['vulnerability'] * stacks;
       }
     }
 

@@ -641,6 +641,7 @@ export function applyComebackBonus(
 export function calculateStats(race: string, className: string): PlayerStats | null {
   // Import the character config (you might need to adjust the path)
   const characterConfig = require('./character');
+  // TODO: Convert this require to import when character config is fully converted
 
   // Check if the combination is valid
   if (!characterConfig.isValidCombination(race, className)) {

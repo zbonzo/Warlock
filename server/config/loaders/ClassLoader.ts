@@ -1,5 +1,6 @@
-import fs from 'fs';
-import path from 'path';
+import * as fs from 'fs';
+import * as path from 'path';
+import { fileURLToPath } from 'url';
 import { 
   ClassesConfig, 
   ClassAttributes,
@@ -7,9 +8,13 @@ import {
   ClassCategory,
   validateClassesConfig,
   safeValidateClassesConfig 
-} from '../schemas/class.schema';
-import { abilityLoader } from './AbilityLoader';
-import { Ability } from '../schemas/ability.schema';
+} from '../schemas/class.schema.js';
+import { abilityLoader } from './AbilityLoader.js';
+import { Ability } from '../schemas/ability.schema.js';
+
+// ES module __dirname equivalent
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 export interface ClassWithAbilities {
   name: string;
