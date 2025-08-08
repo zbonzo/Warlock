@@ -38,7 +38,7 @@ describe('GameController (TypeScript)', () => {
 
     // Setup mock messages
     mockMessages = {
-      formatMessage: jest.fn().mockImplementation((template, vars) => 
+      formatMessage: jest.fn().mockImplementation((template, vars) =>
         template.replace(/{(\w+)}/g, (match, key) => vars[key] || match)
       ),
       getEvent: jest.fn().mockReturnValue('Game {event} message template')
@@ -150,12 +150,12 @@ describe('GameController (TypeScript)', () => {
 
     // Mock external dependencies
     jest.doMock('../../../server/services/gameService.js', () => ({ default: mockGameService }));
-    jest.doMock('../../../server/config/index.js', () => ({ default: mockConfig }));  
+    jest.doMock('../../../server/config/index.js', () => ({ default: mockConfig }));
     jest.doMock('../../../server/messages/index.js', () => ({ default: mockMessages }));
     jest.doMock('../../../server/utils/logger.js', () => ({ default: mockLogger }));
     jest.doMock('../../../server/middleware/validation.js', () => mockValidation);
     jest.doMock('../../../server/shared/gameChecks.js', () => mockGameChecks);
-    jest.doMock('../../../server/models/GameRoom.js', () => ({ 
+    jest.doMock('../../../server/models/GameRoom.js', () => ({
       GameRoom: jest.fn().mockImplementation(() => mockGameRoom)
     }));
 
@@ -207,7 +207,7 @@ describe('GameController (TypeScript)', () => {
 
     it('should fail with invalid player name', async () => {
       mockValidation.validatePlayerNameSocket.mockReturnValue(false);
-      
+
       const request: CreateGameRequest = {
         playerName: 'Invalid@Name',
         maxPlayers: 6

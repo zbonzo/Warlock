@@ -30,7 +30,7 @@ describe('GamePage Hooks Index', () => {
     it('should have hook naming convention', () => {
       const hookNames = [
         'useActionState',
-        'useRacialAbilities', 
+        'useRacialAbilities',
         'useModalState',
         'useMobileState',
         'useGameEvents',
@@ -48,19 +48,19 @@ describe('GamePage Hooks Index', () => {
   describe('module structure', () => {
     it('should provide clean barrel export interface', () => {
       const exportedKeys = Object.keys(GamePageHooks);
-      
+
       // All exports should be hooks (start with 'use')
       exportedKeys.forEach(key => {
         expect(key).toMatch(/^use[A-Z]/);
       });
-      
+
       expect(exportedKeys.length).toBe(7);
     });
 
     it('should not introduce naming conflicts', () => {
       const exportedKeys = Object.keys(GamePageHooks);
       const uniqueKeys = new Set(exportedKeys);
-      
+
       expect(uniqueKeys.size).toBe(exportedKeys.length);
     });
   });
@@ -71,7 +71,7 @@ describe('GamePage Hooks Index', () => {
       const stateHooks = ['useActionState', 'useModalState', 'useMobileState'];
       const utilityHooks = ['useCharacterUtils', 'useGameEvents'];
       const featureHooks = ['useRacialAbilities', 'useActionWizard'];
-      
+
       [...stateHooks, ...utilityHooks, ...featureHooks].forEach(hookName => {
         expect(GamePageHooks[hookName as keyof typeof GamePageHooks]).toBeDefined();
       });
@@ -91,7 +91,7 @@ describe('GamePage Hooks Index', () => {
       const expectedHooks = [
         'useActionState',
         'useRacialAbilities',
-        'useModalState', 
+        'useModalState',
         'useMobileState',
         'useGameEvents',
         'useCharacterUtils',
@@ -105,13 +105,13 @@ describe('GamePage Hooks Index', () => {
 
     it('should not export unexpected items', () => {
       const exportedKeys = Object.keys(GamePageHooks);
-      
+
       // Should only export the expected hooks
       expect(exportedKeys).toEqual([
         'useActionState',
         'useRacialAbilities',
         'useModalState',
-        'useMobileState', 
+        'useMobileState',
         'useGameEvents',
         'useCharacterUtils',
         'useActionWizard'

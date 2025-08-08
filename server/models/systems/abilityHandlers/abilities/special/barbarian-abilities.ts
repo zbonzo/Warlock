@@ -3,6 +3,7 @@
  * Handles barbarian-specific abilities like rage, fury, and bloodlust
  */
 
+import { secureId } from '../../../../../utils/secureRandom.js';
 import type { Player as BasePlayer, Monster, Ability as BaseAbility } from '../../../../../types/generated.js';
 import type {
   AbilityHandler,
@@ -53,7 +54,7 @@ export const handleBloodFrenzy: AbilityHandler = (
 
   if (healthRatio > healthThreshold) {
     log.push({
-      id: `blood-frenzy-not-low-health-${Date.now()}`,
+      id: secureId('blood-frenzy-not-low-health'),
       timestamp: Date.now(),
       type: 'action',
       source: actor['id'],
@@ -70,7 +71,7 @@ export const handleBloodFrenzy: AbilityHandler = (
 
   // Apply blood frenzy buff
   const statusResult = systems.statusEffectManager.applyStatusEffect(actor, {
-    id: `blood-frenzy-${Date.now()}`,
+    id: secureId('blood-frenzy'),
     name: 'blood_frenzy',
     type: 'buff',
     duration,
@@ -83,7 +84,7 @@ export const handleBloodFrenzy: AbilityHandler = (
 
   if (statusResult.success) {
     log.push({
-      id: `blood-frenzy-success-${Date.now()}`,
+      id: secureId('blood-frenzy-success'),
       timestamp: Date.now(),
       type: 'action',
       source: actor['id'],
@@ -127,7 +128,7 @@ export const handleUnstoppableRage: AbilityHandler = (
 
   // Apply unstoppable rage buff
   const statusResult = systems.statusEffectManager.applyStatusEffect(actor, {
-    id: `unstoppable-rage-${Date.now()}`,
+    id: secureId('unstoppable-rage'),
     name: 'unstoppable_rage',
     type: 'buff',
     duration,
@@ -141,7 +142,7 @@ export const handleUnstoppableRage: AbilityHandler = (
 
   if (statusResult.success) {
     log.push({
-      id: `unstoppable-rage-success-${Date.now()}`,
+      id: secureId('unstoppable-rage-success'),
       timestamp: Date.now(),
       type: 'action',
       source: actor['id'],
@@ -184,7 +185,7 @@ export const handleRelentlessFury: AbilityHandler = (
   const duration = params['duration'] || 6;
 
   const statusResult = systems.statusEffectManager.applyStatusEffect(actor, {
-    id: `relentless-fury-${Date.now()}`,
+    id: secureId('relentless-fury'),
     name: 'relentless_fury',
     type: 'buff',
     duration,
@@ -197,7 +198,7 @@ export const handleRelentlessFury: AbilityHandler = (
 
   if (statusResult.success) {
     log.push({
-      id: `relentless-fury-success-${Date.now()}`,
+      id: secureId('relentless-fury-success'),
       timestamp: Date.now(),
       type: 'action',
       source: actor['id'],
@@ -236,7 +237,7 @@ export const handleThirstyBlade: AbilityHandler = (
   const duration = params['duration'] || 5;
 
   const statusResult = systems.statusEffectManager.applyStatusEffect(actor, {
-    id: `thirsty-blade-${Date.now()}`,
+    id: secureId('thirsty-blade'),
     name: 'thirsty_blade',
     type: 'buff',
     duration,
@@ -249,7 +250,7 @@ export const handleThirstyBlade: AbilityHandler = (
 
   if (statusResult.success) {
     log.push({
-      id: `thirsty-blade-success-${Date.now()}`,
+      id: secureId('thirsty-blade-success'),
       timestamp: Date.now(),
       type: 'action',
       source: actor['id'],
@@ -290,11 +291,11 @@ export const handleSweepingStrike: AbilityHandler = (
 
   // Get all valid targets (all living enemies)
   const targets = [];
-  
+
   // Add all living players except the actor
   for (const player of game.players.values()) {
-    if ((player as any)['id'] !== (actor as any)['id'] && 
-        (player as any).isAlive !== false && 
+    if ((player as any)['id'] !== (actor as any)['id'] &&
+        (player as any).isAlive !== false &&
         (player as any).hp > 0) {
       // Skip invisible players
       if (!((player as any).statusEffects && (player as any).statusEffects.invisible)) {
@@ -304,8 +305,8 @@ export const handleSweepingStrike: AbilityHandler = (
   }
 
   // Add monster if alive
-  if (game.monster && 
-      (game.monster as any).isAlive && 
+  if (game.monster &&
+      (game.monster as any).isAlive &&
       (game.monster as any).hp > 0) {
     targets.push(game.monster);
   }
@@ -316,7 +317,7 @@ export const handleSweepingStrike: AbilityHandler = (
 
   const baseDamage = ability['damage'] || 0;
   let coordinationBonus = 0;
-  
+
   if (coordinationInfo && coordinationInfo.isActive) {
     coordinationBonus = Math.floor(baseDamage * Number(coordinationInfo.bonusMultiplier || 1));
   }
@@ -327,7 +328,7 @@ export const handleSweepingStrike: AbilityHandler = (
   // Attack each target
   for (const sweepTarget of targets) {
     const finalDamage = baseDamage + coordinationBonus;
-    
+
     const damageResult = systems.combatSystem?.applyDamage?.(sweepTarget, finalDamage, {
       source: actor['id'],
       type: 'physical',
@@ -339,9 +340,9 @@ export const handleSweepingStrike: AbilityHandler = (
       hitTargets++;
 
       const targetName = (sweepTarget as Player)['name'] || (sweepTarget as Monster)['name'];
-      
+
       log.push({
-        id: `sweeping-strike-hit-${Date.now()}-${sweepTarget['id']}`,
+        id: secureId(`sweeping-strike-hit-${sweepTarget['id']}`),
         timestamp: Date.now(),
         type: 'damage',
         source: actor['id'],
@@ -358,7 +359,7 @@ export const handleSweepingStrike: AbilityHandler = (
 
   if (hitTargets > 0) {
     log.push({
-      id: `sweeping-strike-summary-${Date.now()}`,
+      id: secureId('sweeping-strike-summary'),
       timestamp: Date.now(),
       type: 'action',
       source: actor['id'],

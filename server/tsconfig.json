@@ -9,7 +9,6 @@
     "declarationMap": true,
     "composite": true,
     "outDir": "./dist",
-    "rootDir": "./",
     "strict": true,
     "noImplicitAny": true,
     "strictNullChecks": true,

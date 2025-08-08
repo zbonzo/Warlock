@@ -82,7 +82,7 @@ class WarlockSystem {
    */
   processDetectionPenalties(): void {
     const expiredDetections: string[] = [];
-    
+
     // Process detection penalties
     for (const [playerId, duration] of this.detectionPenalties) {
       if (duration <= 1) {
@@ -91,7 +91,7 @@ class WarlockSystem {
         this.detectionPenalties.set(playerId, duration - 1);
       }
     }
-    
+
     // Remove expired detection penalties
     expiredDetections.forEach(playerId => {
       this.detectionPenalties.delete(playerId);
@@ -107,7 +107,7 @@ class WarlockSystem {
         this.corruptionCooldowns.set(playerId, cooldown - 1);
       }
     }
-    
+
     // Remove expired cooldowns
     expiredCooldowns.forEach(playerId => {
       this.corruptionCooldowns.delete(playerId);
@@ -123,14 +123,14 @@ class WarlockSystem {
    */
   markWarlockDetected(playerId: string): void {
     this.detectedWarlocks.add(playerId);
-    
+
     // Apply detection penalty
     const penaltyDuration = config.gameBalance.warlock.corruption.detectionPenaltyDuration;
     this.detectionPenalties.set(playerId, penaltyDuration);
-    
-    logger.info('WarlockDetected', { 
+
+    logger.info('WarlockDetected', {
       playerId,
-      penaltyDuration 
+      penaltyDuration
     });
   }
 
@@ -154,7 +154,7 @@ class WarlockSystem {
   assignInitialWarlocks(preferredPlayerIds: string[] = []): WarlockAssignmentResult[] {
     const alivePlayers = this.gameStateUtils.getAlivePlayers();
     const targetWarlocks = calculateWarlockCount(alivePlayers.length);
-    
+
     if (targetWarlocks === 0) {
       logger.info('NoWarlocksAssigned', { playerCount: alivePlayers.length });
       return [];
@@ -162,11 +162,11 @@ class WarlockSystem {
 
     const assignedWarlocks: WarlockAssignmentResult[] = [];
     const availablePlayers = [...alivePlayers];
-    
+
     // First, try to assign preferred players
     for (const preferredId of preferredPlayerIds) {
       if (assignedWarlocks.length >= targetWarlocks) break;
-      
+
       const preferredPlayer = availablePlayers.find(p => p.id === preferredId);
       if (preferredPlayer) {
         preferredPlayer.isWarlock = true;
@@ -175,30 +175,31 @@ class WarlockSystem {
           playerName: preferredPlayer.name,
           wasPreferred: true
         });
-        
+
         // Remove from available pool
         const index = availablePlayers.indexOf(preferredPlayer);
         availablePlayers.splice(index, 1);
       }
     }
 
-    // Fill remaining slots randomly
+    // Fill remaining slots randomly using secure randomness
+    const { secureRandomInt } = require('../../utils/secureRandom.js');
     while (assignedWarlocks.length < targetWarlocks && availablePlayers.length > 0) {
-      const randomIndex = Math.floor(Math.random() * availablePlayers.length);
+      const randomIndex = secureRandomInt(0, availablePlayers.length);
       const selectedPlayer = availablePlayers[randomIndex];
-      
+
       selectedPlayer.isWarlock = true;
       assignedWarlocks.push({
         playerId: selectedPlayer.id,
         playerName: selectedPlayer.name,
         wasPreferred: false
       });
-      
+
       availablePlayers.splice(randomIndex, 1);
     }
 
     this.numWarlocks = assignedWarlocks.length;
-    
+
     logger.info('WarlocksAssigned', {
       totalWarlocks: assignedWarlocks.length,
       preferredAssigned: assignedWarlocks.filter(w => w.wasPreferred).length,
@@ -237,8 +238,8 @@ class WarlockSystem {
 
     // Check corruption cooldown
     if (this.corruptionCooldowns.has(warlockId)) {
-      return { 
-        success: false, 
+      return {
+        success: false,
         reason: 'Warlock is on corruption cooldown',
         cooldownApplied: true
       };
@@ -278,8 +279,9 @@ class WarlockSystem {
     // Apply resistance to corruption chance
     const finalChance = baseChance * (1 - Math.min(totalResistance, 0.9)); // Cap at 90% resistance
 
-    // Roll for corruption
-    const roll = Math.random();
+    // Roll for corruption using secure randomness
+    const { secureRandomFloat } = require('../../utils/secureRandom.js');
+    const roll = secureRandomFloat();
     const success = roll < finalChance;
 
     logger.debug('CorruptionAttempt', {
@@ -314,7 +316,7 @@ class WarlockSystem {
         totalCorruptions: this.totalCorruptionsThisGame
       });
 
-      return { 
+      return {
         success: true,
         resistanceBonus: totalResistance,
         cooldownApplied: true
@@ -324,8 +326,8 @@ class WarlockSystem {
       const cooldownDuration = config.gameBalance.warlock.conversion.corruptionCooldown;
       this.corruptionCooldowns.set(warlockId, cooldownDuration);
 
-      return { 
-        success: false, 
+      return {
+        success: false,
         reason: 'Corruption resisted',
         resistanceBonus: totalResistance,
         cooldownApplied: true

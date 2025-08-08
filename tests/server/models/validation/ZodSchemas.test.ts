@@ -155,10 +155,10 @@ describe('ZodSchemas', () => {
     describe('actionResult', () => {
       it('should validate action results', () => {
         expect(BaseSchemas.actionResult.safeParse({ success: true }).success).toBe(true);
-        expect(BaseSchemas.actionResult.safeParse({ 
-          success: false, 
-          reason: 'Invalid action', 
-          data: { code: 'INVALID' } 
+        expect(BaseSchemas.actionResult.safeParse({
+          success: false,
+          reason: 'Invalid action',
+          data: { code: 'INVALID' }
         }).success).toBe(true);
       });
     });

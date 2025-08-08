@@ -7,10 +7,11 @@
 import config from '../config/index.js';
 // Messages are now accessed through the config system
 import logger from '../utils/logger.js';
+import { getCurrentTimestamp } from '../utils/timestamp.js';
 import { Player } from '../models/Player.js';
 import { BaseController } from './PlayerController.js';
-import type { 
-  Monster, 
+import type {
+  Monster,
   ActionResult,
   Schemas
 } from '../types/generated.js';
@@ -62,12 +63,12 @@ export interface ThreatConfig {
  */
 export class MonsterController extends BaseController<Monster, any, Partial<Monster>> {
   protected model: Monster;
-  
+
   private readonly players: Map<string, Player>;
   private readonly statusEffectManager: any;
   private readonly racialAbilitySystem: any;
   private readonly gameStateUtils: any;
-  
+
   // Threat system properties
   private readonly threatTable: Map<string, ThreatTableEntry> = new Map();
   private readonly lastTargets: string[] = [];
@@ -75,7 +76,7 @@ export class MonsterController extends BaseController<Monster, any, Partial<Mons
 
   constructor(dependencies: MonsterControllerDependencies) {
     super();
-    
+
     const {
       monster,
       players,
@@ -117,15 +118,15 @@ export class MonsterController extends BaseController<Monster, any, Partial<Mons
     if (!this.monster.hp) {
       this.monster.hp = config.gameBalance?.monster?.baseHp || 100;
     }
-    
+
     if (!this.monster.maxHp) {
       this.monster.maxHp = config.gameBalance?.monster?.baseHp || 100;
     }
-    
+
     if (!this.monster.attackPower) {
       this.monster.attackPower = config.gameBalance?.monster?.baseDamage || 20;
     }
-    
+
     if (!this.monster.level) {
       this.monster.level = 1;
     }
@@ -145,13 +146,13 @@ export class MonsterController extends BaseController<Monster, any, Partial<Mons
     try {
       // Update threat table with current player states
       this.updateThreatTable(alivePlayers);
-      
+
       // Determine monster action type
       const actionType = this.determineActionType();
-      
+
       // Execute the action
       let action: MonsterAction;
-      
+
       switch (actionType) {
         case 'attack':
           action = await this.executeAttack(alivePlayers, log);
@@ -171,7 +172,7 @@ export class MonsterController extends BaseController<Monster, any, Partial<Mons
 
       // Update last targets history
       this.updateTargetHistory(action.targets);
-      
+
       logger.debug('Monster action processed:', {
         monsterId: this.monster.id,
         actionType: action.type,
@@ -194,12 +195,12 @@ export class MonsterController extends BaseController<Monster, any, Partial<Mons
     const currentThreat = this.threatTable.get(playerId) || {
       playerId,
       threatValue: 0,
-      lastUpdated: Date.now()
+      lastUpdated: getCurrentTimestamp()
     };
 
     currentThreat.threatValue += threatAmount;
-    currentThreat.lastUpdated = Date.now();
-    
+    currentThreat.lastUpdated = getCurrentTimestamp();
+
     this.threatTable.set(playerId, currentThreat);
 
     logger.debug('Threat added:', {
@@ -240,9 +241,9 @@ export class MonsterController extends BaseController<Monster, any, Partial<Mons
   takeDamage(damage: number, sourcePlayerId?: string): number {
     const finalDamage = Math.max(1, Math.floor(damage));
     const oldHp = this.monster.hp;
-    
+
     this.monster.hp = Math.max(0, this.monster.hp - finalDamage);
-    
+
     if (this.monster.hp <= 0) {
       this.monster.isAlive = false;
     }
@@ -304,7 +305,7 @@ export class MonsterController extends BaseController<Monster, any, Partial<Mons
         this.threatTable.set(player.id, {
           playerId: player.id,
           threatValue: 1, // Minimum threat for alive players
-          lastUpdated: Date.now()
+          lastUpdated: getCurrentTimestamp()
         });
       }
     }
@@ -314,8 +315,9 @@ export class MonsterController extends BaseController<Monster, any, Partial<Mons
    * Determine what type of action the monster should take
    */
   private determineActionType(): 'attack' | 'special' | 'heal' | 'enrage' {
+    const { secureRandomFloat } = require('../utils/secureRandom.js');
     const healthPercent = this.monster.hp / this.monster.maxHp;
-    const random = Math.random();
+    const random = secureRandomFloat();
 
     // Low health - more likely to heal or enrage
     if (healthPercent < 0.3) {
@@ -354,8 +356,8 @@ export class MonsterController extends BaseController<Monster, any, Partial<Mons
       type: 'monster_attack',
       message: config.formatMessage(
         'The {monsterName} attacks {playerName} for {damage} damage!',
-        { 
-          playerName: target.name, 
+        {
+          playerName: target.name,
           damage: finalDamage,
           monsterName: this.monster.name || 'Monster'
         }
@@ -421,7 +423,7 @@ export class MonsterController extends BaseController<Monster, any, Partial<Mons
       type: 'monster_heal',
       message: config.formatMessage(
         'monsterHeals',
-        { 
+        {
           healAmount: actualHealing,
           monsterName: this.monster.name || 'Monster'
         }
@@ -493,20 +495,22 @@ export class MonsterController extends BaseController<Monster, any, Partial<Mons
       .filter(entry => alivePlayers.some(p => p.id === entry.playerId));
 
     if (threatEntries.length === 0) {
-      // Fallback to random selection
-      return alivePlayers[Math.floor(Math.random() * alivePlayers.length)] || null;
+      // Fallback to random selection using secure randomness
+      const { secureRandomChoice } = require('../utils/secureRandom.js');
+      return secureRandomChoice(alivePlayers) || null;
     }
 
-    // Calculate selection weights based on threat
+    // Calculate selection weights based on threat using secure randomness
+    const { secureRandomFloat } = require('../utils/secureRandom.js');
     const weights = threatEntries.map(entry => {
       const baseThreat = Math.max(1, entry.threatValue);
       const randomness = 0.2; // Base randomness for threat calculations
-      return baseThreat * (1 + (Math.random() - 0.5) * randomness);
+      return baseThreat * (1 + (secureRandomFloat() - 0.5) * randomness);
     });
 
     // Select based on weighted random
     const totalWeight = weights.reduce((sum, weight) => sum + weight, 0);
-    let random = Math.random() * totalWeight;
+    let random = secureRandomFloat() * totalWeight;
 
     for (let i = 0; i < threatEntries.length; i++) {
       random -= weights[i] || 0;
@@ -556,7 +560,7 @@ export class MonsterController extends BaseController<Monster, any, Partial<Mons
    */
   private updateTargetHistory(targets: string[]): void {
     this.lastTargets.push(...targets);
-    
+
     // Keep only recent history
     const maxHistory = 3; // Maximum target history to track
     if (this.lastTargets.length > maxHistory) {

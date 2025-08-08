@@ -39,19 +39,19 @@ export class GameStateUpdater {
     try {
       // Update monster state based on damage taken
       await this.updateMonsterState(gameRoom, summary);
-      
+
       // Update player states and cooldowns
       await this.updatePlayerStates(gameRoom, summary);
-      
+
       // Check for game ending conditions
       await this.checkGameEndingConditions(gameRoom, summary);
-      
+
       // Update game statistics
       await this.updateGameStatistics(gameRoom, summary);
-      
+
       // Clean up temporary round data
       await this.cleanupRoundData(gameRoom);
-      
+
     } catch (error) {
       logger.error('Error updating game state:', error as any);
     }
@@ -67,7 +67,7 @@ export class GameStateUpdater {
     // Apply damage to monster
     if (summary.totalDamageToMonster > 0) {
       monster.hp = Math.max(0, monster.hp - summary.totalDamageToMonster);
-      
+
       // Update monster threat levels based on player actions
       if (this.monsterController?.updateThreatLevels) {
         await this.monsterController.updateThreatLevels(summary);
@@ -78,7 +78,7 @@ export class GameStateUpdater {
     if (monster.hp <= 0) {
       monster.isAlive = false;
       gameRoom.gamePhase.phase = 'victory';
-      
+
       // Award victory bonuses
       await this.awardVictoryBonuses(gameRoom, summary);
     }
@@ -86,7 +86,7 @@ export class GameStateUpdater {
     // Update monster age/level if still alive
     if (monster.isAlive) {
       monster.age = (monster.age || 0) + 1;
-      
+
       // Scale monster stats based on age
       await this.scaleMonsterStats(monster);
     }
@@ -100,13 +100,13 @@ export class GameStateUpdater {
       // Reset player's submitted action state
       player.hasSubmittedAction = false;
       player.currentAction = null;
-      
+
       // Update cooldowns
       await this.updatePlayerCooldowns(player);
-      
+
       // Apply any end-of-round player effects
       await this.applyPlayerEndOfRoundEffects(player, summary);
-      
+
       // Reset temporary round-specific data
       this.resetPlayerRoundData(player);
     }
@@ -223,7 +223,7 @@ export class GameStateUpdater {
    */
   private async awardVictoryBonuses(gameRoom: any, summary: RoundSummary): Promise<void> {
     const bonusMultiplier = this.calculateVictoryBonus(gameRoom, summary);
-    
+
     for (const [playerId, player] of this.players.entries()) {
       if (!player.isAlive) continue;
 
@@ -276,7 +276,7 @@ export class GameStateUpdater {
 
     // Increase monster power over time
     const scaleFactor = 1 + (monster.age * 0.05); // 5% increase per round
-    
+
     monster.maxHp = Math.floor((monster.baseMaxHp || monster.maxHp) * scaleFactor);
     monster.attackPower = Math.floor((monster.baseAttackPower || monster.attackPower || 10) * scaleFactor);
     monster.defensePower = Math.floor((monster.baseDefensePower || monster.defensePower || 5) * scaleFactor);
@@ -316,7 +316,7 @@ export class GameStateUpdater {
         const regenAmount = Math.floor(player.maxHp * 0.03);
         player.hp = Math.min(player.maxHp, player.hp + regenAmount);
         break;
-        
+
       case 'orc':
         // Orc rage building
         if (summary.totalDamageToPlayers > 0) {
@@ -335,7 +335,7 @@ export class GameStateUpdater {
         const healAmount = Math.floor(player.maxHp * 0.02);
         player.hp = Math.min(player.maxHp, player.hp + healAmount);
         break;
-        
+
       case 'barbarian':
         // Barbarian battle fury
         if (summary.abilitiesUsed > 0) {

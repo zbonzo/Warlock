@@ -11,7 +11,7 @@ import logger from '../../utils/logger.js';
 /**
  * Validation types enumeration
  */
-export type ValidationType = 
+export type ValidationType =
   | 'action_submission'
   | 'game_state'
   | 'player_readiness'
@@ -75,7 +75,7 @@ export class ValidationCommand extends PlayerActionCommand {
       canUndo: false,
       priority: 100 // High priority for validation
     });
-    
+
     this.validationType = validationType;
     this.actionData = options.actionData || {};
     this.validationRules = options.validationRules || [];
@@ -119,7 +119,7 @@ export class ValidationCommand extends PlayerActionCommand {
    */
   protected async _executeAction(gameContext: GameContext): Promise<CommandResult> {
     const { game } = gameContext;
-    
+
     try {
       switch (this.validationType) {
         case 'action_submission':
@@ -191,7 +191,7 @@ export class ValidationCommand extends PlayerActionCommand {
     this._checkRule('player_alive', player?.isAlive === true, 'Dead players cannot submit actions');
     this._checkRule('game_started', game.started === true, 'Game must be started to submit actions');
     this._checkRule('action_phase', game.phase === 'action', 'Actions can only be submitted during action phase');
-    
+
     // Check if player already submitted an action
     if (game.gamePhase) {
       const hasSubmitted = game.gamePhase.hasPlayerSubmittedAction(this.playerId);
@@ -261,7 +261,7 @@ export class ValidationCommand extends PlayerActionCommand {
       // Check if player has selected race and class
       this._checkRule('race_selected', !!player.race, 'Player must select a race');
       this._checkRule('class_selected', !!player.class, 'Player must select a class');
-      
+
       // Validate race/class combination
       if (player.race && player.class) {
         const isValidCombo = this._isValidRaceClassCombo(player.race, player.class);
@@ -417,10 +417,10 @@ export class ValidationCommand extends PlayerActionCommand {
    * @private
    */
   private _calculateValidationScore(): void {
-    const totalRules = this.validationResults.passed.length + 
-                      this.validationResults.failed.length + 
+    const totalRules = this.validationResults.passed.length +
+                      this.validationResults.failed.length +
                       this.validationResults.warnings.length;
-    
+
     if (totalRules === 0) {
       this.validationResults.score = 100;
       return;
@@ -447,7 +447,7 @@ export class ValidationCommand extends PlayerActionCommand {
   private _isValidationSuccessful(): boolean {
     const hasCriticalFailures = this.validationResults.failed.length > 0;
     const hasWarnings = this.validationResults.warnings.length > 0;
-    
+
     return !hasCriticalFailures && (!this.strict || !hasWarnings);
   }
 
@@ -493,7 +493,7 @@ export class ValidationCommand extends PlayerActionCommand {
     const prohibitedCombos: Array<{ race: string; class: string }> = [
       // Add any prohibited combinations here
     ];
-    
+
     return !prohibitedCombos.some(combo => combo.race === race && combo.class === cls);
   }
 

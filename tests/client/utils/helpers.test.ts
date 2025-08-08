@@ -24,7 +24,7 @@ jest.mock('@client/pages/JoinGamePage/constants', () => ({
 jest.mock('@client/pages/CharacterSelectPage/constants', () => ({
   CLASS_TO_RACES: {
     Warrior: ['Artisan', 'Rockhewn', 'Orc'],
-    Wizard: ['Lich', 'Crestfallen', 'Kinfolk'], 
+    Wizard: ['Lich', 'Crestfallen', 'Kinfolk'],
     Assassin: ['Artisan', 'Lich'],
     Priest: ['Artisan', 'Rockhewn']
   }
@@ -40,7 +40,7 @@ describe('helpers utility functions', () => {
     it('should generate different codes on subsequent calls', () => {
       const code1 = generateRandomCode();
       const code2 = generateRandomCode();
-      
+
       // While theoretically they could be the same, probability is very low
       // We'll test multiple times to be more confident
       const codes = Array.from({ length: 10 }, () => generateRandomCode());
@@ -66,7 +66,7 @@ describe('helpers utility functions', () => {
       jest.doMock('@client/pages/JoinGamePage/constants', () => ({
         RANDOM_NAMES: []
       }));
-      
+
       const name = generateRandomName();
       expect(name).toBe('');
     });
@@ -219,21 +219,21 @@ describe('helpers utility functions', () => {
     it('should return true for mobile screen widths', () => {
       global.window = { innerWidth: 600 } as any;
       global.navigator = { userAgent: 'Desktop' } as any;
-      
+
       expect(isMobileDevice()).toBe(true);
     });
 
     it('should return false for desktop screen widths with desktop user agent', () => {
       global.window = { innerWidth: 1024 } as any;
       global.navigator = { userAgent: 'Desktop' } as any;
-      
+
       expect(isMobileDevice()).toBe(false);
     });
 
     it('should return true for mobile user agents regardless of screen size', () => {
       global.window = { innerWidth: 1024 } as any;
       global.navigator = { userAgent: 'iPhone' } as any;
-      
+
       expect(isMobileDevice()).toBe(true);
     });
 
@@ -252,7 +252,7 @@ describe('helpers utility functions', () => {
       mobileUserAgents.forEach(userAgent => {
         global.window = { innerWidth: 1024 } as any;
         global.navigator = { userAgent } as any;
-        
+
         expect(isMobileDevice()).toBe(true);
       });
     });
@@ -296,25 +296,25 @@ describe('helpers utility functions', () => {
 
     it('should resolve after specified time', async () => {
       const promise = delay(1000);
-      
+
       // Fast-forward time
       jest.advanceTimersByTime(1000);
-      
+
       await expect(promise).resolves.toBeUndefined();
     });
 
     it('should not resolve before specified time', async () => {
       const promise = delay(1000);
       let resolved = false;
-      
+
       promise.then(() => { resolved = true; });
-      
+
       // Advance by less than the delay
       jest.advanceTimersByTime(500);
-      
+
       // Allow promises to resolve
       await new Promise(resolve => setImmediate(resolve));
-      
+
       expect(resolved).toBe(false);
     });
 
@@ -328,13 +328,13 @@ describe('helpers utility functions', () => {
     it('should parse valid JSON', () => {
       const obj = { name: 'test', value: 123 };
       const json = JSON.stringify(obj);
-      
+
       expect(safeJsonParse(json)).toEqual(obj);
     });
 
     it('should return fallback for invalid JSON', () => {
       const fallback = { error: true };
-      
+
       expect(safeJsonParse('invalid json', fallback)).toEqual(fallback);
     });
 
@@ -352,18 +352,18 @@ describe('helpers utility functions', () => {
 
     it('should log errors for invalid JSON', () => {
       const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
-      
+
       safeJsonParse('invalid json');
-      
+
       expect(consoleSpy).toHaveBeenCalledWith('JSON Parse Error:', expect.any(Error));
-      
+
       consoleSpy.mockRestore();
     });
 
     it('should use typed fallback', () => {
       const fallback: string[] = ['default'];
       const result = safeJsonParse<string[]>('invalid', fallback);
-      
+
       expect(result).toEqual(fallback);
       expect(Array.isArray(result)).toBe(true);
     });

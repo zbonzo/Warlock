@@ -54,12 +54,12 @@ describe('playerCardUtils utility functions', () => {
       it('should fallback to medium size when context config is missing', () => {
         // This tests the fallback behavior in the function
         const contexts = ['nonexistent', 'invalid', ''] as any[];
-        
+
         contexts.forEach(context => {
           // Should fallback to lobby, then to medium if something goes wrong
           const desktopSize = getPlayerCardSize(false, context);
           const mobileSize = getPlayerCardSize(true, context);
-          
+
           expect(['small', 'medium', 'large']).toContain(desktopSize);
           expect(['small', 'medium', 'large']).toContain(mobileSize);
         });
@@ -81,11 +81,11 @@ describe('playerCardUtils utility functions', () => {
     describe('type safety', () => {
       it('should only accept valid CardContext values', () => {
         const validContexts: Array<'lobby' | 'game' | 'target'> = ['lobby', 'game', 'target'];
-        
+
         validContexts.forEach(context => {
           const desktopSize = getPlayerCardSize(false, context);
           const mobileSize = getPlayerCardSize(true, context);
-          
+
           expect(['small', 'medium', 'large']).toContain(desktopSize);
           expect(['small', 'medium', 'large']).toContain(mobileSize);
         });
@@ -165,7 +165,7 @@ describe('playerCardUtils utility functions', () => {
 
       it('should return valid CSS gap values', () => {
         const validGaps = ['12px', '16px', '20px'];
-        
+
         const testCases = [
           [false, false],
           [false, true],
@@ -184,12 +184,12 @@ describe('playerCardUtils utility functions', () => {
   describe('integration tests', () => {
     it('should provide consistent sizing logic across different contexts', () => {
       const contexts: Array<'lobby' | 'game' | 'target'> = ['lobby', 'game', 'target'];
-      
+
       contexts.forEach(context => {
         const desktopSize = getPlayerCardSize(false, context);
         const mobileSize = getPlayerCardSize(true, context);
         const gap = getPlayerGridGap(false);
-        
+
         // All functions should return valid values
         expect(['small', 'medium', 'large']).toContain(desktopSize);
         expect(['small', 'medium', 'large']).toContain(mobileSize);
@@ -210,16 +210,16 @@ describe('playerCardUtils utility functions', () => {
       scenarios.forEach(({ context, mobile, verySmall }) => {
         const cardSize = getPlayerCardSize(mobile, context);
         const gridGap = getPlayerGridGap(mobile, verySmall);
-        
+
         // Verify responsive behavior makes sense
         if (context === 'target') {
           expect(cardSize).toBe('small');
         }
-        
+
         if (verySmall) {
           expect(gridGap).toBe('12px');
         }
-        
+
         if (mobile && context === 'game') {
           expect(cardSize).toBe('small');
         }

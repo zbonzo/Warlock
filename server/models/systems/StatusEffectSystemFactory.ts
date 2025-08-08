@@ -58,9 +58,9 @@ class StatusEffectSystemFactory {
    * Create a new status effect system for a game room
    */
   static createSystem(
-    players: Map<string, Player>, 
-    monster: Monster | null = null, 
-    warlockSystem: WarlockSystem | null = null, 
+    players: Map<string, Player>,
+    monster: Monster | null = null,
+    warlockSystem: WarlockSystem | null = null,
     migrateExisting: boolean = false
   ): StatusEffectSystem {
     logger.info('Creating new status effect system');
@@ -95,11 +95,11 @@ class StatusEffectSystemFactory {
       entities,
       // Convenience methods
       processEffects: (log) => manager.processTimedEffects(log),
-      applyEffect: (targetId, type, params, sourceId, sourceName, log) => 
+      applyEffect: (targetId, type, params, sourceId, sourceName, log) =>
         manager.applyEffect(targetId, type, params, sourceId, sourceName, log),
       hasEffect: (entityId, type) => manager.hasEffect(entityId, type),
       removeEffect: (entityId, effectId, log) => manager.removeEffect(entityId, effectId, log),
-      calculateModified: (entityId, type, baseValue) => 
+      calculateModified: (entityId, type, baseValue) =>
         manager.calculateModifiedValue(entityId, type, baseValue),
       getStats: () => manager.getEffectStatistics(),
     };
@@ -143,7 +143,7 @@ class StatusEffectSystemFactory {
       const originalGetEffectiveArmor = entity.getEffectiveArmor;
       entity.getEffectiveArmor = function() {
         let baseArmor = 0;
-        
+
         // Ensure all required properties exist before calling original method
         if (this.armor === undefined) {
           this.armor = 0;
@@ -157,7 +157,7 @@ class StatusEffectSystemFactory {
         if (this.stoneArmorIntact === undefined) {
           this.stoneArmorIntact = this.race === 'Rockhewn';
         }
-        
+
         // Get original armor if method exists
         if (originalGetEffectiveArmor) {
           try {
@@ -171,7 +171,7 @@ class StatusEffectSystemFactory {
           }
         } else {
           baseArmor = this.armor || 0;
-          
+
           // Add stone armor for Rockhewn
           if (this.race === 'Rockhewn' && this.stoneArmorIntact) {
             baseArmor += this.stoneArmorValue || 0;
@@ -186,7 +186,7 @@ class StatusEffectSystemFactory {
       const originalModifyDamage = entity.modifyDamage;
       entity.modifyDamage = function(baseDamage: number) {
         let modifiedDamage = baseDamage;
-        
+
         // Apply original modifications if they exist
         if (originalModifyDamage) {
           modifiedDamage = originalModifyDamage.call(this, baseDamage);
@@ -277,14 +277,14 @@ class StatusEffectSystemFactory {
           logger.warn('No player ID available for poison stacking test');
           return { poisonEffects: [], log };
         }
-        
+
         // Apply multiple poison effects
         manager.applyEffect(playerId, 'poison', { damage: 5, turns: 3 }, 'test1', 'Test Source 1', log);
         manager.applyEffect(playerId, 'poison', { damage: 3, turns: 2 }, 'test2', 'Test Source 2', log);
-        
+
         const poisonEffects = manager.getEffectsByType(playerId, 'poison');
         logger.info(`Poison stacking test: ${poisonEffects.length} poison effects applied`);
-        
+
         return { poisonEffects, log };
       },
 
@@ -296,16 +296,16 @@ class StatusEffectSystemFactory {
           logger.warn('No player ID available for percentage calculations test');
           return { damageDealt: 100, damageTaken: 100, log };
         }
-        
+
         // Apply multiple percentage effects
         manager.applyEffect(playerId, 'vulnerable', { damageIncrease: 25, turns: 3 }, 'test', 'Test', log);
         manager.applyEffect(playerId, 'weakened', { damageReduction: 0.2, turns: 2 }, 'test', 'Test', log);
-        
+
         const damageDealt = manager.calculateModifiedValue(playerId, 'damageDealt', 100);
         const damageTaken = manager.calculateModifiedValue(playerId, 'damageTaken', 100);
-        
+
         logger.info(`Percentage test: base 100 -> dealt: ${damageDealt}, taken: ${damageTaken}`);
-        
+
         return { damageDealt, damageTaken, log };
       },
 
@@ -317,10 +317,10 @@ class StatusEffectSystemFactory {
             manager.applyRacialPassives(entityId, entity.race, log);
           }
         }
-        
+
         const stats = manager.getEffectStatistics();
         logger.info(`Racial passives test: ${stats.totalEffects} total effects applied`);
-        
+
         return { stats, log };
       }
     };

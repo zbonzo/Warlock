@@ -34,7 +34,7 @@ const messages = {
   entangleRootsResisted: '{targetName} breaks free from the grasping roots!',
   entangleRootsNoEffect:
     "{playerName}'s {abilityName} finds no targets to entangle.",
-  
+
   // Multi-target stun
   multiStunCast: '{playerName} casts {abilityName}!',
   multiStunNoTargets:

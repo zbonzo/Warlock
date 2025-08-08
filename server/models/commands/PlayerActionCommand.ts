@@ -6,6 +6,7 @@
  */
 import { EventTypes } from '../events/EventTypes.js';
 import { z } from 'zod';
+import { secureId } from '../../utils/secureRandom.js';
 
 import { lenientValidator } from '../validation/ValidationMiddleware.js';
 import logger from '../../utils/logger.js';
@@ -92,7 +93,7 @@ export class PlayerActionCommand {
   public result: CommandResult | null = null;
   public error: string | null = null;
   public undoData: Record<string, unknown> | null = null;
-  
+
   // Validation state
   public validationErrors: string[] = [];
   public validationWarnings: string[] = [];
@@ -112,7 +113,7 @@ export class PlayerActionCommand {
     if (!actionType || typeof actionType !== 'string') {
       throw new Error('Action type must be a non-empty string');
     }
-    
+
     this.id = this._generateCommandId();
     this.playerId = playerId;
     this.actionType = actionType;
@@ -132,7 +133,7 @@ export class PlayerActionCommand {
   async validate(gameContext: GameContext): Promise<boolean> {
     this.validationErrors = [];
     this.validationWarnings = [];
-    
+
     try {
       // Zod validation for basic command structure
       try {
@@ -142,7 +143,7 @@ export class PlayerActionCommand {
           targetId: this.targetId,
           timestamp: this.timestamp
         });
-        
+
         if (!validationResult.success) {
           this.validationErrors.push(...validationResult.errors);
         }
@@ -155,12 +156,12 @@ export class PlayerActionCommand {
         });
         // Fall back to basic validation only
       }
-      
+
       // Basic validation (keep as fallback)
       if (!this.playerId) {
         this.validationErrors.push('Player ID is required');
       }
-      
+
       if (!this.actionType) {
         this.validationErrors.push('Action type is required');
       }
@@ -305,7 +306,7 @@ export class PlayerActionCommand {
     try {
       await this._undoAction(gameContext);
       this.status = 'cancelled';
-      
+
       // Emit action cancelled event
       await gameContext.game.emitEvent(EventTypes.ACTION.CANCELLED, {
         playerId: this.playerId,
@@ -332,7 +333,7 @@ export class PlayerActionCommand {
     if (this.status === 'executing') {
       throw new Error('Cannot cancel command that is currently executing');
     }
-    
+
     this.status = 'cancelled';
   }
 
@@ -413,7 +414,7 @@ export class PlayerActionCommand {
    * @private
    */
   private _generateCommandId(): string {
-    return `cmd_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    return secureId('cmd');
   }
 
   // Static helper methods
@@ -426,7 +427,7 @@ export class PlayerActionCommand {
    */
   static fromActionData(playerId: string, actionData: Record<string, unknown>): PlayerActionCommand {
     const { actionType, targetId, abilityId, metadata } = actionData;
-    
+
     // This will be expanded as we add specific command types
     return new PlayerActionCommand(playerId, actionType as string, {
       targetId: targetId as string,

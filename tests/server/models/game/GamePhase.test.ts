@@ -3,13 +3,13 @@
  * Tests game phase transitions and action submission tracking
  */
 
-import { 
-  GamePhase, 
-  GamePhaseType, 
-  PendingAction, 
-  PendingRacialAction, 
-  DisconnectEvent, 
-  PassiveActivation 
+import {
+  GamePhase,
+  GamePhaseType,
+  PendingAction,
+  PendingRacialAction,
+  DisconnectEvent,
+  PassiveActivation
 } from '@server/models/game/GamePhase';
 
 // Mock logger to avoid console output during tests
@@ -62,7 +62,7 @@ describe('GamePhase', () => {
       it('should reject invalid phases', () => {
         const invalidPhase = 'invalid' as GamePhaseType;
         gamePhase.setPhase(invalidPhase);
-        
+
         // Should remain in lobby phase
         expect(gamePhase.getCurrentPhase()).toBe('lobby');
       });
@@ -127,7 +127,7 @@ describe('GamePhase', () => {
     describe('addPendingAction', () => {
       it('should add valid pending action', () => {
         gamePhase.addPendingAction(mockAction);
-        
+
         const actions = gamePhase.getPendingActions();
         expect(actions).toHaveLength(1);
         expect(actions[0]).toEqual(mockAction);
@@ -165,7 +165,7 @@ describe('GamePhase', () => {
     describe('addPendingRacialAction', () => {
       it('should add valid pending racial action', () => {
         gamePhase.addPendingRacialAction(mockRacialAction);
-        
+
         const actions = gamePhase.getPendingRacialActions();
         expect(actions).toHaveLength(1);
         expect(actions[0]).toEqual(mockRacialAction);
@@ -188,13 +188,13 @@ describe('GamePhase', () => {
     describe('getPendingActions', () => {
       it('should return copy of pending actions', () => {
         gamePhase.addPendingAction(mockAction);
-        
+
         const actions1 = gamePhase.getPendingActions();
         const actions2 = gamePhase.getPendingActions();
 
         expect(actions1).toEqual(actions2);
         expect(actions1).not.toBe(actions2); // Different arrays
-        
+
         // Modifying returned array shouldn't affect internal state
         actions1.push({ ...mockAction, actorId: 'player2' });
         expect(gamePhase.getPendingActions()).toHaveLength(1);
@@ -241,7 +241,7 @@ describe('GamePhase', () => {
 
       it('should handle non-existent player gracefully', () => {
         gamePhase.addPendingAction(mockAction);
-        
+
         expect(() => {
           gamePhase.removePendingActionsForPlayer('nonexistent');
         }).not.toThrow();
@@ -274,7 +274,7 @@ describe('GamePhase', () => {
       it('should update both actions and racial actions', () => {
         const action = { ...mockAction, actorId: 'oldId', targetId: 'oldTarget' };
         const racial = { ...mockRacialAction, actorId: 'oldId', targetId: 'oldTarget' };
-        
+
         gamePhase.addPendingAction(action);
         gamePhase.addPendingRacialAction(racial);
 
@@ -296,7 +296,7 @@ describe('GamePhase', () => {
     describe('setPlayerReady', () => {
       it('should mark player as ready', () => {
         gamePhase.setPlayerReady('player1');
-        
+
         expect(gamePhase.isPlayerReady('player1')).toBe(true);
         expect(gamePhase.getReadyCount()).toBe(1);
       });
@@ -304,7 +304,7 @@ describe('GamePhase', () => {
       it('should handle duplicate ready calls', () => {
         gamePhase.setPlayerReady('player1');
         gamePhase.setPlayerReady('player1');
-        
+
         expect(gamePhase.getReadyCount()).toBe(1);
       });
 
@@ -366,7 +366,7 @@ describe('GamePhase', () => {
 
     it('should add pending disconnect event', () => {
       gamePhase.addPendingDisconnectEvent(mockDisconnectEvent);
-      
+
       // Events are cleared when retrieved
       const events = gamePhase.getPendingDisconnectEvents();
       expect(events).toHaveLength(1);
@@ -375,7 +375,7 @@ describe('GamePhase', () => {
 
     it('should clear events after retrieval', () => {
       gamePhase.addPendingDisconnectEvent(mockDisconnectEvent);
-      
+
       const events1 = gamePhase.getPendingDisconnectEvents();
       const events2 = gamePhase.getPendingDisconnectEvents();
 
@@ -407,7 +407,7 @@ describe('GamePhase', () => {
 
     it('should add pending passive activation', () => {
       gamePhase.addPendingPassiveActivation(mockPassiveActivation);
-      
+
       const activations = gamePhase.getPendingPassiveActivations();
       expect(activations).toHaveLength(1);
       expect(activations[0]).toEqual(mockPassiveActivation);
@@ -416,7 +416,7 @@ describe('GamePhase', () => {
     it('should add multiple passive activations', () => {
       const activation1 = { ...mockPassiveActivation, playerId: 'player1' };
       const activation2 = { ...mockPassiveActivation, playerId: 'player2', type: 'poison' };
-      
+
       gamePhase.addPendingPassiveActivations([activation1, activation2]);
 
       const activations = gamePhase.getPendingPassiveActivations();
@@ -427,7 +427,7 @@ describe('GamePhase', () => {
 
     it('should clear activations after retrieval', () => {
       gamePhase.addPendingPassiveActivation(mockPassiveActivation);
-      
+
       const activations1 = gamePhase.getPendingPassiveActivations();
       const activations2 = gamePhase.getPendingPassiveActivations();
 
@@ -441,9 +441,9 @@ describe('GamePhase', () => {
       it('should reset actions and ready status but preserve events', () => {
         // Setup state
         gamePhase.addPendingAction(mockAction);
-        gamePhase.addPendingRacialAction({ 
-          actorId: 'player1', 
-          racialType: 'bloodRage' 
+        gamePhase.addPendingRacialAction({
+          actorId: 'player1',
+          racialType: 'bloodRage'
         } as PendingRacialAction);
         gamePhase.setPlayerReady('player1');
         gamePhase.addPendingDisconnectEvent({
@@ -468,9 +468,9 @@ describe('GamePhase', () => {
       it('should return current state snapshot', () => {
         gamePhase.toAction();
         gamePhase.addPendingAction(mockAction);
-        gamePhase.addPendingRacialAction({ 
-          actorId: 'player1', 
-          racialType: 'bloodRage' 
+        gamePhase.addPendingRacialAction({
+          actorId: 'player1',
+          racialType: 'bloodRage'
         } as PendingRacialAction);
         gamePhase.setPlayerReady('player1');
         gamePhase.setPlayerReady('player2');

@@ -3,6 +3,7 @@
  * Handles unique attack abilities with special mechanics
  */
 
+import { secureId } from '../../../../../utils/secureRandom.js';
 import type { Player, Monster, Ability } from '../../../../../types/generated.js';
 import type {
   AbilityHandler,
@@ -56,7 +57,7 @@ export const handleVulnerabilityStrike: AbilityHandler = (
     const duration = Number(vulnParams.duration) || 2;
 
     const statusResult = systems.statusEffectManager?.applyStatusEffect?.(target, {
-      id: `vulnerability-${Date.now()}`,
+      id: secureId('vulnerability'),
       name: 'vulnerable',
       type: 'debuff',
       duration,
@@ -69,9 +70,9 @@ export const handleVulnerabilityStrike: AbilityHandler = (
 
     if (statusResult.success) {
       const targetName = (target as Player).name || (target as Monster).name;
-      
+
       log.push({
-        id: `vulnerability-strike-success-${Date.now()}`,
+        id: secureId('vulnerability-strike-success'),
         timestamp: Date.now(),
         type: 'damage',
         source: actor.id,
@@ -95,7 +96,7 @@ export const handleVulnerabilityStrike: AbilityHandler = (
   // Just log the damage if vulnerability failed
   const targetName = (target as Player).name || (target as Monster).name;
   log.push({
-    id: `vulnerability-strike-partial-${Date.now()}`,
+    id: secureId('vulnerability-strike-partial'),
     timestamp: Date.now(),
     type: 'damage',
     source: actor.id,
@@ -129,7 +130,7 @@ export const handleRecklessStrike: AbilityHandler = (
   // Check if target is invisible first
   if ((target as any).statusEffects && (target as any).statusEffects.invisible) {
     log.push({
-      id: `reckless-strike-invisible-${Date.now()}`,
+      id: secureId('reckless-strike-invisible'),
       timestamp: Date.now(),
       type: 'action',
       source: actor.id,
@@ -156,7 +157,7 @@ export const handleRecklessStrike: AbilityHandler = (
 
   if (selfDamageResult.success) {
     log.push({
-      id: `reckless-strike-self-damage-${Date.now()}`,
+      id: secureId('reckless-strike-self-damage'),
       timestamp: Date.now(),
       type: 'damage',
       source: actor.id,
@@ -195,9 +196,9 @@ export const handleRecklessStrike: AbilityHandler = (
 
   if (damageResult.success) {
     const targetName = (target as Player).name || (target as Monster).name;
-    
+
     log.push({
-      id: `reckless-strike-success-${Date.now()}`,
+      id: secureId('reckless-strike-success'),
       timestamp: Date.now(),
       type: 'damage',
       source: actor.id,
@@ -260,7 +261,7 @@ export const handleBarbedArrow: AbilityHandler = (
 
   if ((target as any).hp > 0) {
     const statusResult = systems.statusEffectManager?.applyStatusEffect?.(target, {
-      id: `bleeding-${Date.now()}`,
+      id: secureId('bleeding'),
       name: 'bleeding',
       type: 'debuff',
       duration: bleedDuration,
@@ -273,9 +274,9 @@ export const handleBarbedArrow: AbilityHandler = (
 
     if (statusResult.success) {
       const targetName = (target as Player).name || (target as Monster).name;
-      
+
       log.push({
-        id: `barbed-arrow-success-${Date.now()}`,
+        id: secureId('barbed-arrow-success'),
         timestamp: Date.now(),
         type: 'damage',
         source: actor.id,
@@ -299,7 +300,7 @@ export const handleBarbedArrow: AbilityHandler = (
   // Just log the damage if bleeding failed
   const targetName = (target as Player).name || (target as Monster).name;
   log.push({
-    id: `barbed-arrow-partial-${Date.now()}`,
+    id: secureId('barbed-arrow-partial'),
     timestamp: Date.now(),
     type: 'damage',
     source: actor.id,
@@ -349,7 +350,7 @@ export const handlePyroblast: AbilityHandler = (
   }
 
   let appliedBurn = false;
-  
+
   // Apply burn effect if target survives
   if ((target as any).hp > 0) {
     const params = (ability as any).params || {};
@@ -357,7 +358,7 @@ export const handlePyroblast: AbilityHandler = (
     const burnDuration = Number(params.burnDuration) || 3;
 
     const statusResult = systems.statusEffectManager?.applyStatusEffect?.(target, {
-      id: `burn-${Date.now()}`,
+      id: secureId('burn'),
       name: 'burn',
       type: 'debuff',
       duration: burnDuration,
@@ -372,14 +373,14 @@ export const handlePyroblast: AbilityHandler = (
   }
 
   const targetName = (target as Player).name || (target as Monster).name;
-  
+
   log.push({
-    id: `pyroblast-success-${Date.now()}`,
+    id: secureId('pyroblast-success'),
     timestamp: Date.now(),
     type: 'damage',
     source: actor.id,
     target: target.id,
-    message: appliedBurn 
+    message: appliedBurn
       ? `${actor.name} blasts ${targetName} with Pyroblast for ${damageResult.finalDamage} damage and sets them on fire!`
       : `${actor.name} blasts ${targetName} with Pyroblast for ${damageResult.finalDamage} damage!`,
     details: {

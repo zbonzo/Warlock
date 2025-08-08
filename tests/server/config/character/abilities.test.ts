@@ -284,7 +284,7 @@ describe('Character Abilities Configuration', () => {
       Object.values(abilities).forEach(ability => {
         ability.tags.forEach(tag => allTags.add(tag));
       });
-      
+
       expect(allTags.size).toBeGreaterThan(5); // Should have variety
     });
   });
@@ -329,7 +329,7 @@ describe('Character Abilities Configuration', () => {
       Object.entries(abilities).forEach(([key, ability]) => {
         // Key should match ability id
         expect(key).toBe(ability.id);
-        
+
         // Should have all required Ability properties
         expect(ability).toMatchObject({
           id: expect.any(String),

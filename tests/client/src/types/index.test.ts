@@ -32,7 +32,7 @@ describe('Client Types Index', () => {
       // Test that re-exports don't cause naming conflicts
       const moduleKeys = Object.keys(ClientTypes);
       const uniqueKeys = new Set(moduleKeys);
-      
+
       expect(uniqueKeys.size).toBe(moduleKeys.length);
     });
   });

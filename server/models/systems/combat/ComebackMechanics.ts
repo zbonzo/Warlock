@@ -52,21 +52,21 @@ class ComebackMechanics {
    * Update comeback status based on current game state
    */
   updateComebackStatus(monster: Monster): boolean {
-    const goodPlayers = Array.from(this.players.values()).filter(p => 
+    const goodPlayers = Array.from(this.players.values()).filter(p =>
       p.isAlive && !p.isWarlock
     );
-    
+
     const totalGoodPlayers = goodPlayers.length;
-    const avgGoodHp = totalGoodPlayers > 0 
+    const avgGoodHp = totalGoodPlayers > 0
       ? goodPlayers.reduce((sum, p) => sum + (p.hp / p.maxHp), 0) / totalGoodPlayers
       : 0;
 
     const monsterHpRatio = monster.hp / monster.maxHp;
-    
+
     // Comeback is active if good team is struggling
     // (Low average HP and monster still has significant health)
-    const shouldActivate = avgGoodHp < this.comebackThreshold && 
-                          monsterHpRatio > 0.5 && 
+    const shouldActivate = avgGoodHp < this.comebackThreshold &&
+                          monsterHpRatio > 0.5 &&
                           totalGoodPlayers > 0;
 
     const wasActive = this.comebackActive;
@@ -129,12 +129,12 @@ class ComebackMechanics {
    * Get comeback status for display
    */
   getStatus(): ComebackStatus {
-    const goodPlayers = Array.from(this.players.values()).filter(p => 
+    const goodPlayers = Array.from(this.players.values()).filter(p =>
       p.isAlive && !p.isWarlock
     );
-    
+
     const totalGoodPlayers = goodPlayers.length;
-    const avgGoodHp = totalGoodPlayers > 0 
+    const avgGoodHp = totalGoodPlayers > 0
       ? goodPlayers.reduce((sum, p) => sum + (p.hp / p.maxHp), 0) / totalGoodPlayers
       : 0;
 

@@ -9,6 +9,7 @@ import { Player } from './Player.js';
 import config from '../config/index.js';
 import { SystemsFactory } from './systems/SystemsFactory.js';
 import logger from '../utils/logger.js';
+import { getCurrentTimestamp } from '../utils/timestamp.js';
 // Messages are now accessed through the config system
 import { GameState, DisconnectedPlayer } from './game/GameState.js';
 import { GamePhase, GamePhaseType } from './game/GamePhase.js';
@@ -18,7 +19,7 @@ import { EventMiddleware } from './events/EventMiddleware.js';
 import { EventTypes, GameEvent } from './events/EventTypes.js';
 import { CommandProcessor } from './commands/CommandProcessor.js';
 import SocketEventRouter from './events/SocketEventRouter.js';
-import { 
+import {
   GameState as GameStateType,
   GameCode,
   PlayerAction,
@@ -67,16 +68,16 @@ export interface GameStats {
  */
 export class GameRoom {
   public readonly code: GameCode;
-  
+
   // Domain models for better separation of concerns
   public readonly gameState: GameState;
   public readonly gamePhase: GamePhase;
   public readonly gameRules: GameRules;
-  
+
   // Delegated properties (defined via Object.defineProperty in setupPropertyDelegation)
   public players!: Map<string, Player>;
   public hostId!: string | null;
-  public started!: boolean;  
+  public started!: boolean;
   public round!: number;
   public level!: number;
   public aliveCount!: number;
@@ -90,20 +91,20 @@ export class GameRoom {
   public winner!: string | null;
   public created!: number;
   public startTime!: number | null;
-  
+
   // Event system (Phase 4 enhancement)
   public readonly eventBus: GameEventBus;
   public readonly commandProcessor: CommandProcessor | null;
-  
+
   // Socket event router
   public socketEventRouter: SocketEventRouter | null = null;
-  
+
   // Direct socket.io server reference (temporary for pragmatic approach)
   public io: SocketIOServer | null = null;
-  
+
   // Systems (initialized when game starts)
   public systems: any = null;
-  
+
   // Debug loggers
   private combatDebug = createDebugLogger('combat', 'GameRoom:Combat');
   private roundResultsDebug = createDebugLogger('roundResults', 'GameRoom:RoundResults');
@@ -112,31 +113,31 @@ export class GameRoom {
 
   constructor(code: GameCode, options: GameRoomOptions = {}) {
     this.code = code;
-    
+
     // Initialize domain models
     this.gameState = new GameState(code);
     this.gamePhase = new GamePhase(code);
     this.gameRules = new GameRules(code);
-    
+
     // Initialize event system
     this.eventBus = new GameEventBus(code);
     // TODO: Re-enable event middleware once core functionality is working
     // this.setupEventMiddleware();
-    
+
     // Initialize command system
     // TODO: Re-enable CommandProcessor once core functionality is working
     // this.commandProcessor = new CommandProcessor(this);
     this.commandProcessor = null; // Temporary placeholder
-    
+
     // Initialize monster from config
     (this.gameState as any).initializeMonster(config as any);
-    
+
     // Set up property delegation for backward compatibility
     this.setupPropertyDelegation();
-    
+
     // Set up event listeners for this game room
     this.setupEventListeners();
-    
+
     // Emit game creation event
     this.eventBus.emit((EventTypes as any).GAME.CREATED, {
       gameCode: code,
@@ -151,10 +152,10 @@ export class GameRoom {
   private setupEventMiddleware(): void {
     // Add logging middleware
     this.eventBus.addMiddleware(EventMiddleware.logging({ logData: true }));
-    
+
     // Add validation middleware
     this.eventBus.addMiddleware(EventMiddleware.validation({ strict: true }));
-    
+
     // Add performance monitoring middleware
     this.eventBus.addMiddleware(EventMiddleware.performance({ slowEventThreshold: 1000 }));
   }
@@ -173,8 +174,8 @@ export class GameRoom {
 
     Object.defineProperty(this, 'hostId', {
       get: () => this.gameState.getHostId(),
-      set: (value: string | null) => { 
-        this.gameState.setHostId(value); 
+      set: (value: string | null) => {
+        this.gameState.setHostId(value);
       },
       enumerable: true,
       configurable: true
@@ -285,12 +286,12 @@ export class GameRoom {
     this.eventBus.on(EventTypes.PLAYER.JOINED, this.handlePlayerJoined.bind(this));
     this.eventBus.on(EventTypes.PLAYER.LEFT, this.handlePlayerLeft.bind(this));
     this.eventBus.on(EventTypes.PLAYER.DIED, this.handlePlayerDied.bind(this));
-    
+
     // Listen for game state events
     this.eventBus.on(EventTypes.GAME.STARTED, this.handleGameStarted.bind(this));
     this.eventBus.on(EventTypes.GAME.ENDED, this.handleGameEnded.bind(this));
     this.eventBus.on(EventTypes.PHASE.CHANGED, this.handlePhaseChanged.bind(this));
-    
+
     // Listen for action events
     this.eventBus.on(EventTypes.ACTION.SUBMITTED, this.handleActionSubmitted.bind(this));
     this.eventBus.on(EventTypes.ACTION.VALIDATED, this.handleActionValidated.bind(this));
@@ -309,7 +310,7 @@ export class GameRoom {
 
     const player = new Player({ id, name });
     const success = this.gameState.addPlayer(player as any);
-    
+
     if (success) {
       // Emit player joined event
       this.eventBus.emit((EventTypes as any).PLAYER.JOINED, {
@@ -318,10 +319,10 @@ export class GameRoom {
         gameCode: this.code,
         timestamp: new Date().toISOString()
       } as any);
-      
+
       return { success: true, player };
     }
-    
+
     return {
       success: false,
       error: 'Failed to add player to game state'
@@ -342,7 +343,7 @@ export class GameRoom {
 
     const removedPlayer = this.gameState.removePlayer(id);
     const success = removedPlayer !== null;
-    
+
     if (success) {
       // Emit player left event
       this.eventBus.emit((EventTypes as any).PLAYER.LEFT, {
@@ -352,7 +353,7 @@ export class GameRoom {
         timestamp: new Date().toISOString()
       } as any);
     }
-    
+
     return success;
   }
 
@@ -409,23 +410,23 @@ export class GameRoom {
     try {
       // Initialize systems
       this.systems = (SystemsFactory as any).createSystems(
-        this.players, 
-        this.monster, 
+        this.players,
+        this.monster,
         this.eventBus
       );
-      
+
       // Assign initial warlocks
       if (this.systems && (this.systems as any).warlockSystem) {
         const warlockAssignments = (this.systems as any).warlockSystem.assignInitialWarlocks();
         logger.info(`Assigned ${warlockAssignments.length} warlocks for game ${this.code}`);
       }
-      
+
       // Start the game state
       this.gameState.start();
-      
+
       // Set initial game phase
       (this.gamePhase as any).setPhase('action');
-      
+
       // Emit game started event
       this.eventBus.emit((EventTypes as any).GAME.STARTED, {
         gameCode: this.code,
@@ -433,7 +434,7 @@ export class GameRoom {
         warlockCount: this.systems && (this.systems as any).warlockSystem ? (this.systems as any).warlockSystem.numWarlocks : 0,
         timestamp: new Date().toISOString()
       } as any);
-      
+
       return { success: true };
     } catch (error) {
       (logger as any).error(`Failed to start game ${this.code}:`, error as any);
@@ -449,7 +450,7 @@ export class GameRoom {
    */
   async submitAction(data: PlayerActionData): Promise<ActionResult> {
     const { playerId, actionType, targetId, additionalData = {} } = data;
-    
+
     const player = this.getPlayer(playerId);
     if (!player) {
       return {
@@ -460,16 +461,16 @@ export class GameRoom {
 
     // Submit action through player
     const result = (player as any).submitAction(actionType, targetId, additionalData);
-    
+
     if (result.success) {
       // Get batch progress
       const alivePlayers = this.getAlivePlayers();
       const totalExpected = alivePlayers.length;
       const currentSubmitted = alivePlayers.filter(p => (p as any).hasSubmittedAction).length;
-      
+
       // Log batch progress instead of immediate processing
       (logger as any).info(`[GameRoom:${this.code}] Action added to batch. Batch size currently at ${currentSubmitted} of ${totalExpected}`);
-      
+
       // Emit action submitted event for batch tracking
       this.eventBus.emit((EventTypes as any).ACTION.SUBMITTED, {
         playerId,
@@ -483,7 +484,7 @@ export class GameRoom {
         timestamp: new Date().toISOString()
       } as any);
     }
-    
+
     return result;
   }
 
@@ -493,12 +494,12 @@ export class GameRoom {
   async validateActions(): Promise<ValidationResult[]> {
     const results: ValidationResult[] = [];
     const alivePlayers = this.getAlivePlayers();
-    
+
     for (const player of alivePlayers) {
       if ((player as any).hasSubmittedAction) {
         const validationResult = (player as any).validateSubmittedAction(alivePlayers, (this.gameState as any).monster);
         results.push(validationResult);
-        
+
         // Emit validation event
         this.eventBus.emit((EventTypes as any).ACTION.VALIDATED, {
           playerId: (player as any).id,
@@ -508,7 +509,7 @@ export class GameRoom {
         } as any);
       }
     }
-    
+
     return results;
   }
 
@@ -517,7 +518,7 @@ export class GameRoom {
    */
   async processRound(): Promise<ActionResult> {
     this.combatDebug.info(`🎮 Processing round for game ${this.code}...`);
-    
+
     if (!this.systems) {
       this.combatDebug.error(`❌ Game systems not initialized for game ${this.code}`);
       return {
@@ -525,7 +526,7 @@ export class GameRoom {
         reason: 'Game systems not initialized'
       };
     }
-    
+
     this.combatDebug.verbose('Pre-round game state:', {
       playersCount: this.players?.size || 0,
       aliveCount: this.getAlivePlayers().length,
@@ -543,12 +544,12 @@ export class GameRoom {
         hasLog: !!(result?.log || result?.eventsLog),
         logLength: (result?.log || result?.eventsLog)?.length || 0
       });
-      
+
       // Check win conditions
       const warlockCount = (this.systems as any).warlockSystem.getWarlockCount();
       const aliveCount = (this.gameState as any).getAliveCount();
       this.combatDebug.verbose(`Win condition check: warlocks=${warlockCount}, alive=${aliveCount}`);
-      
+
       const winner = (this.systems as any).gameStateUtils.checkWinConditions(warlockCount, aliveCount);
       if (winner) {
         this.combatDebug.info(`🏆 Game winner detected: ${winner}`);
@@ -556,13 +557,13 @@ export class GameRoom {
       } else {
         this.combatDebug.verbose('No winner detected, game continues');
       }
-      
+
       this.combatDebug.info(`✅ Round processing completed successfully for game ${this.code}`);
       return { success: true, data: result };
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
       const errorStack = error instanceof Error ? error.stack : '';
-      
+
       this.combatDebug.error(`🔥 CRITICAL ERROR processing round for game ${this.code}: ${errorMessage}`);
       this.combatDebug.error('Error details:', {
         error: errorMessage,
@@ -572,7 +573,7 @@ export class GameRoom {
         playersCount: this.players?.size || 0,
         gamePhase: (this.gameState as any)?.phase || 'unknown'
       });
-      
+
       // Reset player actions on failure to allow resubmission
       if (this.players) {
         for (const player of this.players.values()) {
@@ -580,7 +581,7 @@ export class GameRoom {
         }
         (logger as any).error(`Round processing failed for game ${this.code}. Resetting player actions.`);
       }
-      
+
       return {
         success: false,
         reason: 'Failed to process round'
@@ -593,12 +594,12 @@ export class GameRoom {
    */
   async endGame(winner?: string): Promise<void> {
     this.gameState.end(winner);
-    
+
     // Emit game ended event
     this.eventBus.emit((EventTypes as any).GAME.ENDED, {
       gameCode: this.code,
       winner,
-      duration: Date.now() - ((this.gameState as any).startTime || Date.now()),
+      duration: getCurrentTimestamp() - ((this.gameState as any).startTime || getCurrentTimestamp()),
       timestamp: new Date().toISOString()
     } as any);
   }
@@ -633,14 +634,14 @@ export class GameRoom {
    */
   toClientData(playerId?: string): Partial<GameRoom> {
     const players: Partial<Player>[] = [];
-    
+
     for (const [, player] of (this.gameState as any).players) {
       players.push((player as any).toClientData({
         includePrivate: false,
         requestingPlayerId: playerId
       }));
     }
-    
+
     return {
       code: this.code,
       players: Array.from(this.players.values()) as any,
@@ -659,11 +660,11 @@ export class GameRoom {
    */
   toJSON(): Partial<GameStateType> {
     const playersRecord: Record<string, any> = {};
-    
+
     for (const [id, player] of (this.gameState as any).players) {
       playersRecord[id] = (player as any).toJSON();
     }
-    
+
     const gameStateData = {
       gameCode: this.code,
       players: playersRecord,
@@ -735,24 +736,24 @@ export class GameRoom {
 
   private async handleActionSubmitted(event: GameEvent): Promise<void> {
     this.combatDebug.info(`Action ${(event.payload as any)?.actionType || 'unknown'} submitted by ${(event.payload as any)?.playerId || 'unknown'} in game ${this.code}`);
-    
+
     // Check if all alive players have submitted their actions
     const alivePlayers = this.getAlivePlayers();
     const allSubmitted = alivePlayers.every(player => (player as any).hasSubmittedAction);
-    
+
     this.combatDebug.verbose(`Player action submission status in game ${this.code}:`, {
       totalAlive: alivePlayers.length,
       submittedActions: alivePlayers.filter(p => (p as any).hasSubmittedAction).length,
       allSubmitted
     });
-    
+
     if (allSubmitted && this.gamePhase.getCurrentPhase() === 'action') {
       this.combatDebug.info(`🎯 All players have submitted actions in game ${this.code}. Processing round...`);
-      
+
       // Change phase to results
       this.phaseDebug.info(`Phase transition: action → results (game ${this.code})`);
       this.gamePhase.setPhase('results');
-      
+
       // Notify all players that processing is starting
       if (this.socketEventRouter) {
         this.phaseDebug.verbose('Broadcasting phase:changed event to all players');
@@ -761,7 +762,7 @@ export class GameRoom {
           message: 'Processing actions...'
         });
       }
-      
+
       // Process the round
       this.combatDebug.info(`🛡️ Starting round processing for game ${this.code}...`);
       const roundResult = await this.processRound();
@@ -770,18 +771,18 @@ export class GameRoom {
         hasData: !!roundResult.data,
         dataKeys: roundResult.data ? Object.keys(roundResult.data) : []
       });
-      
+
       if (roundResult.success) {
         // Reset player actions for the next round
         this.combatDebug.info(`✅ Resetting player actions for next round in game ${this.code}`);
         for (const player of this.players.values()) {
           (player as any).clearActionSubmission();
         }
-        
+
         // Change phase back to action for next round
         this.phaseDebug.info(`Phase transition: results → action (game ${this.code})`);
         this.gamePhase.setPhase('action');
-        
+
         // Emit results and new phase
         if (this.socketEventRouter) {
           this.roundResultsDebug.info(`📢 Broadcasting round:results to all players in game ${this.code}`);
@@ -793,12 +794,12 @@ export class GameRoom {
             playerCount: roundResult.data?.players?.length || 0,
             round: roundResult.data?.round || roundResult.data?.turn || 'unknown'
           });
-          
+
           this.socketEventRouter.broadcastToGame('round:results', {
             results: roundResult.data,
             newPhase: 'action'
           });
-          
+
           this.roundResultsDebug.info(`✅ Successfully broadcasted round:results for game ${this.code}`);
         } else if (this.io) {
           // Fallback to direct io broadcast when socketEventRouter is not available
@@ -811,17 +812,17 @@ export class GameRoom {
             playerCount: roundResult.data?.players?.length || 0,
             round: roundResult.data?.round || roundResult.data?.turn || 'unknown'
           });
-          
+
           this.io.to(this.code).emit('round:results', {
             results: roundResult.data,
             newPhase: 'action'
           });
-          
+
           this.roundResultsDebug.info(`✅ Successfully broadcasted round:results for game ${this.code}`);
         } else {
           this.roundResultsDebug.error(`❌ No socketEventRouter or io available to broadcast round:results for game ${this.code}`);
         }
-        
+
         // Broadcast updated game state after round processing
         this.combatDebug.info(`📢 Broadcasting updated game state after round for game ${this.code}`);
         if (this.io) {
@@ -834,16 +835,16 @@ export class GameRoom {
         // If round processing failed, reset player actions and go back to action phase
         this.combatDebug.error(`❌ Round processing FAILED for game ${this.code}. Resetting player actions.`);
         this.combatDebug.error('Round failure details:', roundResult);
-        
+
         // Reset all player actions
         for (const player of this.players.values()) {
           (player as any).clearActionSubmission();
         }
-        
+
         // Change phase back to action
         this.phaseDebug.warn(`Phase transition: results → action (FAILURE RECOVERY) (game ${this.code})`);
         this.gamePhase.setPhase('action');
-        
+
         // Notify players of the error and phase change
         if (this.socketEventRouter) {
           this.phaseDebug.error('Broadcasting phase:changed error recovery to all players');
@@ -852,7 +853,7 @@ export class GameRoom {
             message: 'Round processing failed. Please submit your actions again.',
             error: true
           });
-          
+
           // Emit game state update to reset UI
           this.socketEventRouter.broadcastToGame('gameStateUpdate', this.toJSON());
         }

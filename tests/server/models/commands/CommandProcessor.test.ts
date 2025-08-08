@@ -22,7 +22,7 @@ describe('CommandProcessor', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    
+
     mockEventBus = {
       emit: jest.fn().mockResolvedValue(undefined),
       on: jest.fn()
@@ -118,7 +118,7 @@ describe('CommandProcessor', () => {
 
       it('should initialize player queue if needed', async () => {
         await processor.submitCommand(mockCommand);
-        
+
         const pendingCommands = processor.getPendingCommands('player1');
         expect(pendingCommands).toHaveLength(1);
         expect(pendingCommands[0]).toBe(mockCommand);
@@ -451,7 +451,7 @@ describe('CommandProcessor', () => {
 
       it('should update statistics after processing', async () => {
         await processor.processCommands();
-        
+
         const stats = processor.getStats();
         expect(stats.commandsProcessed).toBe(1);
         expect(stats.pendingCommands).toBe(0);

@@ -8,12 +8,12 @@ import config from '../../config/index.js';
 import logger from '../../utils/logger.js';
 import { Player } from '../Player.js';
 import type { GameRoom } from '../GameRoom.js';
-import type { 
-  Race, 
-  Class, 
-  Ability, 
+import type {
+  Race,
+  Class,
+  Ability,
   StatusEffect,
-  RacialAbility 
+  RacialAbility
 } from '../../types/generated.js';
 
 /**
@@ -104,10 +104,10 @@ export class PlayerManager {
 
     // Remove from collections
     this.gameRoom.gameState.getPlayersMap().delete(id);
-    
+
     // Remove from pending actions
     this.removePendingActionsForPlayer(id);
-    
+
     // Update host if necessary
     this.updateHostIfNeeded(id);
 
@@ -157,9 +157,9 @@ export class PlayerManager {
 
       if ((race as string) === 'Lich') {
         (player as any).racialEffects = {
-          undeadNature: { 
+          undeadNature: {
             immuneToPoisonDamage: true,
-            immuneToCharisma: true 
+            immuneToCharisma: true
           }
         };
         if (!player['classEffects'].immunities) {
@@ -193,9 +193,10 @@ export class PlayerManager {
     // Fill remaining warlock slots randomly
     const remainingPlayers = players.filter(p => !p['isWarlock']);
     while (warlocks.length < warlockCount && remainingPlayers.length > 0) {
-      const randomIndex = Math.floor(Math.random() * remainingPlayers.length);
+      const { secureRandomInt } = require('../../utils/secureRandom.js');
+      const randomIndex = secureRandomInt(0, remainingPlayers.length);
       const selectedPlayer = remainingPlayers.splice(randomIndex, 1)[0];
-      
+
       if (selectedPlayer) {
         this.makePlayerWarlock(selectedPlayer as any);
         warlocks.push(selectedPlayer['id']);
@@ -212,7 +213,7 @@ export class PlayerManager {
   private makePlayerWarlock(player: any): void {
     player['isWarlock'] = true;
     this.gameRoom.systems.warlockSystem.incrementWarlockCount();
-    
+
     // Apply warlock-specific effects
     this.applyWarlockEffects(player);
   }
@@ -225,12 +226,12 @@ export class PlayerManager {
     if (!player['classEffects']) {
       player['classEffects'] = {};
     }
-    
+
     player['classEffects'].warlockNature = {
       corruptionResistance: 0.2,
       darkMagicBonus: 0.1
     };
-    
+
     // Warlocks might get special abilities
     const warlockAbilities = (config as any).warlockAbilities || [];
     player.warlockAbilities = [...warlockAbilities];
@@ -289,19 +290,19 @@ export class PlayerManager {
     if (player['addSocketId']) {
       player['addSocketId'](newId);
     }
-    
+
     // Update maps
     this.gameRoom.gameState.getPlayersMap().delete(oldId);
     this.gameRoom.gameState.getPlayersMap().set(newId, player);
-    
+
     // Update host if necessary
     if (this.gameRoom.gameState.getHostId() === oldId) {
       this.gameRoom.gameState.setHostId(newId);
     }
-    
+
     // Update pending actions
     this.updatePendingActionsPlayerId(oldId, newId);
-    
+
     logger.info(`Transferred player ID from ${oldId} to ${newId} for ${player['name']}. Socket IDs: ${player['socketIds'] ? player['socketIds'].join(', ') : 'N/A'}`);
     return true;
   }
@@ -348,7 +349,7 @@ export class PlayerManager {
    * Get players by team (warlock vs good)
    */
   getPlayersByTeam(isWarlock: boolean): any[] {
-    return Array.from(this.gameRoom.gameState.getPlayersMap().values()).filter(p => 
+    return Array.from(this.gameRoom.gameState.getPlayersMap().values()).filter(p =>
       p['isAlive'] && p['isWarlock'] === isWarlock
     );
   }
@@ -359,17 +360,17 @@ export class PlayerManager {
   setPlayerReady(playerId: string, isReady: boolean): boolean {
     const player = this.gameRoom.gameState.getPlayersMap().get(playerId);
     if (!player) return false;
-    
+
     player['isReady'] = isReady;
-    
+
     // Check if all players are ready
     const allReady = Array.from(this.gameRoom.gameState.getPlayersMap().values())
       .every(p => p['isReady']);
-    
+
     if (allReady && this.gameRoom.gameState.getPlayersMap().size >= config.minPlayers) {
       (this.gameRoom as any).allPlayersReady = true;
     }
-    
+
     return true;
   }
 
@@ -380,12 +381,12 @@ export class PlayerManager {
     const player = this.gameRoom.gameState.getPlayersMap().get(playerId);
     if (!player || !player['isAlive']) return false;
     if (player.hasSubmittedAction) return false;
-    
+
     // Check for disabling status effects
     if (player['hasStatusEffect'] && player['hasStatusEffect']('stunned')) return false;
     if (player['hasStatusEffect'] && player['hasStatusEffect']('paralyzed')) return false;
     if (player['hasStatusEffect'] && player['hasStatusEffect']('frozen')) return false;
-    
+
     return true;
   }
 
@@ -401,23 +402,23 @@ export class PlayerManager {
       stunned: 0,
       details: []
     };
-    
+
     for (const player of this.gameRoom.gameState.getPlayersMap().values()) {
       if (player['isAlive']) {
         summary.alive++;
-        
+
         if (player.hasSubmittedAction) {
           summary.hasSubmittedAction++;
         }
-        
+
         if (this.canPlayerAct(player['id'])) {
           summary.canAct++;
         }
-        
+
         if (player['hasStatusEffect'] && player['hasStatusEffect']('stunned')) {
           summary.stunned++;
         }
-        
+
         summary.details.push({
           id: player['id'],
           name: player['name'],
@@ -428,7 +429,7 @@ export class PlayerManager {
         });
       }
     }
-    
+
     return summary;
   }
 
@@ -461,13 +462,13 @@ export class PlayerManager {
   private updatePendingActionsPlayerId(oldId: string, newId: string): void {
     if ((this.gameRoom as any).actionProcessor) {
       const pending = (this.gameRoom as any).actionProcessor.getPendingActions();
-      
+
       // Update class actions
       pending.classActions.forEach((action: any) => {
         if (action.actorId === oldId) action.actorId = newId;
         if (action.targetId === oldId) action.targetId = newId;
       });
-      
+
       // Update racial actions
       pending.racialActions.forEach((action: any) => {
         if (action.actorId === oldId) action.actorId = newId;

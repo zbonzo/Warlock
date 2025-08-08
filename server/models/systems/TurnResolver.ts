@@ -89,9 +89,9 @@ export class TurnResolver {
       priority,
       timestamp: Date.now(),
     });
-    
+
     this.actionQueue.push(queueItem);
-    
+
     logger.debug('ActionQueued', {
       gameCode: this.gameCode,
       actionType: action.actionType,
@@ -115,7 +115,7 @@ export class TurnResolver {
    */
   resolveTurn(context: TurnContext): TurnResult {
     this.currentTurn++;
-    
+
     logger.info('TurnResolutionStarted', {
       gameCode: this.gameCode,
       turn: this.currentTurn,
@@ -142,7 +142,7 @@ export class TurnResolver {
 
         // Apply action effects to game state
         this.applyActionResult(result, context);
-        
+
       } catch (error) {
         logger.error('ActionResolutionError', {
           gameCode: this.gameCode,
@@ -336,7 +336,7 @@ export class TurnResolver {
    */
   private resolveDefendAction(action: PlayerAction, context: TurnContext): ActionResult {
     const actor = context.players.get(action.playerId)!;
-    
+
     // Apply temporary defense bonus
     this.systems.effectManager.applyEffect(action.playerId, {
       id: 'defending',
@@ -390,7 +390,7 @@ export class TurnResolver {
     for (const [playerId, player] of context.players) {
       // Process status effect durations
       const expiredEffects = this.systems.effectManager.processEffectDurations(playerId);
-      
+
       for (const effect of expiredEffects) {
         gameEvents.push(`${player.name}'s ${effect.name} effect expired`);
       }
@@ -404,12 +404,12 @@ export class TurnResolver {
    */
   private determineNextPhase(context: TurnContext): 'action' | 'results' | 'ended' {
     const alivePlayers = Array.from(context.players.values()).filter(p => p.status === 'alive');
-    
+
     // Check win conditions
     if (alivePlayers.length === 0) {
       return 'ended';
     }
-    
+
     if (context.monster && context.monster.hp <= 0) {
       return 'ended';
     }

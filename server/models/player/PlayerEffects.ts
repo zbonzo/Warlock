@@ -128,19 +128,19 @@ export interface EffectProcessingResult {
 export class PlayerEffects {
   private playerId: string;
   private playerName: string;
-  
+
   // Status effects
   private statusEffects: StatusEffects = {};
   private _isVulnerable: boolean = false;
   private _vulnerabilityIncrease: number = 0;
-  
+
   // Stone Armor tracking (Rockhewn racial)
   private stoneArmorIntact: boolean = false;
   private stoneArmorValue: number = 0;
-  
+
   // Class effects tracking
   private classEffects: ClassEffects = {};
-  
+
   // Racial effects
   private racialEffects: RacialEffects = {};
 
@@ -321,9 +321,9 @@ export class PlayerEffects {
    * @returns Life steal result
    */
   processThirstyBladeLifeSteal(
-    damageDealt: number, 
-    playerClass: PlayerClass, 
-    currentHp: number, 
+    damageDealt: number,
+    playerClass: PlayerClass,
+    currentHp: number,
     maxHp: number
   ): LifeStealResult {
     if (
@@ -396,10 +396,10 @@ export class PlayerEffects {
    * @returns Modified damage
    */
   applyDamageModifiers(
-    rawDamage: number, 
-    playerClass: PlayerClass, 
-    level: number, 
-    currentHp: number, 
+    rawDamage: number,
+    playerClass: PlayerClass,
+    level: number,
+    currentHp: number,
     maxHp: number
   ): number {
     let modifiedDamage = rawDamage;
@@ -738,7 +738,7 @@ export class PlayerEffects {
    */
   static fromJSON(data: any): PlayerEffects {
     const effects = new PlayerEffects(data.playerId, data.playerName);
-    
+
     if (data.statusEffects) effects.statusEffects = data.statusEffects;
     effects._isVulnerable = data._isVulnerable || false;
     effects._vulnerabilityIncrease = data._vulnerabilityIncrease || 0;
@@ -746,7 +746,7 @@ export class PlayerEffects {
     effects.stoneArmorValue = data.stoneArmorValue || 0;
     if (data.classEffects) effects.classEffects = data.classEffects;
     if (data.racialEffects) effects.racialEffects = data.racialEffects;
-    
+
     return effects;
   }
 }

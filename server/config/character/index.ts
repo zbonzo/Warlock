@@ -16,13 +16,13 @@ const characterConfig = {
   races: races.availableRaces,
   raceAttributes: races.raceAttributes,
   racialAbilities: races.racialAbilities,
-  
+
   // Class-related exports
   classes: classes.availableClasses,
   classCategories: classes.classCategories,
   classAttributes: classes.classAttributes,
   classAbilityProgression: classes.classAbilityProgression,
-  
+
   // Ability-related exports
   abilities: abilities.abilities,
   getAbility: abilities.getAbility,
@@ -30,13 +30,13 @@ const characterConfig = {
   getAbilitiesByTag: abilities.getAbilitiesByTag,
   getAbilitiesByCategory: abilities.getAbilitiesByCategory,
   getAllAbilityIds: abilities.getAllAbilityIds,
-  
+
   // Compatibility mappings
   classRaceCompatibility: races.classRaceCompatibility,
-  
+
   // Player settings
   player: playerSettings,
-  
+
   // Helper methods
   getRacialAbility: races.getRacialAbility,
   getClassAbilities: classes.getClassAbilities,
@@ -44,7 +44,7 @@ const characterConfig = {
   getClassAbilityForLevel: classes.getClassAbilityForLevel,
   validateClassAbilities: classes.validateClassAbilities,
   isValidCombination: races.isValidCombination,
-  
+
   // Legacy compatibility - maintains old interface
   get classAbilities() {
     console.warn('Accessing classAbilities directly is deprecated. Use getClassAbilities() instead.');

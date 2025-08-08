@@ -43,7 +43,7 @@ describe('defenseAbilities', () => {
 
     // Mock messages
     mockMessages.getAbilityMessage = jest.fn((category, key) => `${category}.${key}`);
-    mockMessages.formatMessage = jest.fn((template, params) => 
+    mockMessages.formatMessage = jest.fn((template, params) =>
       `Formatted: ${template} with ${JSON.stringify(params)}`
     );
 
@@ -203,8 +203,8 @@ describe('defenseAbilities', () => {
       );
 
       // Should log coordination bonus
-      expect(log.some(entry => 
-        entry.type === 'coordination_defense_applied' && 
+      expect(log.some(entry =>
+        entry.type === 'coordination_defense_applied' &&
         entry.privateMessage?.includes('40%')
       )).toBe(true);
     });
@@ -366,8 +366,8 @@ describe('defenseAbilities', () => {
       );
 
       // Should log coordination bonus
-      expect(log.some(entry => 
-        entry.type === 'coordination_utility_applied' && 
+      expect(log.some(entry =>
+        entry.type === 'coordination_utility_applied' &&
         entry.privateMessage?.includes('50%')
       )).toBe(true);
     });
@@ -585,7 +585,7 @@ describe('defenseAbilities', () => {
       );
 
       expect(result).toBe(true);
-      
+
       // Should apply effect to all players
       expect(mockSystems.statusEffectSystem.applyEffect).toHaveBeenCalledTimes(4);
       expect(mockSystems.statusEffectSystem.applyEffect).toHaveBeenCalledWith(

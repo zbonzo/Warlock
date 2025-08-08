@@ -55,7 +55,7 @@ export class EffectManager {
    */
   applyEffect(playerId: string, effect: EffectData): EffectApplicationResult {
     const validatedEffect = EffectDataSchema.parse(effect);
-    
+
     if (!this.activeEffects.has(playerId)) {
       this.activeEffects.set(playerId, new Map());
     }
@@ -68,7 +68,7 @@ export class EffectManager {
       if (this.canStack(effect)) {
         existingEffect.stacks = Math.min(existingEffect.stacks + 1, 5); // Max 5 stacks
         existingEffect.duration = Math.max(existingEffect.duration, effect.duration);
-        
+
         logger.debug('EffectStacked', {
           playerId,
           effectId: effect.id,
@@ -84,7 +84,7 @@ export class EffectManager {
       } else {
         // Replace existing effect
         playerEffects.set(effect.id, validatedEffect);
-        
+
         logger.debug('EffectReplaced', {
           playerId,
           effectId: effect.id,
@@ -102,7 +102,7 @@ export class EffectManager {
 
     // Apply new effect
     playerEffects.set(effect.id, validatedEffect);
-    
+
     logger.debug('EffectApplied', {
       playerId,
       effectId: effect.id,
@@ -127,7 +127,7 @@ export class EffectManager {
     if (!playerEffects) return false;
 
     const removed = playerEffects.delete(effectId);
-    
+
     if (removed) {
       logger.debug('EffectRemoved', { playerId, effectId });
     }
@@ -177,15 +177,15 @@ export class EffectManager {
     if (!playerEffects) return [];
 
     const expiredEffects: EffectData[] = [];
-    
+
     for (const [effectId, effect] of playerEffects.entries()) {
       if (effect.duration > 0) {
         effect.duration--;
-        
+
         if (effect.duration <= 0) {
           expiredEffects.push(effect);
           playerEffects.delete(effectId);
-          
+
           logger.debug('EffectExpired', {
             playerId,
             effectId,
@@ -209,24 +209,24 @@ export class EffectManager {
 
     for (const effect of effects) {
       const stacks = Math.max(1, effect.stacks);
-      
+
       // Apply modifiers based on effect type and metadata
       if (effect.metadata['damageModifier']) {
         modifiers.damage = (modifiers.damage ?? 1) * (1 + effect.metadata['damageModifier'] * stacks);
       }
-      
+
       if (effect.metadata['healingModifier']) {
         modifiers.healing = (modifiers.healing ?? 1) * (1 + effect.metadata['healingModifier'] * stacks);
       }
-      
+
       if (effect.metadata['armorBonus']) {
         modifiers.armor = (modifiers.armor ?? 0) + effect.metadata['armorBonus'] * stacks;
       }
-      
+
       if (effect.metadata['resistance']) {
         modifiers.resistance = Math.min((modifiers.resistance ?? 0) + effect.metadata['resistance'] * stacks, 0.8);
       }
-      
+
       if (effect.metadata['vulnerability']) {
         modifiers.vulnerability = (modifiers.vulnerability ?? 0) + effect.metadata['vulnerability'] * stacks;
       }
@@ -304,11 +304,11 @@ export class EffectManager {
    */
   toJSON(): Record<string, any> {
     const serializedEffects: Record<string, any> = {};
-    
+
     for (const [playerId, effects] of this.activeEffects.entries()) {
       serializedEffects[playerId] = Array.from(effects.entries());
     }
-    
+
     return { activeEffects: serializedEffects };
   }
 
@@ -319,19 +319,19 @@ export class EffectManager {
    */
   static fromJSON(data: any): EffectManager {
     const manager = new EffectManager();
-    
+
     if (data.activeEffects) {
       for (const [playerId, effects] of Object.entries(data.activeEffects)) {
         const playerEffectsMap = new Map();
-        
+
         for (const [effectId, effect] of effects as [string, any][]) {
           playerEffectsMap.set(effectId, EffectDataSchema.parse(effect));
         }
-        
+
         manager.activeEffects.set(playerId, playerEffectsMap);
       }
     }
-    
+
     return manager;
   }
 }

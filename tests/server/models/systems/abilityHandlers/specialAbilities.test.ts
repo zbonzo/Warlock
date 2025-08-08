@@ -26,7 +26,7 @@ describe('specialAbilities', () => {
   describe('register', () => {
     it('should register special abilities with registry', () => {
       register(mockRegistry);
-      
+
       expect(mockRegistry.registerClassAbility).toHaveBeenCalledWith('fatesEye', expect.any(Function));
       expect(mockRegistry.registerClassAbility).toHaveBeenCalledWith('primalRoar', expect.any(Function));
       expect(mockRegistry.registerClassAbility).toHaveBeenCalledWith('bloodFrenzy', expect.any(Function));

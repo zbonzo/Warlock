@@ -87,7 +87,7 @@ export class DamageCalculator {
     // Apply attacker damage modifiers
     if (attacker && !options.ignoreEffects) {
       const attackerEffects = attacker.statusEffects || {};
-      
+
       // Apply damage boost effects
       if (attackerEffects.enraged) {
         damage *= 1.5;
@@ -197,7 +197,8 @@ export class DamageCalculator {
       critChance *= 2;
     }
 
-    return Math.random() < critChance;
+    const { secureRandomFloat } = require('../utils/secureRandom.js');
+    return secureRandomFloat() < critChance;
   }
 
   /**

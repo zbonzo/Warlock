@@ -1,8 +1,8 @@
 /**
  * @fileoverview Tests for PlayerAbilities model
  */
-import { 
-  PlayerAbilities, 
+import {
+  PlayerAbilities,
   ActionSubmission,
   RacialAbility,
   SubmissionStatus,
@@ -30,13 +30,13 @@ describe('PlayerAbilities', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    
+
     // Mock config values
     mockConfig.MONSTER_ID = 'monster1';
-    
+
     // Mock messages
     mockMessages.getError = jest.fn((key) => `Error: ${key}`);
-    mockMessages.formatMessage = jest.fn((template, params) => 
+    mockMessages.formatMessage = jest.fn((template, params) =>
       `Formatted: ${template} with ${JSON.stringify(params)}`
     );
     mockMessages.serverLogMessages = {
@@ -89,7 +89,7 @@ describe('PlayerAbilities', () => {
       it('should return copies of arrays', () => {
         const abilities1 = playerAbilities.getAbilities();
         const abilities2 = playerAbilities.getAbilities();
-        
+
         expect(abilities1).toEqual(abilities2);
         expect(abilities1).not.toBe(abilities2);
       });
@@ -118,7 +118,7 @@ describe('PlayerAbilities', () => {
     describe('getAvailableAbilities', () => {
       it('should return only usable abilities', () => {
         playerAbilities.putAbilityOnCooldown('heal', 1);
-        
+
         const available = playerAbilities.getAvailableAbilities();
         expect(available).toEqual([mockAbilities[0]]); // Only attack
       });
@@ -134,21 +134,21 @@ describe('PlayerAbilities', () => {
     describe('putAbilityOnCooldown', () => {
       it('should put ability on cooldown with extra turn', () => {
         playerAbilities.putAbilityOnCooldown('attack', 2);
-        
+
         expect(playerAbilities.getAbilityCooldown('attack')).toBe(3); // 2 + 1
         expect(playerAbilities.isAbilityOnCooldown('attack')).toBe(true);
       });
 
       it('should not put ability on cooldown for 0 turns', () => {
         playerAbilities.putAbilityOnCooldown('attack', 0);
-        
+
         expect(playerAbilities.getAbilityCooldown('attack')).toBe(0);
         expect(playerAbilities.isAbilityOnCooldown('attack')).toBe(false);
       });
 
       it('should log cooldown application', () => {
         playerAbilities.putAbilityOnCooldown('heal', 3);
-        
+
         expect(mockLogger.debug).toHaveBeenCalledWith(
           expect.stringContaining('Player ability on cooldown')
         );
@@ -159,18 +159,18 @@ describe('PlayerAbilities', () => {
       it('should decrement all cooldowns by 1', () => {
         playerAbilities.putAbilityOnCooldown('attack', 2);
         playerAbilities.putAbilityOnCooldown('heal', 1);
-        
+
         playerAbilities.processAbilityCooldowns();
-        
+
         expect(playerAbilities.getAbilityCooldown('attack')).toBe(2); // 3 -> 2
         expect(playerAbilities.getAbilityCooldown('heal')).toBe(1); // 2 -> 1
       });
 
       it('should remove cooldowns that reach 0', () => {
         playerAbilities.putAbilityOnCooldown('attack', 0); // Will be 1 after adding
-        
+
         playerAbilities.processAbilityCooldowns();
-        
+
         expect(playerAbilities.getAbilityCooldown('attack')).toBe(0);
         expect(playerAbilities.isAbilityOnCooldown('attack')).toBe(false);
       });
@@ -178,9 +178,9 @@ describe('PlayerAbilities', () => {
       it('should log expired cooldowns', () => {
         playerAbilities.putAbilityOnCooldown('attack', 0);
         playerAbilities.putAbilityOnCooldown('heal', 0);
-        
+
         playerAbilities.processAbilityCooldowns();
-        
+
         expect(mockLogger.debug).toHaveBeenCalledWith(
           expect.stringContaining('Player cooldowns expired')
         );
@@ -195,7 +195,7 @@ describe('PlayerAbilities', () => {
 
       it('should return correct cooldown values', () => {
         playerAbilities.putAbilityOnCooldown('attack', 3);
-        
+
         expect(playerAbilities.getAbilityCooldown('attack')).toBe(4);
         expect(playerAbilities.isAbilityOnCooldown('attack')).toBe(true);
       });
@@ -216,7 +216,7 @@ describe('PlayerAbilities', () => {
     describe('submitAction', () => {
       it('should successfully submit valid action', () => {
         const result = playerAbilities.submitAction('attack', 'target1');
-        
+
         expect(result.success).toBe(true);
         expect(result.action).toBeDefined();
         expect(result.action?.actionType).toBe('attack');
@@ -226,9 +226,9 @@ describe('PlayerAbilities', () => {
 
       it('should reject multiple action submissions', () => {
         playerAbilities.submitAction('attack', 'target1');
-        
+
         const result = playerAbilities.submitAction('heal', 'target2');
-        
+
         expect(result.success).toBe(false);
         expect(result.reason).toContain('playerActionAlreadySubmittedThisRound');
         expect(result.action).toBeNull();
@@ -236,7 +236,7 @@ describe('PlayerAbilities', () => {
 
       it('should reject unavailable abilities', () => {
         const result = playerAbilities.submitAction('fireball', 'target1');
-        
+
         expect(result.success).toBe(false);
         expect(result.reason).toContain('playerAbilityNotAvailable');
         expect(result.action).toBeNull();
@@ -244,9 +244,9 @@ describe('PlayerAbilities', () => {
 
       it('should reject abilities on cooldown', () => {
         playerAbilities.putAbilityOnCooldown('attack', 2);
-        
+
         const result = playerAbilities.submitAction('attack', 'target1');
-        
+
         expect(result.success).toBe(false);
         expect(result.reason).toContain('playerAbilityOnCooldownDetailed');
         expect(result.action).toBeNull();
@@ -254,7 +254,7 @@ describe('PlayerAbilities', () => {
 
       it('should reject actions without target', () => {
         const result = playerAbilities.submitAction('attack', '');
-        
+
         expect(result.success).toBe(false);
         expect(result.reason).toContain('playerNoTargetSpecified');
         expect(result.action).toBeNull();
@@ -263,7 +263,7 @@ describe('PlayerAbilities', () => {
       it('should include additional data in action', () => {
         const additionalData = { priority: 'high', context: 'test' };
         const result = playerAbilities.submitAction('attack', 'target1', additionalData);
-        
+
         expect(result.success).toBe(true);
         expect(result.action).toMatchObject({
           actionType: 'attack',
@@ -275,7 +275,7 @@ describe('PlayerAbilities', () => {
 
       it('should log successful submission', () => {
         playerAbilities.submitAction('attack', 'target1');
-        
+
         expect(mockLogger.debug).toHaveBeenCalledWith(
           expect.stringContaining('Action submitted successfully')
         );
@@ -295,34 +295,34 @@ describe('PlayerAbilities', () => {
 
       it('should validate successful action', () => {
         const result = playerAbilities.validateSubmittedAction(alivePlayers, monster);
-        
+
         expect(result.isValid).toBe(true);
         expect(result.reason).toBeNull();
       });
 
       it('should fail validation when no action submitted', () => {
         playerAbilities.clearActionSubmission();
-        
+
         const result = playerAbilities.validateSubmittedAction(alivePlayers, monster);
-        
+
         expect(result.isValid).toBe(false);
         expect(result.reason).toContain('playerNoActionSubmittedForValidation');
       });
 
       it('should fail when ability no longer available', () => {
         playerAbilities.setUnlockedAbilities([]); // Remove all abilities
-        
+
         const result = playerAbilities.validateSubmittedAction(alivePlayers, monster);
-        
+
         expect(result.isValid).toBe(false);
         expect(result.reason).toContain('playerAbilityNoLongerAvailable');
       });
 
       it('should fail when ability now on cooldown', () => {
         playerAbilities.putAbilityOnCooldown('attack', 1);
-        
+
         const result = playerAbilities.validateSubmittedAction(alivePlayers, monster);
-        
+
         expect(result.isValid).toBe(false);
         expect(result.reason).toContain('playerAbilityNowOnCooldown');
       });
@@ -330,10 +330,10 @@ describe('PlayerAbilities', () => {
       it('should fail when monster target is dead', () => {
         playerAbilities.clearActionSubmission();
         playerAbilities.submitAction('attack', 'monster1');
-        
+
         const deadMonster = { hp: 0 };
         const result = playerAbilities.validateSubmittedAction(alivePlayers, deadMonster);
-        
+
         expect(result.isValid).toBe(false);
         expect(result.reason).toContain('playerMonsterInvalidTarget');
       });
@@ -343,9 +343,9 @@ describe('PlayerAbilities', () => {
           { id: 'player1', isAlive: true },
           { id: 'player2', isAlive: false }
         ];
-        
+
         const result = playerAbilities.validateSubmittedAction(playersWithDead, monster);
-        
+
         expect(result.isValid).toBe(false);
         expect(result.reason).toContain('playerTargetInvalidOrDead');
       });
@@ -353,9 +353,9 @@ describe('PlayerAbilities', () => {
       it('should fail when player target not found', () => {
         playerAbilities.clearActionSubmission();
         playerAbilities.submitAction('attack', 'nonexistent');
-        
+
         const result = playerAbilities.validateSubmittedAction(alivePlayers, monster);
-        
+
         expect(result.isValid).toBe(false);
         expect(result.reason).toContain('playerTargetInvalidOrDead');
       });
@@ -369,7 +369,7 @@ describe('PlayerAbilities', () => {
       it('should invalidate current action', () => {
         const reason = 'Target became invalid';
         playerAbilities.invalidateAction(reason);
-        
+
         const status = playerAbilities.getSubmissionStatus();
         expect(status.hasSubmitted).toBe(false);
         expect(status.isValid).toBe(false);
@@ -379,7 +379,7 @@ describe('PlayerAbilities', () => {
 
       it('should log invalidation', () => {
         playerAbilities.invalidateAction('Test reason');
-        
+
         expect(mockLogger.debug).toHaveBeenCalledWith(
           expect.stringContaining('Action invalidated')
         );
@@ -393,7 +393,7 @@ describe('PlayerAbilities', () => {
 
       it('should clear all submission data', () => {
         playerAbilities.clearActionSubmission();
-        
+
         const status = playerAbilities.getSubmissionStatus();
         expect(status.hasSubmitted).toBe(false);
         expect(status.submissionTime).toBeNull();
@@ -403,7 +403,7 @@ describe('PlayerAbilities', () => {
 
       it('should log clearance', () => {
         playerAbilities.clearActionSubmission();
-        
+
         expect(mockLogger.debug).toHaveBeenCalledWith(
           expect.stringContaining('Action submission cleared')
         );
@@ -413,7 +413,7 @@ describe('PlayerAbilities', () => {
     describe('getSubmissionStatus', () => {
       it('should return correct status when no action submitted', () => {
         const status = playerAbilities.getSubmissionStatus();
-        
+
         expect(status).toEqual({
           hasSubmitted: false,
           isValid: false,
@@ -425,9 +425,9 @@ describe('PlayerAbilities', () => {
 
       it('should return correct status when action submitted', () => {
         playerAbilities.submitAction('attack', 'target1');
-        
+
         const status = playerAbilities.getSubmissionStatus();
-        
+
         expect(status.hasSubmitted).toBe(true);
         expect(status.isValid).toBe(true);
         expect(status.validationState).toBe('valid');
@@ -455,21 +455,21 @@ describe('PlayerAbilities', () => {
     describe('setRacialAbility', () => {
       it('should set racial ability with per-game usage', () => {
         playerAbilities.setRacialAbility(mockRacialAbility);
-        
+
         expect(playerAbilities.canUseRacialAbility()).toBe(true);
       });
 
       it('should set racial ability with per-round usage', () => {
         const perRoundAbility = { ...mockRacialAbility, usageLimit: 'perRound' as const };
         playerAbilities.setRacialAbility(perRoundAbility);
-        
+
         expect(playerAbilities.canUseRacialAbility()).toBe(true);
       });
 
       it('should set passive racial ability', () => {
         const passiveAbility = { ...mockRacialAbility, usageLimit: 'passive' as const };
         playerAbilities.setRacialAbility(passiveAbility);
-        
+
         expect(playerAbilities.canUseRacialAbility()).toBe(false); // Passive abilities can't be "used"
       });
 
@@ -492,25 +492,25 @@ describe('PlayerAbilities', () => {
 
       it('should successfully use racial ability', () => {
         const result = playerAbilities.useRacialAbility();
-        
+
         expect(result).toBe(true);
         expect(playerAbilities.canUseRacialAbility()).toBe(false); // Used up
       });
 
       it('should not allow using racial ability when no uses left', () => {
         playerAbilities.useRacialAbility(); // Use the one available use
-        
+
         const result = playerAbilities.useRacialAbility();
-        
+
         expect(result).toBe(false);
       });
 
       it('should apply cooldown when specified', () => {
         const abilityWithCooldown = { ...mockRacialAbility, cooldown: 3 };
         playerAbilities.setRacialAbility(abilityWithCooldown);
-        
+
         playerAbilities.useRacialAbility();
-        
+
         expect(playerAbilities.canUseRacialAbility()).toBe(false); // On cooldown
       });
     });
@@ -519,20 +519,20 @@ describe('PlayerAbilities', () => {
       it('should reset per-round racial ability uses', () => {
         const perRoundAbility = { ...mockRacialAbility, usageLimit: 'perRound' as const };
         playerAbilities.setRacialAbility(perRoundAbility);
-        
+
         playerAbilities.useRacialAbility(); // Use it up
         expect(playerAbilities.canUseRacialAbility()).toBe(false);
-        
+
         playerAbilities.resetRacialPerRoundUses();
         expect(playerAbilities.canUseRacialAbility()).toBe(true);
       });
 
       it('should not affect per-game abilities', () => {
         playerAbilities.setRacialAbility(mockRacialAbility); // per-game
-        
+
         playerAbilities.useRacialAbility(); // Use it up
         expect(playerAbilities.canUseRacialAbility()).toBe(false);
-        
+
         playerAbilities.resetRacialPerRoundUses();
         expect(playerAbilities.canUseRacialAbility()).toBe(false); // Still used up
       });
@@ -542,9 +542,9 @@ describe('PlayerAbilities', () => {
       it('should decrement racial cooldown', () => {
         const abilityWithCooldown = { ...mockRacialAbility, cooldown: 2 };
         playerAbilities.setRacialAbility(abilityWithCooldown);
-        
+
         playerAbilities.useRacialAbility(); // Start cooldown
-        
+
         playerAbilities.processRacialCooldowns();
         // Cooldown should be decremented but ability still unusable due to uses
       });
@@ -566,7 +566,7 @@ describe('PlayerAbilities', () => {
     describe('getAbilityDamageDisplay', () => {
       it('should return damage display for ability with damage', () => {
         const display = playerAbilities.getAbilityDamageDisplay(mockAbility);
-        
+
         expect(display).toEqual({
           base: 10,
           modified: 10,
@@ -578,7 +578,7 @@ describe('PlayerAbilities', () => {
 
       it('should show modified damage when modifier applied', () => {
         const display = playerAbilities.getAbilityDamageDisplay(mockAbility, 1.5);
-        
+
         expect(display).toEqual({
           base: 10,
           modified: 15,
@@ -594,7 +594,7 @@ describe('PlayerAbilities', () => {
           name: 'Heal',
           requirements: { healing: 5 }
         };
-        
+
         const display = playerAbilities.getAbilityDamageDisplay(nonDamageAbility);
         expect(display).toBeNull();
       });
@@ -605,14 +605,14 @@ describe('PlayerAbilities', () => {
           name: 'Test',
           requirements: null
         };
-        
+
         const display = playerAbilities.getAbilityDamageDisplay(abilityNoRequirements as any);
         expect(display).toBeNull();
       });
 
       it('should floor modified damage', () => {
         const display = playerAbilities.getAbilityDamageDisplay(mockAbility, 1.7); // 10 * 1.7 = 17
-        
+
         expect(display?.modified).toBe(17);
       });
     });
@@ -622,7 +622,7 @@ describe('PlayerAbilities', () => {
     describe('setPlayerName', () => {
       it('should update player name for logging', () => {
         playerAbilities.setPlayerName('NewName');
-        
+
         // Test that the new name is used (this would be visible in logging)
         expect(() => playerAbilities.clearActionSubmission()).not.toThrow();
       });
@@ -633,7 +633,7 @@ describe('PlayerAbilities', () => {
     const mockAbilities = [
       { id: 'attack', name: 'Attack', requirements: { damage: 10 } }
     ];
-    
+
     const mockRacialAbility: RacialAbility = {
       id: 'bloodrage',
       name: 'Blood Rage',
@@ -650,9 +650,9 @@ describe('PlayerAbilities', () => {
         playerAbilities.setRacialAbility(mockRacialAbility);
         playerAbilities.putAbilityOnCooldown('attack', 2);
         playerAbilities.submitAction('attack', 'target1');
-        
+
         const json = playerAbilities.toJSON();
-        
+
         expect(json).toEqual({
           playerId,
           playerName,
@@ -706,14 +706,14 @@ describe('PlayerAbilities', () => {
           },
           actionValidationState: 'valid'
         };
-        
+
         const abilities = PlayerAbilities.fromJSON(data);
-        
+
         expect(abilities.getAbilities()).toEqual(mockAbilities);
         expect(abilities.getUnlockedAbilities()).toEqual(mockAbilities);
         expect(abilities.getAbilityCooldown('attack')).toBe(2);
         expect(abilities.canUseRacialAbility()).toBe(true);
-        
+
         const status = abilities.getSubmissionStatus();
         expect(status.hasSubmitted).toBe(true);
         expect(status.validationState).toBe('valid');
@@ -724,13 +724,13 @@ describe('PlayerAbilities', () => {
           playerId: 'player3',
           playerName: 'Player3'
         };
-        
+
         const abilities = PlayerAbilities.fromJSON(data);
-        
+
         expect(abilities.getAbilities()).toEqual([]);
         expect(abilities.getUnlockedAbilities()).toEqual([]);
         expect(abilities.canUseRacialAbility()).toBe(false);
-        
+
         const status = abilities.getSubmissionStatus();
         expect(status.hasSubmitted).toBe(false);
         expect(status.validationState).toBe('none');
@@ -754,16 +754,16 @@ describe('PlayerAbilities', () => {
       playerAbilities.putAbilityOnCooldown('attack', 3);
       playerAbilities.putAbilityOnCooldown('heal', 1);
       playerAbilities.putAbilityOnCooldown('fireball', 2);
-      
+
       // Process cooldowns multiple times
       playerAbilities.processAbilityCooldowns(); // attack: 3, heal: 0, fireball: 2
       expect(playerAbilities.canUseAbility('heal')).toBe(true);
       expect(playerAbilities.canUseAbility('attack')).toBe(false);
       expect(playerAbilities.canUseAbility('fireball')).toBe(false);
-      
+
       playerAbilities.processAbilityCooldowns(); // attack: 2, fireball: 1
       expect(playerAbilities.canUseAbility('fireball')).toBe(false);
-      
+
       playerAbilities.processAbilityCooldowns(); // attack: 1, fireball: 0
       expect(playerAbilities.canUseAbility('fireball')).toBe(true);
       expect(playerAbilities.canUseAbility('attack')).toBe(false);
@@ -772,20 +772,20 @@ describe('PlayerAbilities', () => {
     it('should handle action submission and validation lifecycle', () => {
       const alivePlayers = [{ id: 'target1', isAlive: true }];
       const monster = { hp: 100 };
-      
+
       // Submit action
       const submitResult = playerAbilities.submitAction('attack', 'target1');
       expect(submitResult.success).toBe(true);
-      
+
       // Validate action
       const validateResult = playerAbilities.validateSubmittedAction(alivePlayers, monster);
       expect(validateResult.isValid).toBe(true);
-      
+
       // Put ability on cooldown and re-validate
       playerAbilities.putAbilityOnCooldown('attack', 1);
       const revalidateResult = playerAbilities.validateSubmittedAction(alivePlayers, monster);
       expect(revalidateResult.isValid).toBe(false);
-      
+
       // Check that action was invalidated
       const status = playerAbilities.getSubmissionStatus();
       expect(status.hasSubmitted).toBe(false);
@@ -801,34 +801,34 @@ describe('PlayerAbilities', () => {
         maxUses: 2,
         cooldown: 3
       };
-      
+
       playerAbilities.setRacialAbility(racialAbility);
-      
+
       // Use first time
       expect(playerAbilities.useRacialAbility()).toBe(true);
       expect(playerAbilities.canUseRacialAbility()).toBe(false); // On cooldown
-      
+
       // Process cooldowns
       playerAbilities.processRacialCooldowns(); // cooldown: 2
       playerAbilities.processRacialCooldowns(); // cooldown: 1
       playerAbilities.processRacialCooldowns(); // cooldown: 0
-      
+
       // Should be able to use again (still has uses left)
       expect(playerAbilities.canUseRacialAbility()).toBe(true);
-      
+
       // Use second time
       expect(playerAbilities.useRacialAbility()).toBe(true);
       expect(playerAbilities.canUseRacialAbility()).toBe(false); // No uses left and on cooldown
-      
+
       // Reset per-round uses
       playerAbilities.resetRacialPerRoundUses();
       expect(playerAbilities.canUseRacialAbility()).toBe(false); // Still on cooldown
-      
+
       // Process cooldowns to remove cooldown
       playerAbilities.processRacialCooldowns();
       playerAbilities.processRacialCooldowns();
       playerAbilities.processRacialCooldowns();
-      
+
       expect(playerAbilities.canUseRacialAbility()).toBe(true); // Can use again
     });
   });

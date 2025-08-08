@@ -263,17 +263,17 @@ describe('EntityAdapter', () => {
   describe('createEntitiesMap', () => {
     it('should create entities map with players only', () => {
       const players = new Map([
-        ['player1', { 
-          id: 'player1', 
-          name: 'Alice', 
-          hp: 100, 
-          maxHp: 100 
+        ['player1', {
+          id: 'player1',
+          name: 'Alice',
+          hp: 100,
+          maxHp: 100
         }],
-        ['player2', { 
-          id: 'player2', 
-          name: 'Bob', 
-          hp: 80, 
-          maxHp: 100 
+        ['player2', {
+          id: 'player2',
+          name: 'Bob',
+          hp: 80,
+          maxHp: 100
         }]
       ]);
 
@@ -288,11 +288,11 @@ describe('EntityAdapter', () => {
 
     it('should create entities map with players and monster', () => {
       const players = new Map([
-        ['player1', { 
-          id: 'player1', 
-          name: 'Alice', 
-          hp: 100, 
-          maxHp: 100 
+        ['player1', {
+          id: 'player1',
+          name: 'Alice',
+          hp: 100,
+          maxHp: 100
         }]
       ]);
       const monster = {
@@ -358,7 +358,7 @@ describe('EntityAdapter', () => {
 
     it('should process stone armor degradation for Rockhewn', () => {
       adaptedPlayer.processStoneArmorDegradation(2);
-      
+
       expect(adaptedPlayer.stoneArmorValue).toBe(2); // 3 - 1 (min degradation per hit)
       expect(adaptedPlayer.stoneArmorIntact).toBe(true);
     });
@@ -366,7 +366,7 @@ describe('EntityAdapter', () => {
     it('should break stone armor when value reaches zero', () => {
       adaptedPlayer.stoneArmorValue = 1;
       adaptedPlayer.processStoneArmorDegradation(5);
-      
+
       expect(adaptedPlayer.stoneArmorValue).toBe(0);
       expect(adaptedPlayer.stoneArmorIntact).toBe(false);
     });
@@ -381,7 +381,7 @@ describe('EntityAdapter', () => {
       });
 
       (humanPlayer as any).processStoneArmorDegradation(10);
-      
+
       expect((humanPlayer as any).stoneArmorValue).toBeUndefined();
     });
 
@@ -416,27 +416,27 @@ describe('EntityAdapter', () => {
 
     it('should provide legacy hasStatusEffect method', () => {
       adaptedPlayer.statusEffects = { poison: { duration: 3 } };
-      
+
       expect(adaptedPlayer.hasStatusEffect('poison')).toBe(true);
       expect(adaptedPlayer.hasStatusEffect('vulnerable')).toBe(false);
     });
 
     it('should provide legacy applyStatusEffect method', () => {
       adaptedPlayer.applyStatusEffect('poison', { duration: 5, damage: 3 });
-      
+
       expect(adaptedPlayer.statusEffects.poison).toBeDefined();
       expect(adaptedPlayer.statusEffects.poison.duration).toBe(5);
       expect(adaptedPlayer.statusEffects.poison.damage).toBe(3);
     });
 
     it('should provide legacy removeStatusEffect method', () => {
-      adaptedPlayer.statusEffects = { 
+      adaptedPlayer.statusEffects = {
         poison: { duration: 3 },
         vulnerable: { duration: 2 }
       };
-      
+
       adaptedPlayer.removeStatusEffect('poison');
-      
+
       expect(adaptedPlayer.statusEffects.poison).toBeUndefined();
       expect(adaptedPlayer.statusEffects.vulnerable).toBeDefined();
     });

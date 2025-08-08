@@ -1,0 +1,33 @@
+# Build directories
+client/build/
+server/dist/
+build/
+dist/
+
+# Generated files
+*.d.ts.map
+*.js.map
+*.d.js
+*.generated.js
+*.generated.ts
+
+# Dependencies
+node_modules/
+
+# Coverage
+coverage/
+
+# Logs
+*.log
+logs/
+
+# Environment files
+.env*
+
+# IDE files
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db

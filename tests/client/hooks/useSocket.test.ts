@@ -34,11 +34,11 @@ describe('useSocket', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    
+
     // Reset event handlers
     mockSocketEventHandlers = {};
     mockIoEventHandlers = {};
-    
+
     // Create mock socket
     mockSocket = {
       id: 'socket-123',
@@ -67,7 +67,7 @@ describe('useSocket', () => {
       disconnect: jest.fn(),
       removeAllListeners: jest.fn()
     };
-    
+
     mockIo.mockReturnValue(mockSocket);
   });
 
@@ -119,15 +119,15 @@ describe('useSocket', () => {
       // First hook creates connection
       const { unmount: unmount1 } = renderHook(() => useSocket('http://localhost:3000'));
       expect(mockIo).toHaveBeenCalledTimes(1);
-      
+
       // Don't unmount first hook yet
       // Second hook should reuse connection
       const { result: result2 } = renderHook(() => useSocket('http://localhost:3000'));
-      
+
       expect(mockIo).toHaveBeenCalledTimes(1); // No new connection created
       expect(result2.current.socket).toBe(mockSocket);
       expect(console.log).toHaveBeenCalledWith('Reusing existing socket connection to:', 'http://localhost:3000');
-      
+
       unmount1();
     });
 
@@ -157,7 +157,7 @@ describe('useSocket', () => {
 
       // Re-render with same props
       rerender({ url: 'http://localhost:3000' });
-      
+
       expect(mockIo).toHaveBeenCalledTimes(1); // Still only 1 call
     });
   });
@@ -267,7 +267,7 @@ describe('useSocket', () => {
 
     it('should return false when socket not connected', () => {
       const { result } = renderHook(() => useSocket('http://localhost:3000'));
-      
+
       // Disconnect socket
       act(() => {
         result.current.socket!.connected = false;
@@ -282,7 +282,7 @@ describe('useSocket', () => {
 
     it('should handle emit errors gracefully', () => {
       const { result } = renderHook(() => useSocket('http://localhost:3000'));
-      
+
       mockSocket.emit.mockImplementation(() => {
         throw new Error('Emit error');
       });
@@ -317,7 +317,7 @@ describe('useSocket', () => {
 
     it('should handle listener registration when socket not initialized', () => {
       const { result } = renderHook(() => useSocket('http://localhost:3000'));
-      
+
       // Remove socket reference
       act(() => {
         (result.current as any).socketRef.current = null;
@@ -328,7 +328,7 @@ describe('useSocket', () => {
 
       expect(console.warn).toHaveBeenCalledWith('Attempted to listen for custom-event but socket not initialized');
       expect(unsubscribe).toBeDefined();
-      
+
       // Unsubscribe should not throw
       expect(() => unsubscribe()).not.toThrow();
     });
@@ -344,7 +344,7 @@ describe('useSocket', () => {
 
       it('should return false when disconnected', () => {
         const { result } = renderHook(() => useSocket('http://localhost:3000'));
-        
+
         act(() => {
           // Simulate disconnect
           const disconnectHandler = mockSocketEventHandlers['disconnect'][0];
@@ -356,7 +356,7 @@ describe('useSocket', () => {
 
       it('should return false when socket is null', () => {
         const { result } = renderHook(() => useSocket('http://localhost:3000'));
-        
+
         act(() => {
           (result.current as any).socketRef.current = null;
         });
@@ -368,7 +368,7 @@ describe('useSocket', () => {
     describe('reconnect', () => {
       it('should attempt reconnection when disconnected', () => {
         const { result } = renderHook(() => useSocket('http://localhost:3000'));
-        
+
         act(() => {
           // Simulate disconnect
           const disconnectHandler = mockSocketEventHandlers['disconnect'][0];
@@ -400,7 +400,7 @@ describe('useSocket', () => {
   describe('edge cases', () => {
     it('should handle socket without ID', () => {
       mockSocket.id = undefined;
-      
+
       const { result } = renderHook(() => useSocket('http://localhost:3000'));
 
       expect(result.current.socketId).toBe(null);
@@ -408,7 +408,7 @@ describe('useSocket', () => {
 
     it('should maintain socketId after disconnect', () => {
       const { result } = renderHook(() => useSocket('http://localhost:3000'));
-      
+
       const initialSocketId = result.current.socketId;
 
       act(() => {
@@ -424,17 +424,17 @@ describe('useSocket', () => {
     it('should handle existing but disconnected socket in cache', () => {
       // Create a disconnected socket in cache
       mockSocket.connected = false;
-      
+
       // First render creates disconnected socket
       const { unmount: unmount1 } = renderHook(() => useSocket('http://localhost:3000'));
-      
+
       // Second render should create new socket since cached one is disconnected
       mockSocket.connected = true; // Reset for new socket
       const { result: result2 } = renderHook(() => useSocket('http://localhost:3000'));
-      
+
       expect(mockIo).toHaveBeenCalledTimes(2); // New socket created
       expect(console.log).toHaveBeenCalledWith('Creating new socket connection to:', 'http://localhost:3000');
-      
+
       unmount1();
     });
   });

@@ -4,6 +4,8 @@
  * All TypeScript errors have been resolved
  */
 
+import { createActionLog, createDamageLog } from '../../../../../utils/logEntry.js';
+import { secureId } from '../../../../../utils/secureRandom.js';
 import type { Player, Monster, Ability } from '../../../../../types/generated.js';
 import type {
   AbilityHandler,
@@ -58,7 +60,7 @@ export const handleVulnerabilityStrike: AbilityHandler = (
     const duration = Number(vulnParams.duration) || 2;
 
     const statusResult = systems.statusEffectManager?.applyStatusEffect?.(target, {
-      id: `vulnerability-${Date.now()}`,
+      id: secureId('vulnerability'),
       name: 'vulnerable',
       type: 'debuff',
       duration,
@@ -71,22 +73,22 @@ export const handleVulnerabilityStrike: AbilityHandler = (
 
     if (statusResult.success) {
       const targetName = (target as Player).name || (target as Monster).name;
-      
-      log.push({
-        id: `vulnerability-strike-success-${Date.now()}`,
-        timestamp: Date.now(),
-        type: 'damage',
-        source: actor.id,
-        target: target.id,
-        message: `${actor.name} strikes ${targetName} for ${damageResult.finalDamage} damage and applies vulnerability (${vulnerabilityMultiplier}x damage for ${duration} turns)!`,
-        details: {
-          damage: damageResult.finalDamage,
-          vulnerabilityMultiplier,
-          duration
-        },
-        public: true,
-        priority: 'high'
-      });
+
+      log.push(createDamageLog(
+        actor.id,
+        target.id,
+        damageResult.finalDamage,
+        `${actor.name} strikes ${targetName} for ${damageResult.finalDamage} damage and applies vulnerability (${vulnerabilityMultiplier}x damage for ${duration} turns)!`,
+        {
+          details: {
+            damage: damageResult.finalDamage,
+            vulnerabilityMultiplier,
+            duration
+          },
+          priority: 'high',
+          public: true
+        }
+      ));
 
       applyThreatForAbility(actor, target, ability, finalDamage, 0, systems);
       return true;
@@ -95,17 +97,13 @@ export const handleVulnerabilityStrike: AbilityHandler = (
 
   // Just log the damage if vulnerability failed
   const targetName = (target as Player).name || (target as Monster).name;
-  log.push({
-    id: `vulnerability-strike-partial-${Date.now()}`,
-    timestamp: Date.now(),
-    type: 'damage',
-    source: actor.id,
-    target: target.id,
-    message: `${actor.name} strikes ${targetName} for ${damageResult.finalDamage} damage but fails to apply vulnerability`,
-    details: { damage: damageResult.finalDamage },
-    public: true,
-    priority: 'high'
-  });
+  log.push(createDamageLog(
+    actor.id,
+    target.id,
+    damageResult.finalDamage,
+    `${actor.name} strikes ${targetName} for ${damageResult.finalDamage} damage but fails to apply vulnerability`,
+    { details: { damage: damageResult.finalDamage }, priority: 'high', public: true }
+  ));
 
   applyThreatForAbility(actor, target, ability, finalDamage, 0, systems);
   return true;
@@ -130,17 +128,12 @@ export const handleRecklessStrike: AbilityHandler = (
   if (target.hasOwnProperty('isAlive') && (target as any)['statusEffects']) {
     const targetPlayer = target as Player;
     if (targetPlayer.statusEffects && (targetPlayer.statusEffects as any)['invisible']) {
-      log.push({
-        id: `reckless-strike-invisible-${Date.now()}`,
-        timestamp: Date.now(),
-        type: 'action',
-        source: actor.id,
-        target: target.id,
-        message: `${actor.name} attacks ${(target as Player).name} recklessly but misses due to invisibility!`,
-        details: { reason: 'target_invisible' },
-        public: true,
-        priority: 'medium'
-      });
+      log.push(createActionLog(
+        actor.id,
+        target.id,
+        `${actor.name} attacks ${(target as Player).name} recklessly but misses due to invisibility!`,
+        { details: { reason: 'target_invisible' }, priority: 'medium', public: true }
+      ));
       return false;
     }
   }
@@ -173,24 +166,24 @@ export const handleRecklessStrike: AbilityHandler = (
   if (damageResult.success) {
     // Apply self-damage to actor
     actor.hp = Math.max(0, actor.hp - selfDamage);
-    
+
     const targetName = (target as Player).name || (target as Monster).name;
-    log.push({
-      id: `reckless-strike-success-${Date.now()}`,
-      timestamp: Date.now(),
-      type: 'damage',
-      source: actor.id,
-      target: target.id,
-      message: `${actor.name} strikes ${targetName} recklessly for ${damageResult.finalDamage} damage, taking ${selfDamage} damage in return!`,
-      details: {
-        damage: damageResult.finalDamage,
-        recklessBonus: recklessDamage - baseDamage,
-        selfDamage,
-        wasCritical: false
-      },
-      public: true,
-      priority: 'high'
-    });
+    log.push(createDamageLog(
+      actor.id,
+      target.id,
+      damageResult.finalDamage,
+      `${actor.name} strikes ${targetName} recklessly for ${damageResult.finalDamage} damage, taking ${selfDamage} damage in return!`,
+      {
+        details: {
+          damage: damageResult.finalDamage,
+          recklessBonus: recklessDamage - baseDamage,
+          selfDamage,
+          wasCritical: false
+        },
+        priority: 'high',
+        public: true
+      }
+    ));
 
     applyThreatForAbility(actor, target, ability, finalDamage, 0, systems);
     return true;
@@ -235,7 +228,7 @@ export const handleBarbedArrow: AbilityHandler = (
     const bleedDuration = 3; // 3 turns
 
     systems.statusEffectManager?.applyStatusEffect?.(target, {
-      id: `bleed-${Date.now()}`,
+      id: secureId('bleed'),
       name: 'bleeding',
       type: 'debuff',
       duration: bleedDuration,
@@ -247,21 +240,21 @@ export const handleBarbedArrow: AbilityHandler = (
     });
 
     const targetName = (target as Player).name || (target as Monster).name;
-    log.push({
-      id: `barbed-arrow-success-${Date.now()}`,
-      timestamp: Date.now(),
-      type: 'damage',
-      source: actor.id,
-      target: target.id,
-      message: `${actor.name} hits ${targetName} with a barbed arrow for ${damageResult.finalDamage} damage, causing bleeding!`,
-      details: {
-        damage: damageResult.finalDamage,
-        bleedDamage,
-        bleedDuration
-      },
-      public: true,
-      priority: 'high'
-    });
+    log.push(createDamageLog(
+      actor.id,
+      target.id,
+      damageResult.finalDamage,
+      `${actor.name} hits ${targetName} with a barbed arrow for ${damageResult.finalDamage} damage, causing bleeding!`,
+      {
+        details: {
+          damage: damageResult.finalDamage,
+          bleedDamage,
+          bleedDuration
+        },
+        priority: 'high',
+        public: true
+      }
+    ));
 
     applyThreatForAbility(actor, target, ability, finalDamage, 0, systems);
     return true;
@@ -269,17 +262,12 @@ export const handleBarbedArrow: AbilityHandler = (
 
   // Log miss
   const targetName = (target as Player).name || (target as Monster).name;
-  log.push({
-    id: `barbed-arrow-miss-${Date.now()}`,
-    timestamp: Date.now(),
-    type: 'damage',
-    source: actor.id,
-    target: target.id,
-    message: `${actor.name}'s barbed arrow misses ${targetName}!`,
-    details: { damage: 0 },
-    public: true,
-    priority: 'high'
-  });
+  log.push(createActionLog(
+    actor.id,
+    target.id,
+    `${actor.name}'s barbed arrow misses ${targetName}!`,
+    { details: { damage: 0 }, priority: 'high', public: true }
+  ));
 
   applyThreatForAbility(actor, target, ability, 0, 0, systems);
   return true;
@@ -324,7 +312,7 @@ export const handlePyroblast: AbilityHandler = (
     let appliedBurn = false;
 
     const burnResult = systems.statusEffectManager?.applyStatusEffect?.(target, {
-      id: `burn-${Date.now()}`,
+      id: secureId('burn'),
       name: 'burning',
       type: 'debuff',
       duration: burnDuration,
@@ -341,21 +329,21 @@ export const handlePyroblast: AbilityHandler = (
 
     const targetName = (target as Player).name || (target as Monster).name;
     const burnText = appliedBurn ? ', setting them ablaze!' : '!';
-    
-    log.push({
-      id: `pyroblast-success-${Date.now()}`,
-      timestamp: Date.now(),
-      type: 'damage',
-      source: actor.id,
-      target: target.id,
-      message: `${actor.name} unleashes a pyroblast at ${targetName} for ${damageResult.finalDamage} fire damage${burnText}`,
-      details: {
-        damage: damageResult.finalDamage,
-        appliedBurn
-      },
-      public: true,
-      priority: 'high'
-    });
+
+    log.push(createDamageLog(
+      actor.id,
+      target.id,
+      damageResult.finalDamage,
+      `${actor.name} unleashes a pyroblast at ${targetName} for ${damageResult.finalDamage} fire damage${burnText}`,
+      {
+        details: {
+          damage: damageResult.finalDamage,
+          appliedBurn
+        },
+        priority: 'high',
+        public: true
+      }
+    ));
 
     applyThreatForAbility(actor, target, ability, finalDamage, 0, systems);
     return true;

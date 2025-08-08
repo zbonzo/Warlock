@@ -8,7 +8,7 @@ import type { Ability, AbilitiesMap } from '../schemas/ability.schema.js';
 /**
  * Master ability registry containing all abilities in the game
  * Abilities can be referenced by their ID from classes or other systems
- * 
+ *
  * Structure:
  * - id: Unique identifier (same as type)
  * - name: Display name
@@ -23,7 +23,7 @@ import type { Ability, AbilitiesMap } from '../schemas/ability.schema.js';
  */
 const abilities: AbilitiesMap = {
   // ========== ATTACK ABILITIES ==========
-  
+
   // Basic Attacks
   attack: {
     id: 'attack',

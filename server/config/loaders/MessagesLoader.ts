@@ -1,13 +1,13 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { fileURLToPath } from 'url';
-import { 
-  MessagesConfig, 
+import {
+  MessagesConfig,
   MessageCategory,
   AbilityMessages,
   ServerLogMessages,
   validateMessagesConfig,
-  safeValidateMessagesConfig 
+  safeValidateMessagesConfig
 } from '../schemas/messages.schema.js';
 
 // ES module __dirname equivalent
@@ -118,7 +118,7 @@ export class MessagesLoader {
    */
   public getMessage(category: string, key: string): string | null {
     this.reloadIfChanged();
-    
+
     const categories = {
       errors: this.messagesConfig.errors,
       success: this.messagesConfig.success,
@@ -126,7 +126,7 @@ export class MessagesLoader {
       privateMessages: this.messagesConfig.privateMessages,
       winConditions: this.messagesConfig.winConditions,
     };
-    
+
     return categories[category as keyof typeof categories]?.[key] || null;
   }
 
@@ -135,7 +135,7 @@ export class MessagesLoader {
    */
   public getAbilityMessage(category: string, key: string): string | null {
     this.reloadIfChanged();
-    
+
     const categoryPath = category.split('.');
     let messageConfig: any = this.messagesConfig;
 
@@ -271,14 +271,14 @@ export class MessagesLoader {
    */
   public searchMessages(searchText: string): Array<{ category: string; key: string; message: string }> {
     this.reloadIfChanged();
-    
+
     const results: Array<{ category: string; key: string; message: string }> = [];
     const searchLower = searchText.toLowerCase();
 
     const searchInCategory = (categoryName: string, categoryData: any, parentPath: string = '') => {
       for (const [key, value] of Object.entries(categoryData)) {
         const fullPath = parentPath ? `${parentPath}.${key}` : key;
-        
+
         if (typeof value === 'string') {
           if (value.toLowerCase().includes(searchLower)) {
             results.push({
@@ -312,7 +312,7 @@ export class MessagesLoader {
     uniquePlaceholders: Set<string>;
   } {
     this.reloadIfChanged();
-    
+
     let totalMessages = 0;
     let totalLength = 0;
     let messagesWithPlaceholders = 0;
@@ -321,13 +321,13 @@ export class MessagesLoader {
 
     const countInCategory = (categoryName: string, categoryData: any) => {
       let categoryCount = 0;
-      
+
       for (const [, value] of Object.entries(categoryData)) {
         if (typeof value === 'string') {
           totalMessages++;
           categoryCount++;
           totalLength += value.length;
-          
+
           // Check for placeholders
           const placeholders = value.match(/{(\w+)}/g);
           if (placeholders) {
@@ -340,7 +340,7 @@ export class MessagesLoader {
           categoryCount += countInCategory(categoryName, value);
         }
       }
-      
+
       return categoryCount;
     };
 
@@ -367,7 +367,7 @@ export class MessagesLoader {
     unusedPlaceholders: string[];
   } {
     this.reloadIfChanged();
-    
+
     const warnings: string[] = [];
     const allPlaceholders = new Set<string>();
 
@@ -388,7 +388,7 @@ export class MessagesLoader {
             placeholders.forEach(placeholder => {
               const placeholderKey = placeholder.slice(1, -1);
               allPlaceholders.add(placeholderKey);
-              
+
               if (!expectedContextKeys.has(placeholderKey)) {
                 warnings.push(`Unexpected placeholder '{${placeholderKey}}' in ${categoryPath}.${key}`);
               }

@@ -11,15 +11,7 @@ import type {
   GamePhase,
   PlayerClass,
   PlayerRace,
-  PlayerRole,
-  Ability,
-  StatusEffect,
-  Monster,
-  PlayerStats,
-  PlayerAction,
-  CreatePlayerInput,
-  GameRules,
-  Position
+  PlayerRole
 } from '../../server/types/generated';
 
 // Re-export all generated server types for client usage
@@ -52,49 +44,49 @@ export interface NotificationState {
 export interface ClientToServerEvents {
   // Connection events
   'connection:ping': () => void;
-  'connection:authenticate': (data: { token?: string }) => void;
-  
+  'connection:authenticate': (_data: { token?: string }) => void;
+
   // Game events
-  'game:join': (data: { gameCode: string; playerData: CreatePlayerData }) => void;
-  'game:leave': (data: { playerId: string }) => void;
-  'game:ready': (data: { playerId: string; isReady: boolean }) => void;
+  'game:join': (_data: { gameCode: string; playerData: CreatePlayerData }) => void;
+  'game:leave': (_data: { playerId: string }) => void;
+  'game:ready': (_data: { playerId: string; isReady: boolean }) => void;
   'game:start': () => void;
-  
+
   // Action events
-  'action:submit': (data: { action: PlayerActionData }) => void;
-  'action:ability': (data: { abilityId: string; targetId?: string }) => void;
-  'action:vote': (data: { targetId: string }) => void;
-  
+  'action:submit': (_data: { action: PlayerActionData }) => void;
+  'action:ability': (_data: { abilityId: string; targetId?: string }) => void;
+  'action:vote': (_data: { targetId: string }) => void;
+
   // Chat events
-  'chat:message': (data: { message: string; channel: ChatChannel }) => void;
-  'chat:typing': (data: { isTyping: boolean }) => void;
+  'chat:message': (_data: { message: string; channel: ChatChannel }) => void;
+  'chat:typing': (_data: { isTyping: boolean }) => void;
 }
 
 export interface ServerToClientEvents {
   // Connection events
   'connection:pong': () => void;
-  'connection:authenticated': (data: { success: boolean; playerId?: string }) => void;
-  'connection:error': (data: { message: string; code?: string }) => void;
-  
+  'connection:authenticated': (_data: { success: boolean; playerId?: string }) => void;
+  'connection:error': (_data: { message: string; code?: string }) => void;
+
   // Game state events
-  'game:stateUpdate': (data: GameStateUpdate) => void;
-  'game:phaseChange': (data: PhaseChangeData) => void;
-  'game:playerUpdate': (data: PlayerUpdateData) => void;
-  'game:ended': (data: GameEndData) => void;
-  
+  'game:stateUpdate': (_data: GameStateUpdate) => void;
+  'game:phaseChange': (_data: PhaseChangeData) => void;
+  'game:playerUpdate': (_data: PlayerUpdateData) => void;
+  'game:ended': (_data: GameEndData) => void;
+
   // Action feedback
-  'action:result': (data: ActionResultData) => void;
-  'action:invalid': (data: { reason: string; suggestion?: string }) => void;
-  
+  'action:result': (_data: ActionResultData) => void;
+  'action:invalid': (_data: { reason: string; suggestion?: string }) => void;
+
   // Event notifications
-  'event:damage': (data: DamageEventData) => void;
-  'event:heal': (data: HealEventData) => void;
-  'event:death': (data: DeathEventData) => void;
-  'event:ability': (data: AbilityEventData) => void;
-  
+  'event:damage': (_data: DamageEventData) => void;
+  'event:heal': (_data: HealEventData) => void;
+  'event:death': (_data: DeathEventData) => void;
+  'event:ability': (_data: AbilityEventData) => void;
+
   // Chat events
-  'chat:message': (data: ChatMessageData) => void;
-  'chat:userTyping': (data: { userId: string; isTyping: boolean }) => void;
+  'chat:message': (_data: ChatMessageData) => void;
+  'chat:userTyping': (_data: { userId: string; isTyping: boolean }) => void;
 }
 
 // Data structures for socket events
@@ -249,7 +241,7 @@ export type GamePhaseInfo = {
 };
 
 // Re-export commonly used types with better names
-export type { 
+export type {
   Player,
   GameState,
   GamePhase,

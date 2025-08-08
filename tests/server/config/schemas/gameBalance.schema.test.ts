@@ -48,7 +48,7 @@ describe('GameBalance Schema Validation', () => {
       };
 
       const result = GameBalanceSchema.safeParse(validGameBalance);
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.data.monster.baseHp).toBe(100);
@@ -79,7 +79,7 @@ describe('GameBalance Schema Validation', () => {
       };
 
       const result = GameBalanceSchema.safeParse(minimalGameBalance);
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.data.monster.baseHp).toBe(50);
@@ -106,10 +106,10 @@ describe('GameBalance Schema Validation', () => {
       };
 
       const result = GameBalanceSchema.safeParse(invalidConfig);
-      
+
       expect(result.success).toBe(false);
       if (!result.success) {
-        expect(result.error.issues.some(issue => 
+        expect(result.error.issues.some(issue =>
           issue.path.includes('baseHp') && issue.code === 'too_small'
         )).toBe(true);
       }
@@ -132,10 +132,10 @@ describe('GameBalance Schema Validation', () => {
       };
 
       const result = GameBalanceSchema.safeParse(invalidConfig);
-      
+
       expect(result.success).toBe(false);
       if (!result.success) {
-        expect(result.error.issues.some(issue => 
+        expect(result.error.issues.some(issue =>
           issue.path.includes('baseDamage') && issue.code === 'too_small'
         )).toBe(true);
       }
@@ -159,10 +159,10 @@ describe('GameBalance Schema Validation', () => {
       };
 
       const result = GameBalanceSchema.safeParse(invalidConfig);
-      
+
       expect(result.success).toBe(false);
       if (!result.success) {
-        expect(result.error.issues.some(issue => 
+        expect(result.error.issues.some(issue =>
           issue.path.includes('levelMultiplier') && issue.code === 'too_small'
         )).toBe(true);
       }
@@ -186,10 +186,10 @@ describe('GameBalance Schema Validation', () => {
       };
 
       const result = GameBalanceSchema.safeParse(invalidConfig);
-      
+
       expect(result.success).toBe(false);
       if (!result.success) {
-        expect(result.error.issues.some(issue => 
+        expect(result.error.issues.some(issue =>
           issue.path.includes('damageVariance') && issue.code === 'too_big'
         )).toBe(true);
       }
@@ -220,7 +220,7 @@ describe('GameBalance Schema Validation', () => {
       };
 
       const result = GameBalanceSchema.safeParse(validConfig);
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.data.player.levelUp.hpIncrease).toBe(0.25);
@@ -247,7 +247,7 @@ describe('GameBalance Schema Validation', () => {
       };
 
       const result = GameBalanceSchema.safeParse(invalidConfig);
-      
+
       expect(result.success).toBe(false);
     });
 
@@ -271,10 +271,10 @@ describe('GameBalance Schema Validation', () => {
       };
 
       const result = GameBalanceSchema.safeParse(invalidConfig);
-      
+
       expect(result.success).toBe(false);
       if (!result.success) {
-        expect(result.error.issues.some(issue => 
+        expect(result.error.issues.some(issue =>
           issue.path.includes('damageIncrease') && issue.code === 'too_small'
         )).toBe(true);
       }
@@ -308,7 +308,7 @@ describe('GameBalance Schema Validation', () => {
       };
 
       const result = GameBalanceSchema.safeParse(validConfig);
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.data.combat.armorReduction).toBe(0.15);
@@ -334,7 +334,7 @@ describe('GameBalance Schema Validation', () => {
       };
 
       const result = GameBalanceSchema.safeParse(invalidConfig);
-      
+
       expect(result.success).toBe(false);
     });
 
@@ -356,7 +356,7 @@ describe('GameBalance Schema Validation', () => {
       };
 
       const result = GameBalanceSchema.safeParse(invalidConfig);
-      
+
       expect(result.success).toBe(false);
     });
 
@@ -381,7 +381,7 @@ describe('GameBalance Schema Validation', () => {
       };
 
       const result = GameBalanceSchema.safeParse(invalidConfig);
-      
+
       expect(result.success).toBe(false);
       if (!result.success) {
         expect(result.error.issues.length).toBeGreaterThan(0);
@@ -412,7 +412,7 @@ describe('GameBalance Schema Validation', () => {
       };
 
       const result = GameBalanceSchema.safeParse(validConfig);
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.data.rounds?.maxRounds).toBe(30);
@@ -442,7 +442,7 @@ describe('GameBalance Schema Validation', () => {
       };
 
       const result = GameBalanceSchema.safeParse(invalidConfig);
-      
+
       expect(result.success).toBe(false);
     });
 
@@ -468,7 +468,7 @@ describe('GameBalance Schema Validation', () => {
       };
 
       const result = GameBalanceSchema.safeParse(invalidConfig);
-      
+
       expect(result.success).toBe(false);
     });
   });
@@ -476,7 +476,7 @@ describe('GameBalance Schema Validation', () => {
   describe('Type Inference and Integration', () => {
     it('should provide correct TypeScript types', () => {
       type GameBalanceType = z.infer<typeof GameBalanceSchema>;
-      
+
       const gameBalance: GameBalanceType = {
         monster: {
           baseHp: 100,
@@ -525,11 +525,11 @@ describe('GameBalance Schema Validation', () => {
       };
 
       const result = GameBalanceSchema.safeParse(deeplyInvalidConfig);
-      
+
       expect(result.success).toBe(false);
       if (!result.success) {
         expect(result.error.issues.length).toBeGreaterThan(5);
-        
+
         // Verify we get errors from all nested levels
         const paths = result.error.issues.map(issue => issue.path.join('.'));
         expect(paths.some(path => path.includes('monster'))).toBe(true);

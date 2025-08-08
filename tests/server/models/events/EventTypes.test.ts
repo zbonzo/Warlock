@@ -149,7 +149,7 @@ describe('EventTypes', () => {
 
     it('should have unique event type values', () => {
       const allEventTypes: string[] = [];
-      
+
       function collectEventTypes(obj: any) {
         for (const key in obj) {
           if (typeof obj[key] === 'string') {
@@ -159,9 +159,9 @@ describe('EventTypes', () => {
           }
         }
       }
-      
+
       collectEventTypes(EventTypes);
-      
+
       const uniqueTypes = new Set(allEventTypes);
       expect(uniqueTypes.size).toBe(allEventTypes.length);
     });
@@ -416,7 +416,7 @@ describe('EventTypes', () => {
       };
 
       const result = validateEventData(EventTypes.GAME.CREATED, validData);
-      
+
       expect(result.valid).toBe(true);
       expect(result.errors).toEqual([]);
     });
@@ -429,14 +429,14 @@ describe('EventTypes', () => {
       };
 
       const result = validateEventData(EventTypes.GAME.CREATED, invalidData);
-      
+
       expect(result.valid).toBe(false);
       expect(result.errors.length).toBeGreaterThan(0);
     });
 
     it('should return valid for events without schemas', () => {
       const result = validateEventData('unknown.event' as EventType, {});
-      
+
       expect(result.valid).toBe(true);
       expect(result.errors).toEqual([]);
     });
@@ -453,7 +453,7 @@ describe('EventTypes', () => {
       (EventSchemas as any)[EventTypes.GAME.CREATED] = mockSchema;
 
       const result = validateEventData(EventTypes.GAME.CREATED, {});
-      
+
       expect(result.valid).toBe(false);
       expect(result.errors).toContain('Validation error: Custom validation error');
 
@@ -465,7 +465,7 @@ describe('EventTypes', () => {
   describe('getEventsByCategory function', () => {
     it('should return events for valid category', () => {
       const gameLifecycleEvents = getEventsByCategory('GAME_LIFECYCLE');
-      
+
       expect(gameLifecycleEvents).toContain(EventTypes.GAME.CREATED);
       expect(gameLifecycleEvents).toContain(EventTypes.GAME.STARTED);
       expect(gameLifecycleEvents).toContain(EventTypes.GAME.ENDED);
@@ -473,13 +473,13 @@ describe('EventTypes', () => {
 
     it('should return empty array for invalid category', () => {
       const invalidEvents = getEventsByCategory('INVALID_CATEGORY' as any);
-      
+
       expect(invalidEvents).toEqual([]);
     });
 
     it('should return readonly array', () => {
       const events = getEventsByCategory('GAME_LIFECYCLE');
-      
+
       // TypeScript should enforce readonly, but we can test runtime behavior
       expect(Array.isArray(events)).toBe(true);
     });
@@ -608,7 +608,7 @@ describe('EventTypes', () => {
 
     it('should provide proper EventPayload extraction', () => {
       type GameCreatedPayload = EventPayload<typeof EventTypes.GAME.CREATED>;
-      
+
       const payload: GameCreatedPayload = {
         timestamp: new Date().toISOString(),
         gameCode: 'GAME123',
@@ -633,7 +633,7 @@ describe('EventTypes', () => {
   describe('Schema Coverage', () => {
     it('should have schemas for all mapped event types', () => {
       const schemaEventTypes = Object.keys(EventSchemas);
-      
+
       expect(schemaEventTypes).toContain(EventTypes.GAME.CREATED);
       expect(schemaEventTypes).toContain(EventTypes.GAME.STARTED);
       expect(schemaEventTypes).toContain(EventTypes.GAME.ENDED);
@@ -702,10 +702,10 @@ describe('EventTypes', () => {
     it('should categorize events correctly for filtering', () => {
       const combatEvents = getEventsByCategory('COMBAT_EFFECTS');
       const gameLifecycleEvents = getEventsByCategory('GAME_LIFECYCLE');
-      
+
       expect(combatEvents).toContain(EventTypes.DAMAGE.APPLIED);
       expect(combatEvents).not.toContain(EventTypes.GAME.CREATED);
-      
+
       expect(gameLifecycleEvents).toContain(EventTypes.GAME.CREATED);
       expect(gameLifecycleEvents).not.toContain(EventTypes.DAMAGE.APPLIED);
     });
@@ -715,14 +715,14 @@ describe('EventTypes', () => {
     it('should handle null/undefined event data', () => {
       const result1 = validateEventData(EventTypes.GAME.CREATED, null);
       const result2 = validateEventData(EventTypes.GAME.CREATED, undefined);
-      
+
       expect(result1.valid).toBe(false);
       expect(result2.valid).toBe(false);
     });
 
     it('should handle empty objects', () => {
       const result = validateEventData(EventTypes.GAME.CREATED, {});
-      
+
       expect(result.valid).toBe(false);
       expect(result.errors.length).toBeGreaterThan(0);
     });

@@ -56,7 +56,7 @@ describe('EventsLog', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockUseTheme.mockReturnValue('light');
-    
+
     // Mock console.log to avoid noise in tests
     jest.spyOn(console, 'log').mockImplementation(() => {});
   });
@@ -68,19 +68,19 @@ describe('EventsLog', () => {
   describe('Basic Rendering', () => {
     it('should render with title', () => {
       render(<EventsLog {...defaultProps} />);
-      
+
       expect(screen.getByText('Battle Log')).toBeInTheDocument();
     });
 
     it('should show empty message when no events', () => {
       render(<EventsLog {...defaultProps} />);
-      
+
       expect(screen.getByText('No events yet')).toBeInTheDocument();
     });
 
     it('should render events container', () => {
       const { container } = render(<EventsLog {...defaultProps} />);
-      
+
       expect(container.querySelector('.events-log-container')).toBeInTheDocument();
       expect(container.querySelector('.events-log-content')).toBeInTheDocument();
     });
@@ -89,9 +89,9 @@ describe('EventsLog', () => {
   describe('String Events (Legacy)', () => {
     it('should render legacy string events', () => {
       const events = ['Player attacks monster', 'Monster takes damage'];
-      
+
       render(<EventsLog {...defaultProps} events={events} />);
-      
+
       expect(screen.getByText('Player attacks monster')).toBeInTheDocument();
       expect(screen.getByText('Monster takes damage')).toBeInTheDocument();
     });
@@ -99,10 +99,10 @@ describe('EventsLog', () => {
     it('should apply correct CSS classes to string events', () => {
       const events = ['Alice attacked the monster', 'Bob healed Charlie'];
       const { container } = render(<EventsLog {...defaultProps} events={events} />);
-      
+
       const attackEvent = container.querySelector('.attack-event');
       const healEvent = container.querySelector('.heal-event');
-      
+
       expect(attackEvent).toBeInTheDocument();
       expect(healEvent).toBeInTheDocument();
     });
@@ -110,7 +110,7 @@ describe('EventsLog', () => {
     it('should apply alternating even/odd classes', () => {
       const events = ['Event 1', 'Event 2', 'Event 3'];
       const { container } = render(<EventsLog {...defaultProps} events={events} />);
-      
+
       const entries = container.querySelectorAll('.events-log-entry');
       expect(entries[0]).toHaveClass('even');
       expect(entries[1]).toHaveClass('odd');
@@ -125,9 +125,9 @@ describe('EventsLog', () => {
         message: 'Alice deals 10 damage to Bob',
         public: true
       }];
-      
+
       render(<EventsLog {...defaultProps} events={events} />);
-      
+
       expect(screen.getByText('Alice deals 10 damage to Bob')).toBeInTheDocument();
     });
 
@@ -140,9 +140,9 @@ describe('EventsLog', () => {
         damage: 15,
         public: true
       }];
-      
+
       render(<EventsLog {...defaultProps} events={events} />);
-      
+
       expect(screen.getByText('Bob deals 15 damage to Charlie')).toBeInTheDocument();
     });
 
@@ -154,9 +154,9 @@ describe('EventsLog', () => {
         targetId: '__monster__',
         public: true
       }];
-      
+
       render(<EventsLog {...defaultProps} events={events} />);
-      
+
       expect(screen.getByText('Alice attacks the Monster')).toBeInTheDocument();
     });
 
@@ -169,9 +169,9 @@ describe('EventsLog', () => {
         damage: { final: 8, initial: 12, reduction: 4 },
         public: true
       }];
-      
+
       render(<EventsLog {...defaultProps} events={events} />);
-      
+
       expect(screen.getByText('Alice deals 8 damage (reduced from 12)')).toBeInTheDocument();
     });
   });
@@ -187,9 +187,9 @@ describe('EventsLog', () => {
         targetId: 'player2',
         public: true
       }];
-      
+
       render(<EventsLog {...defaultProps} events={events} />);
-      
+
       expect(screen.getByText('You attack Bob for 10 damage')).toBeInTheDocument();
     });
 
@@ -203,9 +203,9 @@ describe('EventsLog', () => {
         targetId: 'player1',
         public: true
       }];
-      
+
       render(<EventsLog {...defaultProps} events={events} />);
-      
+
       expect(screen.getByText('Alice attacks you for 10 damage')).toBeInTheDocument();
     });
 
@@ -219,9 +219,9 @@ describe('EventsLog', () => {
         targetId: 'player3',
         public: true
       }];
-      
+
       render(<EventsLog {...defaultProps} events={events} />);
-      
+
       expect(screen.getByText('Bob attacks Charlie')).toBeInTheDocument();
     });
   });
@@ -233,9 +233,9 @@ describe('EventsLog', () => {
         message: 'Public event',
         public: true
       }];
-      
+
       render(<EventsLog {...defaultProps} events={events} />);
-      
+
       expect(screen.getByText('Public event')).toBeInTheDocument();
     });
 
@@ -247,9 +247,9 @@ describe('EventsLog', () => {
         targetId: 'player2',
         public: false
       }];
-      
+
       render(<EventsLog {...defaultProps} events={events} />);
-      
+
       expect(screen.getByText('Private event')).toBeInTheDocument();
     });
 
@@ -261,9 +261,9 @@ describe('EventsLog', () => {
         targetId: 'player3',
         public: false
       }];
-      
+
       render(<EventsLog {...defaultProps} events={events} />);
-      
+
       expect(screen.queryByText('Private event')).not.toBeInTheDocument();
     });
 
@@ -274,9 +274,9 @@ describe('EventsLog', () => {
         visibleTo: ['player1', 'player3'],
         public: false
       }];
-      
+
       render(<EventsLog {...defaultProps} events={events} />);
-      
+
       expect(screen.getByText('Special private event')).toBeInTheDocument();
     });
 
@@ -287,9 +287,9 @@ describe('EventsLog', () => {
         visibleTo: ['player2', 'player3'],
         public: false
       }];
-      
+
       render(<EventsLog {...defaultProps} events={events} />);
-      
+
       expect(screen.queryByText('Special private event')).not.toBeInTheDocument();
     });
   });
@@ -301,9 +301,9 @@ describe('EventsLog', () => {
         message: 'Damage event',
         public: true
       }];
-      
+
       const { container } = render(<EventsLog {...defaultProps} events={events} />);
-      
+
       expect(container.querySelector('.event-damage')).toBeInTheDocument();
     });
 
@@ -315,9 +315,9 @@ describe('EventsLog', () => {
         targetId: 'player2',
         public: true
       }];
-      
+
       const { container } = render(<EventsLog {...defaultProps} events={events} />);
-      
+
       expect(container.querySelector('.event-you-acted')).toBeInTheDocument();
     });
 
@@ -329,9 +329,9 @@ describe('EventsLog', () => {
         targetId: 'player1',
         public: true
       }];
-      
+
       const { container } = render(<EventsLog {...defaultProps} events={events} />);
-      
+
       expect(container.querySelector('.event-you-target')).toBeInTheDocument();
     });
 
@@ -343,9 +343,9 @@ describe('EventsLog', () => {
         targetId: 'player3',
         public: true
       }];
-      
+
       const { container } = render(<EventsLog {...defaultProps} events={events} />);
-      
+
       expect(container.querySelector('.event-observer')).toBeInTheDocument();
     });
 
@@ -368,9 +368,9 @@ describe('EventsLog', () => {
           message,
           public: true
         }];
-        
+
         const { container } = render(<EventsLog {...defaultProps} events={events} />);
-        
+
         expect(container.querySelector(`.${expectedClass}`)).toBeInTheDocument();
       });
     });
@@ -385,9 +385,9 @@ describe('EventsLog', () => {
         targetId: 'player2',
         public: true
       }];
-      
+
       render(<EventsLog {...defaultProps} players={[]} events={events} />);
-      
+
       expect(screen.getByText('a player attacks another player')).toBeInTheDocument();
     });
 
@@ -399,9 +399,9 @@ describe('EventsLog', () => {
         targetId: 'unknown2',
         public: true
       }];
-      
+
       render(<EventsLog {...defaultProps} events={events} />);
-      
+
       expect(screen.getByText('a player attacks another player')).toBeInTheDocument();
     });
 
@@ -412,9 +412,9 @@ describe('EventsLog', () => {
         attackerId: 'player1',
         public: true
       }];
-      
+
       render(<EventsLog {...defaultProps} events={events} />);
-      
+
       expect(screen.getByText('Alice uses {unknownVariable}')).toBeInTheDocument();
     });
 
@@ -425,9 +425,9 @@ describe('EventsLog', () => {
         attackerId: 'player1',
         public: true
       }];
-      
+
       render(<EventsLog {...defaultProps} events={events} />);
-      
+
       expect(screen.getByText('Alice and Alice attack')).toBeInTheDocument();
     });
   });
@@ -439,17 +439,17 @@ describe('EventsLog', () => {
         message: '',
         public: true
       }];
-      
+
       render(<EventsLog {...defaultProps} events={events} />);
-      
+
       expect(screen.getByText('No events yet')).toBeInTheDocument();
     });
 
     it('should handle null/undefined events', () => {
       const events = [null, undefined, 'Valid event'] as any[];
-      
+
       render(<EventsLog {...defaultProps} events={events} />);
-      
+
       expect(screen.getByText('Valid event')).toBeInTheDocument();
     });
 
@@ -458,9 +458,9 @@ describe('EventsLog', () => {
         type: 'damage',
         public: true
       }];
-      
+
       render(<EventsLog {...defaultProps} events={events} />);
-      
+
       expect(screen.getByText('No events yet')).toBeInTheDocument();
     });
 
@@ -470,7 +470,7 @@ describe('EventsLog', () => {
         currentPlayerId: '',
         players: undefined
       } as any;
-      
+
       expect(() => render(<EventsLog {...props} />)).not.toThrow();
     });
   });
@@ -478,24 +478,28 @@ describe('EventsLog', () => {
   describe('Auto-scrolling', () => {
     it('should scroll to bottom when events are added', () => {
       const mockScrollTo = jest.fn();
-      
+
       // Mock the ref and scrollTop/scrollHeight
       const mockRef = {
         current: {
-          scrollTop: 0,
           scrollHeight: 1000,
+          _scrollTop: 0,
+          get scrollTop() {
+            return this._scrollTop;
+          },
           set scrollTop(value: number) {
+            this._scrollTop = value;
             mockScrollTo(value);
           }
         }
       };
-      
+
       jest.spyOn(React, 'useRef').mockReturnValue(mockRef);
-      
+
       const { rerender } = render(<EventsLog {...defaultProps} events={['Event 1']} />);
-      
+
       rerender(<EventsLog {...defaultProps} events={['Event 1', 'Event 2']} />);
-      
+
       expect(mockScrollTo).toHaveBeenCalledWith(1000);
     });
   });

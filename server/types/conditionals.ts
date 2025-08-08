@@ -4,16 +4,13 @@
  * Part of Phase 7 - Advanced Type Features & Optimization
  */
 
-import type { GameEvent, EventType, EventPayload } from '../models/events/EventTypes.js';
+import type { GameEvent, EventType } from '../models/events/EventTypes.js';
 import type {
   Player,
   GameRoom,
-  Monster,
   Ability,
-  PlayerStats,
   StatusEffect,
-  GamePhase,
-  PlayerAction
+  GamePhase
 } from './generated.js';
 
 /**
@@ -43,7 +40,7 @@ export type ActionEventPayloads = ActionEvents['payload'];
  * Player role-based conditional types
  */
 export type PlayerByRole<Role extends Player['role']> = Player & { role: Role };
-export type PlayersOfRole<Role extends Player['role'], P extends Player[]> = 
+export type PlayersOfRole<Role extends Player['role'], P extends Player[]> =
   Extract<P[number], { role: Role }>[];
 
 // Extract players by status
@@ -102,23 +99,23 @@ export type EndedGame = GameInPhase<'ended'>;
  */
 
 // If-Then-Else type
-export type If<Condition extends boolean, Then, Else> = 
+export type If<Condition extends boolean, Then, Else> =
   Condition extends true ? Then : Else;
 
 // Not type
 export type Not<T extends boolean> = T extends true ? false : true;
 
 // And type
-export type And<A extends boolean, B extends boolean> = 
+export type And<A extends boolean, B extends boolean> =
   A extends true ? B extends true ? true : false : false;
 
 // Or type
-export type Or<A extends boolean, B extends boolean> = 
+export type Or<A extends boolean, B extends boolean> =
   A extends true ? true : B extends true ? true : false;
 
 // Equals type
-export type Equals<X, Y> = 
-  (<T>() => T extends X ? 1 : 2) extends 
+export type Equals<X, Y> =
+  (<T>() => T extends X ? 1 : 2) extends
   (<T>() => T extends Y ? 1 : 2) ? true : false;
 
 // Extends type
@@ -127,16 +124,18 @@ export type Extends<A, B> = A extends B ? true : false;
 /**
  * Type-level arithmetic
  */
-type Length<T extends readonly any[]> = T['length'];
+// Unused utility types kept for potential future use
+// type _Length<T extends readonly any[]> = T['length'];
 
-type BuildTuple<L extends number, T extends readonly any[] = []> =
-  T['length'] extends L ? T : BuildTuple<L, [...T, any]>;
+// type _BuildTuple<L extends number, T extends readonly any[] = []> =
+//   T['length'] extends L ? T : _BuildTuple<L, [...T, any]>;
 
-type Add<A extends number, B extends number> =
-  Length<[...BuildTuple<A>, ...BuildTuple<B>]>;
+// Unused arithmetic types kept for potential future use
+// type _Add<A extends number, B extends number> =
+//   _Length<[..._BuildTuple<A>, ..._BuildTuple<B>]>;
 
-type Subtract<A extends number, B extends number> =
-  BuildTuple<A> extends [...BuildTuple<B>, ...infer R] ? Length<R> : never;
+// type _Subtract<A extends number, B extends number> =
+//   _BuildTuple<A> extends [..._BuildTuple<B>, ...infer R] ? _Length<R> : never;
 
 /**
  * String manipulation types
@@ -146,15 +145,15 @@ export type Split<S extends string, D extends string> =
 
 export type Join<T extends readonly string[], D extends string> =
   T extends readonly [] ? '' :
-  T extends readonly [infer F] ? 
+  T extends readonly [infer F] ?
     F extends string ? F : never :
   T extends readonly [infer F, ...infer R] ?
-    F extends string ? 
-      R extends readonly string[] ? 
+    F extends string ?
+      R extends readonly string[] ?
         `${F}${D}${Join<R, D>}` : never : never : never;
 
 export type Replace<S extends string, From extends string, To extends string> =
-  S extends `${infer Start}${From}${infer End}` 
+  S extends `${infer Start}${From}${infer End}`
     ? `${Start}${To}${Replace<End, From, To>}`
     : S;
 
@@ -182,7 +181,8 @@ export type OptionalKeys<T> = {
   [K in keyof T]-?: {} extends Pick<T, K> ? K : never
 }[keyof T];
 
-// Readonly keys
+// Readonly keys - Q is used by TypeScript for mapped type computation
+/* eslint-disable no-unused-vars */
 export type ReadonlyKeys<T> = {
   [K in keyof T]-?: Equals<
     { [Q in K]: T[K] },
@@ -190,41 +190,42 @@ export type ReadonlyKeys<T> = {
   > extends true ? never : K
 }[keyof T];
 
-// Mutable keys
+// Mutable keys - Q is used by TypeScript for mapped type computation
 export type MutableKeys<T> = {
   [K in keyof T]-?: Equals<
     { [Q in K]: T[K] },
     { -readonly [Q in K]: T[K] }
   > extends true ? K : never
 }[keyof T];
+/* eslint-enable no-unused-vars */
 
 /**
  * Function type conditionals
  */
-export type Parameters<T extends (...args: any) => any> = 
-  T extends (...args: infer P) => any ? P : never;
+export type Parameters<T extends (..._args: any) => any> =
+  T extends (..._args: infer P) => any ? P : never;
 
-export type ReturnType<T extends (...args: any) => any> = 
-  T extends (...args: any) => infer R ? R : any;
+export type ReturnType<T extends (..._args: any) => any> =
+  T extends (..._args: any) => infer R ? R : any;
 
-export type PromiseType<T extends Promise<any>> = 
+export type PromiseType<T extends Promise<any>> =
   T extends Promise<infer U> ? U : never;
 
-export type AsyncReturnType<T extends (...args: any) => Promise<any>> =
+export type AsyncReturnType<T extends (..._args: any) => Promise<any>> =
   PromiseType<ReturnType<T>>;
 
 /**
  * Tuple manipulation
  */
 export type Head<T extends readonly any[]> = T extends readonly [infer H, ...any[]] ? H : never;
-export type Tail<T extends readonly any[]> = T extends readonly [any, ...infer T] ? T : [];
+export type Tail<T extends readonly any[]> = T extends readonly [any, ...infer _T] ? _T : [];
 export type Last<T extends readonly any[]> = T extends readonly [...any[], infer L] ? L : never;
 
 /**
  * Union to intersection
  */
-export type UnionToIntersection<U> = 
-  (U extends any ? (k: U) => void : never) extends ((k: infer I) => void) ? I : never;
+export type UnionToIntersection<U> =
+  (U extends any ? (_k: U) => void : never) extends ((_k: infer I) => void) ? I : never;
 
 /**
  * Distributive conditional types
@@ -252,8 +253,8 @@ export type ValidateType<T, Expected> = T extends Expected ? T : never;
  * Exhaustiveness checking
  */
 export type AssertNever<T extends never> = T;
-export function assertNever(value: never): never {
-  throw new Error(`Unexpected value: ${value}`);
+export function assertNever(_value: never): never {
+  throw new Error(`Unexpected value: ${_value}`);
 }
 
 /**
@@ -264,8 +265,8 @@ export type TypePredicate<T> = (value: unknown) => value is T;
 export function createEventTypePredicate<T extends EventType>(
   eventType: T
 ): TypePredicate<Extract<GameEvent, { type: T }>> {
-  return (event: unknown): event is Extract<GameEvent, { type: T }> => {
-    return (event as GameEvent).type === eventType;
+  return (_event: unknown): _event is Extract<GameEvent, { type: T }> => {
+    return (_event as GameEvent).type === eventType;
   };
 }
 
@@ -278,7 +279,7 @@ export type SafeGet<T, K extends string> = K extends keyof T ? T[K] : undefined;
  * Type-safe builder pattern
  */
 export type Builder<T> = {
-  [K in keyof T]-?: (value: T[K]) => Builder<T>
+  [K in keyof T]-?: (_value: T[K]) => Builder<T>
 } & {
   build(): T;
 };

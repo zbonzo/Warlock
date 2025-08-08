@@ -14,7 +14,7 @@ describe('Combat Messages Configuration', () => {
     it('should have all required damage message types', () => {
       expect(combatMessages.damage).toBeDefined();
       expect(typeof combatMessages.damage).toBe('object');
-      
+
       const requiredDamageMessages = [
         'playerTakesDamage',
         'playerDamageWithArmor',
@@ -23,7 +23,7 @@ describe('Combat Messages Configuration', () => {
         'monsterTakesDamage',
         'damageDealt'
       ];
-      
+
       requiredDamageMessages.forEach(messageType => {
         expect(combatMessages.damage[messageType]).toBeDefined();
         expect(typeof combatMessages.damage[messageType]).toBe('string');
@@ -33,11 +33,11 @@ describe('Combat Messages Configuration', () => {
 
     it('should have proper placeholder formatting in damage messages', () => {
       const damageMessages = combatMessages.damage;
-      
+
       // Test that key messages have proper placeholders
       expect(damageMessages.playerTakesDamage).toMatch(/{targetName}/);
       expect(damageMessages.playerTakesDamage).toMatch(/{damage}/);
-      
+
       expect(damageMessages.playerDamageWithArmor).toMatch(/{targetName}/);
       expect(damageMessages.playerDamageWithArmor).toMatch(/{damage}/);
       expect(damageMessages.playerDamageWithArmor).toMatch(/{initial}/);
@@ -49,14 +49,14 @@ describe('Combat Messages Configuration', () => {
     it('should have barbarian-specific messages', () => {
       expect(combatMessages.barbarian).toBeDefined();
       expect(typeof combatMessages.barbarian).toBe('object');
-      
+
       const barbarianMessages = [
         'relentlessFuryVulnerability',
         'thirstyBladeLifeSteal',
         'sweepingStrikeHits',
         'sweepingStrikeStuns'
       ];
-      
+
       barbarianMessages.forEach(messageType => {
         expect(combatMessages.barbarian[messageType]).toBeDefined();
         expect(typeof combatMessages.barbarian[messageType]).toBe('string');
@@ -68,7 +68,7 @@ describe('Combat Messages Configuration', () => {
     it('should have coordination system messages', () => {
       expect(combatMessages.coordination).toBeDefined();
       expect(typeof combatMessages.coordination).toBe('object');
-      
+
       const coordinationMessages = [
         'damageBonus',
         'healingBonus',
@@ -76,7 +76,7 @@ describe('Combat Messages Configuration', () => {
         'teamworkAnnouncement',
         'coordinationFailed'
       ];
-      
+
       coordinationMessages.forEach(messageType => {
         expect(combatMessages.coordination[messageType]).toBeDefined();
         expect(typeof combatMessages.coordination[messageType]).toBe('string');
@@ -95,7 +95,7 @@ describe('Combat Messages Configuration', () => {
     it('should have comeback system messages', () => {
       expect(combatMessages.comeback).toBeDefined();
       expect(typeof combatMessages.comeback).toBe('object');
-      
+
       const comebackMessages = [
         'activated',
         'damageBonus',
@@ -104,7 +104,7 @@ describe('Combat Messages Configuration', () => {
         'corruptionResistance',
         'lastStand'
       ];
-      
+
       comebackMessages.forEach(messageType => {
         expect(combatMessages.comeback[messageType]).toBeDefined();
         expect(typeof combatMessages.comeback[messageType]).toBe('string');
@@ -116,7 +116,7 @@ describe('Combat Messages Configuration', () => {
     it('should have detection penalty messages', () => {
       expect(combatMessages.detection).toBeDefined();
       expect(typeof combatMessages.detection).toBe('object');
-      
+
       const detectionMessages = [
         'penaltyApplied',
         'penaltyActive',
@@ -124,7 +124,7 @@ describe('Combat Messages Configuration', () => {
         'penaltyExpired',
         'privateDetectionPenalty'
       ];
-      
+
       detectionMessages.forEach(messageType => {
         expect(combatMessages.detection[messageType]).toBeDefined();
         expect(typeof combatMessages.detection[messageType]).toBe('string');
@@ -136,7 +136,7 @@ describe('Combat Messages Configuration', () => {
     it('should have death messages', () => {
       expect(combatMessages.death).toBeDefined();
       expect(typeof combatMessages.death).toBe('object');
-      
+
       const deathMessages = [
         'playerDies',
         'playerCollapse',
@@ -144,7 +144,7 @@ describe('Combat Messages Configuration', () => {
         'heroicSacrifice',
         'warlockEliminated'
       ];
-      
+
       deathMessages.forEach(messageType => {
         expect(combatMessages.death[messageType]).toBeDefined();
         expect(typeof combatMessages.death[messageType]).toBe('string');
@@ -154,14 +154,14 @@ describe('Combat Messages Configuration', () => {
     it('should have resurrection messages', () => {
       expect(combatMessages.resurrection).toBeDefined();
       expect(typeof combatMessages.resurrection).toBe('object');
-      
+
       const resurrectionMessages = [
         'playerResurrected',
         'playerRises',
         'undyingActivated',
         'hopefulReturn'
       ];
-      
+
       resurrectionMessages.forEach(messageType => {
         expect(combatMessages.resurrection[messageType]).toBeDefined();
         expect(typeof combatMessages.resurrection[messageType]).toBe('string');
@@ -173,7 +173,7 @@ describe('Combat Messages Configuration', () => {
     it('should have private combat messages', () => {
       expect(combatMessages.private).toBeDefined();
       expect(typeof combatMessages.private).toBe('object');
-      
+
       const privateMessages = [
         'youAttacked',
         'youWereAttacked',
@@ -182,7 +182,7 @@ describe('Combat Messages Configuration', () => {
         'healedByPlayer',
         'youKilledTarget'
       ];
-      
+
       privateMessages.forEach(messageType => {
         expect(combatMessages.private[messageType]).toBeDefined();
         expect(typeof combatMessages.private[messageType]).toBe('string');
@@ -212,7 +212,7 @@ describe('Combat Messages Configuration', () => {
           }
         });
       };
-      
+
       checkPlaceholders(combatMessages);
     });
 
@@ -226,7 +226,7 @@ describe('Combat Messages Configuration', () => {
           }
         });
       };
-      
+
       checkEmptyStrings(combatMessages);
     });
   });
@@ -235,7 +235,7 @@ describe('Combat Messages Configuration', () => {
     it('should have game state transition messages', () => {
       expect(combatMessages.gameState).toBeDefined();
       expect(typeof combatMessages.gameState).toBe('object');
-      
+
       const gameStateMessages = [
         'comebackActivated',
         'comebackDeactivated',
@@ -243,7 +243,7 @@ describe('Combat Messages Configuration', () => {
         'hopefulTurn',
         'balanceShifts'
       ];
-      
+
       gameStateMessages.forEach(messageType => {
         expect(combatMessages.gameState[messageType]).toBeDefined();
         expect(typeof combatMessages.gameState[messageType]).toBe('string');
@@ -255,14 +255,14 @@ describe('Combat Messages Configuration', () => {
     it('should have moonbeam detection messages', () => {
       expect(combatMessages.moonbeam).toBeDefined();
       expect(typeof combatMessages.moonbeam).toBe('object');
-      
+
       const moonbeamMessages = [
         'warlockDetected',
         'notWarlockDetected',
         'moonbeamPrivate',
         'truthRevealed'
       ];
-      
+
       moonbeamMessages.forEach(messageType => {
         expect(combatMessages.moonbeam[messageType]).toBeDefined();
         expect(typeof combatMessages.moonbeam[messageType]).toBe('string');
@@ -272,7 +272,7 @@ describe('Combat Messages Configuration', () => {
     it('should have life bond messages', () => {
       expect(combatMessages.lifeBond).toBeDefined();
       expect(typeof combatMessages.lifeBond).toBe('object');
-      
+
       expect(combatMessages.lifeBond.healing).toBeDefined();
       expect(combatMessages.lifeBond.healingPrivate).toBeDefined();
     });

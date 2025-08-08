@@ -26,15 +26,15 @@ jest.mock('@components/common/ThemeToggle', () => {
 });
 
 jest.mock('../../../../client/src/components/ui/RuneButton', () => {
-  return function MockRuneButton({ 
-    children, 
-    onClick, 
-    disabled, 
-    variant = 'primary' 
+  return function MockRuneButton({
+    children,
+    onClick,
+    disabled,
+    variant = 'primary'
   }: any) {
     return (
-      <button 
-        onClick={onClick} 
+      <button
+        onClick={onClick}
         disabled={disabled}
         data-testid="rune-button"
         data-variant={variant}
@@ -96,7 +96,7 @@ describe('JoinGamePage', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     jest.useFakeTimers();
-    
+
     mockUseSocket.mockReturnValue({
       socket: mockSocket,
       connected: true
@@ -110,40 +110,40 @@ describe('JoinGamePage', () => {
   describe('Component Rendering', () => {
     it('should render the game logo and tagline', () => {
       render(<JoinGamePage {...defaultProps} />);
-      
+
       expect(screen.getByText('Warlock')).toBeInTheDocument();
       expect(screen.getByText('Battle monsters with friends, but beware the Warlocks among you!')).toBeInTheDocument();
     });
 
     it('should render name input field', () => {
       render(<JoinGamePage {...defaultProps} />);
-      
+
       expect(screen.getByPlaceholderText('Enter your name')).toBeInTheDocument();
       expect(screen.getByText('Your Name')).toBeInTheDocument();
     });
 
     it('should render game code input field', () => {
       render(<JoinGamePage {...defaultProps} />);
-      
+
       expect(screen.getByPlaceholderText('4-digit mystic code')).toBeInTheDocument();
       expect(screen.getByText('Whisper the Code')).toBeInTheDocument();
     });
 
     it('should render create game button when no code entered', () => {
       render(<JoinGamePage {...defaultProps} />);
-      
+
       expect(screen.getByText('Cast the First Rune')).toBeInTheDocument();
     });
 
     it('should render tutorial button', () => {
       render(<JoinGamePage {...defaultProps} />);
-      
+
       expect(screen.getByText('How to Play')).toBeInTheDocument();
     });
 
     it('should render theme toggle in footer', () => {
       render(<JoinGamePage {...defaultProps} />);
-      
+
       expect(screen.getByTestId('theme-toggle')).toBeInTheDocument();
     });
   });
@@ -151,23 +151,23 @@ describe('JoinGamePage', () => {
   describe('Lifecycle Effects', () => {
     it('should clear localStorage on mount', () => {
       render(<JoinGamePage {...defaultProps} />);
-      
+
       expect(mockLocalStorage.removeItem).toHaveBeenCalledWith('lastGameCode');
       expect(mockLocalStorage.removeItem).toHaveBeenCalledWith('lastPlayerName');
     });
 
     it('should set up socket listeners', () => {
       render(<JoinGamePage {...defaultProps} />);
-      
+
       expect(mockSocket.on).toHaveBeenCalledWith('nameCheckResponse', expect.any(Function));
       expect(mockSocket.on).toHaveBeenCalledWith('errorMessage', expect.any(Function));
     });
 
     it('should clean up socket listeners on unmount', () => {
       const { unmount } = render(<JoinGamePage {...defaultProps} />);
-      
+
       unmount();
-      
+
       expect(mockSocket.off).toHaveBeenCalledWith('nameCheckResponse', expect.any(Function));
       expect(mockSocket.off).toHaveBeenCalledWith('errorMessage', expect.any(Function));
     });
@@ -176,57 +176,57 @@ describe('JoinGamePage', () => {
   describe('Name Input Validation', () => {
     it('should accept valid names', () => {
       render(<JoinGamePage {...defaultProps} />);
-      
+
       const nameInput = screen.getByPlaceholderText('Enter your name');
       fireEvent.change(nameInput, { target: { value: 'ValidName' } });
-      
+
       expect(nameInput).toHaveValue('ValidName');
       expect(screen.getByText('✓ Name looks good!')).toBeInTheDocument();
     });
 
     it('should reject names shorter than 2 characters', () => {
       render(<JoinGamePage {...defaultProps} />);
-      
+
       const nameInput = screen.getByPlaceholderText('Enter your name');
       fireEvent.change(nameInput, { target: { value: 'A' } });
-      
+
       expect(screen.getByText('Need 1 more character')).toBeInTheDocument();
     });
 
     it('should reject reserved words', () => {
       render(<JoinGamePage {...defaultProps} />);
-      
+
       const nameInput = screen.getByPlaceholderText('Enter your name');
       fireEvent.change(nameInput, { target: { value: 'monster' } });
-      
+
       expect(screen.getByText('Cannot use reserved game terms')).toBeInTheDocument();
     });
 
     it('should filter dangerous characters', () => {
       render(<JoinGamePage {...defaultProps} />);
-      
+
       const nameInput = screen.getByPlaceholderText('Enter your name');
       fireEvent.change(nameInput, { target: { value: 'Test<script>' } });
-      
+
       expect(nameInput).toHaveValue('Testscript');
     });
 
     it('should limit name length to 20 characters', () => {
       render(<JoinGamePage {...defaultProps} />);
-      
+
       const nameInput = screen.getByPlaceholderText('Enter your name');
       const longName = 'A'.repeat(25);
       fireEvent.change(nameInput, { target: { value: longName } });
-      
+
       expect(nameInput.value.length).toBe(20);
     });
 
     it('should show character counter', () => {
       render(<JoinGamePage {...defaultProps} />);
-      
+
       const nameInput = screen.getByPlaceholderText('Enter your name');
       fireEvent.change(nameInput, { target: { value: 'Test' } });
-      
+
       expect(screen.getByText('4/20')).toBeInTheDocument();
     });
   });
@@ -234,24 +234,24 @@ describe('JoinGamePage', () => {
   describe('Random Name Generation', () => {
     it('should generate random name when dice button is clicked', () => {
       render(<JoinGamePage {...defaultProps} />);
-      
+
       const diceButton = screen.getByTitle('Generate a random name');
       fireEvent.click(diceButton);
-      
+
       act(() => {
         jest.advanceTimersByTime(200);
       });
-      
+
       const nameInput = screen.getByPlaceholderText('Enter your name');
       expect(['Hero1', 'Champion2', 'Warrior3', 'Knight4', 'Ranger5']).toContain(nameInput.value);
     });
 
     it('should show loading state while generating name', () => {
       render(<JoinGamePage {...defaultProps} />);
-      
+
       const diceButton = screen.getByTitle('Generate a random name');
       fireEvent.click(diceButton);
-      
+
       expect(diceButton).toHaveTextContent('...');
       expect(diceButton).toBeDisabled();
     });
@@ -260,40 +260,40 @@ describe('JoinGamePage', () => {
   describe('Game Code Input', () => {
     it('should only accept numeric input', () => {
       render(<JoinGamePage {...defaultProps} />);
-      
+
       const codeInput = screen.getByPlaceholderText('4-digit mystic code');
       fireEvent.change(codeInput, { target: { value: 'abc123def' } });
-      
+
       expect(codeInput).toHaveValue('1234');
     });
 
     it('should limit code to 4 digits', () => {
       render(<JoinGamePage {...defaultProps} />);
-      
+
       const codeInput = screen.getByPlaceholderText('4-digit mystic code');
       fireEvent.change(codeInput, { target: { value: '123456789' } });
-      
+
       expect(codeInput).toHaveValue('1234');
     });
 
     it('should show clear button when code is entered', () => {
       render(<JoinGamePage {...defaultProps} />);
-      
+
       const codeInput = screen.getByPlaceholderText('4-digit mystic code');
       fireEvent.change(codeInput, { target: { value: '1234' } });
-      
+
       expect(screen.getByLabelText('Clear game code')).toBeInTheDocument();
     });
 
     it('should clear code when clear button is clicked', () => {
       render(<JoinGamePage {...defaultProps} />);
-      
+
       const codeInput = screen.getByPlaceholderText('4-digit mystic code');
       fireEvent.change(codeInput, { target: { value: '1234' } });
-      
+
       const clearButton = screen.getByLabelText('Clear game code');
       fireEvent.click(clearButton);
-      
+
       expect(codeInput).toHaveValue('');
     });
   });
@@ -301,34 +301,34 @@ describe('JoinGamePage', () => {
   describe('Button States', () => {
     it('should show create game button when no code entered', () => {
       render(<JoinGamePage {...defaultProps} />);
-      
+
       expect(screen.getByText('Cast the First Rune')).toBeInTheDocument();
       expect(screen.queryByText('Take your place')).not.toBeInTheDocument();
     });
 
     it('should show join game button when code is entered', () => {
       render(<JoinGamePage {...defaultProps} />);
-      
+
       const codeInput = screen.getByPlaceholderText('4-digit mystic code');
       fireEvent.change(codeInput, { target: { value: '1234' } });
-      
+
       expect(screen.queryByText('Cast the First Rune')).not.toBeInTheDocument();
       expect(screen.getByText('Take your place')).toBeInTheDocument();
     });
 
     it('should disable create game button with invalid name', () => {
       render(<JoinGamePage {...defaultProps} />);
-      
+
       const createButton = screen.getByText('Cast the First Rune');
       expect(createButton).toBeDisabled();
     });
 
     it('should enable create game button with valid name', () => {
       render(<JoinGamePage {...defaultProps} />);
-      
+
       const nameInput = screen.getByPlaceholderText('Enter your name');
       fireEvent.change(nameInput, { target: { value: 'ValidName' } });
-      
+
       const createButton = screen.getByText('Cast the First Rune');
       expect(createButton).not.toBeDisabled();
     });
@@ -337,40 +337,40 @@ describe('JoinGamePage', () => {
   describe('Game Actions', () => {
     it('should call onCreateGame when create button is clicked', () => {
       render(<JoinGamePage {...defaultProps} />);
-      
+
       const nameInput = screen.getByPlaceholderText('Enter your name');
       fireEvent.change(nameInput, { target: { value: 'TestPlayer' } });
-      
+
       const createButton = screen.getByText('Cast the First Rune');
       fireEvent.click(createButton);
-      
+
       expect(defaultProps.onCreateGame).toHaveBeenCalledWith('TestPlayer');
     });
 
     it('should call onJoinGame when join button is clicked', () => {
       render(<JoinGamePage {...defaultProps} />);
-      
+
       const nameInput = screen.getByPlaceholderText('Enter your name');
       const codeInput = screen.getByPlaceholderText('4-digit mystic code');
-      
+
       fireEvent.change(nameInput, { target: { value: 'TestPlayer' } });
       fireEvent.change(codeInput, { target: { value: '1234' } });
-      
+
       const joinButton = screen.getByText('Take your place');
       fireEvent.click(joinButton);
-      
+
       expect(defaultProps.onJoinGame).toHaveBeenCalledWith('1234', 'TestPlayer');
     });
 
     it('should clear localStorage before creating game', () => {
       render(<JoinGamePage {...defaultProps} />);
-      
+
       const nameInput = screen.getByPlaceholderText('Enter your name');
       fireEvent.change(nameInput, { target: { value: 'TestPlayer' } });
-      
+
       const createButton = screen.getByText('Cast the First Rune');
       fireEvent.click(createButton);
-      
+
       expect(mockLocalStorage.removeItem).toHaveBeenCalledWith('lastGameCode');
       expect(mockLocalStorage.removeItem).toHaveBeenCalledWith('lastPlayerName');
     });
@@ -379,22 +379,22 @@ describe('JoinGamePage', () => {
   describe('Tutorial Modal', () => {
     it('should show tutorial when tutorial button is clicked', () => {
       render(<JoinGamePage {...defaultProps} />);
-      
+
       const tutorialButton = screen.getByText('How to Play');
       fireEvent.click(tutorialButton);
-      
+
       expect(screen.getByTestId('game-tutorial')).toBeInTheDocument();
     });
 
     it('should hide tutorial when modal is closed', () => {
       render(<JoinGamePage {...defaultProps} />);
-      
+
       const tutorialButton = screen.getByText('How to Play');
       fireEvent.click(tutorialButton);
-      
+
       const closeButton = screen.getByText('Close Tutorial');
       fireEvent.click(closeButton);
-      
+
       expect(screen.queryByTestId('game-tutorial')).not.toBeInTheDocument();
     });
   });
@@ -402,20 +402,20 @@ describe('JoinGamePage', () => {
   describe('Code Help', () => {
     it('should show code help when help button is clicked', () => {
       render(<JoinGamePage {...defaultProps} />);
-      
+
       const helpButton = screen.getByText('?');
       fireEvent.click(helpButton);
-      
+
       expect(screen.getByText(/Enter a 4-digit code whispered by the ritual master/)).toBeInTheDocument();
     });
 
     it('should hide code help when help button is clicked again', () => {
       render(<JoinGamePage {...defaultProps} />);
-      
+
       const helpButton = screen.getByText('?');
       fireEvent.click(helpButton);
       fireEvent.click(helpButton);
-      
+
       expect(screen.queryByText(/Enter a 4-digit code whispered by the ritual master/)).not.to.toBeInTheDocument();
     });
   });
@@ -423,48 +423,48 @@ describe('JoinGamePage', () => {
   describe('Socket Events', () => {
     it('should handle nameCheckResponse for available name', () => {
       render(<JoinGamePage {...defaultProps} />);
-      
+
       // Get the event handler that was registered
       const nameCheckHandler = mockSocket.on.mock.calls.find(
         call => call[0] === 'nameCheckResponse'
       )[1];
-      
+
       act(() => {
         nameCheckHandler({ isAvailable: true });
       });
-      
+
       // Should show success state (tested indirectly through other behaviors)
     });
 
     it('should handle nameCheckResponse for unavailable name', () => {
       render(<JoinGamePage {...defaultProps} />);
-      
+
       const nameCheckHandler = mockSocket.on.mock.calls.find(
         call => call[0] === 'nameCheckResponse'
       )[1];
-      
+
       act(() => {
-        nameCheckHandler({ 
-          isAvailable: false, 
+        nameCheckHandler({
+          isAvailable: false,
           error: 'Name is taken',
           suggestion: 'TestPlayer2'
         });
       });
-      
+
       expect(screen.getByText('Name is taken')).toBeInTheDocument();
     });
 
     it('should handle errorMessage events', () => {
       render(<JoinGamePage {...defaultProps} />);
-      
+
       const errorHandler = mockSocket.on.mock.calls.find(
         call => call[0] === 'errorMessage'
       )[1];
-      
+
       act(() => {
         errorHandler({ message: 'Game not found', code: 'NOT_FOUND_ERROR' });
       });
-      
+
       // Should handle the error appropriately
     });
   });
@@ -472,18 +472,18 @@ describe('JoinGamePage', () => {
   describe('Duplicate Name Checking', () => {
     it('should trigger name check when valid name and code are entered', async () => {
       render(<JoinGamePage {...defaultProps} />);
-      
+
       const nameInput = screen.getByPlaceholderText('Enter your name');
       const codeInput = screen.getByPlaceholderText('4-digit mystic code');
-      
+
       fireEvent.change(nameInput, { target: { value: 'TestPlayer' } });
       fireEvent.change(codeInput, { target: { value: '1234' } });
-      
+
       // Wait for debounced call
       await act(async () => {
         jest.advanceTimersByTime(500);
       });
-      
+
       expect(mockSocket.emit).toHaveBeenCalledWith('checkNameAvailability', {
         playerName: 'TestPlayer',
         gameCode: '1234'
@@ -492,13 +492,13 @@ describe('JoinGamePage', () => {
 
     it('should show checking message during name validation', () => {
       render(<JoinGamePage {...defaultProps} />);
-      
+
       const nameInput = screen.getByPlaceholderText('Enter your name');
       const codeInput = screen.getByPlaceholderText('4-digit mystic code');
-      
+
       fireEvent.change(nameInput, { target: { value: 'TestPlayer' } });
       fireEvent.change(codeInput, { target: { value: '1234' } });
-      
+
       expect(screen.getByText('Checking name availability...')).toBeInTheDocument();
     });
   });
@@ -509,39 +509,39 @@ describe('JoinGamePage', () => {
         socket: null,
         connected: false
       });
-      
+
       expect(() => render(<JoinGamePage {...defaultProps} />)).not.toThrow();
     });
 
     it('should prevent dangerous key presses', () => {
       render(<JoinGamePage {...defaultProps} />);
-      
+
       const nameInput = screen.getByPlaceholderText('Enter your name');
-      
+
       const preventDefault = jest.fn();
-      fireEvent.keyPress(nameInput, { 
-        key: '<', 
-        preventDefault 
+      fireEvent.keyPress(nameInput, {
+        key: '<',
+        preventDefault
       });
-      
+
       expect(preventDefault).toHaveBeenCalled();
     });
 
     it('should handle paste events with dangerous content', () => {
       render(<JoinGamePage {...defaultProps} />);
-      
+
       const nameInput = screen.getByPlaceholderText('Enter your name');
-      
+
       const clipboardData = {
         getData: () => 'Test<script>alert("xss")</script>'
       };
-      
+
       const preventDefault = jest.fn();
-      fireEvent.paste(nameInput, { 
+      fireEvent.paste(nameInput, {
         clipboardData,
         preventDefault
       });
-      
+
       expect(preventDefault).toHaveBeenCalled();
       expect(nameInput).toHaveValue('Testscriptalertxssscript');
     });
@@ -550,20 +550,20 @@ describe('JoinGamePage', () => {
   describe('Suggestions', () => {
     it('should show suggestion button when name is invalid', () => {
       render(<JoinGamePage {...defaultProps} />);
-      
+
       const nameInput = screen.getByPlaceholderText('Enter your name');
       fireEvent.change(nameInput, { target: { value: 'monster' } });
-      
+
       const suggestion = screen.getByText(/Try:/);
       expect(suggestion).toBeInTheDocument();
     });
 
     it('should use suggestion when suggestion button is clicked', () => {
       render(<JoinGamePage {...defaultProps} />);
-      
+
       const nameInput = screen.getByPlaceholderText('Enter your name');
       fireEvent.change(nameInput, { target: { value: 'monster' } });
-      
+
       const suggestionButton = suggestion.querySelector('button');
       if (suggestionButton) {
         fireEvent.click(suggestionButton);

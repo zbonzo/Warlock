@@ -22,7 +22,7 @@ describe('PlayerEffects', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    
+
     // Mock config
     mockConfig.gameBalance = {
       stoneArmor: {
@@ -33,7 +33,7 @@ describe('PlayerEffects', () => {
     };
 
     // Mock messages
-    mockMessages.formatMessage = jest.fn((template, params) => 
+    mockMessages.formatMessage = jest.fn((template, params) =>
       `Formatted: ${template} with ${JSON.stringify(params)}`
     );
     mockMessages.getEvent = jest.fn((event) => `Event: ${event}`);
@@ -100,7 +100,7 @@ describe('PlayerEffects', () => {
 
         expect(playerEffects.isVulnerable).toBe(true);
         expect(playerEffects.vulnerabilityIncrease).toBe(50);
-        
+
         const effects = playerEffects.getStatusEffects();
         expect(effects.vulnerable).toEqual({
           damageIncrease: 50,
@@ -146,14 +146,14 @@ describe('PlayerEffects', () => {
 
       it('should increase damage when vulnerable', () => {
         playerEffects.applyVulnerability(50, 2); // 50% increase
-        
+
         const damage = playerEffects.calculateDamageWithVulnerability(100);
         expect(damage).toBe(150); // 100 * 1.5 = 150
       });
 
       it('should floor the damage result', () => {
         playerEffects.applyVulnerability(33, 2); // 33% increase
-        
+
         const damage = playerEffects.calculateDamageWithVulnerability(100);
         expect(damage).toBe(133); // 100 * 1.33 = 133 (floored)
       });
@@ -169,14 +169,14 @@ describe('PlayerEffects', () => {
 
       it('should add stone armor when intact', () => {
         playerEffects.initializeStoneArmor(5);
-        
+
         const armor = playerEffects.getEffectiveArmor(10);
         expect(armor).toBe(15);
       });
 
       it('should add shielded effect armor', () => {
         playerEffects.applyStatusEffect('shielded', { armor: 8, turns: 2 });
-        
+
         const armor = playerEffects.getEffectiveArmor(10);
         expect(armor).toBe(18);
       });
@@ -184,14 +184,14 @@ describe('PlayerEffects', () => {
       it('should combine all armor sources', () => {
         playerEffects.initializeStoneArmor(5);
         playerEffects.applyStatusEffect('shielded', { armor: 8, turns: 2 });
-        
+
         const armor = playerEffects.getEffectiveArmor(10);
         expect(armor).toBe(23); // 10 + 5 + 8
       });
 
       it('should handle zero base armor', () => {
         playerEffects.initializeStoneArmor(5);
-        
+
         const armor = playerEffects.getEffectiveArmor(0);
         expect(armor).toBe(5);
       });
@@ -201,14 +201,14 @@ describe('PlayerEffects', () => {
       describe('initializeStoneArmor', () => {
         it('should initialize with default value', () => {
           playerEffects.initializeStoneArmor();
-          
+
           const armor = playerEffects.getEffectiveArmor(0);
           expect(armor).toBe(5); // Default from config
         });
 
         it('should initialize with custom value', () => {
           playerEffects.initializeStoneArmor(10);
-          
+
           const armor = playerEffects.getEffectiveArmor(0);
           expect(armor).toBe(10);
         });
@@ -217,26 +217,26 @@ describe('PlayerEffects', () => {
       describe('processStoneArmorDegradation', () => {
         it('should not degrade when stone armor not intact', () => {
           const result = playerEffects.processStoneArmorDegradation(10);
-          
+
           expect(result.degraded).toBe(false);
           expect(result.newArmorValue).toBe(0);
         });
 
         it('should not degrade on zero or negative damage', () => {
           playerEffects.initializeStoneArmor(5);
-          
+
           const result1 = playerEffects.processStoneArmorDegradation(0);
           const result2 = playerEffects.processStoneArmorDegradation(-5);
-          
+
           expect(result1.degraded).toBe(false);
           expect(result2.degraded).toBe(false);
         });
 
         it('should degrade stone armor by config amount', () => {
           playerEffects.initializeStoneArmor(5);
-          
+
           const result = playerEffects.processStoneArmorDegradation(10);
-          
+
           expect(result.degraded).toBe(true);
           expect(result.oldValue).toBe(5);
           expect(result.newArmorValue).toBe(4);
@@ -245,9 +245,9 @@ describe('PlayerEffects', () => {
 
         it('should mark as destroyed when armor reaches minimum', () => {
           playerEffects.initializeStoneArmor(1);
-          
+
           const result = playerEffects.processStoneArmorDegradation(10);
-          
+
           expect(result.degraded).toBe(true);
           expect(result.newArmorValue).toBe(0);
           expect(result.destroyed).toBe(true);
@@ -255,19 +255,19 @@ describe('PlayerEffects', () => {
 
         it('should cap at minimum value', () => {
           playerEffects.initializeStoneArmor(1);
-          
+
           // Multiple hits to go below minimum
           playerEffects.processStoneArmorDegradation(10);
           const result = playerEffects.processStoneArmorDegradation(10);
-          
+
           expect(result.newArmorValue).toBe(0); // Capped at minimum
         });
 
         it('should log degradation', () => {
           playerEffects.initializeStoneArmor(5);
-          
+
           playerEffects.processStoneArmorDegradation(10);
-          
+
           expect(mockLogger.debug).toHaveBeenCalledWith(
             expect.stringContaining('Stone armor degraded')
           );
@@ -285,20 +285,20 @@ describe('PlayerEffects', () => {
 
       it('should apply blood rage double damage', () => {
         playerEffects.setRacialEffects({ bloodRage: true });
-        
+
         const damage = playerEffects.applyDamageModifiers(100, 'Warrior', 1, 80, 100);
         expect(damage).toBe(200);
-        
+
         // Should consume the effect
         expect(playerEffects.getRacialEffects().bloodRage).toBeUndefined();
       });
 
       it('should apply blood rage multiplier', () => {
         playerEffects.setRacialEffects({ bloodRageMultiplier: 1.5 });
-        
+
         const damage = playerEffects.applyDamageModifiers(100, 'Warrior', 1, 80, 100);
         expect(damage).toBe(150);
-        
+
         // Should consume the effect
         expect(playerEffects.getRacialEffects().bloodRageMultiplier).toBeUndefined();
       });
@@ -311,7 +311,7 @@ describe('PlayerEffects', () => {
             damagePerLevel: 0.05
           }
         });
-        
+
         const damage = playerEffects.applyDamageModifiers(100, 'Barbarian', 1, 80, 100);
         expect(damage).toBe(110); // 100 * (1 + 2 * 0.05) = 110
       });
@@ -323,7 +323,7 @@ describe('PlayerEffects', () => {
             damageIncreasePerHpMissing: 0.02
           }
         });
-        
+
         // 50% HP missing = 50% * 0.02 = 1% damage increase
         const damage = playerEffects.applyDamageModifiers(100, 'Barbarian', 1, 50, 100);
         expect(damage).toBe(101); // 100 * (1 + 0.01) = 101
@@ -337,14 +337,14 @@ describe('PlayerEffects', () => {
             damageBoost: 1.5
           }
         });
-        
+
         const damage = playerEffects.applyDamageModifiers(100, 'Barbarian', 1, 80, 100);
         expect(damage).toBe(150);
       });
 
       it('should apply weakened effect reduction', () => {
         playerEffects.applyStatusEffect('weakened', { damageReduction: 0.25, turns: 2 });
-        
+
         const damage = playerEffects.applyDamageModifiers(100, 'Warrior', 1, 80, 100);
         expect(damage).toBe(75); // 100 * (1 - 0.25) = 75
       });
@@ -355,7 +355,7 @@ describe('PlayerEffects', () => {
           relentlessFury: { active: true, currentLevel: 1, damagePerLevel: 0.1 }
         });
         playerEffects.applyStatusEffect('weakened', { damageReduction: 0.2, turns: 2 });
-        
+
         const damage = playerEffects.applyDamageModifiers(100, 'Barbarian', 1, 80, 100);
         // 100 * 1.5 = 150 (blood rage)
         // 150 * 1.1 = 165 (relentless fury)
@@ -372,7 +372,7 @@ describe('PlayerEffects', () => {
 
       it('should apply vulnerability before resistance', () => {
         playerEffects.applyVulnerability(50, 2); // 50% increase
-        
+
         const damage = playerEffects.applyDamageResistance(100, 'Warrior');
         expect(damage).toBe(150);
       });
@@ -385,7 +385,7 @@ describe('PlayerEffects', () => {
             damageResistance: 0.3
           }
         });
-        
+
         const damage = playerEffects.applyDamageResistance(100, 'Barbarian');
         expect(damage).toBe(70); // 100 * (1 - 0.3) = 70
       });
@@ -399,7 +399,7 @@ describe('PlayerEffects', () => {
             damageResistance: 0.5
           }
         });
-        
+
         const damage = playerEffects.applyDamageResistance(100, 'Barbarian');
         // 100 * 2.0 = 200 (vulnerability)
         // 200 * 0.5 = 100 (resistance)
@@ -418,7 +418,7 @@ describe('PlayerEffects', () => {
             vulnerabilityPerLevel: 0.02
           }
         });
-        
+
         const vulnDamage = playerEffects.getRelentlessFuryVulnerability(100, 'Barbarian');
         expect(vulnDamage).toBe(6); // 100 * (3 * 0.02) = 6
       });
@@ -427,7 +427,7 @@ describe('PlayerEffects', () => {
         playerEffects.setClassEffects({
           relentlessFury: { active: true, currentLevel: 3 }
         });
-        
+
         const vulnDamage = playerEffects.getRelentlessFuryVulnerability(100, 'Warrior');
         expect(vulnDamage).toBe(0);
       });
@@ -436,9 +436,9 @@ describe('PlayerEffects', () => {
         playerEffects.setClassEffects({
           relentlessFury: { active: true, currentLevel: 1 }
         });
-        
+
         playerEffects.updateRelentlessFuryLevel(5, 'Barbarian');
-        
+
         const effects = playerEffects.getClassEffects();
         expect(effects.relentlessFury?.currentLevel).toBe(5);
       });
@@ -453,7 +453,7 @@ describe('PlayerEffects', () => {
             lifeSteal: 0.2
           }
         });
-        
+
         const result = playerEffects.processThirstyBladeLifeSteal(50, 'Barbarian', 70, 100);
         expect(result.healed).toBe(10); // 50 * 0.2 = 10
         expect(result.newHp).toBe(80); // 70 + 10
@@ -467,7 +467,7 @@ describe('PlayerEffects', () => {
             lifeSteal: 0.5
           }
         });
-        
+
         const result = playerEffects.processThirstyBladeLifeSteal(100, 'Barbarian', 90, 100);
         expect(result.healed).toBe(10); // Capped at max HP difference
         expect(result.newHp).toBe(100);
@@ -481,9 +481,9 @@ describe('PlayerEffects', () => {
             maxDuration: 3
           }
         });
-        
+
         const refreshed = playerEffects.refreshThirstyBladeOnKill('Barbarian');
-        
+
         expect(refreshed).toBe(true);
         expect(playerEffects.getClassEffects().thirstyBlade?.active).toBe(true);
         expect(playerEffects.getClassEffects().thirstyBlade?.turnsLeft).toBe(3);
@@ -505,7 +505,7 @@ describe('PlayerEffects', () => {
             stunDuration: 2
           }
         });
-        
+
         const params = playerEffects.getSweepingStrikeParams('Barbarian');
         expect(params).toEqual({
           bonusTargets: 2,
@@ -518,7 +518,7 @@ describe('PlayerEffects', () => {
         playerEffects.setClassEffects({
           sweepingStrike: { active: true }
         });
-        
+
         const params = playerEffects.getSweepingStrikeParams('Warrior');
         expect(params).toBe(null);
       });
@@ -527,7 +527,7 @@ describe('PlayerEffects', () => {
         playerEffects.setClassEffects({
           sweepingStrike: { active: false }
         });
-        
+
         const params = playerEffects.getSweepingStrikeParams('Barbarian');
         expect(params).toBe(null);
       });
@@ -548,9 +548,9 @@ describe('PlayerEffects', () => {
             turnsLeft: 1
           }
         });
-        
+
         const result = playerEffects.processClassEffects(100);
-        
+
         expect(result?.type).toBe('thirsty_blade_ended');
         expect(playerEffects.getClassEffects().thirstyBlade?.active).toBe(false);
       });
@@ -563,9 +563,9 @@ describe('PlayerEffects', () => {
             selfDamagePercent: 0.25
           }
         });
-        
+
         const result = playerEffects.processClassEffects(100);
-        
+
         expect(result?.type).toBe('rage_ended');
         expect(result?.damage).toBe(25); // 100 * 0.25
         expect(playerEffects.getClassEffects().unstoppableRage).toBeUndefined();
@@ -578,9 +578,9 @@ describe('PlayerEffects', () => {
             turnsLeft: 1
           }
         });
-        
+
         const result = playerEffects.processClassEffects(100);
-        
+
         expect(result?.type).toBe('spirit_guard_ended');
         expect(playerEffects.getClassEffects().spiritGuard).toBeUndefined();
       });
@@ -592,9 +592,9 @@ describe('PlayerEffects', () => {
             turnsLeft: 1
           }
         });
-        
+
         const result = playerEffects.processClassEffects(100);
-        
+
         expect(result?.type).toBe('sanctuary_ended');
         expect(playerEffects.getClassEffects().sanctuaryOfTruth).toBeUndefined();
       });
@@ -606,9 +606,9 @@ describe('PlayerEffects', () => {
             turnsLeft: 3
           }
         });
-        
+
         const result = playerEffects.processClassEffects(100);
-        
+
         expect(result).toBe(null);
         expect(playerEffects.getClassEffects().thirstyBlade?.turnsLeft).toBe(2);
       });
@@ -619,7 +619,7 @@ describe('PlayerEffects', () => {
     describe('undying (lich racial)', () => {
       it('should initialize undying with default HP', () => {
         playerEffects.initializeUndying();
-        
+
         const racialEffects = playerEffects.getRacialEffects();
         expect(racialEffects.resurrect).toEqual({
           resurrectedHp: 1,
@@ -629,7 +629,7 @@ describe('PlayerEffects', () => {
 
       it('should initialize undying with custom HP', () => {
         playerEffects.initializeUndying(5);
-        
+
         const racialEffects = playerEffects.getRacialEffects();
         expect(racialEffects.resurrect?.resurrectedHp).toBe(5);
       });
@@ -640,7 +640,7 @@ describe('PlayerEffects', () => {
     describe('setPlayerName', () => {
       it('should update player name for logging', () => {
         playerEffects.setPlayerName('NewName');
-        
+
         // Test that the new name is used (this would be visible in logging)
         expect(() => playerEffects.initializeStoneArmor()).not.toThrow();
       });
@@ -650,7 +650,7 @@ describe('PlayerEffects', () => {
       it('should handle vulnerability property getters/setters', () => {
         playerEffects.isVulnerable = true;
         playerEffects.vulnerabilityIncrease = 50;
-        
+
         expect(playerEffects.isVulnerable).toBe(true);
         expect(playerEffects.vulnerabilityIncrease).toBe(50);
       });
@@ -658,10 +658,10 @@ describe('PlayerEffects', () => {
       it('should return copies of effects', () => {
         const originalEffects = { poison: { damage: 5, turns: 2 } };
         playerEffects.applyStatusEffect('poison', originalEffects.poison);
-        
+
         const statusEffects1 = playerEffects.getStatusEffects();
         const statusEffects2 = playerEffects.getStatusEffects();
-        
+
         expect(statusEffects1).toEqual(statusEffects2);
         expect(statusEffects1).not.toBe(statusEffects2); // Different objects
       });
@@ -675,9 +675,9 @@ describe('PlayerEffects', () => {
         playerEffects.initializeStoneArmor(10);
         playerEffects.setClassEffects({ thirstyBlade: { active: true } });
         playerEffects.setRacialEffects({ bloodRage: true });
-        
+
         const json = playerEffects.toJSON();
-        
+
         expect(json).toEqual({
           playerId,
           playerName,
@@ -711,9 +711,9 @@ describe('PlayerEffects', () => {
           classEffects: { bloodFrenzy: { active: true } },
           racialEffects: { bloodRage: true }
         };
-        
+
         const effects = PlayerEffects.fromJSON(data);
-        
+
         expect(effects.getStatusEffects()).toEqual(data.statusEffects);
         expect(effects.isVulnerable).toBe(true);
         expect(effects.vulnerabilityIncrease).toBe(25);
@@ -727,9 +727,9 @@ describe('PlayerEffects', () => {
           playerId: 'player3',
           playerName: 'Player3'
         };
-        
+
         const effects = PlayerEffects.fromJSON(data);
-        
+
         expect(effects.getStatusEffects()).toEqual({});
         expect(effects.isVulnerable).toBe(false);
         expect(effects.getClassEffects()).toEqual({});

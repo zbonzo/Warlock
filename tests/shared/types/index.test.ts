@@ -465,7 +465,7 @@ describe('Shared Types', () => {
       it('should define game context with all connection states', () => {
         const connectionStates: GameContextState['connectionStatus'][] = [
           'disconnected',
-          'connecting', 
+          'connecting',
           'connected',
           'reconnecting'
         ];

@@ -60,7 +60,7 @@ export class ActionProcessor {
 
         // Validate the action
         const validation = await this.validatePlayerAction(player, action);
-        
+
         if (validation.valid) {
           validationResults.push({
             playerId,
@@ -104,7 +104,7 @@ export class ActionProcessor {
   ): Promise<Map<string, any>> {
     const playerActions = new Map<string, any>();
     const allValidActions = await this.collectAllValidActions(validationResults);
-    
+
     if (allValidActions.length === 0) {
       log.push({
         type: 'system',
@@ -118,7 +118,7 @@ export class ActionProcessor {
 
     // Sort actions by priority
     const sortedActions = this.sortActionsByPriority(allValidActions);
-    
+
     // Process each action
     for (const actionData of sortedActions) {
       try {
@@ -177,7 +177,7 @@ export class ActionProcessor {
     summary: RoundSummary
   ): Promise<any> {
     const { player, action } = actionData;
-    
+
     try {
       // Get ability definition
       const ability = this.getAbilityDefinition(action.abilityId);
@@ -187,7 +187,7 @@ export class ActionProcessor {
 
       // Execute the action through the appropriate system
       const result = await this.executeAction(player, action, ability, log);
-      
+
       // Update summary
       if (result.damage) {
         summary.totalDamageToMonster += result.damage;
@@ -195,9 +195,9 @@ export class ActionProcessor {
       if (result.healing) {
         summary.totalHealing += result.healing;
       }
-      
+
       summary.abilitiesUsed++;
-      
+
       return result;
     } catch (error) {
       logger.error(`Failed to process action for ${player.name}:`, error as any);
@@ -269,13 +269,13 @@ export class ActionProcessor {
 
     // Healing abilities get highest priority
     if (ability.category === 'Heal') return 3;
-    
+
     // Defense abilities get medium priority
     if (ability.category === 'Defense') return 2;
-    
+
     // Attack abilities get lower priority
     if (ability.category === 'Attack') return 1;
-    
+
     // Everything else gets default priority
     return 0;
   }

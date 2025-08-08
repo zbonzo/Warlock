@@ -1,12 +1,12 @@
 /**
  * @fileoverview Heal-related ability handlers (Refactored)
- * 
+ *
  * This file has been refactored to use modular ability handlers.
  * Individual handlers have been moved to:
- * 
+ *
  * - abilities/heal/basic-healing.ts: Standard healing abilities
  * - abilities/heal/regeneration-abilities.ts: Healing over time and regeneration
- * 
+ *
  * This provides better organization and easier maintenance.
  */
 
@@ -21,7 +21,7 @@ import {
   // Basic healing
   handleHeal,
   handleMultiHeal,
-  
+
   // Regeneration abilities
   handleHealingOverTime,
   handleRapidRegeneration,

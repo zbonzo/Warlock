@@ -14,7 +14,7 @@ import logger from './utils/logger.js';
 import gameController from './controllers/GameController.js';
 import playerController from './controllers/PlayerController.js';
 import { withSocketErrorHandling } from './utils/errorHandler.js';
-import { SocketValidators, socketValidator } from './middleware/socketValidation.js';
+import './middleware/socketValidation.js';
 import gameService from './services/gameService.js';
 
 // Socket event data interfaces
@@ -96,9 +96,9 @@ interface RateLimitRecord {
 
 interface SocketRateLimiter {
   limits: Map<string, Map<string, RateLimitRecord>>;
-  check(socketId: string, action: string, limit?: number, timeWindow?: number): boolean;
-  cleanupSocket(socketId: string): void;
-  reset(socketId: string, action: string): void;
+  check(_socketId: string, _action: string, _limit?: number, _timeWindow?: number): boolean;
+  cleanupSocket(_socketId: string): void;
+  reset(_socketId: string, _action: string): void;
 }
 
 // Initialize Express app and HTTP server
@@ -132,7 +132,7 @@ const server = http.createServer(app);
 // Initialize Socket.IO with CORS and transport configuration
 const io = new SocketIOServer(server, {
   cors: {
-    origin: process.env['NODE_ENV'] === 'development' 
+    origin: process.env['NODE_ENV'] === 'development'
       ? '*' // Allow any origin in development
       : config.corsOrigins,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
@@ -142,16 +142,15 @@ const io = new SocketIOServer(server, {
   // Transport configuration - start with polling, allow upgrades
   transports: ['polling', 'websocket'],
   allowEIO3: true,
-  
+
   // Connection settings - balanced for stability
   connectTimeout: 45000,
   pingTimeout: 30000,
   pingInterval: 25000,
-  
+
   // HTTP settings
-  maxHttpBufferSize: 1e6,
   httpCompression: true,
-  
+
   // Allow transport upgrades
   allowUpgrades: true,
 });
@@ -266,7 +265,7 @@ io.engine.on('headers', (headers: any, request: any) => {
 });
 
 io.on('connection', (socket: Socket) => {
-  logger.info('Socket connected', { 
+  logger.info('Socket connected', {
     socketId: socket.id,
     transport: (socket.conn as any).transport.name,
     userAgent: socket.handshake.headers['user-agent']?.substring(0, 100),
@@ -478,7 +477,7 @@ io.on('connection', (socket: Socket) => {
   // Handle player disconnection
   socket.on('disconnect', (reason: string) => {
     try {
-      logger.info('Socket disconnected', { 
+      logger.info('Socket disconnected', {
         socketId: socket.id,
         reason,
         transport: (socket.conn as any)?.transport?.name
@@ -499,7 +498,7 @@ process.on('uncaughtException', (error: Error) => {
     cause: (error as any).cause,
     timestamp: new Date().toISOString()
   });
-  
+
   // Also log to console for immediate visibility
   console.error('=== UNCAUGHT EXCEPTION ===');
   console.error('Message:', error.message);
@@ -507,7 +506,7 @@ process.on('uncaughtException', (error: Error) => {
   console.error('Name:', error.name);
   console.error('Time:', new Date().toISOString());
   console.error('========================');
-  
+
   // In a production environment, you might want to restart the server
   // or perform other recovery actions
 });

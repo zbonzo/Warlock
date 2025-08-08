@@ -4,13 +4,13 @@
  * Part of Phase 3 refactoring - Runtime Validation with Zod
  */
 import { ZodError, z } from 'zod';
-import { 
-  BaseSchemas, 
-  PlayerSchemas, 
-  ActionSchemas, 
-  GameSchemas, 
+import {
+  BaseSchemas,
+  PlayerSchemas,
+  ActionSchemas,
+  GameSchemas,
   SocketSchemas,
-  ConfigSchemas 
+  ConfigSchemas
 } from './ZodSchemas.js';
 import logger from '../../utils/logger.js';
 import { Request, Response, NextFunction } from 'express';
@@ -39,7 +39,7 @@ interface ValidationErrorDetail {
 }
 
 interface SocketMiddlewareFunction {
-  (eventData: any, callback?: (error?: Error | null, data?: any) => void): void;
+  (_eventData: any, _callback?: (_error?: Error | null, _data?: any) => void): void;
 }
 
 /**
@@ -101,7 +101,7 @@ class ValidationMiddleware {
 
         return result;
       }
-      
+
       // Handle non-Zod errors
       const result: ValidationResult<T> = {
         success: false,
@@ -150,14 +150,14 @@ class ValidationMiddleware {
     return (req: Request, res: Response, next: NextFunction) => {
       const data = req[target];
       const result = this.validate(data, schema);
-      
+
       if (!result.success) {
         return res.status(400).json({
           error: 'Validation failed',
           details: result.errors
         });
       }
-      
+
       // Replace the data with validated/sanitized version
       (req as any)[target] = result.data;
       return next();
@@ -167,11 +167,11 @@ class ValidationMiddleware {
   /**
    * Create middleware function for Socket.IO events
    */
-  socket<T>(schema: z.ZodSchema<T>): (socket: Socket) => SocketMiddlewareFunction {
-    return (socket: Socket) => {
-      return (eventData: unknown, callback?: (error?: Error | null, data?: any) => void): void => {
+  socket<T>(schema: z.ZodSchema<T>): (_socket: Socket) => SocketMiddlewareFunction {
+    return (_socket: Socket) => {
+      return (eventData: unknown, callback?: (_error?: Error | null, _data?: any) => void): void => {
         const result = this.validate(eventData, schema);
-        
+
         if (!result.success) {
           const error = new Error('Invalid event data') as any;
           error.validationErrors = result.errors;
@@ -182,7 +182,7 @@ class ValidationMiddleware {
           });
           return callback && callback(error);
         }
-        
+
         // Continue with validated data
         return callback && callback(null, result.data);
       };
@@ -264,20 +264,20 @@ export class ValidationError extends Error {
 /**
  * Pre-configured validation instances
  */
-export const strictValidator = new ValidationMiddleware({ 
-  strict: true, 
-  throwOnError: true 
+export const strictValidator = new ValidationMiddleware({
+  strict: true,
+  throwOnError: true
 });
 
-export const lenientValidator = new ValidationMiddleware({ 
-  strict: false, 
-  throwOnError: false 
+export const lenientValidator = new ValidationMiddleware({
+  strict: false,
+  throwOnError: false
 });
 
-export const silentValidator = new ValidationMiddleware({ 
-  strict: false, 
+export const silentValidator = new ValidationMiddleware({
+  strict: false,
   throwOnError: false,
-  logValidationErrors: false 
+  logValidationErrors: false
 });
 
 /**
@@ -311,7 +311,7 @@ export const ValidationUtils = {
    */
   extractErrorMessages(zodError: unknown): string[] {
     if (!(zodError instanceof ZodError)) return [];
-    return zodError.errors.map(err => 
+    return zodError.errors.map(err =>
       `${err.path.join('.')}: ${err.message}`
     );
   },

@@ -3,12 +3,11 @@
  * Complex game state types with discriminated unions for type safety
  */
 
-import type { 
-  GamePhase, 
-  PlayerAction, 
-  GameRoom,
-  Player
+import type {
+  PlayerAction
 } from '../generated.js';
+
+// Local types defined inline within the discriminated unions to avoid unused type warnings
 
 import type { ValidationResult } from './validation-types.js';
 
@@ -26,7 +25,7 @@ export interface GameRoomSettings {
 /**
  * Enhanced player state with discriminated union
  */
-export type PlayerState = 
+export type PlayerState =
   | { status: 'alive'; hp: number; maxHp: number; lastDamageTime?: number; lastHealTime?: number }
   | { status: 'dead'; deathTime: number; killedBy?: string; causeOfDeath: string; canBeRevived: boolean }
   | { status: 'revived'; revivedTime: number; revivedBy: string; revivedAt: number; reviveCount: number }
@@ -108,56 +107,56 @@ export type MonsterState =
  * Game room states with detailed metadata
  */
 export type GameRoomState =
-  | { 
-      state: 'created'; 
-      createdAt: number; 
-      hostId: string; 
-      gameCode: string; 
-      settings: GameRoomSettings; 
-      isPrivate: boolean 
+  | {
+      state: 'created';
+      createdAt: number;
+      hostId: string;
+      gameCode: string;
+      settings: GameRoomSettings;
+      isPrivate: boolean
     }
-  | { 
-      state: 'waiting_for_players'; 
-      playerCount: number; 
-      minPlayers: number; 
-      maxPlayers: number; 
-      readyPlayers: string[]; 
-      canStart: boolean 
+  | {
+      state: 'waiting_for_players';
+      playerCount: number;
+      minPlayers: number;
+      maxPlayers: number;
+      readyPlayers: string[];
+      canStart: boolean
     }
-  | { 
-      state: 'starting'; 
-      countdown: number; 
-      playersReady: number; 
-      totalPlayers: number; 
-      startTime?: number 
+  | {
+      state: 'starting';
+      countdown: number;
+      playersReady: number;
+      totalPlayers: number;
+      startTime?: number
     }
-  | { 
-      state: 'in_progress'; 
-      currentPhase: GamePhaseState; 
-      round: number; 
-      turn: number; 
-      startedAt: number; 
-      estimatedEndTime?: number 
+  | {
+      state: 'in_progress';
+      currentPhase: GamePhaseState;
+      round: number;
+      turn: number;
+      startedAt: number;
+      estimatedEndTime?: number
     }
-  | { 
-      state: 'paused'; 
-      pausedAt: number; 
-      pauseReason: string; 
-      pausedBy: string; 
-      canResume: boolean 
+  | {
+      state: 'paused';
+      pausedAt: number;
+      pauseReason: string;
+      pausedBy: string;
+      canResume: boolean
     }
-  | { 
-      state: 'finished'; 
-      winner: 'good' | 'evil' | 'draw'; 
-      endedAt: number; 
-      duration: number; 
-      finalStats: Record<string, any> 
+  | {
+      state: 'finished';
+      winner: 'good' | 'evil' | 'draw';
+      endedAt: number;
+      duration: number;
+      finalStats: Record<string, any>
     }
-  | { 
-      state: 'terminated'; 
-      terminatedAt: number; 
-      reason: 'host_left' | 'all_players_left' | 'error' | 'admin_action'; 
-      lastPhase?: GamePhaseState 
+  | {
+      state: 'terminated';
+      terminatedAt: number;
+      reason: 'host_left' | 'all_players_left' | 'error' | 'admin_action';
+      lastPhase?: GamePhaseState
     };
 
 /**
@@ -172,39 +171,39 @@ export type AbilityCooldownState =
  * Status effect states with enhanced metadata
  */
 export type StatusEffectState =
-  | { 
-      state: 'active'; 
-      type: string; 
-      remainingDuration: number; 
-      totalDuration: number; 
-      appliedAt: number; 
-      sourceId: string; 
+  | {
+      state: 'active';
+      type: string;
+      remainingDuration: number;
+      totalDuration: number;
+      appliedAt: number;
+      sourceId: string;
       params: Record<string, any>;
       stacks?: number;
       canStack: boolean;
     }
-  | { 
-      state: 'expired'; 
-      type: string; 
-      expiredAt: number; 
-      totalDuration: number; 
-      sourceId: string; 
+  | {
+      state: 'expired';
+      type: string;
+      expiredAt: number;
+      totalDuration: number;
+      sourceId: string;
       expiredNaturally: boolean;
     }
-  | { 
-      state: 'dispelled'; 
-      type: string; 
-      dispelledAt: number; 
-      dispelledBy: string; 
-      remainingDuration: number; 
+  | {
+      state: 'dispelled';
+      type: string;
+      dispelledAt: number;
+      dispelledBy: string;
+      remainingDuration: number;
       sourceId: string;
     }
-  | { 
-      state: 'replaced'; 
-      type: string; 
-      replacedAt: number; 
-      replacedBy: string; 
-      newEffectId: string; 
+  | {
+      state: 'replaced';
+      type: string;
+      replacedAt: number;
+      replacedBy: string;
+      newEffectId: string;
       sourceId: string;
     };
 
@@ -221,40 +220,40 @@ export type PlayerRoleState =
  * Combat interaction results
  */
 export type CombatResult =
-  | { 
-      type: 'damage_dealt'; 
-      attacker: string; 
-      target: string; 
-      damage: number; 
-      damageType: 'physical' | 'magical' | 'true'; 
-      wasCritical: boolean; 
+  | {
+      type: 'damage_dealt';
+      attacker: string;
+      target: string;
+      damage: number;
+      damageType: 'physical' | 'magical' | 'true';
+      wasCritical: boolean;
       wasBlocked: boolean;
       modifiers: DamageModifier[];
     }
-  | { 
-      type: 'healing_applied'; 
-      healer: string; 
-      target: string; 
-      healing: number; 
-      healingType: 'direct' | 'overtime' | 'instant'; 
+  | {
+      type: 'healing_applied';
+      healer: string;
+      target: string;
+      healing: number;
+      healingType: 'direct' | 'overtime' | 'instant';
       wasOverhealing: boolean;
       modifiers: HealingModifier[];
     }
-  | { 
-      type: 'status_applied'; 
-      source: string; 
-      target: string; 
-      statusEffect: string; 
-      duration: number; 
-      wasResisted: boolean; 
+  | {
+      type: 'status_applied';
+      source: string;
+      target: string;
+      statusEffect: string;
+      duration: number;
+      wasResisted: boolean;
       replacedExisting?: boolean;
     }
-  | { 
-      type: 'ability_triggered'; 
-      source: string; 
-      abilityId: string; 
-      targets: string[]; 
-      wasSuccessful: boolean; 
+  | {
+      type: 'ability_triggered';
+      source: string;
+      abilityId: string;
+      targets: string[];
+      wasSuccessful: boolean;
       coordinationBonus: number;
     };
 

@@ -3,13 +3,12 @@
  * This file tests that all generated types work correctly
  */
 
-import { 
-  Player, 
-  GameState, 
-  PlayerClass, 
+import {
+  Player,
+  GameState,
+  PlayerClass,
   PlayerRace,
   PlayerRole,
-  Ability,
   StatusEffect,
   Monster,
   GamePhase,
@@ -18,7 +17,6 @@ import {
   isGameState,
   isValidAction,
   CreatePlayerInput,
-  EventType,
   EventPayload,
   DeepPartial
 } from './generated.js';
@@ -50,7 +48,8 @@ const testPlayer: Player = {
     target: 'player',
     cooldown: 3,
     currentCooldown: 0,
-    unlocked: true
+    unlocked: true,
+    damage: 25
   }],
   statusEffects: [],
   actionThisRound: false,
@@ -62,6 +61,10 @@ const playerClass: PlayerClass = 'Paladin';
 const playerRace: PlayerRace = 'Human';
 const playerRole: PlayerRole = 'Evil';
 const gamePhase: GamePhase = 'night';
+
+// Use the variables to prevent linting errors
+/* eslint-disable-next-line no-console */
+console.log('Types:', { playerClass, playerRace, playerRole, gamePhase });
 
 // Test 3: Complex nested types
 const gameState: GameState = {
@@ -92,10 +95,15 @@ const gameState: GameState = {
 };
 
 // Test 4: Type guards
+/* eslint-disable-next-line no-console */
 console.log('Testing type guards:');
+/* eslint-disable-next-line no-console */
 console.log('isPlayer(testPlayer):', isPlayer(testPlayer));
+/* eslint-disable-next-line no-console */
 console.log('isPlayer({})):', isPlayer({}));
+/* eslint-disable-next-line no-console */
 console.log('isGameState(gameState):', isGameState(gameState));
+/* eslint-disable-next-line no-console */
 console.log('isGameState(null):', isGameState(null));
 
 // Test 5: Action types
@@ -108,6 +116,7 @@ const playerAction: PlayerAction = {
   turn: 2
 };
 
+/* eslint-disable-next-line no-console */
 console.log('isValidAction(playerAction):', isValidAction(playerAction));
 
 // Test 6: Event types with discriminated unions
@@ -194,6 +203,7 @@ const statusEffect: StatusEffect = {
 const monster: Monster = {
   id: 'monster-1',
   name: 'Ancient Dragon',
+  race: 'Monster',
   hp: 500,
   maxHp: 500,
   level: 10,
@@ -209,7 +219,9 @@ const monster: Monster = {
 };
 
 // Test compilation success indicator
+/* eslint-disable-next-line no-console */
 console.log('\n✅ All type tests compiled successfully!');
+/* eslint-disable-next-line no-console */
 console.log('Types are properly generated from Zod schemas.');
 
 // Export for verification

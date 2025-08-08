@@ -172,7 +172,7 @@ describe('Ability Handlers Index', () => {
 
       expect(Array.isArray(modules)).toBe(true);
       expect(modules.length).toBe(5);
-      
+
       modules.forEach(module => {
         expect(module).toHaveProperty('register');
         expect(typeof module.register).toBe('function');
@@ -182,7 +182,7 @@ describe('Ability Handlers Index', () => {
     it('should filter out invalid modules', () => {
       // This test ensures the filter logic works
       const modules = getAbilityHandlerModules();
-      
+
       // All modules should have register function
       modules.forEach(module => {
         expect(typeof module.register).toBe('function');
@@ -267,7 +267,7 @@ describe('Ability Handlers Index', () => {
   describe('Registration Flow', () => {
     it('should register handlers in correct order', () => {
       const callOrder: string[] = [];
-      
+
       mockRegister.mockImplementation((registry: any) => {
         callOrder.push('registered');
       });
@@ -303,7 +303,7 @@ describe('Ability Handlers Index', () => {
 
     it('should validate interface compliance', () => {
       const modules = getAbilityHandlerModules();
-      
+
       modules.forEach(module => {
         // Each module should comply with AbilityHandlerModule interface
         expect(module).toHaveProperty('register');

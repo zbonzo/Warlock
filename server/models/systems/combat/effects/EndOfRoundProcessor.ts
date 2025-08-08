@@ -41,16 +41,16 @@ export class EndOfRoundProcessor {
   async processEndOfRoundEffects(log: CombatLogEntry[], summary: RoundSummary): Promise<void> {
     // Process status effects (DoT, HoT, buffs, debuffs)
     await this.processStatusEffects(log, summary);
-    
+
     // Process racial abilities end-of-round effects
     await this.processRacialEndOfRoundEffects(log, summary);
-    
+
     // Process warlock corruption effects
     await this.processWarlockEffects(log, summary);
-    
+
     // Clean up expired effects
     await this.cleanupExpiredEffects(log);
-    
+
     // Update effect durations
     await this.updateEffectDurations(log);
   }
@@ -61,13 +61,13 @@ export class EndOfRoundProcessor {
   async checkLevelProgression(gameRoom: any): Promise<void> {
     const currentLevel = gameRoom.gamePhase?.level || 1;
     const damageDealt = this.getTotalDamageDealtThisGame(gameRoom);
-    
+
     // Calculate required damage for next level
     const requiredDamage = this.calculateRequiredDamageForLevel(currentLevel + 1);
-    
+
     if (damageDealt >= requiredDamage) {
       const newLevel = this.calculateLevelFromDamage(damageDealt);
-      
+
       if (newLevel > currentLevel) {
         await this.levelUpPlayers(gameRoom, newLevel);
       }
@@ -80,21 +80,21 @@ export class EndOfRoundProcessor {
   private async processStatusEffects(log: CombatLogEntry[], summary: RoundSummary): Promise<void> {
     for (const [playerId, player] of this.players.entries()) {
       if (!player.isAlive) continue;
-      
+
       // Process damage over time effects
       const dotEffects = await this.statusEffectManager.getEffectsByType(playerId, 'damage_over_time');
       for (const effect of dotEffects) {
         const damage = this.calculateDotDamage(effect);
         await this.applyDotDamage(player, damage, effect, log, summary);
       }
-      
+
       // Process healing over time effects
       const hotEffects = await this.statusEffectManager.getEffectsByType(playerId, 'heal_over_time');
       for (const effect of hotEffects) {
         const healing = this.calculateHotHealing(effect);
         await this.applyHotHealing(player, healing, effect, log, summary);
       }
-      
+
       // Process other timed effects
       await this.processTimedEffects(player, log);
     }
@@ -106,11 +106,11 @@ export class EndOfRoundProcessor {
   private async processRacialEndOfRoundEffects(log: CombatLogEntry[], summary: RoundSummary): Promise<void> {
     for (const [playerId, player] of this.players.entries()) {
       if (!player.isAlive) continue;
-      
+
       // Get player race
       const race = player.race;
       if (!race) continue;
-      
+
       // Process race-specific end-of-round effects
       switch (race.toLowerCase()) {
         case 'lich':
@@ -132,17 +132,17 @@ export class EndOfRoundProcessor {
    */
   private async processWarlockEffects(log: CombatLogEntry[], summary: RoundSummary): Promise<void> {
     if (!this.warlockSystem) return;
-    
+
     // Get current warlock count
     const warlockCount = await this.warlockSystem.getWarlockCount();
     if (warlockCount === 0) return;
-    
+
     // Apply corruption effects based on warlock count
     const corruptionLevel = this.calculateCorruptionLevel(warlockCount);
-    
+
     for (const [playerId, player] of this.players.entries()) {
       if (!player.isAlive || await this.warlockSystem.isWarlock(playerId)) continue;
-      
+
       // Apply corruption damage or effects
       if (corruptionLevel > 0) {
         const corruptionDamage = Math.floor(corruptionLevel * 2);
@@ -156,19 +156,19 @@ export class EndOfRoundProcessor {
    */
   private async levelUpPlayers(gameRoom: any, newLevel: number): Promise<void> {
     const oldLevel = gameRoom.gamePhase?.level || 1;
-    
+
     // Update game level
     if (gameRoom.gamePhase) {
       gameRoom.gamePhase.level = newLevel;
     }
-    
+
     // Apply level bonuses to all alive players
     for (const [playerId, player] of this.players.entries()) {
       if (player.isAlive) {
         await this.applyLevelBonuses(player, newLevel);
       }
     }
-    
+
     logger.info(`Party leveled up from ${oldLevel} to ${newLevel}`);
   }
 
@@ -177,18 +177,18 @@ export class EndOfRoundProcessor {
    */
   private async applyLevelBonuses(player: Player, level: number): Promise<void> {
     const bonuses = this.calculateLevelBonuses(level);
-    
+
     // Apply HP bonus
     if (bonuses.hpBonus > 0) {
       player.maxHp += bonuses.hpBonus;
       player.hp = Math.min(player.hp + bonuses.hpBonus, player.maxHp); // Also heal a bit
     }
-    
+
     // Apply other bonuses
     if (bonuses.attackBonus > 0) {
       player.attackPower = (player.attackPower || 0) + bonuses.attackBonus;
     }
-    
+
     if (bonuses.defenseBonus > 0) {
       player.defensePower = (player.defensePower || 0) + bonuses.defenseBonus;
     }
@@ -201,7 +201,7 @@ export class EndOfRoundProcessor {
     const baseHpBonus = 5; // Base HP per level
     const baseAttackBonus = 1; // Base attack per level
     const baseDefenseBonus = 1; // Base defense per level
-    
+
     return {
       hpBonus: baseHpBonus * level,
       attackBonus: baseAttackBonus * level,
@@ -238,7 +238,7 @@ export class EndOfRoundProcessor {
     summary: RoundSummary
   ): Promise<void> {
     player.hp = Math.max(0, player.hp - damage);
-    
+
     log.push({
       type: 'damage_over_time',
       message: `${player.name} takes ${damage} damage from ${effect.name || effect.type}`,
@@ -248,14 +248,14 @@ export class EndOfRoundProcessor {
       timestamp: Date.now(),
       priority: 'medium' as const
     });
-    
+
     summary.totalDamageToPlayers += damage;
-    
+
     // Check if player died from DoT
     if (player.hp <= 0) {
       player.isAlive = false;
       summary.playersKilled.push(player.id);
-      
+
       log.push({
         type: 'player_death',
         message: `${player.name} dies from ${effect.name || effect.type}!`,
@@ -279,7 +279,7 @@ export class EndOfRoundProcessor {
   ): Promise<void> {
     const actualHealing = Math.min(healing, player.maxHp - player.hp);
     player.hp += actualHealing;
-    
+
     if (actualHealing > 0) {
       log.push({
         type: 'heal_over_time',
@@ -290,7 +290,7 @@ export class EndOfRoundProcessor {
         timestamp: Date.now(),
         priority: 'low' as const
       });
-      
+
       summary.totalHealing += actualHealing;
     }
   }
@@ -301,7 +301,7 @@ export class EndOfRoundProcessor {
   private async processTimedEffects(player: Player, log: CombatLogEntry[]): Promise<void> {
     // Get all active effects
     const activeEffects = await this.statusEffectManager.getActiveEffects(player.id);
-    
+
     for (const effect of activeEffects) {
       // Process effect based on type
       switch (effect.type) {
@@ -348,7 +348,7 @@ export class EndOfRoundProcessor {
     // Lich slowly regenerates HP
     const regenAmount = Math.floor(player.maxHp * 0.05); // 5% of max HP
     const actualHealing = Math.min(regenAmount, player.maxHp - player.hp);
-    
+
     if (actualHealing > 0) {
       player.hp += actualHealing;
       log.push({
@@ -381,7 +381,7 @@ export class EndOfRoundProcessor {
         duration: 3,
         damageBonus: rageStacks * 2
       });
-      
+
       if (rageStacks > 0) {
         log.push({
           type: 'racial_effect',
@@ -412,7 +412,7 @@ export class EndOfRoundProcessor {
         attackBonus: packBonus,
         defenseBonus: packBonus
       });
-      
+
       log.push({
         type: 'racial_effect',
         message: `${player.name} gains pack bond with ${nearbyAllies.length} allies (Kinfolk passive)`,
@@ -462,7 +462,7 @@ export class EndOfRoundProcessor {
     summary: RoundSummary
   ): Promise<void> {
     player.hp = Math.max(0, player.hp - damage);
-    
+
     log.push({
       type: 'corruption',
       message: `${player.name} takes ${damage} corruption damage`,
@@ -472,9 +472,9 @@ export class EndOfRoundProcessor {
       timestamp: Date.now(),
       priority: 'high' as const
     });
-    
+
     summary.totalDamageToPlayers += damage;
-    
+
     if (player.hp <= 0) {
       player.isAlive = false;
       summary.playersKilled.push(player.id);
@@ -494,7 +494,7 @@ export class EndOfRoundProcessor {
    */
   private getNearbyAllies(player: Player): Player[] {
     // For simplicity, consider all alive players as "nearby"
-    return Array.from(this.players.values()).filter(p => 
+    return Array.from(this.players.values()).filter(p =>
       p.id !== player.id && p.isAlive
     );
   }

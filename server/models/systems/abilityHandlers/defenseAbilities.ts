@@ -1,12 +1,12 @@
 /**
  * @fileoverview Defense-related ability handlers (Refactored)
- * 
+ *
  * This file has been refactored to use modular ability handlers.
  * Individual handlers have been moved to:
- * 
+ *
  * - abilities/defense/protection-abilities.ts: Shield and protection abilities
  * - abilities/defense/stealth-abilities.ts: Invisibility and stealth abilities
- * 
+ *
  * This provides better organization and easier maintenance.
  */
 
@@ -22,7 +22,7 @@ import {
   // Protection abilities
   handleShieldWall,
   handleMultiProtection,
-  
+
   // Stealth abilities
   handleInvisibility,
   handleShadowstep

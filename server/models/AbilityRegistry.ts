@@ -192,15 +192,16 @@ class AbilityRegistry {
     let critMultiplier = 1;
     let outcome = 'normal';
 
-    // Critical hit calculation (5% chance)
-    if (Math.random() < config.gameBalance.abilityVariance.critChance) {
+    // Critical hit calculation (5% chance) using secure randomness
+    const { secureRandomFloat, secureRandomChoice } = require('../utils/secureRandom.js');
+    if (secureRandomFloat() < config.gameBalance.abilityVariance.critChance) {
       critMultiplier = config.gameBalance.abilityVariance.critMultiplier;
       outcome = 'crit';
       logger.info(`Critical hit! ${actor.name} using ${ability.name}`);
     }
 
-    // Ultra fail calculation (1% chance)
-    if (Math.random() < config.gameBalance.abilityVariance.ultraFailChance && target !== 'multi') {
+    // Ultra fail calculation (1% chance) using secure randomness
+    if (secureRandomFloat() < config.gameBalance.abilityVariance.ultraFailChance && target !== 'multi') {
       // Ultra fail: hit random target instead
       outcome = 'ultraFail';
       critMultiplier = config.gameBalance.abilityVariance.critMultiplier;
@@ -209,8 +210,8 @@ class AbilityRegistry {
         // Was targeting monster, now hit random player
         const alivePlayers = game.players.filter((p: Player) => p.status === 'alive');
         if (alivePlayers.length > 0) {
-          finalTarget = alivePlayers[Math.floor(Math.random() * alivePlayers.length)];
-          
+          finalTarget = secureRandomChoice(alivePlayers);
+
           log.push({
             type: 'ability_ultra_fail',
             public: false,
@@ -222,7 +223,7 @@ class AbilityRegistry {
         }
       } else if (typeof target === 'object' && 'id' in target) {
         // Was targeting a player, now hit monster or different player
-        if (Math.random() < 0.5) {
+        if (secureRandomFloat() < 0.5) {
           finalTarget = config.MONSTER_ID;
           log.push({
             type: 'ability_ultra_fail',
@@ -237,7 +238,7 @@ class AbilityRegistry {
             (p: Player) => p.status === 'alive' && p.id !== target.id && p.id !== actor.id
           );
           if (otherPlayers.length > 0) {
-            finalTarget = otherPlayers[Math.floor(Math.random() * otherPlayers.length)];
+            finalTarget = secureRandomChoice(otherPlayers);
             log.push({
               type: 'ability_ultra_fail',
               public: false,
@@ -264,7 +265,7 @@ class AbilityRegistry {
         : finalTarget === 'multi'
         ? 'multiple targets'
         : (finalTarget as Player).name;
-      
+
       log.push({
         type: 'ability_crit',
         public: true,

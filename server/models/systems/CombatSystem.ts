@@ -1,6 +1,6 @@
 /**
  * @fileoverview TypeScript Enhanced Combat System with coordination bonuses and comeback mechanics
- * Phase 5: Controllers & Main Classes Migration  
+ * Phase 5: Controllers & Main Classes Migration
  * Refactored to use composition with extracted domain models
  * Uses DamageCalculator, EffectManager, and TurnResolver with full type safety
  */
@@ -13,8 +13,8 @@ import { EffectManager } from './EffectManager.js';
 import { TurnResolver } from './TurnResolver.js';
 import { EventTypes } from '../events/EventTypes.js';
 import { GameEventBus } from '../events/GameEventBus.js';
-import type { 
-  Monster, 
+import type {
+  Monster,
   Player,
   GameRoom
 } from '../../types/generated.js';
@@ -23,9 +23,9 @@ import type {
   EventType,
   EventPayload
 } from '../events/EventTypes.js';
-import { 
-  CombatSystemInterface, 
-  DamageCalculation, 
+import {
+  CombatSystemInterface,
+  DamageCalculation,
   SystemConfig,
   AbstractGameSystem,
   DamageModifier
@@ -80,7 +80,7 @@ export interface CombatSystemDependencies {
 export class CombatSystem extends AbstractGameSystem<GameRoom, GameEvent> implements CombatSystemInterface {
   readonly name = 'CombatSystem';
   readonly version = '2.0.0';
-  
+
   private readonly players: Map<string, Player>;
   private readonly monsterController: any;
   private readonly _statusEffectManager: any;
@@ -96,7 +96,7 @@ export class CombatSystem extends AbstractGameSystem<GameRoom, GameEvent> implem
 
   constructor(dependencies: CombatSystemDependencies) {
     super();
-    
+
     const {
       players,
       monsterController,
@@ -141,7 +141,7 @@ export class CombatSystem extends AbstractGameSystem<GameRoom, GameEvent> implem
     const log: CombatLogEntry[] = [];
     const playerActions = new Map<string, any>();
     let monsterAction: any = null;
-    
+
     const roundSummary: RoundSummary = {
       totalDamageToMonster: 0,
       totalDamageToPlayers: 0,
@@ -154,7 +154,7 @@ export class CombatSystem extends AbstractGameSystem<GameRoom, GameEvent> implem
     try {
       // Phase 1: Validate all submitted actions
       const validationResults = await this.validateSubmittedActions();
-      
+
       // Phase 2: Process player actions
       const playerResults = await this.processPlayerActions(validationResults, log, roundSummary, gameRoom);
       for (const [playerId, action] of playerResults) {
@@ -192,13 +192,13 @@ export class CombatSystem extends AbstractGameSystem<GameRoom, GameEvent> implem
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
       const errorStack = error instanceof Error ? error.stack : '';
-      
+
       logger.error('Error processing combat round:', {
         message: errorMessage,
         stack: errorStack,
         phase: 'processRound'
       });
-      
+
       return {
         success: false,
         log: [{
@@ -229,7 +229,7 @@ export class CombatSystem extends AbstractGameSystem<GameRoom, GameEvent> implem
     for (const player of alivePlayers) {
       const hasSubmitted = player.hasSubmittedAction;
       const submittedAction = player.submittedAction;
-      
+
       logger.info('[CombatSystem] Player action status:', {
         playerId: player.id,
         playerName: player.name,
@@ -240,13 +240,13 @@ export class CombatSystem extends AbstractGameSystem<GameRoom, GameEvent> implem
 
       if (hasSubmitted) {
         const validationResult = (player as any).validateSubmittedAction(alivePlayers, (this.monsterController as any)['monster']);
-        
+
         logger.info('[CombatSystem] Validation result:', {
           playerId: (player as any)['id'],
           valid: validationResult.valid,
           errors: validationResult.errors || []
         });
-        
+
         results.push({
           ...validationResult,
           playerId: (player as any)['id']
@@ -276,38 +276,38 @@ export class CombatSystem extends AbstractGameSystem<GameRoom, GameEvent> implem
    * Process all player actions
    */
   private async processPlayerActions(
-    validationResults: any[], 
-    log: CombatLogEntry[], 
+    validationResults: any[],
+    log: CombatLogEntry[],
     summary: RoundSummary,
     gameRoom?: any
   ): Promise<Map<string, any>> {
     const processedActions = new Map<string, any>();
-    
+
     // PHASE 1: Collect all valid actions into a single batch
     const allActions = await this.collectAllValidActions(validationResults);
     logger.info(`[CombatSystem] Collected ${allActions.length} actions for batched processing`);
-    
+
     // PHASE 2: Analyze coordination bonuses across all actions
     const coordinationBonuses = this.analyzeCoordinationBonuses(allActions);
     if (coordinationBonuses.size > 0) {
       logger.info(`[CombatSystem] Found coordination bonuses:`, Object.fromEntries(coordinationBonuses));
       summary.coordinatedActions = Array.from(coordinationBonuses.values()).reduce((total, bonus) => total + bonus.count, 0);
     }
-    
+
     // PHASE 3: Sort actions by priority order (ability.order property)
     const sortedActions = this.sortActionsByPriority(allActions);
     logger.info(`[CombatSystem] Sorted ${sortedActions.length} actions by priority order`);
-    
+
     // PHASE 4: Process actions in priority order with conditional mechanics
     for (let i = 0; i < sortedActions.length; i++) {
       const action = sortedActions[i];
-      
+
       // Check for conditional mechanics (Last Stand, etc.) before processing
       const conditionals = this.checkConditionalMechanics(action, gameRoom);
-      
+
       // Process action with full context (coordination bonuses, conditionals)
       await this.processActionWithContext(action, coordinationBonuses, conditionals, log, summary, gameRoom);
-      
+
       processedActions.set(action.playerId, action);
       summary.abilitiesUsed++;
     }
@@ -320,17 +320,17 @@ export class CombatSystem extends AbstractGameSystem<GameRoom, GameEvent> implem
    */
   private async collectAllValidActions(validationResults: any[]): Promise<any[]> {
     const allActions = [];
-    
+
     for (const result of validationResults) {
       if (result.valid && (result as any)['playerId']) {
         const player = this.players.get((result as any)['playerId']);
         const submittedAction = player ? (player as any)['submittedAction'] : null;
-        
+
         if (player && submittedAction) {
           // Get ability definition to access order property
           const abilityId = submittedAction['actionType'];
           const ability = this.getAbilityDefinition(abilityId);
-          
+
           allActions.push({
             playerId: (result as any)['playerId'],
             player,
@@ -342,7 +342,7 @@ export class CombatSystem extends AbstractGameSystem<GameRoom, GameEvent> implem
         }
       }
     }
-    
+
     return allActions;
   }
 
@@ -352,7 +352,7 @@ export class CombatSystem extends AbstractGameSystem<GameRoom, GameEvent> implem
   private analyzeCoordinationBonuses(allActions: any[]): Map<string, any> {
     const coordinationBonuses = new Map();
     const actionTypeCounts = new Map();
-    
+
     // Count actions by type
     for (const actionData of allActions) {
       const actionType = actionData.action.actionType;
@@ -361,7 +361,7 @@ export class CombatSystem extends AbstractGameSystem<GameRoom, GameEvent> implem
       }
       actionTypeCounts.get(actionType).push(actionData);
     }
-    
+
     // Generate bonuses for coordinated actions (2+ of same type)
     for (const [actionType, actions] of actionTypeCounts) {
       if (actions.length > 1) {
@@ -372,7 +372,7 @@ export class CombatSystem extends AbstractGameSystem<GameRoom, GameEvent> implem
         });
       }
     }
-    
+
     return coordinationBonuses;
   }
 
@@ -385,7 +385,7 @@ export class CombatSystem extends AbstractGameSystem<GameRoom, GameEvent> implem
       if (a.order !== b.order) {
         return a.order - b.order;
       }
-      
+
       // Secondary sort: by player ID for consistent ordering
       return a.playerId.localeCompare(b.playerId);
     });
@@ -400,13 +400,13 @@ export class CombatSystem extends AbstractGameSystem<GameRoom, GameEvent> implem
       lowHealth: false,
       // Add more conditionals as needed
     };
-    
+
     const player = actionData.player;
     if (player) {
       const currentHP = (player as any)['currentHP'] || 0;
       const maxHP = (player as any)['maxHP'] || 1;
       const healthPercentage = currentHP / maxHP;
-      
+
       // Last Stand: player at very low health (< 20%)
       if (healthPercentage < 0.2 && healthPercentage > 0) {
         conditionals.lastStand = true;
@@ -415,7 +415,7 @@ export class CombatSystem extends AbstractGameSystem<GameRoom, GameEvent> implem
         conditionals.lowHealth = true;
       }
     }
-    
+
     return conditionals;
   }
 
@@ -432,7 +432,7 @@ export class CombatSystem extends AbstractGameSystem<GameRoom, GameEvent> implem
   ): Promise<void> {
     const { player, action } = actionData;
     const actionType = action.actionType;
-    
+
     // Log conditional mechanics
     if (conditionals.lastStand) {
       log.push({
@@ -441,16 +441,16 @@ export class CombatSystem extends AbstractGameSystem<GameRoom, GameEvent> implem
         public: true
       });
     }
-    
+
     // Get coordination bonus if applicable
     const coordBonus = coordinationBonuses.get(actionType);
     const coordinationMultiplier = coordBonus ? coordBonus.bonus : 1.0;
-    
+
     // Process the action with context
     if (coordBonus && coordBonus.count > 1) {
       // This is a coordinated action
       await this.processSingleAction(actionData, log, summary, coordinationMultiplier, gameRoom);
-      
+
       // Log coordination on first action of this type
       if (coordBonus.actions[0] === actionData) {
         log.push({
@@ -501,7 +501,7 @@ export class CombatSystem extends AbstractGameSystem<GameRoom, GameEvent> implem
 
     try {
       const monsterAction = await (this.monsterController as any).processMonsterAction(alivePlayers, log);
-      
+
       // Update summary with monster damage
       if ((monsterAction as any)?.['damage']) {
         summary.totalDamageToPlayers += (monsterAction as any)['damage'];
@@ -531,7 +531,7 @@ export class CombatSystem extends AbstractGameSystem<GameRoom, GameEvent> implem
   private async processEndOfRoundEffects(log: CombatLogEntry[], summary: RoundSummary): Promise<void> {
     // Process status effects - using any type assertion since method doesn't exist
     await (this.effectManager as any)['processEndOfRoundEffects']?.(log, summary) || Promise.resolve();
-    
+
     // Process cooldowns
     for (const player of this.players.values()) {
       (player as any)['processAbilityCooldowns']?.();
@@ -552,7 +552,7 @@ export class CombatSystem extends AbstractGameSystem<GameRoom, GameEvent> implem
   private async updateGameState(gameRoom: any, summary: RoundSummary): Promise<void> {
     // Update round counter
     (gameRoom as any)['round']++;
-    
+
     // Update player statistics
     for (const player of this.players.values()) {
       if (summary.playersKilled.includes((player as any)['id'])) {
@@ -562,7 +562,7 @@ export class CombatSystem extends AbstractGameSystem<GameRoom, GameEvent> implem
 
     // Check for level progression
     await this.checkLevelProgression(gameRoom);
-    
+
     // Update alive count
     (gameRoom as any)['aliveCount'] = this.getAlivePlayers().length;
   }
@@ -575,10 +575,10 @@ export class CombatSystem extends AbstractGameSystem<GameRoom, GameEvent> implem
     if (!config_progression) return;
 
     const shouldLevelUp = (gameRoom as any)['round'] % ((config_progression as any)['roundsPerLevel'] || 5) === 0;
-    
+
     if (shouldLevelUp && (gameRoom as any)['level'] < ((config_progression as any)['maxLevel'] || 10)) {
       (gameRoom as any)['level']++;
-      
+
       // Apply level bonuses to players
       for (const player of this.getAlivePlayers()) {
         this.applyLevelBonuses(player, (gameRoom as any)['level']);
@@ -624,12 +624,12 @@ export class CombatSystem extends AbstractGameSystem<GameRoom, GameEvent> implem
    */
   private groupActionsByType(validationResults: any[]): Map<string, any[]> {
     const groups = new Map<string, any[]>();
-    
+
     logger.info('[CombatSystem] Grouping actions by type:', {
       validationResultsCount: validationResults.length,
       validResults: validationResults.filter(r => r.valid).length
     });
-    
+
     for (const result of validationResults) {
       logger.info('[CombatSystem] Processing validation result:', {
         playerId: (result as any)['playerId'],
@@ -640,7 +640,7 @@ export class CombatSystem extends AbstractGameSystem<GameRoom, GameEvent> implem
       if (result.valid && (result as any)['playerId']) {
         const player = this.players.get((result as any)['playerId']);
         const submittedAction = player ? (player as any)['submittedAction'] : null;
-        
+
         logger.info('[CombatSystem] Player and action details:', {
           playerId: (result as any)['playerId'],
           playerExists: !!player,
@@ -651,18 +651,18 @@ export class CombatSystem extends AbstractGameSystem<GameRoom, GameEvent> implem
 
         if (player && submittedAction) {
           const actionType = submittedAction['actionType'];
-          
+
           if (!groups.has(actionType)) {
             groups.set(actionType, []);
           }
-          
+
           groups.get(actionType)!.push({
             playerId: (result as any)['playerId'],
             player,
             action: submittedAction,
             validation: result
           });
-          
+
           logger.info('[CombatSystem] Added action to group:', {
             actionType,
             playerId: (result as any)['playerId'],
@@ -671,7 +671,7 @@ export class CombatSystem extends AbstractGameSystem<GameRoom, GameEvent> implem
         }
       }
     }
-    
+
     logger.info('[CombatSystem] Action grouping completed:', {
       groupCount: groups.size,
       groups: Array.from(groups.entries()).map(([type, actions]) => ({
@@ -679,7 +679,7 @@ export class CombatSystem extends AbstractGameSystem<GameRoom, GameEvent> implem
         count: actions.length
       }))
     });
-    
+
     return groups;
   }
 
@@ -687,14 +687,14 @@ export class CombatSystem extends AbstractGameSystem<GameRoom, GameEvent> implem
    * Process coordinated actions with bonuses
    */
   private async processCoordinatedActions(
-    actionType: string, 
-    actions: any[], 
-    log: CombatLogEntry[], 
+    actionType: string,
+    actions: any[],
+    log: CombatLogEntry[],
     summary: RoundSummary,
     gameRoom?: any
   ): Promise<void> {
     const coordinationBonus = this.calculateCoordinationBonus(actions.length);
-    
+
     for (const actionData of actions) {
       await this.processSingleAction(actionData, log, summary, coordinationBonus, gameRoom);
     }
@@ -702,7 +702,7 @@ export class CombatSystem extends AbstractGameSystem<GameRoom, GameEvent> implem
     // Add coordination log entry
     log.push({
       type: 'coordination',
-      message: (config as any).formatMessage ? 
+      message: (config as any).formatMessage ?
         (config as any).formatMessage(
           'Coordinated {actionType} by {playerCount} players! (+{bonus}% effectiveness)',
           {
@@ -719,14 +719,14 @@ export class CombatSystem extends AbstractGameSystem<GameRoom, GameEvent> implem
    * Process a single player action
    */
   private async processSingleAction(
-    actionData: any, 
-    log: CombatLogEntry[], 
-    summary: RoundSummary, 
+    actionData: any,
+    log: CombatLogEntry[],
+    summary: RoundSummary,
     coordinationBonus: number = 0,
     gameRoom?: any
   ): Promise<void> {
     const { player, action } = actionData;
-    
+
     logger.info('[CombatSystem] Processing single action:', {
       playerId: (player as any)['id'],
       playerName: (player as any)['name'],
@@ -734,20 +734,20 @@ export class CombatSystem extends AbstractGameSystem<GameRoom, GameEvent> implem
       target: (action as any)?.targetId || 'none',
       coordinationBonus
     });
-    
+
     try {
       // Process the action directly since TurnResolver.processPlayerAction doesn't exist
       let result: { damage: number; healing: number; logEntries: any[] } = { damage: 0, healing: 0, logEntries: [] };
-      
+
       // Get the ability handler from the ability registry
       const abilityRegistry = gameRoom?.systems?.abilityRegistry;
       const actionType = (action as any)?.actionType || (action as any)?.type;
-      
+
       if (abilityRegistry && actionType) {
         const handler = abilityRegistry.getHandler(actionType);
         if (handler) {
           logger.info('[CombatSystem] Found ability handler for:', actionType);
-          
+
           // Execute the ability
           const abilityResult = await handler({
             action,
@@ -755,13 +755,13 @@ export class CombatSystem extends AbstractGameSystem<GameRoom, GameEvent> implem
             game: gameRoom,
             coordinationBonus
           });
-          
+
           logger.info('[CombatSystem] Ability result:', {
             damage: abilityResult?.damage || 0,
             healing: abilityResult?.healing || 0,
             success: abilityResult?.success
           });
-          
+
           result = {
             damage: abilityResult?.damage || 0,
             healing: abilityResult?.healing || 0,
@@ -771,17 +771,17 @@ export class CombatSystem extends AbstractGameSystem<GameRoom, GameEvent> implem
           logger.warn('[CombatSystem] No handler found for ability:', actionType);
         }
       } else {
-        logger.warn('[CombatSystem] No ability registry or action type', { 
-          hasRegistry: !!abilityRegistry, 
+        logger.warn('[CombatSystem] No ability registry or action type', {
+          hasRegistry: !!abilityRegistry,
           actionType,
           actionKeys: Object.keys(action || {})
         });
-        
+
         // Fallback: Create basic damage result for common attack abilities
         if (actionType && this.isAttackAbility(actionType)) {
           const baseDamage = this.calculateBasicAttackDamage(player, actionType);
           const target = this.getActionTarget(action, gameRoom);
-          
+
           if (target) {
             const finalDamage = this.applyDamageToTarget(target, baseDamage);
             result = {
@@ -797,7 +797,7 @@ export class CombatSystem extends AbstractGameSystem<GameRoom, GameEvent> implem
           }
         }
       }
-      
+
       // Update summary with action results
       if ((result as any)['damage']) {
         summary.totalDamageToMonster += (result as any)['damage'];
@@ -806,7 +806,7 @@ export class CombatSystem extends AbstractGameSystem<GameRoom, GameEvent> implem
           totalDamageToMonster: summary.totalDamageToMonster
         });
       }
-      
+
       if ((result as any)['healing']) {
         summary.totalHealing += (result as any)['healing'];
         logger.info('[CombatSystem] Added healing to summary:', {
@@ -814,7 +814,7 @@ export class CombatSystem extends AbstractGameSystem<GameRoom, GameEvent> implem
           totalHealing: summary.totalHealing
         });
       }
-      
+
       // Add action log entries
       if ((result as any)['logEntries'] && (result as any)['logEntries'].length > 0) {
         log.push(...(result as any)['logEntries']);
@@ -847,7 +847,7 @@ export class CombatSystem extends AbstractGameSystem<GameRoom, GameEvent> implem
         playerId: player.id,
         actionType: action.actionType || action.type
       });
-      
+
       log.push({
         type: 'error',
         message: `Failed to process action for ${(player as any)['name']}`,
@@ -863,7 +863,7 @@ export class CombatSystem extends AbstractGameSystem<GameRoom, GameEvent> implem
   private calculateCoordinationBonus(playerCount: number): number {
     const baseBonus = (config as any)['gameBalance']?.['coordination']?.['baseBonus'] || 0.1;
     const bonusPerPlayer = (config as any)['gameBalance']?.['coordination']?.['bonusPerPlayer'] || 0.05;
-    
+
     return baseBonus + (playerCount - 1) * bonusPerPlayer;
   }
 
@@ -887,7 +887,7 @@ export class CombatSystem extends AbstractGameSystem<GameRoom, GameEvent> implem
   isCombatActive(): boolean {
     const alivePlayers = this.getAlivePlayers();
     const monster = this.getMonster();
-    
+
     return alivePlayers.length > 0 && monster !== null && (monster as any)['isAlive'] === true;
   }
 
@@ -907,7 +907,7 @@ export class CombatSystem extends AbstractGameSystem<GameRoom, GameEvent> implem
   /**
    * GameSystem interface implementation
    */
-  
+
   /**
    * Process a game event and return updated state
    */
@@ -922,15 +922,15 @@ export class CombatSystem extends AbstractGameSystem<GameRoom, GameEvent> implem
         const result = await this.processRound(state);
         // Update game state with combat results
         return this.updateGameStateWithCombatResults(state, result);
-        
+
       case 'damage.calculated':
         // Apply damage calculation results
         return this.applyDamageToGameState(state, (event as any)['payload']);
-        
+
       case 'heal.applied':
         // Apply healing results
         return this.applyHealingToGameState(state, (event as any)['payload']);
-        
+
       default:
         return state;
     }
@@ -941,22 +941,22 @@ export class CombatSystem extends AbstractGameSystem<GameRoom, GameEvent> implem
    */
   validate(event: GameEvent): ValidationResult<GameEvent> {
     const errors: string[] = [];
-    
+
     if (!this.isCombatActive()) {
       errors.push('Combat is not active');
     }
-    
+
     if ((event as any)['type'] === 'action.submitted') {
       const payload = (event as any)['payload'];
       const player = this.players.get((payload as any)['playerId']);
-      
+
       if (!player) {
         errors.push('Player not found');
       } else if (!(player as any)['isAlive']) {
         errors.push('Player is not alive');
       }
     }
-    
+
     if (errors.length === 0) {
       return {
         success: true,
@@ -978,7 +978,7 @@ export class CombatSystem extends AbstractGameSystem<GameRoom, GameEvent> implem
   canHandle(event: GameEvent): boolean {
     const combatEventTypes = [
       'action.submitted',
-      'action.validated', 
+      'action.validated',
       'action.executed',
       'damage.calculated',
       'damage.applied',
@@ -986,7 +986,7 @@ export class CombatSystem extends AbstractGameSystem<GameRoom, GameEvent> implem
       'ability.used',
       'coordination.calculated'
     ];
-    
+
     return combatEventTypes.includes((event as any)['type']);
   }
 
@@ -1028,7 +1028,7 @@ export class CombatSystem extends AbstractGameSystem<GameRoom, GameEvent> implem
   /**
    * CombatSystemInterface implementation
    */
-  
+
   /**
    * Calculate damage between entities
    */
@@ -1044,7 +1044,7 @@ export class CombatSystem extends AbstractGameSystem<GameRoom, GameEvent> implem
       options: {},
       log: []
     });
-    
+
     return {
       finalDamage: result.finalDamage,
       baseDamage: baseDamage,
@@ -1080,19 +1080,19 @@ export class CombatSystem extends AbstractGameSystem<GameRoom, GameEvent> implem
   ): number {
     // Apply healing modifiers
     let finalHealing = baseHealing;
-    
+
     // Check for healing bonuses from effects
     if ('statusEffects' in healer) {
       const healingBonus = (this.effectManager as any)['getHealingModifier']?.(healer) || 0;
       finalHealing *= (1 + healingBonus);
     }
-    
+
     // Cap healing at max health
     if ('health' in target && 'maxHealth' in target) {
       const maxHealable = (target as any)['maxHealth'] - (target as any)['health'];
       finalHealing = Math.min(finalHealing, maxHealable);
     }
-    
+
     return Math.floor(finalHealing);
   }
 
@@ -1101,17 +1101,17 @@ export class CombatSystem extends AbstractGameSystem<GameRoom, GameEvent> implem
    */
   canAttack(attacker: Player | Monster, target: Player | Monster): boolean {
     // Check if attacker is alive
-    const attackerAlive = 'isAlive' in attacker ? (attacker as any)['isAlive'] : 
+    const attackerAlive = 'isAlive' in attacker ? (attacker as any)['isAlive'] :
                          'health' in attacker ? (attacker as any)['health'] > 0 : false;
-    
+
     // Check if target is alive
     const targetAlive = 'isAlive' in target ? (target as any)['isAlive'] :
                        'health' in target ? (target as any)['health'] > 0 : false;
-    
+
     if (!attackerAlive || !targetAlive) {
       return false;
     }
-    
+
     // Check for disabling effects
     if ('statusEffects' in attacker) {
       const statusEffects = (attacker as any)['statusEffects'] || [];
@@ -1122,7 +1122,7 @@ export class CombatSystem extends AbstractGameSystem<GameRoom, GameEvent> implem
         return false;
       }
     }
-    
+
     return true;
   }
 
@@ -1131,7 +1131,7 @@ export class CombatSystem extends AbstractGameSystem<GameRoom, GameEvent> implem
    */
   private isAttackAbility(actionType: string): boolean {
     const attackAbilities = [
-      'attack', 'lightningBolt', 'fireball', 'backstab', 'preciseShot', 
+      'attack', 'lightningBolt', 'fireball', 'backstab', 'preciseShot',
       'pistolShot', 'psychicBolt', 'strike', 'slash', 'pierce'
     ];
     return attackAbilities.includes(actionType);
@@ -1143,7 +1143,7 @@ export class CombatSystem extends AbstractGameSystem<GameRoom, GameEvent> implem
   private calculateBasicAttackDamage(player: Player, actionType: string): number {
     const baseDamage = (player as any)['attackPower'] || 20;
     const damageMod = (player as any)['damageMod'] || 1.0;
-    
+
     // Different abilities have different base multipliers
     let abilityMultiplier = 1.0;
     switch (actionType) {
@@ -1161,7 +1161,7 @@ export class CombatSystem extends AbstractGameSystem<GameRoom, GameEvent> implem
         abilityMultiplier = 1.0;
         break;
     }
-    
+
     return Math.floor(baseDamage * damageMod * abilityMultiplier);
   }
 
@@ -1171,12 +1171,12 @@ export class CombatSystem extends AbstractGameSystem<GameRoom, GameEvent> implem
   private getActionTarget(action: any, gameRoom: any): any {
     const targetId = (action as any)?.targetId;
     if (!targetId) return null;
-    
+
     // Check if targeting monster
     if (targetId === 'monster') {
       return (gameRoom as any)?.monster || this.getMonster();
     }
-    
+
     // Check if targeting a player
     return this.players.get(targetId);
   }
@@ -1192,15 +1192,15 @@ export class CombatSystem extends AbstractGameSystem<GameRoom, GameEvent> implem
       const currentHp = (target as any).hp || 0;
       const armor = (target as any).armor || 0;
       const finalDamage = Math.max(1, damage - armor);
-      
+
       (target as any).hp = Math.max(0, currentHp - finalDamage);
       if ((target as any).hp <= 0) {
         (target as any).isAlive = false;
       }
-      
+
       return finalDamage;
     }
-    
+
     return 0;
   }
 
@@ -1217,13 +1217,13 @@ export class CombatSystem extends AbstractGameSystem<GameRoom, GameEvent> implem
         (state as any)['players'].set(playerId, (player as any).toJSON?.() || player);
       }
     }
-    
+
     // Update monster state
     const monster = this.getMonster();
     if (monster && (state as any)['monster']) {
       (state as any)['monster'] = monster;
     }
-    
+
     return state;
   }
 
@@ -1232,7 +1232,7 @@ export class CombatSystem extends AbstractGameSystem<GameRoom, GameEvent> implem
    */
   private applyDamageToGameState(state: GameRoom, payload: any): GameRoom {
     const { targetId, damage } = payload as any;
-    
+
     // Apply damage to player or monster
     if ((state as any)['players']?.get?.(targetId)) {
       const player = this.players.get(targetId);
@@ -1244,7 +1244,7 @@ export class CombatSystem extends AbstractGameSystem<GameRoom, GameEvent> implem
       (state as any)['monster']['hp'] = Math.max(0, (state as any)['monster']['hp'] - damage);
       (state as any)['monster']['isAlive'] = (state as any)['monster']['hp'] > 0;
     }
-    
+
     return state;
   }
 
@@ -1253,7 +1253,7 @@ export class CombatSystem extends AbstractGameSystem<GameRoom, GameEvent> implem
    */
   private applyHealingToGameState(state: GameRoom, payload: any): GameRoom {
     const { targetId, healing } = payload as any;
-    
+
     // Apply healing to player
     if ((state as any)['players']?.get?.(targetId)) {
       const player = this.players.get(targetId);
@@ -1262,7 +1262,7 @@ export class CombatSystem extends AbstractGameSystem<GameRoom, GameEvent> implem
         (state as any)['players'].set(targetId, (player as any).toJSON?.() || player);
       }
     }
-    
+
     return state;
   }
 

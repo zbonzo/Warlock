@@ -42,7 +42,7 @@ describe('DamageEffects', () => {
     jest.clearAllMocks();
     jest.useFakeTimers();
     mockUseAppContext.mockReturnValue({});
-    
+
     // Mock console.log to avoid noise in tests
     jest.spyOn(console, 'log').mockImplementation(() => {});
   });
@@ -56,20 +56,20 @@ describe('DamageEffects', () => {
   describe('Basic Rendering', () => {
     it('should render nothing when no effects are active', () => {
       const { container } = render(<DamageEffects {...defaultProps} />);
-      
+
       expect(container.firstChild).toBeNull();
     });
 
     it('should not render anything when eventsLog is empty', () => {
       const { container } = render(<DamageEffects {...defaultProps} />);
-      
+
       expect(container.firstChild).toBeNull();
     });
 
     it('should not render anything when playerId is not provided', () => {
       const props = { ...defaultProps, playerId: '' };
       const { container } = render(<DamageEffects {...props} />);
-      
+
       expect(container.firstChild).toBeNull();
     });
   });

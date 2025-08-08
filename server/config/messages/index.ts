@@ -61,12 +61,12 @@ const messages = {
  */
 function formatMessage(template: string, params: Record<string, any> = {}): string {
   let formatted = template;
-  
+
   for (const [key, value] of Object.entries(params)) {
     const placeholder = `{${key}}`;
     formatted = formatted.replace(new RegExp(placeholder, 'g'), String(value));
   }
-  
+
   return formatted;
 }
 
@@ -76,7 +76,7 @@ function formatMessage(template: string, params: Record<string, any> = {}): stri
 function getMessage(path: string): string | null {
   const keys = path.split('.');
   let current: any = messages;
-  
+
   for (const key of keys) {
     if (current && typeof current === 'object' && key in current) {
       current = current[key];
@@ -84,7 +84,7 @@ function getMessage(path: string): string | null {
       return null;
     }
   }
-  
+
   return typeof current === 'string' ? current : null;
 }
 
@@ -131,7 +131,7 @@ export default {
   player: messages.player,
   ui: messages.ui,
   serverLogMessages: messages.serverLogMessages,
-  
+
   // Helper functions
   formatMessage,
   getMessage,

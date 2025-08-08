@@ -8,12 +8,18 @@ import logger from './logger.js';
 
 /**
  * Error types.
+ * Note: All enum values are used by the error handling functions below
  */
 export enum ErrorTypes {
+  // eslint-disable-next-line no-unused-vars
   VALIDATION = 'VALIDATION_ERROR',
+  // eslint-disable-next-line no-unused-vars
   GAME_STATE = 'GAME_STATE_ERROR',
+  // eslint-disable-next-line no-unused-vars
   PERMISSION = 'PERMISSION_ERROR',
+  // eslint-disable-next-line no-unused-vars
   NOT_FOUND = 'NOT_FOUND_ERROR',
+  // eslint-disable-next-line no-unused-vars
   SERVER = 'SERVER_ERROR',
 }
 
@@ -30,7 +36,7 @@ interface CustomError extends Error {
 interface Socket {
   id: string;
   playerId?: string;
-  emit: (event: string, data: any) => void;
+  emit: (_event: string, _data: any) => void;
 }
 
 interface ErrorContext {
@@ -66,10 +72,10 @@ export function createError(type: ErrorTypes, message: string, details: ErrorDet
  * A decorator for socket functions that adds error handling and performance monitoring.
  */
 export function withSocketErrorHandling<T extends any[], R>(
-  socket: Socket, 
-  fn: (...args: T) => Promise<R>, 
+  socket: Socket,
+  fn: (..._args: T) => Promise<R>,
   actionName: string
-): (...args: T) => Promise<R | false> {
+): (..._args: T) => Promise<R | false> {
   return async (...args: T): Promise<R | false> => {
     const startTime = performance.now();
     try {
@@ -130,9 +136,9 @@ export function handleSocketError(socket: Socket, error: Error, actionName: stri
   } catch (emitError) {
     logger.error('FailedToSendErrorMessage', {
       originalAction: actionName,
-      emitError: { 
-        message: (emitError as Error).message, 
-        stack: (emitError as Error).stack 
+      emitError: {
+        message: (emitError as Error).message,
+        stack: (emitError as Error).stack
       },
     });
   }

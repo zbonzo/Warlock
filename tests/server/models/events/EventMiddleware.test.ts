@@ -26,7 +26,7 @@ describe('EventMiddleware', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    
+
     mockEvent = {
       type: 'action.submitted' as EventType,
       timestamp: new Date(),
@@ -42,7 +42,7 @@ describe('EventMiddleware', () => {
   describe('logging middleware', () => {
     it('should log event without data by default', () => {
       const middleware = EventMiddleware.logging();
-      
+
       middleware(mockEvent, mockNext);
 
       expect(mockLogger.info).toHaveBeenCalledWith(
@@ -57,7 +57,7 @@ describe('EventMiddleware', () => {
 
     it('should log event with data when enabled', () => {
       const middleware = EventMiddleware.logging({ logData: true });
-      
+
       middleware(mockEvent, mockNext);
 
       expect(mockLogger.info).toHaveBeenCalledWith(
@@ -70,10 +70,10 @@ describe('EventMiddleware', () => {
     });
 
     it('should exclude specified event types from logging', () => {
-      const middleware = EventMiddleware.logging({ 
-        excludeTypes: ['action.submitted' as EventType] 
+      const middleware = EventMiddleware.logging({
+        excludeTypes: ['action.submitted' as EventType]
       });
-      
+
       middleware(mockEvent, mockNext);
 
       expect(mockLogger.info).not.toHaveBeenCalled();
@@ -85,7 +85,7 @@ describe('EventMiddleware', () => {
         ...mockEvent,
         data: { legacyData: 'test' }
       } as any;
-      
+
       const middleware = EventMiddleware.logging({ logData: true });
       middleware(legacyEvent, mockNext);
 
@@ -109,7 +109,7 @@ describe('EventMiddleware', () => {
 
     it('should validate event type and data', () => {
       const middleware = EventMiddleware.validation();
-      
+
       middleware(mockEvent, mockNext);
 
       expect(mockEventTypes.isValidEventType).toHaveBeenCalledWith('action.submitted');
@@ -123,7 +123,7 @@ describe('EventMiddleware', () => {
     it('should handle invalid event type in strict mode', () => {
       mockEventTypes.isValidEventType.mockReturnValue(false);
       const middleware = EventMiddleware.validation({ strict: true });
-      
+
       middleware(mockEvent, mockNext);
 
       expect(mockLogger.warn).toHaveBeenCalledWith(
@@ -135,7 +135,7 @@ describe('EventMiddleware', () => {
     it('should handle invalid event type in non-strict mode', () => {
       mockEventTypes.isValidEventType.mockReturnValue(false);
       const middleware = EventMiddleware.validation({ strict: false });
-      
+
       middleware(mockEvent, mockNext);
 
       expect(mockLogger.warn).toHaveBeenCalled();
@@ -148,7 +148,7 @@ describe('EventMiddleware', () => {
         valid: false,
         errors: ['Missing required field']
       });
-      
+
       const middleware = EventMiddleware.validation({ onError });
       middleware(mockEvent, mockNext);
 
@@ -163,7 +163,7 @@ describe('EventMiddleware', () => {
         valid: false,
         errors: ['Invalid data format', 'Missing field']
       });
-      
+
       const middleware = EventMiddleware.validation({ strict: true });
       middleware(mockEvent, mockNext);
 
@@ -181,7 +181,7 @@ describe('EventMiddleware', () => {
         type: 'action.submitted' as EventType,
         data: { legacyData: 'test' }
       } as any;
-      
+
       const middleware = EventMiddleware.validation();
       middleware(legacyEvent, mockNext);
 
@@ -194,11 +194,11 @@ describe('EventMiddleware', () => {
 
   describe('rateLimiting middleware', () => {
     it('should allow events within rate limit', () => {
-      const middleware = EventMiddleware.rateLimiting({ 
+      const middleware = EventMiddleware.rateLimiting({
         maxEvents: 10,
-        windowMs: 60000 
+        windowMs: 60000
       });
-      
+
       middleware(mockEvent, mockNext);
 
       expect(mockNext).toHaveBeenCalledWith();
@@ -206,22 +206,22 @@ describe('EventMiddleware', () => {
     });
 
     it('should block events exceeding rate limit', () => {
-      const middleware = EventMiddleware.rateLimiting({ 
+      const middleware = EventMiddleware.rateLimiting({
         maxEvents: 1,
-        windowMs: 60000 
+        windowMs: 60000
       });
-      
+
       const eventWithGameCode = {
         ...mockEvent,
         gameCode: 'TEST123'
       } as any;
-      
+
       // First event should pass
       middleware(eventWithGameCode, mockNext);
       expect(mockNext).toHaveBeenCalledWith();
-      
+
       mockNext.mockClear();
-      
+
       // Second event should be blocked
       middleware(eventWithGameCode, mockNext);
       expect(mockNext).toHaveBeenCalledWith(false);
@@ -236,22 +236,22 @@ describe('EventMiddleware', () => {
     });
 
     it('should reset rate limit after window expires', (done) => {
-      const middleware = EventMiddleware.rateLimiting({ 
+      const middleware = EventMiddleware.rateLimiting({
         maxEvents: 1,
         windowMs: 50 // Very short window for testing
       });
-      
+
       const eventWithGameCode = {
         ...mockEvent,
         gameCode: 'TEST123'
       } as any;
-      
+
       // First event
       middleware(eventWithGameCode, mockNext);
       expect(mockNext).toHaveBeenCalledWith();
-      
+
       mockNext.mockClear();
-      
+
       // Wait for window to expire, then test second event
       setTimeout(() => {
         middleware(eventWithGameCode, mockNext);
@@ -261,11 +261,11 @@ describe('EventMiddleware', () => {
     });
 
     it('should exempt specified event types from rate limiting', () => {
-      const middleware = EventMiddleware.rateLimiting({ 
+      const middleware = EventMiddleware.rateLimiting({
         maxEvents: 0, // Block all events
         exemptTypes: ['action.submitted' as EventType]
       });
-      
+
       middleware(mockEvent, mockNext);
 
       expect(mockNext).toHaveBeenCalledWith();
@@ -274,7 +274,7 @@ describe('EventMiddleware', () => {
 
     it('should handle events without gameCode', () => {
       const middleware = EventMiddleware.rateLimiting({ maxEvents: 10 });
-      
+
       middleware(mockEvent, mockNext);
 
       expect(mockNext).toHaveBeenCalledWith();
@@ -287,7 +287,7 @@ describe('EventMiddleware', () => {
       const errorNext = jest.fn().mockImplementation(() => {
         throw error;
       });
-      
+
       const middleware = EventMiddleware.errorHandling();
       middleware(mockEvent, errorNext);
 
@@ -306,7 +306,7 @@ describe('EventMiddleware', () => {
       const errorNext = jest.fn().mockImplementation(() => {
         throw error;
       });
-      
+
       const middleware = EventMiddleware.errorHandling({ onError });
       middleware(mockEvent, errorNext);
 
@@ -317,7 +317,7 @@ describe('EventMiddleware', () => {
       const errorNext = jest.fn().mockImplementation(() => {
         throw 'String error';
       });
-      
+
       const middleware = EventMiddleware.errorHandling();
       middleware(mockEvent, errorNext);
 
@@ -332,15 +332,15 @@ describe('EventMiddleware', () => {
 
   describe('performance middleware', () => {
     it('should track event processing time', (done) => {
-      const middleware = EventMiddleware.performance({ 
-        slowEventThreshold: 10 
+      const middleware = EventMiddleware.performance({
+        slowEventThreshold: 10
       });
-      
+
       const slowNext = jest.fn().mockImplementation(() => {
         // Simulate slow processing
         setTimeout(() => done(), 20);
       });
-      
+
       middleware(mockEvent, slowNext);
 
       // Wait a bit to ensure the warning is logged
@@ -356,10 +356,10 @@ describe('EventMiddleware', () => {
     });
 
     it('should not warn for fast events', () => {
-      const middleware = EventMiddleware.performance({ 
-        slowEventThreshold: 1000 
+      const middleware = EventMiddleware.performance({
+        slowEventThreshold: 1000
       });
-      
+
       middleware(mockEvent, mockNext);
 
       expect(mockLogger.warn).not.toHaveBeenCalled();
@@ -371,7 +371,7 @@ describe('EventMiddleware', () => {
     it('should allow events that pass filter', () => {
       const filterFn = jest.fn().mockReturnValue(true);
       const middleware = EventMiddleware.filtering(filterFn);
-      
+
       middleware(mockEvent, mockNext);
 
       expect(filterFn).toHaveBeenCalledWith(mockEvent);
@@ -381,7 +381,7 @@ describe('EventMiddleware', () => {
     it('should block events that fail filter', () => {
       const filterFn = jest.fn().mockReturnValue(false);
       const middleware = EventMiddleware.filtering(filterFn);
-      
+
       middleware(mockEvent, mockNext);
 
       expect(filterFn).toHaveBeenCalledWith(mockEvent);
@@ -395,10 +395,10 @@ describe('EventMiddleware', () => {
         ...mockEvent,
         transformed: true
       } as any;
-      
+
       const transformFn = jest.fn().mockReturnValue(transformedEvent);
       const middleware = EventMiddleware.transformation(transformFn);
-      
+
       middleware(mockEvent, mockNext);
 
       expect(transformFn).toHaveBeenCalledWith(mockEvent);
@@ -410,7 +410,7 @@ describe('EventMiddleware', () => {
       const transformFn = jest.fn().mockImplementation(() => {
         throw error;
       });
-      
+
       const middleware = EventMiddleware.transformation(transformFn);
       middleware(mockEvent, mockNext);
 
@@ -429,7 +429,7 @@ describe('EventMiddleware', () => {
     it('should allow authorized events', () => {
       const authFn = jest.fn().mockReturnValue(true);
       const middleware = EventMiddleware.authorization(authFn);
-      
+
       middleware(mockEvent, mockNext);
 
       expect(authFn).toHaveBeenCalledWith(mockEvent);
@@ -439,7 +439,7 @@ describe('EventMiddleware', () => {
     it('should block unauthorized events', () => {
       const authFn = jest.fn().mockReturnValue(false);
       const middleware = EventMiddleware.authorization(authFn);
-      
+
       middleware(mockEvent, mockNext);
 
       expect(authFn).toHaveBeenCalledWith(mockEvent);
@@ -456,7 +456,7 @@ describe('EventMiddleware', () => {
   describe('debugging middleware', () => {
     it('should add debug information to event', () => {
       const middleware = EventMiddleware.debugging();
-      
+
       middleware(mockEvent, mockNext);
 
       const enhancedEvent = mockNext.mock.calls[0][0];
@@ -473,7 +473,7 @@ describe('EventMiddleware', () => {
 
     it('should add stack trace when enabled', () => {
       const middleware = EventMiddleware.debugging({ addStackTrace: true });
-      
+
       middleware(mockEvent, mockNext);
 
       const enhancedEvent = mockNext.mock.calls[0][0];
@@ -520,11 +520,11 @@ describe('EventMiddleware', () => {
 
     it('should apply middleware stack in correct order', () => {
       const stack = EventMiddleware.createStandardStack();
-      
+
       // Test that middleware are applied in the expected order
       // This is implicit in the order they're added to the array
       expect(stack).toHaveLength(5);
-      
+
       // We can't easily test the actual execution order without more complex mocking,
       // but we can verify the stack contains the expected number of middleware
     });
@@ -534,18 +534,18 @@ describe('EventMiddleware', () => {
     it('should chain multiple middleware correctly', () => {
       const middleware1 = EventMiddleware.logging();
       const middleware2 = EventMiddleware.validation();
-      
+
       // Simulate chaining by having middleware2 as the next function for middleware1
       const chainedNext = jest.fn().mockImplementation(() => {
         middleware2(mockEvent, mockNext);
       });
-      
+
       mockEventTypes.isValidEventType.mockReturnValue(true);
       mockEventTypes.validateEventData.mockReturnValue({
         valid: true,
         errors: []
       });
-      
+
       middleware1(mockEvent, chainedNext);
 
       expect(mockLogger.info).toHaveBeenCalled();
@@ -556,13 +556,13 @@ describe('EventMiddleware', () => {
     it('should stop middleware chain when event is cancelled', () => {
       const middleware1 = EventMiddleware.rateLimiting({ maxEvents: 0 }); // Block all
       const middleware2 = EventMiddleware.logging();
-      
+
       const chainedNext = jest.fn().mockImplementation((result) => {
         if (result !== false) {
           middleware2(mockEvent, mockNext);
         }
       });
-      
+
       middleware1(mockEvent, chainedNext);
 
       expect(mockLogger.warn).toHaveBeenCalled(); // Rate limit warning

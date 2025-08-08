@@ -1,11 +1,11 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { fileURLToPath } from 'url';
-import { 
-  AbilitiesMap, 
-  Ability, 
+import {
+  AbilitiesMap,
+  Ability,
   validateAbilitiesMap,
-  safeValidateAbilitiesMap 
+  safeValidateAbilitiesMap
 } from '../schemas/ability.schema.js';
 
 // ES module __dirname equivalent
@@ -107,7 +107,7 @@ export class AbilityLoader {
    */
   public getAbilitiesByTag(tag: string): Ability[] {
     this.reloadIfChanged();
-    return Object.values(this.abilities).filter(ability => 
+    return Object.values(this.abilities).filter(ability =>
       ability.tags && ability.tags.includes(tag)
     );
   }
@@ -145,7 +145,7 @@ export class AbilityLoader {
 
     // Add business logic for availability checking
     // This could include cooldown checks, resource requirements, etc.
-    
+
     // Example: Check if ability is hidden and player has access
     if (ability.tags.includes('hidden')) {
       return context['hasHiddenAccess'] === true;
@@ -217,7 +217,7 @@ export class AbilityLoader {
 
     // Add validation logic for ability-specific parameters
     // This could check required parameters, value ranges, etc.
-    
+
     // Example: Validate target requirements
     if (ability.target === 'Single' && !params['targetId']) {
       return false;
@@ -233,10 +233,10 @@ export class AbilityLoader {
   /**
    * Get ability effect information
    */
-  public getEffectInfo(abilityId: string): { 
-    hasEffect: boolean; 
-    effectType: string | null; 
-    effectParams: Record<string, any> 
+  public getEffectInfo(abilityId: string): {
+    hasEffect: boolean;
+    effectType: string | null;
+    effectParams: Record<string, any>
   } {
     const ability = this.getAbility(abilityId);
     if (!ability) {
@@ -244,7 +244,7 @@ export class AbilityLoader {
     }
 
     const effectParams: Record<string, any> = {};
-    
+
     // Extract effect-specific parameters
     if (ability.effect === 'poison' && ability.params['poison']) {
       effectParams['poison'] = ability.params['poison'];
@@ -283,7 +283,7 @@ export class AbilityLoader {
   } {
     this.reloadIfChanged();
     const abilities = Object.values(this.abilities);
-    
+
     const byCategory: Record<string, number> = {};
     const byTags: Record<string, number> = {};
     let totalDamage = 0;
@@ -293,7 +293,7 @@ export class AbilityLoader {
     abilities.forEach(ability => {
       // Count by category
       byCategory[ability.category] = (byCategory[ability.category] || 0) + 1;
-      
+
       // Count by tags
       ability.tags.forEach(tag => {
         byTags[tag] = (byTags[tag] || 0) + 1;

@@ -13,29 +13,29 @@ export const BaseSchemas = {
   playerId: z.string().min(1).max(50),
   gameCode: z.string().length(6).regex(/^[A-Z0-9]{6}$/),
   timestamp: z.string().datetime().or(z.date()),
-  
+
   // Numeric ranges
   healthPoints: z.number().int().min(0).max(100),
   round: z.number().int().min(1).max(100),
   turn: z.number().int().min(1).max(20),
-  
+
   // Game enums
   playerClass: z.enum(['Alchemist', 'Assassin', 'Barbarian', 'Druid', 'Gunslinger', 'Oracle', 'Priest', 'Pyromancer', 'Shaman', 'Tracker', 'Warrior', 'Wizard', 'Paladin']),
   playerRace: z.enum(['Human', 'Elf', 'Dwarf', 'Halfling', 'Orc', 'Kinfolk', 'Crestfallen', 'Artisan', 'Lich', 'Rockhewn']),
   playerRole: z.enum(['Good', 'Evil', 'Warlock']),
   gamePhase: z.enum(['setup', 'day', 'night', 'voting', 'ended']),
-  
+
   // Status and states
   playerStatus: z.enum(['alive', 'dead', 'revived']),
   abilityTarget: z.enum(['self', 'player', 'monster', 'area', 'none']),
   effectType: z.enum(['buff', 'debuff', 'status', 'immunity']),
-  
+
   // Coordinate systems
   position: z.object({
     x: z.number().int().min(0).max(10),
     y: z.number().int().min(0).max(10)
   }).optional(),
-  
+
   // Common result patterns
   actionResult: z.object({
     success: z.boolean(),
@@ -60,7 +60,7 @@ export const PlayerSchemas = {
     magicPower: z.number().int().min(0).max(50),
     luck: z.number().int().min(0).max(100)
   }),
-  
+
   // Player abilities
   ability: z.object({
     id: z.string().min(1),
@@ -81,7 +81,7 @@ export const PlayerSchemas = {
       blockedBy: z.array(z.string()).optional()
     }).optional()
   }).passthrough(), // Allow additional properties for backward compatibility
-  
+
   // Status effects
   statusEffect: z.object({
     id: z.string().min(1),
@@ -102,7 +102,7 @@ export const PlayerSchemas = {
     }).optional(),
     metadata: z.record(z.any()).optional()
   }),
-  
+
   // Full player object
   player: z.lazy((): z.ZodType<any> => z.object({
     id: BaseSchemas.playerId,
@@ -136,7 +136,7 @@ export const ActionSchemas = {
     round: BaseSchemas.round.optional(),
     turn: BaseSchemas.turn.optional()
   }),
-  
+
   // Ability usage action
   abilityAction: z.object({
     playerId: BaseSchemas.playerId,
@@ -151,7 +151,7 @@ export const ActionSchemas = {
     actionData: z.record(z.any()).optional(),
     timestamp: BaseSchemas.timestamp
   }),
-  
+
   // Validation result
   validationResult: z.object({
     valid: z.boolean(),
@@ -160,7 +160,7 @@ export const ActionSchemas = {
     score: z.number().min(0).max(100).optional(),
     metadata: z.record(z.any()).optional()
   }),
-  
+
   // Command execution result
   commandResult: z.object({
     success: z.boolean(),
@@ -191,7 +191,7 @@ export const GameSchemas = {
     race: z.literal('Monster'), // Required for system compatibility
     metadata: z.record(z.any()).optional()
   }),
-  
+
   // Game phase tracking
   gamePhase: z.object({
     current: BaseSchemas.gamePhase,
@@ -202,7 +202,7 @@ export const GameSchemas = {
     actionsSubmitted: z.record(z.boolean()).default({}),
     canSubmitActions: z.boolean().default(true)
   }),
-  
+
   // Game rules configuration
   gameRules: z.object({
     maxPlayers: z.number().int().min(3).max(12),
@@ -214,7 +214,7 @@ export const GameSchemas = {
     allowLateJoin: z.boolean().default(false),
     difficultyModifier: z.number().min(0.5).max(2.0).default(1.0)
   }),
-  
+
   // Complete game state
   gameState: z.lazy((): z.ZodType<any> => z.object({
     gameCode: BaseSchemas.gameCode,
@@ -241,14 +241,14 @@ export const SocketSchemas = {
     playerClass: BaseSchemas.playerClass,
     playerRace: BaseSchemas.playerRace
   }),
-  
+
   submitAction: z.object({
     actionType: z.string().min(1),
     targetId: z.string().optional(),
     abilityId: z.string().optional(),
     actionData: z.record(z.any()).optional()
   }),
-  
+
   // Outgoing socket events
   gameUpdate: z.lazy((): z.ZodType<any> => z.object({
     type: z.string().min(1),
@@ -258,7 +258,7 @@ export const SocketSchemas = {
     message: z.string().optional(),
     data: z.any().optional()
   })),
-  
+
   errorMessage: z.object({
     type: z.literal('error'),
     message: z.string().min(1),
@@ -289,7 +289,7 @@ export const ConfigSchemas = {
       format: z.enum(['json', 'simple']).default('simple')
     })
   }),
-  
+
   // Game configuration
   gameConfig: z.lazy((): z.ZodType<any> => z.object({
     defaultRules: GameSchemas.gameRules,

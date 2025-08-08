@@ -28,10 +28,10 @@ jest.mock('../../../client/src/styles/global.css', () => ({}));
 
 describe('index.tsx', () => {
   const originalGetElementById = document.getElementById;
-  
+
   beforeEach(() => {
     jest.clearAllMocks();
-    
+
     // Mock document.getElementById to return a root element
     document.getElementById = jest.fn().mockReturnValue(
       document.createElement('div')
@@ -48,7 +48,7 @@ describe('index.tsx', () => {
 
     // Verify that document.getElementById was called with 'root'
     expect(document.getElementById).toHaveBeenCalledWith('root');
-    
+
     // Verify that reportWebVitals was called
     expect(mockReportWebVitals).toHaveBeenCalledTimes(1);
   });

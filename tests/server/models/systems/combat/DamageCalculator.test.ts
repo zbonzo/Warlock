@@ -29,21 +29,21 @@ describe('DamageCalculator', () => {
     it('should calculate basic damage', () => {
       const attacker = { damageMod: 1.2 };
       const target = { armor: 2 };
-      
+
       const result = damageCalculator.calculateDamage(attacker, target, 10);
-      
+
       expect(result.finalDamage).toBe(10); // (10 * 1.2) - 2 = 10
     });
 
     it('should apply vulnerability modifier', () => {
-      const target = { 
-        statusEffects: { 
-          vulnerable: { damageIncrease: 0.5 } 
-        } 
+      const target = {
+        statusEffects: {
+          vulnerable: { damageIncrease: 0.5 }
+        }
       };
-      
+
       const result = damageCalculator.calculateDamage(null, target, 10);
-      
+
       expect(result.finalDamage).toBe(15);
     });
   });

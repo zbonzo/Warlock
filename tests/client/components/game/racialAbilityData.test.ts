@@ -18,7 +18,7 @@ describe('racialAbilityData', () => {
       it('should contain all expected races', () => {
         const expectedRaces = ['Artisan', 'Rockhewn', 'Crestfallen', 'Orc', 'Kinfolk', 'Lich'];
         const actualRaces = Object.keys(RACE_TO_ABILITY);
-        
+
         expectedRaces.forEach(race => {
           expect(actualRaces).toContain(race);
         });
@@ -36,7 +36,7 @@ describe('racialAbilityData', () => {
       it('should have unique ability types for each race', () => {
         const abilityTypes = Object.values(RACE_TO_ABILITY);
         const uniqueAbilityTypes = [...new Set(abilityTypes)];
-        
+
         expect(abilityTypes.length).toBe(uniqueAbilityTypes.length);
       });
     });
@@ -44,7 +44,7 @@ describe('racialAbilityData', () => {
     describe('ABILITY_ICONS', () => {
       it('should contain icons for all ability types', () => {
         const abilityTypes = Object.values(RACE_TO_ABILITY);
-        
+
         abilityTypes.forEach(abilityType => {
           expect(ABILITY_ICONS).toHaveProperty(abilityType);
           expect(typeof ABILITY_ICONS[abilityType]).toBe('string');
@@ -65,7 +65,7 @@ describe('racialAbilityData', () => {
     describe('RACE_COLORS', () => {
       it('should contain colors for all races', () => {
         const races = Object.keys(RACE_TO_ABILITY);
-        
+
         races.forEach(race => {
           expect(RACE_COLORS).toHaveProperty(race);
           expect(typeof RACE_COLORS[race]).toBe('string');
@@ -85,7 +85,7 @@ describe('racialAbilityData', () => {
       it('should have unique colors for each race', () => {
         const colors = Object.values(RACE_COLORS);
         const uniqueColors = [...new Set(colors)];
-        
+
         expect(colors.length).toBe(uniqueColors.length);
       });
     });
@@ -157,7 +157,7 @@ describe('racialAbilityData', () => {
 
     it('should return theme color for invalid races when theme is provided', () => {
       const mockTheme = { colors: { primary: '#123456' } };
-      
+
       expect(getRaceColor('InvalidRace', mockTheme)).toBe('#123456');
       expect(getRaceColor('', mockTheme)).toBe('#123456');
     });
@@ -169,7 +169,7 @@ describe('racialAbilityData', () => {
 
     it('should return default color when theme is provided but has no colors.primary', () => {
       const mockTheme = { colors: {} };
-      
+
       expect(getRaceColor('InvalidRace', mockTheme)).toBe('#4a2c82');
     });
 
@@ -180,14 +180,14 @@ describe('racialAbilityData', () => {
 
     it('should handle case sensitivity', () => {
       const mockTheme = { colors: { primary: '#999999' } };
-      
+
       expect(getRaceColor('artisan', mockTheme)).toBe('#999999');
       expect(getRaceColor('ARTISAN', mockTheme)).toBe('#999999');
     });
 
     it('should prioritize race color over theme color for valid races', () => {
       const mockTheme = { colors: { primary: '#999999' } };
-      
+
       expect(getRaceColor('Artisan', mockTheme)).toBe('#4169E1');
       expect(getRaceColor('Orc', mockTheme)).toBe('#8B0000');
     });
@@ -198,14 +198,14 @@ describe('racialAbilityData', () => {
       const raceCount = Object.keys(RACE_TO_ABILITY).length;
       const abilityIconCount = Object.keys(ABILITY_ICONS).length;
       const raceColorCount = Object.keys(RACE_COLORS).length;
-      
+
       expect(abilityIconCount).toBe(raceCount);
       expect(raceColorCount).toBe(raceCount);
     });
 
     it('should have ability icons for all mapped ability types', () => {
       const abilityTypes = Object.values(RACE_TO_ABILITY);
-      
+
       abilityTypes.forEach(abilityType => {
         expect(ABILITY_ICONS).toHaveProperty(abilityType);
       });
@@ -213,7 +213,7 @@ describe('racialAbilityData', () => {
 
     it('should have colors for all mapped races', () => {
       const races = Object.keys(RACE_TO_ABILITY);
-      
+
       races.forEach(race => {
         expect(RACE_COLORS).toHaveProperty(race);
       });
@@ -230,7 +230,7 @@ describe('racialAbilityData', () => {
 
     it('should handle all ability types from RACE_TO_ABILITY in getRaceFromAbilityType', () => {
       const abilityTypes = Object.values(RACE_TO_ABILITY);
-      
+
       abilityTypes.forEach(abilityType => {
         const race = getRaceFromAbilityType(abilityType);
         expect(race).not.toBe('Unknown');
@@ -240,7 +240,7 @@ describe('racialAbilityData', () => {
 
     it('should handle all races from RACE_TO_ABILITY in getAbilityTypeFromRace', () => {
       const races = Object.keys(RACE_TO_ABILITY);
-      
+
       races.forEach(race => {
         const abilityType = getAbilityTypeFromRace(race);
         expect(abilityType).not.toBeNull();

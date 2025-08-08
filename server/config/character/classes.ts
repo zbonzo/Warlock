@@ -222,7 +222,7 @@ export function getClassAbilities(className: string): Ability[] {
 
   const abilities: Ability[] = [];
   const levels = ['level1', 'level2', 'level3', 'level4'] as const;
-  
+
   for (const level of levels) {
     const abilityId = progression[level];
     const ability = getAbility(abilityId);
@@ -232,7 +232,7 @@ export function getClassAbilities(className: string): Ability[] {
       console.warn(`Ability '${abilityId}' not found for class '${className}' at ${level}`);
     }
   }
-  
+
   return abilities;
 }
 
@@ -275,7 +275,7 @@ export function getClassAbilityForLevel(className: string, level: number): Abili
 
   const levelKey = `level${level}` as keyof AbilityProgression;
   const abilityId = progression[levelKey];
-  
+
   if (!abilityId) {
     return null;
   }

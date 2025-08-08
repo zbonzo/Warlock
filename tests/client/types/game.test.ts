@@ -66,7 +66,7 @@ describe('Game Types', () => {
 
     it('should accept all category types', () => {
       const categories: Ability['category'][] = ['Attack', 'Defense', 'Heal', 'Special', 'Racial'];
-      
+
       categories.forEach(category => {
         const ability: Ability = {
           type: 'test',
@@ -79,7 +79,7 @@ describe('Game Types', () => {
 
     it('should accept all target types', () => {
       const targets: Ability['target'][] = ['Single', 'Multi', 'Self'];
-      
+
       targets.forEach(target => {
         const ability: Ability = {
           type: 'test',
@@ -227,7 +227,7 @@ describe('Game Types', () => {
 
     it('should accept all phase types', () => {
       const phases: GameState['phase'][] = ['action', 'results', 'end'];
-      
+
       phases.forEach(phase => {
         const gameState: Partial<GameState> = { phase };
         expect(gameState.phase).toBe(phase);
@@ -236,7 +236,7 @@ describe('Game Types', () => {
 
     it('should accept all winner types', () => {
       const winners: GameState['winner'][] = ['villagers', 'warlocks', 'monster'];
-      
+
       winners.forEach(winner => {
         const gameState: Partial<GameState> = { winner };
         expect(gameState.winner).toBe(winner);
@@ -281,12 +281,12 @@ describe('Game Types', () => {
         type: 'damage',
         damage: 25
       };
-      
+
       const complexEvent: GameEvent = {
         type: 'damage',
         damage: { final: 20, initial: 25, reduction: 5 }
       };
-      
+
       expect(simpleEvent.damage).toBe(25);
       expect(complexEvent.damage).toEqual({ final: 20, initial: 25, reduction: 5 });
     });
@@ -302,7 +302,7 @@ describe('Game Types', () => {
         leaveGame: () => {},
         reconnect: (playerId: string, gameCode: string) => {}
       };
-      
+
       expect(typeof emitEvents.selectAbility).toBe('function');
       expect(typeof emitEvents.joinGame).toBe('function');
     });
@@ -337,7 +337,7 @@ describe('Game Types', () => {
         actionResult: (result: any) => {},
         phaseChange: (phase: string) => {}
       };
-      
+
       expect(typeof listenEvents.gameUpdate).toBe('function');
       expect(typeof listenEvents.playerJoined).toBe('function');
     });

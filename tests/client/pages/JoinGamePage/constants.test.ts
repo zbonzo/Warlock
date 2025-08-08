@@ -28,13 +28,13 @@ describe('JoinGamePage constants', () => {
 
     it('should contain expected name categories', () => {
       // Test for presence of different categories of names
-      const hasArtisanNames = RANDOM_NAMES.some(name => 
+      const hasArtisanNames = RANDOM_NAMES.some(name =>
         ['Forge', 'Chisel', 'Canvas', 'Hammer', 'Smith'].includes(name)
       );
-      const hasLichNames = RANDOM_NAMES.some(name => 
+      const hasLichNames = RANDOM_NAMES.some(name =>
         ['Wraith', 'Shade', 'Void', 'Crypt', 'Lich'].includes(name)
       );
-      const hasOrcNames = RANDOM_NAMES.some(name => 
+      const hasOrcNames = RANDOM_NAMES.some(name =>
         ['Fury', 'Rage', 'Blade', 'Blood', 'Savage'].includes(name)
       );
 
@@ -76,13 +76,13 @@ describe('JoinGamePage constants', () => {
 
     it('should have names suitable for different character classes', () => {
       // Check that we have names that would fit different character themes
-      const craftingNames = RANDOM_NAMES.filter(name => 
+      const craftingNames = RANDOM_NAMES.filter(name =>
         ['Forge', 'Smith', 'Mason', 'Potter', 'Weaver', 'Carver'].includes(name)
       );
-      const magicNames = RANDOM_NAMES.filter(name => 
+      const magicNames = RANDOM_NAMES.filter(name =>
         ['Wraith', 'Hex', 'Phantom', 'Void', 'Mist'].includes(name)
       );
-      const warriorNames = RANDOM_NAMES.filter(name => 
+      const warriorNames = RANDOM_NAMES.filter(name =>
         ['Blade', 'Steel', 'Iron', 'Crusher', 'Breaker'].includes(name)
       );
 

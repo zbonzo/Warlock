@@ -3,6 +3,7 @@
  * Handles racial abilities that enhance combat performance
  */
 
+import { secureId } from '../../../../../utils/secureRandom.js';
 import type { Player, Monster, Ability } from '../../../../../types/generated.js';
 import type {
   AbilityHandler,
@@ -40,12 +41,12 @@ export const handleBloodRage: AbilityHandler = (
   const currentHp = (actor as any).hp || 0;
   if (currentHp <= healthCost) {
     log.push({
-      id: `blood-rage-insufficient-hp-${Date.now()}`,
+      id: secureId('blood-rage-insufficient-hp'),
       timestamp: Date.now(),
       type: 'action',
       source: actor.id,
       message: messages.getAbilityMessage('racial', 'blood_rage_insufficient_health') || `${actor.name} doesn't have enough health for Blood Rage (needs ${healthCost}, has ${currentHp})!`,
-      details: { 
+      details: {
         healthCost,
         currentHp,
         reason: 'insufficient_health'
@@ -67,7 +68,7 @@ export const handleBloodRage: AbilityHandler = (
 
   if (healthCostResult.success) {
     log.push({
-      id: `blood-rage-health-cost-${Date.now()}`,
+      id: secureId('blood-rage-health-cost'),
       timestamp: Date.now(),
       type: 'action',
       source: actor.id,
@@ -82,7 +83,7 @@ export const handleBloodRage: AbilityHandler = (
 
   // Apply blood rage buff
   const statusResult = systems.statusEffectManager.applyStatusEffect(actor, {
-    id: `blood-rage-${Date.now()}`,
+    id: secureId('blood-rage'),
     name: 'blood_rage',
     type: 'buff',
     duration,
@@ -95,7 +96,7 @@ export const handleBloodRage: AbilityHandler = (
 
   if (statusResult.success) {
     log.push({
-      id: `blood-rage-success-${Date.now()}`,
+      id: secureId('blood-rage-success'),
       timestamp: Date.now(),
       type: 'action',
       source: actor.id,
@@ -143,7 +144,7 @@ export const handleUndying: AbilityHandler = (
   // Check if health is low enough to activate undying
   if (healthRatio > healthThreshold) {
     log.push({
-      id: `undying-health-too-high-${Date.now()}`,
+      id: secureId('undying-health-too-high'),
       timestamp: Date.now(),
       type: 'action',
       source: actor.id,
@@ -161,7 +162,7 @@ export const handleUndying: AbilityHandler = (
 
   // Apply undying effect
   const statusResult = systems.statusEffectManager.applyStatusEffect(actor, {
-    id: `undying-${Date.now()}`,
+    id: secureId('undying'),
     name: 'undying',
     type: 'buff',
     duration,
@@ -175,7 +176,7 @@ export const handleUndying: AbilityHandler = (
 
   if (statusResult.success) {
     log.push({
-      id: `undying-success-${Date.now()}`,
+      id: secureId('undying-success'),
       timestamp: Date.now(),
       type: 'action',
       source: actor.id,
@@ -220,7 +221,7 @@ export const handleStoneArmor: AbilityHandler = (
 
   // Apply enhanced stone armor
   const statusResult = systems.statusEffectManager.applyStatusEffect(actor, {
-    id: `stone-armor-enhanced-${Date.now()}`,
+    id: secureId('stone-armor-enhanced'),
     name: 'stone_armor_enhanced',
     type: 'buff',
     duration,
@@ -234,7 +235,7 @@ export const handleStoneArmor: AbilityHandler = (
 
   if (statusResult.success) {
     log.push({
-      id: `stone-armor-success-${Date.now()}`,
+      id: secureId('stone-armor-success'),
       timestamp: Date.now(),
       type: 'action',
       source: actor.id,

@@ -3,6 +3,7 @@
  * Handles racial abilities that provide adaptation and evolution mechanics
  */
 
+import { secureId } from '../../../../../utils/secureRandom.js';
 import type { Player, Monster, Ability } from '../../../../../types/generated.js';
 import type {
   AbilityHandler,
@@ -13,6 +14,7 @@ import type { GameSystems } from '../../../SystemsFactory.js';
 import { applyThreatForAbility } from '../../abilityRegistryUtils.js';
 
 import config from '../../../../../config/index.js';
+import { secureRandomChoice } from '../../../../../utils/secureRandom.js';
 import messages from '../../../../../config/messages/index.js';
 
 /**
@@ -37,10 +39,10 @@ export const handleAdaptability: AbilityHandler = (
 
   // Get available classes for adaptation
   const availableClasses = config.getClassesByCategory?.('adaptable') || [];
-  
+
   if (availableClasses.length === 0) {
     log.push({
-      id: `adaptability-no-classes-${Date.now()}`,
+      id: secureId('adaptability-no-classes'),
       timestamp: Date.now(),
       type: 'action',
       source: actor.id,
@@ -55,7 +57,7 @@ export const handleAdaptability: AbilityHandler = (
 
   // Select a random class to adapt to (or based on game conditions)
   const selectedClass = selectAdaptationClass(availableClasses, game, actor);
-  
+
   if (!selectedClass) {
     return false;
   }
@@ -66,7 +68,7 @@ export const handleAdaptability: AbilityHandler = (
   const adaptationBonus = params.adaptationBonus || 0.2; // 20% bonus to adapted class abilities
 
   const statusResult = systems.statusEffectManager?.applyStatusEffect?.(actor, {
-    id: `adaptability-${Date.now()}`,
+    id: secureId('adaptability'),
     name: 'adapted',
     type: 'buff',
     duration,
@@ -81,7 +83,7 @@ export const handleAdaptability: AbilityHandler = (
 
   if (statusResult.success) {
     log.push({
-      id: `adaptability-success-${Date.now()}`,
+      id: secureId('adaptability-success'),
       timestamp: Date.now(),
       type: 'action',
       source: actor.id,
@@ -100,7 +102,7 @@ export const handleAdaptability: AbilityHandler = (
     // Private message with new abilities available
     if (selectedClass.abilities && selectedClass.abilities.length > 0) {
       log.push({
-        id: `adaptability-abilities-${Date.now()}`,
+        id: secureId('adaptability-abilities'),
         timestamp: Date.now(),
         type: 'action',
         source: actor.id,
@@ -129,7 +131,7 @@ function selectAdaptationClass(availableClasses: any[], game: any, actor: Player
   if (availableClasses.length === 0) return null;
 
   // Simple selection logic - can be enhanced with more sophisticated rules
-  
+
   // Check if we need healing (low health players)
   const lowHealthPlayers = Array.from(game.players.values()).filter(
     (p: any) => p.hp / p.maxHp < 0.5
@@ -150,12 +152,12 @@ function selectAdaptationClass(availableClasses: any[], game: any, actor: Player
   // Check if we need detection (suspected warlocks)
   const suspiciousActivity = game.suspicionLevel || 0;
   if (suspiciousActivity > 0.6) {
-    const detectionClass = availableClasses.find(c => 
+    const detectionClass = availableClasses.find(c =>
       c.abilities?.some((a: any) => a.effect === 'detect')
     );
     if (detectionClass) return detectionClass;
   }
 
   // Default to random selection
-  return availableClasses[Math.floor(Math.random() * availableClasses.length)];
+  return secureRandomChoice(availableClasses);
 }

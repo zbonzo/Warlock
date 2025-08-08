@@ -7,34 +7,34 @@ export interface AttackMessages {
   attackInvisible: string;
   attackInvalidTarget: string;
   attackDeadTarget: string;
-  
+
   // Poison-related messages
   poisonStrike: string;
   poisonApplied: string;
-  
+
   // Multi-hit attack messages
   multiHitAnnounce: string;
   multiHitSummary: string;
   multiHitMissed: string;
   multiHitIndividual: string;
   multiHitMiss: string;
-  
+
   // Vulnerability messages
   vulnerabilityApplied: string;
   vulnerabilityStrike: string;
-  
+
   // Area of Effect messages
   aoeAnnounce: string;
   aoeNoTargets: string;
-  
+
   // Death Mark specific
   deathMarkPoison: string;
   deathMarkInvalidTarget: string;
-  
+
   // Poison Trap messages
   poisonTrapAnnounce: string;
   poisonTrapCaught: string;
-  
+
   // General failure messages
   targetNotFound: string;
   targetDead: string;
@@ -46,12 +46,12 @@ export interface DefenseMessages {
   holyShield: string;
   shieldProtect: string;
   shieldStrike: string;
-  
+
   // Evasion/Stealth messages
   evasionActivate: string;
   invisibilityFade: string;
   stealthBreak: string;
-  
+
   // Defense outcome messages
   defenseSuccess: string;
   defensePartial: string;
@@ -63,15 +63,15 @@ export interface HealingMessages {
   healSelf: string;
   healOther: string;
   healFailed: string;
-  
+
   // Regeneration
   regenerationApplied: string;
   regenerationTick: string;
-  
+
   // Conditional healing
   conditionalHeal: string;
   groupHeal: string;
-  
+
   // Healing failures
   healDeadTarget: string;
   healFullHealth: string;
@@ -82,11 +82,11 @@ export interface SpecialMessages {
   statusApplied: string;
   statusResisted: string;
   statusCleared: string;
-  
+
   // Special mechanics
   adaptabilityGained: string;
   coordinationBonus: string;
-  
+
   // Ultimate abilities
   ultimateActivated: string;
   ultimateReady: string;
@@ -98,7 +98,7 @@ export interface RacialMessages {
   racialActivated: string;
   racialPassive: string;
   racialTriggered: string;
-  
+
   // Racial-specific outcomes
   racialSuccess: string;
   racialFailed: string;
@@ -109,12 +109,12 @@ export interface CombatMessages {
   turnStart: string;
   turnEnd: string;
   turnSkipped: string;
-  
+
   // Combat outcomes
   damageDealt: string;
   damageMitigated: string;
   damageEvaded: string;
-  
+
   // Critical hits
   criticalHit: string;
   criticalMiss: string;
@@ -125,11 +125,11 @@ export interface StatusEffectMessages {
   effectApplied: string;
   effectRefreshed: string;
   effectResisted: string;
-  
+
   // Expiration
   effectExpired: string;
   effectCleansed: string;
-  
+
   // Periodic effects
   effectTick: string;
   effectProc: string;
@@ -140,12 +140,12 @@ export interface PlayerMessages {
   playerJoined: string;
   playerLeft: string;
   playerReconnected: string;
-  
+
   // Game state
   playerReady: string;
   playerNotReady: string;
   playerWaiting: string;
-  
+
   // Character selection
   characterSelected: string;
   characterChanged: string;
@@ -156,11 +156,11 @@ export interface UIMessages {
   gameStarting: string;
   gameStarted: string;
   gameEnded: string;
-  
+
   // Round flow
   roundStarting: string;
   roundEnded: string;
-  
+
   // Action prompts
   selectAction: string;
   selectTarget: string;
@@ -172,12 +172,12 @@ export interface ServerMessages {
   socketConnected: string;
   socketDisconnected: string;
   socketError: string;
-  
+
   // Game logs
   gameCreated: string;
   gameDestroyed: string;
   gameStateChanged: string;
-  
+
   // Error logs
   validationError: string;
   runtimeError: string;
@@ -191,7 +191,7 @@ export interface MessageConfig {
   events: Record<string, string>;
   privateMessages: Record<string, string>;
   winConditions: Record<string, string>;
-  
+
   // Organized message categories
   abilities: {
     attacks: AttackMessages;
@@ -200,13 +200,13 @@ export interface MessageConfig {
     special: SpecialMessages;
     racial: RacialMessages;
   };
-  
+
   // System messages
   combat: CombatMessages;
   statusEffects: StatusEffectMessages;
   warlock: Record<string, string>;
   monster: Record<string, string>;
-  
+
   // Player and UI
   player: PlayerMessages;
   ui: UIMessages;

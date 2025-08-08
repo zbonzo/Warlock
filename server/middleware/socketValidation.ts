@@ -74,8 +74,8 @@ export class SocketValidationMiddleware {
    * Create validation middleware for a specific socket event
    */
   validate(schema: z.ZodSchema<any>, options: ValidationOptions = {}): SocketMiddleware {
-    const { 
-      allowPartial = false, 
+    const {
+      allowPartial = false,
       logErrors = this.enableLogging,
       customErrorMessage = 'Invalid data received'
     } = options;
@@ -191,8 +191,8 @@ export class SocketValidationMiddleware {
    * Create a wrapper for socket event handlers with validation
    */
   wrapHandler(
-    schema: z.ZodSchema<any>, 
-    handler: (socket: Socket) => SocketEventHandler, 
+    schema: z.ZodSchema<any>,
+    handler: (socket: Socket) => SocketEventHandler,
     options: ValidationOptions = {}
   ): (socket: Socket) => SocketEventHandler {
     const validator = this.validate(schema, options);

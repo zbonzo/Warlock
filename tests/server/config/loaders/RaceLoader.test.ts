@@ -25,7 +25,7 @@ describe('RaceLoader', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    
+
     // Setup mock races config
     mockRacesConfig = {
       availableRaces: ['Human', 'Elf', 'Dwarf', 'Orc'],
@@ -112,7 +112,7 @@ describe('RaceLoader', () => {
   describe('constructor and initialization', () => {
     it('should create RaceLoader with default path', () => {
       raceLoader = new RaceLoader();
-      
+
       expect(mockPath.join).toHaveBeenCalledWith(__dirname, '../data/races.json');
       expect(mockFS.existsSync).toHaveBeenCalled();
       expect(mockFS.readFileSync).toHaveBeenCalled();
@@ -122,19 +122,19 @@ describe('RaceLoader', () => {
     it('should create RaceLoader with custom path', () => {
       const customPath = '/custom/races.json';
       raceLoader = new RaceLoader(customPath);
-      
+
       expect(mockFS.existsSync).toHaveBeenCalledWith(customPath);
     });
 
     it('should throw error when file does not exist', () => {
       mockFS.existsSync.mockReturnValue(false);
-      
+
       expect(() => new RaceLoader()).toThrow('Races data file not found');
     });
 
     it('should throw error when JSON is invalid', () => {
       mockFS.readFileSync.mockReturnValue('invalid json');
-      
+
       expect(() => new RaceLoader()).toThrow();
       expect(consoleSpy.error).toHaveBeenCalledWith('Failed to load races:', expect.any(Error));
     });
@@ -144,13 +144,13 @@ describe('RaceLoader', () => {
         availableRaces: 'not an array' // Should be array
       };
       mockFS.readFileSync.mockReturnValue(JSON.stringify(invalidConfig));
-      
+
       expect(() => new RaceLoader()).toThrow('Invalid races data');
     });
 
     it('should build class-race compatibility mapping', () => {
       raceLoader = new RaceLoader();
-      
+
       const compatibleRaces = raceLoader.getCompatibleRaces('Warrior');
       expect(compatibleRaces).toContain('Human');
       expect(compatibleRaces).toContain('Dwarf');
@@ -167,16 +167,16 @@ describe('RaceLoader', () => {
     it('should reload when file is modified', () => {
       const newMtime = Date.now() + 10000;
       mockFS.statSync.mockReturnValue({ mtimeMs: newMtime } as any);
-      
+
       const reloaded = raceLoader.reloadIfChanged();
-      
+
       expect(reloaded).toBe(true);
       expect(mockFS.readFileSync).toHaveBeenCalledTimes(2); // Once in constructor, once in reload
     });
 
     it('should not reload when file is unchanged', () => {
       const reloaded = raceLoader.reloadIfChanged();
-      
+
       expect(reloaded).toBe(false);
       expect(mockFS.readFileSync).toHaveBeenCalledTimes(1); // Only in constructor
     });
@@ -185,9 +185,9 @@ describe('RaceLoader', () => {
       mockFS.statSync.mockImplementation(() => {
         throw new Error('File stat error');
       });
-      
+
       const reloaded = raceLoader.reloadIfChanged();
-      
+
       expect(reloaded).toBe(false);
       expect(consoleSpy.error).toHaveBeenCalledWith('Error checking for race config changes:', expect.any(Error));
     });
@@ -201,7 +201,7 @@ describe('RaceLoader', () => {
     describe('getAvailableRaces', () => {
       it('should return available race names', () => {
         const races = raceLoader.getAvailableRaces();
-        
+
         expect(races).toEqual(['Human', 'Elf', 'Dwarf', 'Orc']);
         expect(races).not.toBe(mockRacesConfig.availableRaces); // Should be a copy
       });
@@ -210,7 +210,7 @@ describe('RaceLoader', () => {
     describe('getRaceAttributes', () => {
       it('should return attributes for valid race', () => {
         const attributes = raceLoader.getRaceAttributes('Human');
-        
+
         expect(attributes).toEqual({
           hpModifier: 1.0,
           armorModifier: 1.0,
@@ -228,7 +228,7 @@ describe('RaceLoader', () => {
     describe('getRacialAbility', () => {
       it('should return racial ability for valid race', () => {
         const ability = raceLoader.getRacialAbility('Dwarf');
-        
+
         expect(ability).toEqual({
           id: 'stoneArmor',
           name: 'Stone Armor',
@@ -318,9 +318,9 @@ describe('RaceLoader', () => {
           baseArmor: 10,
           baseDamage: 25
         };
-        
+
         const stats = raceLoader.calculateRaceStats('Dwarf', context);
-        
+
         expect(stats).toEqual({
           hp: 120, // 100 * 1.2
           armor: 13, // 10 * 1.3
@@ -330,7 +330,7 @@ describe('RaceLoader', () => {
 
       it('should use default values when context is empty', () => {
         const stats = raceLoader.calculateRaceStats('Orc');
-        
+
         expect(stats).toEqual({
           hp: 130, // 100 * 1.3
           armor: 8,  // 10 * 0.8
@@ -344,9 +344,9 @@ describe('RaceLoader', () => {
           baseArmor: 10,
           baseDamage: 25
         };
-        
+
         const stats = raceLoader.calculateRaceStats('InvalidRace', context);
-        
+
         expect(stats).toEqual({
           hp: 100,
           armor: 10,
@@ -356,7 +356,7 @@ describe('RaceLoader', () => {
 
       it('should handle missing context gracefully', () => {
         const stats = raceLoader.calculateRaceStats('Human');
-        
+
         expect(stats.hp).toBe(100); // Default 100 * 1.0
         expect(stats.armor).toBe(10); // Default 10 * 1.0
         expect(stats.damage).toBe(25); // Default 25 * 1.0
@@ -372,7 +372,7 @@ describe('RaceLoader', () => {
     describe('getRacialAbilityUsage', () => {
       it('should return usage information for race ability', () => {
         const usage = raceLoader.getRacialAbilityUsage('Orc');
-        
+
         expect(usage).toEqual({
           isPassive: false,
           maxUses: 3,
@@ -383,7 +383,7 @@ describe('RaceLoader', () => {
 
       it('should identify passive abilities', () => {
         const usage = raceLoader.getRacialAbilityUsage('Elf');
-        
+
         expect(usage?.isPassive).toBe(true);
         expect(usage?.usageLimit).toBe('passive');
       });
@@ -425,16 +425,16 @@ describe('RaceLoader', () => {
     describe('getRaceBalanceStats', () => {
       it('should calculate comprehensive balance statistics', () => {
         const stats = raceLoader.getRaceBalanceStats();
-        
+
         expect(stats.races).toBe(4);
-        
+
         // Average modifiers: (1.0 + 0.9 + 1.2 + 1.3) / 4 = 1.1 hp
         expect(stats.averageModifiers.hp).toBeCloseTo(1.1);
         // (1.0 + 0.9 + 1.3 + 0.8) / 4 = 1.0 armor
         expect(stats.averageModifiers.armor).toBeCloseTo(1.0);
         // (1.0 + 1.1 + 0.9 + 1.2) / 4 = 1.05 damage
         expect(stats.averageModifiers.damage).toBeCloseTo(1.05);
-        
+
         expect(stats.extremes.highestHp).toEqual({ race: 'Orc', value: 1.3 });
         expect(stats.extremes.lowestHp).toEqual({ race: 'Elf', value: 0.9 });
         expect(stats.extremes.highestDamage).toEqual({ race: 'Orc', value: 1.2 });
@@ -443,7 +443,7 @@ describe('RaceLoader', () => {
 
       it('should track compatibility matrix', () => {
         const stats = raceLoader.getRaceBalanceStats();
-        
+
         expect(stats.compatibilityMatrix).toEqual({
           'Human': 4,  // Compatible with 4 classes
           'Elf': 3,    // Compatible with 3 classes
@@ -454,7 +454,7 @@ describe('RaceLoader', () => {
 
       it('should categorize ability types', () => {
         const stats = raceLoader.getRaceBalanceStats();
-        
+
         expect(stats.abilityTypes).toEqual({
           passive: 1,   // Elf
           perGame: 1,   // Human
@@ -466,10 +466,10 @@ describe('RaceLoader', () => {
       it('should handle empty race list', () => {
         mockRacesConfig.availableRaces = [];
         mockFS.readFileSync.mockReturnValue(JSON.stringify(mockRacesConfig));
-        
+
         raceLoader = new RaceLoader();
         const stats = raceLoader.getRaceBalanceStats();
-        
+
         expect(stats.races).toBe(0);
         expect(stats.averageModifiers.hp).toBeNaN(); // Division by zero
       });
@@ -478,7 +478,7 @@ describe('RaceLoader', () => {
     describe('validateCompatibility', () => {
       it('should validate when compatibility is correct', () => {
         const validation = raceLoader.validateCompatibility();
-        
+
         expect(validation.isValid).toBe(true);
         expect(validation.orphanedClasses).toEqual([]);
         expect(validation.orphanedRaces).toEqual([]);
@@ -503,10 +503,10 @@ describe('RaceLoader', () => {
           params: {}
         };
         mockFS.readFileSync.mockReturnValue(JSON.stringify(mockRacesConfig));
-        
+
         raceLoader = new RaceLoader();
         const validation = raceLoader.validateCompatibility();
-        
+
         expect(validation.isValid).toBe(false);
         expect(validation.orphanedRaces).toContain('Goblin');
       });
@@ -514,7 +514,7 @@ describe('RaceLoader', () => {
       it('should warn about classes with limited race options', () => {
         // Barbarian only has 1 compatible race (Orc)
         const validation = raceLoader.validateCompatibility();
-        
+
         expect(validation.warnings).toContain("Class 'Barbarian' only has 1 compatible race");
       });
 
@@ -523,10 +523,10 @@ describe('RaceLoader', () => {
         mockRacesConfig.raceAttributes.Human.compatibleClasses = ['TestClass'];
         mockRacesConfig.raceAttributes.Elf.compatibleClasses = ['TestClass'];
         mockFS.readFileSync.mockReturnValue(JSON.stringify(mockRacesConfig));
-        
+
         raceLoader = new RaceLoader();
         const validation = raceLoader.validateCompatibility();
-        
+
         expect(validation.warnings).toContain("Class 'TestClass' only has 2 compatible races");
       });
     });
@@ -540,16 +540,16 @@ describe('RaceLoader', () => {
     describe('getAllRaceData', () => {
       it('should return complete config with compatibility mapping', () => {
         const allData = raceLoader.getAllRaceData();
-        
+
         expect(allData.availableRaces).toEqual(mockRacesConfig.availableRaces);
         expect(allData.raceAttributes).toEqual(mockRacesConfig.raceAttributes);
         expect(allData.racialAbilities).toEqual(mockRacesConfig.racialAbilities);
         expect(allData.classRaceCompatibility).toBeDefined();
-        
+
         // Should be copies, not references
         expect(allData.availableRaces).not.toBe(mockRacesConfig.availableRaces);
         expect(allData.raceAttributes).not.toBe(mockRacesConfig.raceAttributes);
-        
+
         // Check class-race compatibility
         expect(allData.classRaceCompatibility['Warrior']).toContain('Human');
         expect(allData.classRaceCompatibility['Mage']).toContain('Elf');
@@ -559,14 +559,14 @@ describe('RaceLoader', () => {
     describe('getClassRaceCompatibility', () => {
       it('should return class-race compatibility mapping', () => {
         const compatibility = raceLoader.getClassRaceCompatibility();
-        
+
         expect(compatibility['Warrior']).toEqual(['Human', 'Dwarf', 'Orc']);
         expect(compatibility['Mage']).toEqual(['Human', 'Elf']);
         expect(compatibility['Cleric']).toEqual(['Human', 'Dwarf']);
         expect(compatibility['Rogue']).toEqual(['Human', 'Elf']);
         expect(compatibility['Ranger']).toEqual(['Elf']);
         expect(compatibility['Barbarian']).toEqual(['Orc']);
-        
+
         // Should be a copy
         expect(compatibility).not.toBe((raceLoader as any).classRaceCompatibility);
       });
@@ -578,20 +578,20 @@ describe('RaceLoader', () => {
       mockFS.readFileSync.mockImplementation(() => {
         throw new Error('Permission denied');
       });
-      
+
       expect(() => new RaceLoader()).toThrow('Permission denied');
       expect(consoleSpy.error).toHaveBeenCalled();
     });
 
     it('should handle malformed JSON gracefully', () => {
       mockFS.readFileSync.mockReturnValue('{ "invalid": json }');
-      
+
       expect(() => new RaceLoader()).toThrow();
     });
 
     it('should handle empty file', () => {
       mockFS.readFileSync.mockReturnValue('');
-      
+
       expect(() => new RaceLoader()).toThrow();
     });
 
@@ -602,16 +602,16 @@ describe('RaceLoader', () => {
         racialAbilities: {}
       };
       mockFS.readFileSync.mockReturnValue(JSON.stringify(partialConfig));
-      
+
       raceLoader = new RaceLoader();
-      
+
       expect(raceLoader.getRaceAttributes('Human')).toBeNull();
       expect(raceLoader.getRacialAbility('Human')).toBeNull();
     });
 
     it('should handle race without attributes', () => {
       raceLoader = new RaceLoader();
-      
+
       const classes = raceLoader.getCompatibleClasses('NonExistentRace');
       expect(classes).toEqual([]);
     });
@@ -619,13 +619,13 @@ describe('RaceLoader', () => {
     it('should not reload when file timestamps are equal', () => {
       const fixedTime = Date.now();
       mockFS.statSync.mockReturnValue({ mtimeMs: fixedTime } as any);
-      
+
       raceLoader = new RaceLoader();
-      
+
       // Reset call count and try reload
       mockFS.readFileSync.mockClear();
       const reloaded = raceLoader.reloadIfChanged();
-      
+
       expect(reloaded).toBe(false);
       expect(mockFS.readFileSync).not.toHaveBeenCalled();
     });
@@ -640,12 +640,12 @@ describe('RaceLoader', () => {
       // 1. Get available races
       const races = raceLoader.getAvailableRaces();
       expect(races.length).toBeGreaterThan(0);
-      
+
       // 2. Select a race and validate with a class
       const raceName = races[0];
       const isValid = raceLoader.isValidCombination(raceName, 'Warrior');
       expect(typeof isValid).toBe('boolean');
-      
+
       // 3. Calculate stats for the race
       const stats = raceLoader.calculateRaceStats(raceName, {
         baseHp: 100,
@@ -653,11 +653,11 @@ describe('RaceLoader', () => {
         baseDamage: 25
       });
       expect(stats.hp).toBeGreaterThan(0);
-      
+
       // 4. Get racial ability information
       const ability = raceLoader.getRacialAbility(raceName);
       expect(ability).toBeDefined();
-      
+
       const usage = raceLoader.getRacialAbilityUsage(raceName);
       expect(usage).toBeDefined();
     });
@@ -665,19 +665,19 @@ describe('RaceLoader', () => {
     it('should provide consistent data across multiple calls', () => {
       const races1 = raceLoader.getAvailableRaces();
       const races2 = raceLoader.getAvailableRaces();
-      
+
       expect(races1).toEqual(races2);
       expect(races1).not.toBe(races2); // Different instances
-      
+
       const attributes1 = raceLoader.getRaceAttributes('Human');
       const attributes2 = raceLoader.getRaceAttributes('Human');
-      
+
       expect(attributes1).toEqual(attributes2);
     });
 
     it('should maintain consistency between race-class and class-race mappings', () => {
       const humanCompatibleClasses = raceLoader.getCompatibleClasses('Human');
-      
+
       humanCompatibleClasses.forEach(className => {
         const classCompatibleRaces = raceLoader.getCompatibleRaces(className);
         expect(classCompatibleRaces).toContain('Human');
@@ -698,9 +698,9 @@ describe('RaceLoader', () => {
         baseDamage: 25,
         customProperty: 'test'
       };
-      
+
       const stats = raceLoader.calculateRaceStats('Human', context);
-      
+
       expect(typeof stats.hp).toBe('number');
       expect(typeof stats.armor).toBe('number');
       expect(typeof stats.damage).toBe('number');
@@ -708,7 +708,7 @@ describe('RaceLoader', () => {
 
     it('should enforce ClassRaceCompatibility interface', () => {
       const compatibility = raceLoader.getClassRaceCompatibility();
-      
+
       Object.entries(compatibility).forEach(([className, races]) => {
         expect(typeof className).toBe('string');
         expect(Array.isArray(races)).toBe(true);
@@ -720,7 +720,7 @@ describe('RaceLoader', () => {
 
     it('should enforce UsageLimit type safety', () => {
       const validLimits: UsageLimit[] = ['passive', 'perGame', 'perRound', 'perTurn'];
-      
+
       validLimits.forEach(limit => {
         const races = raceLoader.getRacesByUsageLimit(limit);
         expect(Array.isArray(races)).toBe(true);
@@ -729,7 +729,7 @@ describe('RaceLoader', () => {
 
     it('should return proper racial ability usage information', () => {
       const usage = raceLoader.getRacialAbilityUsage('Human');
-      
+
       if (usage) {
         expect(typeof usage.isPassive).toBe('boolean');
         expect(typeof usage.maxUses).toBe('number');

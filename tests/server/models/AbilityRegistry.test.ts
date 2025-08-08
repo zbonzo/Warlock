@@ -124,45 +124,45 @@ describe('AbilityRegistry (TypeScript)', () => {
     abilityRegistry = {
       classAbilities: new Map(),
       racialAbilities: new Map(),
-      
+
       registerClassAbility: jest.fn().mockImplementation(function(abilityType: string, handler: any) {
         this.classAbilities.set(abilityType, handler);
       }),
-      
+
       registerClassAbilities: jest.fn().mockImplementation(function(abilityTypes: string[], handler: any) {
         abilityTypes.forEach((type) => {
           this.registerClassAbility(type, handler);
         });
       }),
-      
+
       registerRacialAbility: jest.fn().mockImplementation(function(abilityType: string, handler: any) {
         this.racialAbilities.set(abilityType, handler);
       }),
-      
+
       hasClassAbility: jest.fn().mockImplementation(function(abilityType: string) {
         return this.classAbilities.has(abilityType);
       }),
-      
+
       hasRacialAbility: jest.fn().mockImplementation(function(abilityType: string) {
         return this.racialAbilities.has(abilityType);
       }),
-      
+
       executeClassAbility: jest.fn(),
       executeRacialAbility: jest.fn(),
-      
+
       getRegisteredClassAbilities: jest.fn().mockImplementation(function() {
         return Array.from(this.classAbilities.keys());
       }),
-      
+
       getRegisteredRacialAbilities: jest.fn().mockImplementation(function() {
         return Array.from(this.racialAbilities.keys());
       }),
-      
+
       clear: jest.fn().mockImplementation(function() {
         this.classAbilities.clear();
         this.racialAbilities.clear();
       }),
-      
+
       getStats: jest.fn().mockImplementation(function() {
         return {
           classAbilities: this.classAbilities.size,
@@ -170,7 +170,7 @@ describe('AbilityRegistry (TypeScript)', () => {
           totalAbilities: this.classAbilities.size + this.racialAbilities.size
         };
       }),
-      
+
       getDebugInfo: jest.fn().mockImplementation(function() {
         return {
           classAbilities: Array.from(this.classAbilities.keys()),
@@ -198,18 +198,18 @@ describe('AbilityRegistry (TypeScript)', () => {
         }
 
         // Simulate critical hit logic
-        let finalTarget = target;
+        const finalTarget = target;
         let critMultiplier = 1;
         let outcome = 'normal';
 
         // Mock random for predictable testing
         const randomValue = Math.random();
-        
+
         if (randomValue < mockConfig.gameBalance.criticalHitChance) {
           critMultiplier = mockConfig.gameBalance.criticalHitMultiplier;
           outcome = 'crit';
           actor.tempCritMultiplier = critMultiplier;
-          
+
           log.push({
             type: 'ability_crit',
             public: true,
@@ -272,7 +272,7 @@ describe('AbilityRegistry (TypeScript)', () => {
   describe('Class Ability Registration', () => {
     it('should register single class ability', () => {
       const mockHandler = jest.fn();
-      
+
       abilityRegistry.registerClassAbility('fireball', mockHandler);
 
       expect(abilityRegistry.registerClassAbility).toHaveBeenCalledWith('fireball', mockHandler);
@@ -283,7 +283,7 @@ describe('AbilityRegistry (TypeScript)', () => {
     it('should register multiple class abilities with same handler', () => {
       const mockHandler = jest.fn();
       const abilityTypes = ['fireball', 'lightning', 'ice_shard'];
-      
+
       abilityRegistry.registerClassAbilities(abilityTypes, mockHandler);
 
       expect(abilityRegistry.registerClassAbilities).toHaveBeenCalledWith(abilityTypes, mockHandler);
@@ -314,7 +314,7 @@ describe('AbilityRegistry (TypeScript)', () => {
     it('should overwrite existing class ability registration', () => {
       const handler1 = jest.fn();
       const handler2 = jest.fn();
-      
+
       abilityRegistry.registerClassAbility('fireball', handler1);
       abilityRegistry.registerClassAbility('fireball', handler2);
 
@@ -325,7 +325,7 @@ describe('AbilityRegistry (TypeScript)', () => {
   describe('Racial Ability Registration', () => {
     it('should register racial ability', () => {
       const mockHandler = jest.fn();
-      
+
       abilityRegistry.registerRacialAbility('dwarf_endurance', mockHandler);
 
       expect(abilityRegistry.registerRacialAbility).toHaveBeenCalledWith('dwarf_endurance', mockHandler);
@@ -857,7 +857,7 @@ describe('AbilityRegistry (TypeScript)', () => {
 
       // Execute multiple abilities
       const log: any[] = [];
-      
+
       abilityRegistry._actualExecuteClassAbility('attack', mockAbility, mockActor, mockTarget, mockGame, mockSystems, mockEventBus, log);
       abilityRegistry._actualExecuteClassAbility('heal', mockAbility, mockActor, mockActor, mockGame, mockSystems, mockEventBus, log);
       abilityRegistry._actualExecuteRacialAbility('strength_buff', mockActor, mockActor, mockGame, mockSystems, mockEventBus, log);

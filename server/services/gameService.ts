@@ -10,7 +10,6 @@ import config from '../config/index.js';
 // Messages are now accessed through the config system
 import {
   throwGameStateError,
-  throwValidationError,
 } from '../utils/errorHandler.js';
 import logger from '../utils/logger.js';
 import trophies from '../config/trophies.js';
@@ -119,9 +118,12 @@ export function createGame(gameCode: string): GameRoom | null {
  * Generate a unique game code
  */
 export function generateGameCode(): string {
+  // Import secure random utilities
+  const { secureGameCode } = require('../utils/secureRandom.js');
+
   let code: string;
   do {
-    code = Math.floor(1000 + Math.random() * 9000).toString();
+    code = secureGameCode();
   } while (games.has(code));
 
   return code;
@@ -130,7 +132,7 @@ export function generateGameCode(): string {
 /**
  * Check if a player can join a game
  */
-export function canPlayerJoinGame(game: GameRoom, playerId: string): boolean {
+export function canPlayerJoinGame(game: GameRoom, _playerId: string): boolean {
   // Check if game is full based on config max players
   if (game.gameState.getPlayersMap().size >= config.maxPlayers) {
     throwGameStateError(`Game is full (${config.maxPlayers} players max).`);
@@ -163,7 +165,7 @@ const gameServiceDebug = createDebugLogger('roundResults', 'GameService');
  */
 export async function processGameRound(io: SocketIOServer, gameCode: string): Promise<GameResult | null> {
   gameServiceDebug.info(`\ud83c\udfae Processing game round for ${gameCode}...`);
-  
+
   const game = games.get(gameCode);
   if (!game) {
     gameServiceDebug.error(`\u274c Game ${gameCode} not found for round processing`);
@@ -189,7 +191,7 @@ export async function processGameRound(io: SocketIOServer, gameCode: string): Pr
   const result = (game as any).processRound() as GameResult;
 
   logger.info(`=== ROUND ${result.turn} STATS ===`);
-  
+
   // Debug: Check that stats are being tracked correctly
   const actualPlayers = Array.from(game.gameState.getPlayersMap().values());
   logger.info(`Round ${result.turn} stats (${actualPlayers.length} players):`);
@@ -213,12 +215,12 @@ export async function processGameRound(io: SocketIOServer, gameCode: string): Pr
     hasLevelUp: !!result.levelUp,
     phase: game.gamePhase.getPhase()
   });
-  
+
   io.to(gameCode).emit('roundResult', {
     ...result,
     phase: game.gamePhase.getPhase(), // Include current phase
   });
-  
+
   gameServiceDebug.info(`✅ roundResult event broadcasted to game ${gameCode}`);
 
   // Broadcast phase update specifically
@@ -243,7 +245,7 @@ export async function processGameRound(io: SocketIOServer, gameCode: string): Pr
   if (result.winner) {
     gameServiceDebug.info(`🏆 Game ${gameCode} ended with winner: ${result.winner}`);
     logger.info('GameEnded', { gameCode, winner: result.winner });
-    
+
     // Trophy system: Award a random trophy
     const trophyAward = awardRandomTrophy(game, result);
     if (trophyAward) {
@@ -253,13 +255,13 @@ export async function processGameRound(io: SocketIOServer, gameCode: string): Pr
         trophyData: trophyAward,
         socketRoomSize: io.sockets.adapter.rooms.get(gameCode)?.size || 0
       });
-      
+
       // Add trophy to the result that was already emitted
       io.to(gameCode).emit('trophyAwarded', trophyAward);
     } else {
       logger.warn('No trophy to award - awardRandomTrophy returned null/undefined');
     }
-    
+
     // Clean up the game
     const timer = gameTimers.get(gameCode);
     if (timer) {
@@ -276,8 +278,8 @@ export async function processGameRound(io: SocketIOServer, gameCode: string): Pr
  * Check win conditions (for disconnects)
  */
 export function checkGameWinConditions(
-  io: SocketIOServer, 
-  gameCode: string, 
+  io: SocketIOServer,
+  gameCode: string,
   disconnectedPlayerName: string
 ): boolean {
   const game = games.get(gameCode);
@@ -291,7 +293,7 @@ export function checkGameWinConditions(
     );
     return false; // Don't end game, resurrections are coming
   }
-  
+
   // Check if all warlocks are gone
   if (game.systems.warlockSystem.getWarlockCount() <= 0) {
     const gameResult: GameResult = {
@@ -301,7 +303,7 @@ export function checkGameWinConditions(
       players: (game as any).getPlayersInfo(),
       winner: 'Good',
     };
-    
+
     io.to(gameCode).emit('roundResult', gameResult);
 
     // Trophy system: Award a random trophy
@@ -313,7 +315,7 @@ export function checkGameWinConditions(
         trophyData: trophyAward,
         socketRoomSize: io.sockets.adapter.rooms.get(gameCode)?.size || 0
       });
-      
+
       io.to(gameCode).emit('trophyAwarded', trophyAward);
     } else {
       logger.warn('No trophy to award - awardRandomTrophy returned null/undefined (all warlocks gone)');
@@ -338,7 +340,7 @@ export function checkGameWinConditions(
       players: (game as any).getPlayersInfo(),
       winner: 'Evil',
     };
-    
+
     io.to(gameCode).emit('roundResult', gameResult);
 
     // Trophy system: Award a random trophy
@@ -350,7 +352,7 @@ export function checkGameWinConditions(
         trophyData: trophyAward,
         socketRoomSize: io.sockets.adapter.rooms.get(gameCode)?.size || 0
       });
-      
+
       io.to(gameCode).emit('trophyAwarded', trophyAward);
     } else {
       logger.warn('No trophy to award - awardRandomTrophy returned null/undefined (all innocents gone)');
@@ -399,7 +401,7 @@ function awardRandomTrophy(game: GameRoom, gameResult: GameResult): TrophyAward 
       }))
     });
     gameResult.players = playersInfo;
-    
+
     // DEBUG: Log the player stats structure for trophy debugging
     logger.info('Trophy debug - getPlayersInfo structure:', {
       playerCount: gameResult.players?.length || 0,
@@ -408,19 +410,19 @@ function awardRandomTrophy(game: GameRoom, gameResult: GameResult): TrophyAward 
       firstPlayerComplete: gameResult.players?.[0] || 'NO_PLAYER',
       playerNames: gameResult.players?.map(p => p?.name) || []
     });
-    
+
     if (gameResult.players && gameResult.players.length > 0) {
       logger.info('Using refreshed gameResult player data for trophy evaluation');
       const gameResultPlayers = gameResult.players;
-      
+
       gameResultPlayers.forEach((player, index) => {
         logger.info(`GameResult Player ${index + 1}: ${player.name} - stats: ${JSON.stringify(player.stats)}`);
       });
-      
+
       // Use gameResult players for trophy evaluation instead of game.getPlayersInfo()
       // since the game state might be inconsistent at this point
       const earnedTrophiesFromResult: EarnedTrophy[] = [];
-      
+
       // Check each trophy to see if any player qualifies
       for (const trophy of trophies) {
         try {
@@ -428,7 +430,7 @@ function awardRandomTrophy(game: GameRoom, gameResult: GameResult): TrophyAward 
             logger.warn('Invalid trophy object:', trophy);
             continue;
           }
-          
+
           // DEBUG: Log first player's stats structure for this trophy
           if (gameResultPlayers.length > 0) {
             logger.info(`Trophy "${trophy.name}" debug - First player stats:`, {
@@ -437,14 +439,14 @@ function awardRandomTrophy(game: GameRoom, gameResult: GameResult): TrophyAward 
               stats: gameResultPlayers[0].stats
             });
           }
-          
+
           // Convert gameResult.winner to trophy system format
           const trophyGameResult = {
             winner: gameResult.winner === 'good' ? 'Good' as const : 'Evil' as const
           };
           const winner = trophy.getWinner(gameResultPlayers, trophyGameResult);
           logger.info(`Trophy "${trophy.name}" evaluation: ${winner ? `${(winner as any).name} wins!` : 'No winner'}`);
-          
+
           if (winner) {
             earnedTrophiesFromResult.push({
               trophy: trophy,
@@ -467,14 +469,15 @@ function awardRandomTrophy(game: GameRoom, gameResult: GameResult): TrophyAward 
 
       logger.info(`${earnedTrophiesFromResult.length} trophies earned: ${earnedTrophiesFromResult.map(t => `${t.trophy.name} (${t.winner.name})`).join(', ')}`);
 
-      // Randomly select one trophy from the earned trophies
-      const selectedTrophy = earnedTrophiesFromResult[Math.floor(Math.random() * earnedTrophiesFromResult.length)];
-      
+      // Randomly select one trophy from the earned trophies using secure random
+      const { secureRandomChoice } = require('../utils/secureRandom.js');
+      const selectedTrophy = secureRandomChoice(earnedTrophiesFromResult);
+
       if (!selectedTrophy) {
         logger.info('No trophy selected (empty earned trophies list)');
         return null;
       }
-      
+
       const trophyAward: TrophyAward = {
         playerName: selectedTrophy.winner.name,
         trophyName: selectedTrophy.trophy.name,
@@ -624,7 +627,7 @@ export function cleanupGame(gameCode: string): boolean {
 
   // Remove game
   games.delete(gameCode);
-  
+
   logger.info('GameCleanedup', { gameCode });
   return true;
 }
@@ -632,9 +635,9 @@ export function cleanupGame(gameCode: string): boolean {
 /**
  * Cleanup expired disconnected players across all games
  */
-export function cleanupExpiredDisconnectedPlayers(io?: SocketIOServer): void {
+export function cleanupExpiredDisconnectedPlayers(_io?: SocketIOServer): void {
   let totalCleaned = 0;
-  
+
   for (const [gameCode, game] of games.entries()) {
     // TODO: Re-enable when cleanupDisconnectedPlayers is implemented
     if (typeof (game as any).cleanupDisconnectedPlayers !== 'function') {
@@ -642,7 +645,7 @@ export function cleanupExpiredDisconnectedPlayers(io?: SocketIOServer): void {
     }
     const cleanedPlayerNames = (game as any).cleanupDisconnectedPlayers();
     totalCleaned += cleanedPlayerNames.length;
-    
+
     if (cleanedPlayerNames.length > 0) {
       logger.info('CleanedUpDisconnectedPlayers', {
         gameCode,
@@ -651,7 +654,7 @@ export function cleanupExpiredDisconnectedPlayers(io?: SocketIOServer): void {
       });
     }
   }
-  
+
   if (totalCleaned > 0) {
     logger.info('DisconnectedPlayersCleanupComplete', {
       totalCleaned,
@@ -680,7 +683,7 @@ export default {
   isInRoundResults,
   createGameWithCode,
   cleanupExpiredDisconnectedPlayers,
-  
+
   // Game management functions
   getGame,
   cleanupGame,

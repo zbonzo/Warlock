@@ -66,7 +66,7 @@ export const AbilitySchemaRefined = AbilitySchema.refine(
   (ability) => {
     // Validate that effect matches expected patterns
     const validEffects = [
-      null, 'poison', 'bleed', 'vulnerable', 'healingOverTime', 'shielded', 
+      null, 'poison', 'bleed', 'vulnerable', 'healingOverTime', 'shielded',
       'invisible', 'spiritGuard', 'deathMark', 'stun', 'selfDamage', 'passive',
       'lifesteal', 'controlMonster', 'reveal', 'sanctuary', 'poisonTrap',
       'rage', 'teleport', 'decoy', 'soulburn', 'timeManipulation'

@@ -3,6 +3,7 @@
  * Handles racial abilities that provide utility and support functions
  */
 
+import { secureId } from '../../../../../utils/secureRandom.js';
 import type { Player, Monster, Ability } from '../../../../../types/generated.js';
 import type {
   AbilityHandler,
@@ -13,6 +14,7 @@ import type { GameSystems } from '../../../SystemsFactory.js';
 
 import config from '../../../../../config/index.js';
 import messages from '../../../../../config/messages/index.js';
+import { secureRandomChoice } from '../../../../../utils/secureRandom.js';
 
 /**
  * Handle Kinfolk Pack Bond - Kinfolk racial ability
@@ -36,15 +38,15 @@ export const handlePackBond: AbilityHandler = (
 
   // Find other Kinfolk players
   const kinfolkAllies = Array.from(game.players.values()).filter(
-    (p: any) => p.id !== actor.id && 
-                p.race === 'Kinfolk' && 
-                p.isAlive !== false && 
+    (p: any) => p.id !== actor.id &&
+                p.race === 'Kinfolk' &&
+                p.isAlive !== false &&
                 p.hp > 0
   );
 
   if (kinfolkAllies.length === 0) {
     log.push({
-      id: `pack-bond-no-allies-${Date.now()}`,
+      id: secureId('pack-bond-no-allies'),
       timestamp: Date.now(),
       type: 'action',
       source: actor.id,
@@ -69,7 +71,7 @@ export const handlePackBond: AbilityHandler = (
 
   for (const bondTarget of bonusTargets) {
     const statusResult = systems.statusEffectManager.applyStatusEffect(bondTarget, {
-      id: `pack-bond-${Date.now()}-${bondTarget.id}`,
+      id: secureId(`pack-bond-${bondTarget.id}`),
       name: 'pack_bond',
       type: 'buff',
       duration,
@@ -89,7 +91,7 @@ export const handlePackBond: AbilityHandler = (
 
   if (successfulBonds > 0) {
     log.push({
-      id: `pack-bond-success-${Date.now()}`,
+      id: secureId('pack-bond-success'),
       timestamp: Date.now(),
       type: 'action',
       source: actor.id,
@@ -149,7 +151,7 @@ export const handleDespairAura: AbilityHandler = (
   // Apply despair to all other players
   for (const despairTarget of targets) {
     const statusResult = systems.statusEffectManager.applyStatusEffect(despairTarget, {
-      id: `despair-aura-${Date.now()}-${(despairTarget as any).id}`,
+      id: secureId(`despair-aura-${(despairTarget as any).id}`),
       name: 'despair',
       type: 'debuff',
       duration,
@@ -167,7 +169,7 @@ export const handleDespairAura: AbilityHandler = (
 
   // Apply self-bonus to the Crestfallen
   const selfBonusResult = systems.statusEffectManager.applyStatusEffect(actor, {
-    id: `despair-self-bonus-${Date.now()}`,
+    id: secureId('despair-self-bonus'),
     name: 'despair_empowerment',
     type: 'buff',
     duration,
@@ -180,7 +182,7 @@ export const handleDespairAura: AbilityHandler = (
 
   if (affectedTargets > 0 || selfBonusResult.success) {
     log.push({
-      id: `despair-aura-success-${Date.now()}`,
+      id: secureId('despair-aura-success'),
       timestamp: Date.now(),
       type: 'action',
       source: actor.id,
@@ -221,7 +223,7 @@ export const handleArtisanCrafting: AbilityHandler = (
   const itemDuration = params.itemDuration || 6;
 
   let craftedItem: any = null;
-  let craftingSuccess = false;
+  const craftingSuccess = false;
 
   switch (craftingType) {
     case 'healing_potion':
@@ -232,7 +234,7 @@ export const handleArtisanCrafting: AbilityHandler = (
         uses: 1
       };
       break;
-    
+
     case 'smoke_bomb':
       craftedItem = {
         name: 'Smoke Bomb',
@@ -242,7 +244,7 @@ export const handleArtisanCrafting: AbilityHandler = (
         uses: 1
       };
       break;
-    
+
     case 'reinforcement_kit':
       craftedItem = {
         name: 'Armor Reinforcement',
@@ -252,13 +254,13 @@ export const handleArtisanCrafting: AbilityHandler = (
         uses: 1
       };
       break;
-    
+
     default:
       // Random crafting
       const randomItems = ['healing_potion', 'smoke_bomb', 'reinforcement_kit'];
       return handleArtisanCrafting(
-        actor, target, 
-        { ...ability, params: { ...params, craftingType: randomItems[Math.floor(Math.random() * randomItems.length)] } },
+        actor, target,
+        { ...ability, params: { ...params, craftingType: secureRandomChoice(randomItems) } },
         log, systems, coordinationInfo
       );
   }
@@ -270,7 +272,7 @@ export const handleArtisanCrafting: AbilityHandler = (
     (actor as any).inventory = playerInventory;
 
     log.push({
-      id: `artisan-crafting-success-${Date.now()}`,
+      id: secureId('artisan-crafting-success'),
       timestamp: Date.now(),
       type: 'action',
       source: actor.id,
@@ -285,7 +287,7 @@ export const handleArtisanCrafting: AbilityHandler = (
 
     // Private message with item details
     log.push({
-      id: `artisan-crafting-details-${Date.now()}`,
+      id: secureId('artisan-crafting-details'),
       timestamp: Date.now(),
       type: 'action',
       source: actor.id,

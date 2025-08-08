@@ -1,9 +1,9 @@
 /**
  * @fileoverview Tests for ValidationCommand class
  */
-import { 
-  ValidationCommand, 
-  ValidationType, 
+import {
+  ValidationCommand,
+  ValidationType,
   ValidationSeverity,
   ValidationRuleResult,
   ValidationResults,
@@ -740,7 +740,7 @@ describe('ValidationCommand', () => {
         actionData: { actionType: 'ability' },
         validationRules: ['game_started'] // Only check this rule
       });
-      
+
       await command.validate(mockGameContext);
       const result = await command.execute(mockGameContext);
 
@@ -757,7 +757,7 @@ describe('ValidationCommand', () => {
       const command = new ValidationCommand('player1', 'action_submission', {
         actionData: { actionType: 'ability' }
       });
-      
+
       await command.validate(mockGameContext);
       const result = await command.execute(mockGameContext);
 
@@ -771,7 +771,7 @@ describe('ValidationCommand', () => {
       const command = new ValidationCommand('player1', 'action_submission', {
         actionData: { actionType: 'ability' }
       });
-      
+
       await command.validate(mockGameContext);
       const result = await command.execute(mockGameContext);
 
@@ -786,7 +786,7 @@ describe('ValidationCommand', () => {
       const command = new ValidationCommand('player1', 'action_submission', {
         actionData: { actionType: 'ability' }
       });
-      
+
       await command.validate(mockGameContext);
       const result = await command.execute(mockGameContext);
 
@@ -797,7 +797,7 @@ describe('ValidationCommand', () => {
       const command = new ValidationCommand('player1', 'action_submission', {
         actionData: { actionType: 'ability' }
       });
-      
+
       // Manually add some results to test scoring
       command.validationResults.passed.push({
         rule: 'test_pass',
@@ -825,7 +825,7 @@ describe('ValidationCommand', () => {
         actionData: { actionType: 'ability' },
         strict: false
       });
-      
+
       // Manually add a warning
       command.validationResults.warnings.push({
         rule: 'test_warning',
@@ -844,7 +844,7 @@ describe('ValidationCommand', () => {
         actionData: { actionType: 'ability' },
         strict: true
       });
-      
+
       // Manually add a warning
       command.validationResults.warnings.push({
         rule: 'test_warning',
@@ -864,7 +864,7 @@ describe('ValidationCommand', () => {
       const command = new ValidationCommand('player1', 'action_submission', {
         actionData: { actionType: 'ability' }
       });
-      
+
       await command.validate(mockGameContext);
       await command.execute(mockGameContext);
 
@@ -886,11 +886,11 @@ describe('ValidationCommand', () => {
       const command = new ValidationCommand('player1', 'action_submission', {
         actionData: { actionType: 'ability' }
       });
-      
+
       await command.validate(mockGameContext);
 
       await expect(command.execute(mockGameContext)).rejects.toThrow('Event emission failed');
-      
+
       expect(command.validationResults.failed).toContainEqual({
         rule: 'validation_execution',
         message: 'Validation execution failed: Event emission failed',
@@ -900,7 +900,7 @@ describe('ValidationCommand', () => {
 
     it('should handle unknown validation types', async () => {
       const command = new ValidationCommand('player1', 'unknown_type' as ValidationType);
-      
+
       await command.validate(mockGameContext);
 
       await expect(command.execute(mockGameContext)).rejects.toThrow('Unhandled validation type: unknown_type');

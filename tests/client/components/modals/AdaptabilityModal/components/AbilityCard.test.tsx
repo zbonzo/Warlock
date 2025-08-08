@@ -53,32 +53,32 @@ describe('AbilityCard', () => {
   describe('Basic Rendering', () => {
     it('should render ability name', () => {
       render(<AbilityCard {...defaultProps} />);
-      
+
       expect(screen.getByText('Slash')).toBeInTheDocument();
     });
 
     it('should render ability category', () => {
       render(<AbilityCard {...defaultProps} />);
-      
+
       expect(screen.getByText('Attack')).toBeInTheDocument();
     });
 
     it('should render category icon for known categories', () => {
       render(<AbilityCard {...defaultProps} />);
-      
+
       expect(screen.getByText('⚔️')).toBeInTheDocument();
     });
 
     it('should apply category color styling', () => {
       render(<AbilityCard {...defaultProps} />);
-      
+
       const categoryElement = screen.getByText('Attack').closest('.ability-category');
       expect(categoryElement).toHaveStyle({ color: '#e74c3c' });
     });
 
     it('should have clickable card element', () => {
       const { container } = render(<AbilityCard {...defaultProps} />);
-      
+
       expect(container.querySelector('.ability-card')).toBeInTheDocument();
     });
   });
@@ -87,7 +87,7 @@ describe('AbilityCard', () => {
     it('should handle Defense category', () => {
       const defenseAbility = { ...mockAbility, category: 'Defense' };
       render(<AbilityCard ability={defenseAbility} onSelect={jest.fn()} />);
-      
+
       expect(screen.getByText('🛡️')).toBeInTheDocument();
       expect(screen.getByText('Defense')).toBeInTheDocument();
     });
@@ -95,7 +95,7 @@ describe('AbilityCard', () => {
     it('should handle Heal category', () => {
       const healAbility = { ...mockAbility, category: 'Heal' };
       render(<AbilityCard ability={healAbility} onSelect={jest.fn()} />);
-      
+
       expect(screen.getByText('💚')).toBeInTheDocument();
       expect(screen.getByText('Heal')).toBeInTheDocument();
     });
@@ -103,7 +103,7 @@ describe('AbilityCard', () => {
     it('should handle Special category', () => {
       const specialAbility = { ...mockAbility, category: 'Special' };
       render(<AbilityCard ability={specialAbility} onSelect={jest.fn()} />);
-      
+
       expect(screen.getByText('✨')).toBeInTheDocument();
       expect(screen.getByText('Special')).toBeInTheDocument();
     });
@@ -111,10 +111,10 @@ describe('AbilityCard', () => {
     it('should handle unknown category with default styling', () => {
       const unknownAbility = { ...mockAbility, category: 'Unknown' };
       render(<AbilityCard ability={unknownAbility} onSelect={jest.fn()} />);
-      
+
       expect(screen.getByText('📜')).toBeInTheDocument();
       expect(screen.getByText('Unknown')).toBeInTheDocument();
-      
+
       const categoryElement = screen.getByText('Unknown').closest('.ability-category');
       expect(categoryElement).toHaveStyle({ color: '#7f8c8d' });
     });
@@ -122,7 +122,7 @@ describe('AbilityCard', () => {
     it('should handle missing category', () => {
       const noCategoryAbility = { ...mockAbility, category: undefined };
       render(<AbilityCard ability={noCategoryAbility} onSelect={jest.fn()} />);
-      
+
       expect(screen.getByText('📜')).toBeInTheDocument();
       expect(screen.getByText('Ability')).toBeInTheDocument();
     });
@@ -132,28 +132,28 @@ describe('AbilityCard', () => {
     it('should call onSelect when card is clicked', () => {
       const onSelect = jest.fn();
       render(<AbilityCard {...defaultProps} onSelect={onSelect} />);
-      
+
       fireEvent.click(screen.getByText('Slash'));
-      
+
       expect(onSelect).toHaveBeenCalledTimes(1);
     });
 
     it('should call onSelect when clicking anywhere on the card', () => {
       const onSelect = jest.fn();
       const { container } = render(<AbilityCard {...defaultProps} onSelect={onSelect} />);
-      
+
       const card = container.querySelector('.ability-card');
       fireEvent.click(card!);
-      
+
       expect(onSelect).toHaveBeenCalledTimes(1);
     });
 
     it('should call onSelect when clicking category section', () => {
       const onSelect = jest.fn();
       render(<AbilityCard {...defaultProps} onSelect={onSelect} />);
-      
+
       fireEvent.click(screen.getByText('Attack'));
-      
+
       expect(onSelect).toHaveBeenCalledTimes(1);
     });
   });
@@ -162,14 +162,14 @@ describe('AbilityCard', () => {
     it('should handle empty ability name', () => {
       const emptyNameAbility = { ...mockAbility, name: '' };
       render(<AbilityCard ability={emptyNameAbility} onSelect={jest.fn()} />);
-      
+
       expect(screen.getByText('')).toBeInTheDocument();
     });
 
     it('should handle null ability name', () => {
       const nullNameAbility = { ...mockAbility, name: null as any };
       render(<AbilityCard ability={nullNameAbility} onSelect={jest.fn()} />);
-      
+
       // Should render without throwing
       expect(screen.getByText('Attack')).toBeInTheDocument();
     });
@@ -180,7 +180,7 @@ describe('AbilityCard', () => {
         name: 'This is a very long ability name that might cause display issues'
       };
       render(<AbilityCard ability={longNameAbility} onSelect={jest.fn()} />);
-      
+
       expect(screen.getByText('This is a very long ability name that might cause display issues')).toBeInTheDocument();
     });
 
@@ -190,7 +190,7 @@ describe('AbilityCard', () => {
         name: 'Ability with 🔥 special & characters!'
       };
       render(<AbilityCard ability={specialCharAbility} onSelect={jest.fn()} />);
-      
+
       expect(screen.getByText('Ability with 🔥 special & characters!')).toBeInTheDocument();
     });
   });
@@ -199,10 +199,10 @@ describe('AbilityCard', () => {
     it('should be keyboard accessible', () => {
       const onSelect = jest.fn();
       const { container } = render(<AbilityCard {...defaultProps} onSelect={onSelect} />);
-      
+
       const card = container.querySelector('.ability-card');
       expect(card).toBeInTheDocument();
-      
+
       // Should be able to receive focus (div elements are focusable when they have click handlers)
       card?.focus();
       expect(document.activeElement).toBe(card);
@@ -211,9 +211,9 @@ describe('AbilityCard', () => {
     it('should support keyboard activation', () => {
       const onSelect = jest.fn();
       const { container } = render(<AbilityCard {...defaultProps} onSelect={onSelect} />);
-      
+
       const card = container.querySelector('.ability-card');
-      
+
       // Simulate Enter key press
       fireEvent.keyDown(card!, { key: 'Enter' });
       // Note: The component doesn't currently handle keyboard events,
@@ -227,9 +227,9 @@ describe('AbilityCard', () => {
         isDarkMode: true,
         toggleTheme: jest.fn()
       });
-      
+
       render(<AbilityCard {...defaultProps} />);
-      
+
       expect(screen.getByText('Slash')).toBeInTheDocument();
       expect(screen.getByText('Attack')).toBeInTheDocument();
     });
@@ -239,9 +239,9 @@ describe('AbilityCard', () => {
         isDarkMode: false,
         toggleTheme: jest.fn()
       });
-      
+
       render(<AbilityCard {...defaultProps} />);
-      
+
       expect(screen.getByText('Slash')).toBeInTheDocument();
       expect(screen.getByText('Attack')).toBeInTheDocument();
     });
@@ -250,7 +250,7 @@ describe('AbilityCard', () => {
   describe('Component Structure', () => {
     it('should have correct CSS class structure', () => {
       const { container } = render(<AbilityCard {...defaultProps} />);
-      
+
       expect(container.querySelector('.ability-card')).toBeInTheDocument();
       expect(container.querySelector('.ability-name')).toBeInTheDocument();
       expect(container.querySelector('.ability-category')).toBeInTheDocument();
@@ -260,10 +260,10 @@ describe('AbilityCard', () => {
 
     it('should contain category icon and name in separate elements', () => {
       render(<AbilityCard {...defaultProps} />);
-      
+
       const icon = screen.getByText('⚔️');
       const categoryName = screen.getByText('Attack');
-      
+
       expect(icon.closest('.category-icon')).toBeInTheDocument();
       expect(categoryName.closest('.category-name')).toBeInTheDocument();
     });

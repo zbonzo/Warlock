@@ -6,11 +6,11 @@
 
 import { z } from 'zod';
 import * as Schemas from '../models/validation/ZodSchemas.js';
-import type { 
-  Player, 
-  GameRoom, 
-  Monster, 
-  Ability, 
+import type {
+  Player,
+  GameRoom,
+  Monster,
+  Ability,
   GameEvent,
   PlayerStats,
   PlayerAbilities,
@@ -226,51 +226,51 @@ export const TypeGuards = {
   isPlayerAbilities,
   isPlayerEffects,
   isStatusEffect,
-  
+
   // Game guards
   isGameRoom,
   isMonster,
   isGamePhase,
   isGameRules,
-  
+
   // Ability guards
   isAbility,
-  
+
   // Action guards
   isPlayerAction,
   isAbilityAction,
   isValidationResult,
   isCommandResult,
-  
+
   // Event guards
   isGameEvent,
-  
+
   // Array guards
   isPlayerArray,
   isAbilityArray,
   isStatusEffectArray,
-  
+
   // Partial guards
   isPartialPlayer,
   isPartialGameRoom,
-  
+
   // Assertion guards
   assertPlayer,
   assertGameRoom,
   assertGameEvent,
-  
+
   // Narrow guards
   isAlivePlayer,
   isDeadPlayer,
   isWarlockPlayer,
   isGoodPlayer,
   isEvilPlayer,
-  
+
   // Complex guards
   hasValidStats,
   hasAbilities,
   hasStatusEffects,
-  
+
   // Utilities
   validateWithDetails,
   createTypeGuard

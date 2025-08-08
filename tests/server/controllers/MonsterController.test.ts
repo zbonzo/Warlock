@@ -249,7 +249,7 @@ describe('MonsterController (TypeScript)', () => {
 
         currentThreat.threatValue += threatAmount;
         currentThreat.lastUpdated = Date.now();
-        
+
         threatTable.set(playerId, currentThreat);
         return currentThreat;
       };
@@ -343,7 +343,7 @@ describe('MonsterController (TypeScript)', () => {
 
     it('should apply threat decay over time', () => {
       const threatConfig = mockConfig.gameBalance.monster.threat;
-      
+
       // Initialize threat table
       threatTable.set('player1', { playerId: 'player1', threatValue: 100, lastUpdated: Date.now() });
       threatTable.set('player2', { playerId: 'player2', threatValue: 50, lastUpdated: Date.now() });
@@ -362,7 +362,7 @@ describe('MonsterController (TypeScript)', () => {
 
     it('should remove dead players from threat table', () => {
       const alivePlayers = [mockPlayer1, mockPlayer2]; // player3 is dead
-      
+
       threatTable.set('player1', { playerId: 'player1', threatValue: 100, lastUpdated: Date.now() });
       threatTable.set('player2', { playerId: 'player2', threatValue: 50, lastUpdated: Date.now() });
       threatTable.set('player3', { playerId: 'player3', threatValue: 75, lastUpdated: Date.now() });
@@ -416,7 +416,7 @@ describe('MonsterController (TypeScript)', () => {
 
     it('should execute basic attack action', async () => {
       const alivePlayers = [mockPlayer1, mockPlayer2];
-      
+
       const executeAttack = async (players: any[], log: any[]) => {
         // Select highest threat target (simplified - just pick first)
         const target = players[0];
@@ -461,7 +461,7 @@ describe('MonsterController (TypeScript)', () => {
 
     it('should execute special ability (area attack)', async () => {
       const alivePlayers = [mockPlayer1, mockPlayer2];
-      
+
       const executeSpecialAbility = async (players: any[], log: any[]) => {
         const targets = players.slice(0, 2); // Take up to 2 targets
         const baseDamage = Math.floor(mockMonster.attackPower * 0.75);
@@ -505,7 +505,7 @@ describe('MonsterController (TypeScript)', () => {
     it('should execute healing action', async () => {
       // Reduce monster health first
       mockMonster.hp = 75;
-      
+
       const executeHealingAction = async (log: any[]) => {
         const healAmount = Math.floor(mockMonster.maxHp * 0.15);
         const oldHp = mockMonster.hp;
@@ -540,7 +540,7 @@ describe('MonsterController (TypeScript)', () => {
 
     it('should execute enrage action', async () => {
       const alivePlayers = [mockPlayer1];
-      
+
       const executeEnrageAction = async (players: any[], log: any[]) => {
         const damageBoost = Math.floor(mockMonster.attackPower * 0.5);
         mockMonster.attackPower += damageBoost;
@@ -622,7 +622,7 @@ describe('MonsterController (TypeScript)', () => {
         }
 
         // For testing, select highest threat (simplified)
-        const highestThreatEntry = threatEntries.reduce((max, entry) => 
+        const highestThreatEntry = threatEntries.reduce((max, entry) =>
           entry.threatValue > max.threatValue ? entry : max
         );
 
@@ -637,7 +637,7 @@ describe('MonsterController (TypeScript)', () => {
 
     it('should fall back to random selection when no threat entries exist', () => {
       const emptyThreatTable = new Map();
-      
+
       const selectTargetByThreat = (alivePlayers: any[], threatTable: Map<string, any>) => {
         if (alivePlayers.length === 0) return null;
 
@@ -687,9 +687,9 @@ describe('MonsterController (TypeScript)', () => {
       const takeDamage = (damage: number, sourcePlayerId?: string) => {
         const finalDamage = Math.max(1, Math.floor(damage));
         const oldHp = mockMonster.hp;
-        
+
         mockMonster.hp = Math.max(0, mockMonster.hp - finalDamage);
-        
+
         if (mockMonster.hp <= 0) {
           mockMonster.isAlive = false;
         }
@@ -708,11 +708,11 @@ describe('MonsterController (TypeScript)', () => {
 
     it('should die when health reaches zero', () => {
       mockMonster.hp = 10;
-      
+
       const takeDamage = (damage: number) => {
         const finalDamage = Math.max(1, Math.floor(damage));
         mockMonster.hp = Math.max(0, mockMonster.hp - finalDamage);
-        
+
         if (mockMonster.hp <= 0) {
           mockMonster.isAlive = false;
         }
@@ -728,7 +728,7 @@ describe('MonsterController (TypeScript)', () => {
 
     it('should heal correctly within max health limits', () => {
       mockMonster.hp = 100;
-      
+
       const heal = (amount: number) => {
         const oldHp = mockMonster.hp;
         mockMonster.hp = Math.min(mockMonster.maxHp, mockMonster.hp + amount);
@@ -746,7 +746,7 @@ describe('MonsterController (TypeScript)', () => {
 
     it('should not heal beyond max health', () => {
       mockMonster.hp = 140;
-      
+
       const heal = (amount: number) => {
         const oldHp = mockMonster.hp;
         mockMonster.hp = Math.min(mockMonster.maxHp, mockMonster.hp + amount);
@@ -907,7 +907,7 @@ describe('MonsterController (TypeScript)', () => {
   describe('Error Handling', () => {
     it('should handle null/dead monster gracefully', () => {
       const deadMonster = { ...mockMonster, hp: 0, isAlive: false };
-      
+
       const processMonsterAction = async (monster: any, alivePlayers: any[]) => {
         if (!monster.isAlive || alivePlayers.length === 0) {
           return null;

@@ -55,7 +55,7 @@ describe('Status Effects Configuration', () => {
     it.each(statusEffects)('$name should have valid structure', ({ name, effect }) => {
       expect(effect).toBeDefined();
       expect(typeof effect).toBe('object');
-      
+
       // All effects should have these core properties
       expect(effect.default).toBeDefined();
       expect(typeof effect.default).toBe('object');
@@ -67,18 +67,18 @@ describe('Status Effects Configuration', () => {
 
     it.each(statusEffects)('$name should have valid default values', ({ name, effect }) => {
       const defaults = effect.default;
-      
+
       // Turns should always be defined and be a number
       expect(defaults.turns).toBeDefined();
       expect(typeof defaults.turns).toBe('number');
-      
+
       // For permanent effects, turns should be -1
       if (effect.isPermanent) {
         expect(defaults.turns).toBe(-1);
       } else {
         expect(defaults.turns).toBeGreaterThan(0);
       }
-      
+
       // Validate numeric properties when they exist
       const numericProps = ['damage', 'armor', 'amount', 'damageIncrease', 'damageReduction'];
       numericProps.forEach(prop => {
@@ -91,16 +91,16 @@ describe('Status Effects Configuration', () => {
 
     it.each(statusEffects)('$name should have valid message templates', ({ name, effect }) => {
       const messages = effect.messages;
-      
+
       // At least one message should be defined
       expect(Object.keys(messages).length).toBeGreaterThan(0);
-      
+
       // All message values should be non-empty strings
       Object.values(messages).forEach(message => {
         expect(typeof message).toBe('string');
         expect(message.trim().length).toBeGreaterThan(0);
       });
-      
+
       // Check for proper placeholder formatting
       Object.values(messages).forEach(message => {
         const placeholders = (message as string).match(/{[^}]+}/g) || [];
@@ -199,7 +199,7 @@ describe('Status Effects Configuration', () => {
     it('should have a valid processing order configuration', () => {
       expect(processingOrder).toBeDefined();
       expect(typeof processingOrder).toBe('object');
-      
+
       // All processing orders should be positive integers
       Object.values(processingOrder).forEach(order => {
         expect(typeof order).toBe('number');
@@ -219,11 +219,11 @@ describe('Status Effects Configuration', () => {
       // Damage effects should be processed early
       expect(processingOrder.poison).toBeLessThan(10);
       expect(processingOrder.bleed).toBeLessThan(10);
-      
+
       // Healing should be processed after damage
       expect(processingOrder.healingOverTime).toBeGreaterThan(processingOrder.poison);
       expect(processingOrder.healingOverTime).toBeGreaterThan(processingOrder.bleed);
-      
+
       // Death triggers should be processed last
       expect(processingOrder.undying).toBeGreaterThan(processingOrder.healingOverTime);
     });
@@ -233,16 +233,16 @@ describe('Status Effects Configuration', () => {
     it('should have valid global configuration', () => {
       expect(global).toBeDefined();
       expect(typeof global).toBe('object');
-      
+
       expect(typeof global.maxEffectsPerPlayer).toBe('number');
       expect(global.maxEffectsPerPlayer).toBeGreaterThan(0);
-      
+
       expect(typeof global.maxTurns).toBe('number');
       expect(global.maxTurns).toBeGreaterThan(0);
-      
+
       expect(typeof global.minTurns).toBe('number');
       expect(global.minTurns).toBeGreaterThan(0);
-      
+
       expect(global.maxTurns).toBeGreaterThan(global.minTurns);
     });
 
@@ -257,13 +257,13 @@ describe('Status Effects Configuration', () => {
   describe('Helper functions', () => {
     it('should have working getEffectDefaults function', () => {
       expect(typeof getEffectDefaults).toBe('function');
-      
+
       // Test with valid effect
       const poisonDefaults = getEffectDefaults('poison');
       expect(poisonDefaults).toBeDefined();
       expect(poisonDefaults.damage).toBe(poison.default.damage);
       expect(poisonDefaults.turns).toBe(poison.default.turns);
-      
+
       // Test with invalid effect
       const invalidDefaults = getEffectDefaults('nonexistent');
       expect(invalidDefaults).toBeNull();
@@ -271,37 +271,37 @@ describe('Status Effects Configuration', () => {
 
     it('should have working isEffectStackable function', () => {
       expect(typeof isEffectStackable).toBe('function');
-      
+
       // Test stackable effects
       expect(isEffectStackable('poison')).toBe(true);
       expect(isEffectStackable('bleed')).toBe(true);
-      
-      // Test non-stackable effects  
+
+      // Test non-stackable effects
       expect(isEffectStackable('stunned')).toBe(false);
       expect(isEffectStackable('invisible')).toBe(false);
-      
+
       // Test invalid effect
       expect(isEffectStackable('nonexistent')).toBe(false);
     });
 
     it('should have working isEffectRefreshable function', () => {
       expect(typeof isEffectRefreshable).toBe('function');
-      
+
       // Test refreshable effects
       expect(isEffectRefreshable('poison')).toBe(true);
       expect(isEffectRefreshable('stunned')).toBe(true);
-      
+
       // Test non-refreshable effects
       expect(isEffectRefreshable('enraged')).toBe(false);
       expect(isEffectRefreshable('stoneArmor')).toBe(false);
-      
+
       // Test invalid effect
       expect(isEffectRefreshable('nonexistent')).toBe(false);
     });
 
     it('should have working getEffectMessage function', () => {
       expect(typeof getEffectMessage).toBe('function');
-      
+
       // Test with valid effect and message type
       const poisonApplied = getEffectMessage('poison', 'applied', {
         playerName: 'TestPlayer',
@@ -310,7 +310,7 @@ describe('Status Effects Configuration', () => {
       });
       expect(typeof poisonApplied).toBe('string');
       expect(poisonApplied).toContain('TestPlayer');
-      
+
       // Test with invalid message type (should return fallback)
       const fallback = getEffectMessage('poison', 'nonexistent', {
         playerName: 'TestPlayer'
@@ -321,7 +321,7 @@ describe('Status Effects Configuration', () => {
 
     it('should have working formatEffectMessage function', () => {
       expect(typeof formatEffectMessage).toBe('function');
-      
+
       // Test message formatting
       const template = '{playerName} takes {damage} damage!';
       const formatted = formatEffectMessage(template, {
@@ -329,13 +329,13 @@ describe('Status Effects Configuration', () => {
         damage: 10
       });
       expect(formatted).toBe('TestPlayer takes 10 damage!');
-      
+
       // Test with missing placeholders
       const partialFormat = formatEffectMessage(template, {
         playerName: 'TestPlayer'
       });
       expect(partialFormat).toBe('TestPlayer takes {damage} damage!');
-      
+
       // Test with empty template
       expect(formatEffectMessage('', {})).toBe('');
     });
@@ -345,17 +345,17 @@ describe('Status Effects Configuration', () => {
     it('should have consistent player name placeholders', () => {
       const effects = [poison, bleed, shielded, stunned, vulnerable];
       const commonPlayerPlaceholders = ['playerName', 'targetName', 'attackerName'];
-      
+
       effects.forEach(effect => {
         Object.values(effect.messages).forEach(message => {
           const placeholders = (message as string).match(/{[^}]+}/g) || [];
-          const playerPlaceholders = placeholders.filter(p => 
+          const playerPlaceholders = placeholders.filter(p =>
             commonPlayerPlaceholders.some(common => p.includes(common))
           );
-          
+
           // If player placeholders exist, they should use standard names
           playerPlaceholders.forEach(placeholder => {
-            expect(commonPlayerPlaceholders.some(common => 
+            expect(commonPlayerPlaceholders.some(common =>
               placeholder.includes(common)
             )).toBe(true);
           });

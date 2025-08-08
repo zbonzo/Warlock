@@ -4,6 +4,7 @@
  * Part of Phase 4 refactoring - TypeScript Migration with generic type-safe event handling
  */
 import { GameEvent, EventType, EventHandler, EventPayload } from './EventTypes.js';
+import { secureId } from '../../utils/secureRandom.js';
 
 import logger from '../../utils/logger.js';
 import messages from '../../config/messages/index.js';
@@ -338,7 +339,7 @@ export class GameEventBus {
     const promises = listeners.map(async (listener) => {
       try {
         await listener.fn(event);
-        
+
         // Remove one-time listeners
         if (listener.once) {
           const eventListeners = this.listeners.get(event.type);
@@ -370,7 +371,7 @@ export class GameEventBus {
     for (const listener of listeners) {
       try {
         await listener.fn(event);
-        
+
         // Mark one-time listeners for removal
         if (listener.once) {
           toRemove.push(listener);
@@ -400,7 +401,7 @@ export class GameEventBus {
    */
   private _addToHistory(event: GameEvent): void {
     this.eventHistory.push(event);
-    
+
     // Trim history if too large
     if (this.eventHistory.length > this.maxHistorySize) {
       this.eventHistory.splice(0, this.eventHistory.length - this.maxHistorySize);
@@ -424,7 +425,7 @@ export class GameEventBus {
    * @private
    */
   private _generateListenerId(): string {
-    return `listener_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    return secureId('listener');
   }
 
   /**
@@ -433,7 +434,7 @@ export class GameEventBus {
    * @private
    */
   private _generateEventId(): string {
-    return `event_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    return secureId('event');
   }
 
   /**
@@ -463,7 +464,7 @@ export class GameEventBus {
       const listeners = this.listeners.get(eventType);
       return listeners ? listeners.size : 0;
     }
-    
+
     let total = 0;
     for (const listeners of this.listeners.values()) {
       total += listeners.size;

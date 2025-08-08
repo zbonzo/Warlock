@@ -3,8 +3,8 @@
  */
 import { Socket } from 'socket.io';
 import { z } from 'zod';
-import { 
-  SocketValidationMiddleware, 
+import {
+  SocketValidationMiddleware,
   socketValidator,
   SocketValidators,
   ValidationOptions,
@@ -29,24 +29,24 @@ describe('SocketValidationMiddleware', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    
+
     // Create mock validator
     mockValidator = {
       validate: jest.fn()
     } as any;
-    
+
     MockValidationMiddleware.mockImplementation(() => mockValidator);
-    
+
     // Create middleware instance
     middleware = new SocketValidationMiddleware();
-    
+
     // Create mock socket
     mockSocket = {
       id: 'socket-123',
       emit: jest.fn(),
       eventName: 'testEvent'
     } as any;
-    
+
     mockNext = jest.fn();
     mockCallback = jest.fn();
   });
@@ -54,7 +54,7 @@ describe('SocketValidationMiddleware', () => {
   describe('constructor', () => {
     it('should initialize with default options', () => {
       const instance = new SocketValidationMiddleware();
-      
+
       expect(MockValidationMiddleware).toHaveBeenCalledWith({
         strict: false,
         logValidationErrors: true,
@@ -109,14 +109,14 @@ describe('SocketValidationMiddleware', () => {
         errors: ['name must be string', 'value must be number'],
         details: {}
       });
-      
+
       expect(mockCallback).toHaveBeenCalledWith(
         expect.objectContaining({
           message: 'Invalid data received',
           validationErrors: ['name must be string', 'value must be number']
         })
       );
-      
+
       expect(result).toBe(false);
     });
 
@@ -133,7 +133,7 @@ describe('SocketValidationMiddleware', () => {
       const handler = validator(mockSocket, mockNext);
       handler({}, mockCallback);
 
-      expect(mockSocket.emit).toHaveBeenCalledWith('validationError', 
+      expect(mockSocket.emit).toHaveBeenCalledWith('validationError',
         expect.objectContaining({
           message: 'Custom error'
         })
@@ -144,7 +144,7 @@ describe('SocketValidationMiddleware', () => {
       const partialSchema = testSchema.partial();
       const validator = middleware.validate(testSchema, { allowPartial: true });
       const handler = validator(mockSocket, mockNext);
-      
+
       mockValidator.validate.mockReturnValue({
         success: true,
         data: { name: 'test' },
@@ -243,7 +243,7 @@ describe('SocketValidationMiddleware', () => {
     it('should validate join game data', () => {
       const validator = middleware.validateJoinGame();
       const handler = validator(mockSocket, mockNext);
-      
+
       handler({ gameCode: 'ABC123', playerName: 'Player1' }, mockCallback);
 
       expect(mockValidator.validate).toHaveBeenCalled();
@@ -253,7 +253,7 @@ describe('SocketValidationMiddleware', () => {
     it('should validate submit action data', () => {
       const validator = middleware.validateSubmitAction();
       const handler = validator(mockSocket, mockNext);
-      
+
       handler({ action: 'move', target: 'north' }, mockCallback);
 
       expect(mockValidator.validate).toHaveBeenCalled();
@@ -262,7 +262,7 @@ describe('SocketValidationMiddleware', () => {
     it('should validate game code', () => {
       const validator = middleware.validateGameCode();
       const handler = validator(mockSocket, mockNext);
-      
+
       handler('ABC123', mockCallback);
 
       expect(mockValidator.validate).toHaveBeenCalled();
@@ -271,7 +271,7 @@ describe('SocketValidationMiddleware', () => {
     it('should validate player name', () => {
       const validator = middleware.validatePlayerName();
       const handler = validator(mockSocket, mockNext);
-      
+
       handler('PlayerName', mockCallback);
 
       expect(mockValidator.validate).toHaveBeenCalled();
@@ -297,7 +297,7 @@ describe('SocketValidationMiddleware', () => {
 
       const wrapped = middleware.wrapHandler(testSchema, mockHandlerFactory);
       const handler = wrapped(mockSocket);
-      
+
       await handler({ value: 42 }, mockCallback);
 
       expect(mockValidator.validate).toHaveBeenCalledWith({ value: 42 }, testSchema);
@@ -314,7 +314,7 @@ describe('SocketValidationMiddleware', () => {
 
       const wrapped = middleware.wrapHandler(testSchema, mockHandlerFactory);
       const handler = wrapped(mockSocket);
-      
+
       await handler({ value: 'invalid' }, mockCallback);
 
       expect(mockValidator.validate).toHaveBeenCalled();
@@ -334,7 +334,7 @@ describe('SocketValidationMiddleware', () => {
 
       const wrapped = middleware.wrapHandler(testSchema, mockHandlerFactory);
       const handler = wrapped(mockSocket);
-      
+
       await handler({ value: 42 }, mockCallback);
 
       expect(mockLogger.error).toHaveBeenCalledWith('Socket handler execution error:', {
@@ -457,7 +457,7 @@ describe('SocketValidationMiddleware', () => {
 
     it('should export all required components', () => {
       const defaultExport = require('../../../server/middleware/socketValidation').default;
-      
+
       expect(defaultExport.SocketValidationMiddleware).toBe(SocketValidationMiddleware);
       expect(defaultExport.socketValidator).toBe(socketValidator);
       expect(defaultExport.SocketValidators).toBe(SocketValidators);

@@ -1,13 +1,13 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { fileURLToPath } from 'url';
-import { 
-  ClassesConfig, 
+import {
+  ClassesConfig,
   ClassAttributes,
   AbilityProgression,
   ClassCategory,
   validateClassesConfig,
-  safeValidateClassesConfig 
+  safeValidateClassesConfig
 } from '../schemas/class.schema.js';
 import { abilityLoader } from './AbilityLoader.js';
 import { Ability } from '../schemas/ability.schema.js';
@@ -150,7 +150,7 @@ export class ClassLoader {
     }
 
     const abilities: Array<Ability & { unlockAt: number; type: string }> = [];
-    
+
     for (let level = 1; level <= Math.min(maxLevel, 4); level++) {
       const abilityId = progression[`level${level}` as keyof AbilityProgression];
       if (abilityId) {
@@ -211,7 +211,7 @@ export class ClassLoader {
    */
   public getClassCategory(className: string): ClassCategory | null {
     this.reloadIfChanged();
-    
+
     for (const [category, classes] of Object.entries(this.classesConfig.classCategories)) {
       if (classes.includes(className)) {
         return category as ClassCategory;
@@ -253,7 +253,7 @@ export class ClassLoader {
     warnings: string[];
   } {
     this.reloadIfChanged();
-    
+
     const missing: string[] = [];
     const warnings: string[] = [];
 
@@ -264,7 +264,7 @@ export class ClassLoader {
           warnings.push(`${className} missing ability for level ${level}`);
           continue;
         }
-        
+
         const ability = abilityLoader.getAbility(abilityId);
         if (!ability) {
           missing.push(`${className} level ${level}: ability '${abilityId}' not found`);
@@ -298,14 +298,14 @@ export class ClassLoader {
     };
   } {
     this.reloadIfChanged();
-    
+
     const classes = this.classesConfig.availableClasses;
     const categories: Record<string, number> = {};
-    
+
     let totalHp = 0;
     let totalArmor = 0;
     let totalDamage = 0;
-    
+
     let highestHp = { class: '', value: 0 };
     let lowestHp = { class: '', value: Infinity };
     let highestDamage = { class: '', value: 0 };

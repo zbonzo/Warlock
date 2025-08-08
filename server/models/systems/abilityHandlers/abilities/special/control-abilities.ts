@@ -3,6 +3,7 @@
  * Handles abilities that control monsters, apply buffs, or manipulate game state
  */
 
+import { secureId } from '../../../../../utils/secureRandom.js';
 import type { Player as BasePlayer, Monster, Ability as BaseAbility } from '../../../../../types/generated.js';
 import type {
   AbilityHandler,
@@ -44,7 +45,7 @@ export const handleControlMonster: AbilityHandler = (
   const game = systems.game;
   if (!game || !game.monster) {
     log.push({
-      id: `control-monster-no-target-${Date.now()}`,
+      id: secureId('control-monster-no-target'),
       timestamp: Date.now(),
       type: 'action',
       source: actor['id'],
@@ -57,18 +58,18 @@ export const handleControlMonster: AbilityHandler = (
   }
 
   const monster = game.monster;
-  
+
   // Check if monster is already controlled
   if ((monster as any).controllerId) {
     log.push({
-      id: `control-monster-already-controlled-${Date.now()}`,
+      id: secureId('control-monster-already-controlled'),
       timestamp: Date.now(),
       type: 'action',
       source: actor['id'],
       message: `${actor['name']} cannot control monster - already controlled by ${(monster as any).controllerName}`,
-      details: { 
+      details: {
         reason: 'already_controlled',
-        currentController: (monster as any).controllerId 
+        currentController: (monster as any).controllerId
       },
       public: true,
       priority: 'medium'
@@ -79,7 +80,7 @@ export const handleControlMonster: AbilityHandler = (
   // Check if monster is alive
   if (!(monster as any).isAlive || (monster as any).hp <= 0) {
     log.push({
-      id: `control-monster-dead-${Date.now()}`,
+      id: secureId('control-monster-dead'),
       timestamp: Date.now(),
       type: 'action',
       source: actor['id'],
@@ -102,7 +103,7 @@ export const handleControlMonster: AbilityHandler = (
   (monster as any).controlStartTime = Date.now();
 
   log.push({
-    id: `control-monster-success-${Date.now()}`,
+    id: secureId('control-monster-success'),
     timestamp: Date.now(),
     type: 'action',
     source: actor['id'],
@@ -120,7 +121,7 @@ export const handleControlMonster: AbilityHandler = (
 
   // Private instructions to the controller
   log.push({
-    id: `control-monster-instructions-${Date.now()}`,
+    id: secureId('control-monster-instructions'),
     timestamp: Date.now(),
     type: 'action',
     source: actor['id'],
@@ -170,7 +171,7 @@ export const handleSpiritGuard: AbilityHandler = (
 
   // Apply spirit guard protection
   const statusResult = systems.statusEffectManager.applyStatusEffect(target, {
-    id: `spirit-guard-${Date.now()}`,
+    id: secureId('spirit-guard'),
     name: 'spirit_guard',
     type: 'buff',
     duration,
@@ -183,7 +184,7 @@ export const handleSpiritGuard: AbilityHandler = (
 
   if (statusResult.success) {
     log.push({
-      id: `spirit-guard-success-${Date.now()}`,
+      id: secureId('spirit-guard-success'),
       timestamp: Date.now(),
       type: 'action',
       source: actor['id'],
@@ -228,7 +229,7 @@ export const handleStunAbility: AbilityHandler = (
 
   // Apply stun effect
   const statusResult = systems.statusEffectManager.applyStatusEffect(target, {
-    id: `stunned-${Date.now()}`,
+    id: secureId('stunned'),
     name: 'stunned',
     type: 'debuff',
     duration: stunDuration,
@@ -240,9 +241,9 @@ export const handleStunAbility: AbilityHandler = (
 
   if (statusResult.success) {
     const targetName = (target as Player)['name'] || (target as Monster)['name'];
-    
+
     log.push({
-      id: `stun-success-${Date.now()}`,
+      id: secureId('stun-success'),
       timestamp: Date.now(),
       type: 'status',
       source: actor['id'],

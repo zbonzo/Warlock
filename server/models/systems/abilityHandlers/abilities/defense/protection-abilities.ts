@@ -3,6 +3,8 @@
  * Handles abilities that provide shields, armor, and protection
  */
 
+import { createActionLog } from '../../../../../utils/logEntry.js';
+import { secureId } from '../../../../../utils/secureRandom.js';
 import type { Player, Monster, Ability } from '../../../../../types/generated.js';
 import type {
   AbilityHandler,
@@ -49,7 +51,7 @@ export const handleShieldWall: AbilityHandler = (
 
   // Apply shield effect
   const statusResult = systems.statusEffectManager?.applyStatusEffect?.(target, {
-    id: `shield-wall-${Date.now()}`,
+    id: secureId('shield-wall'),
     name: 'shielded',
     type: 'buff',
     duration,
@@ -62,22 +64,20 @@ export const handleShieldWall: AbilityHandler = (
   }) || { success: false };
 
   if (statusResult.success) {
-    log.push({
-      id: `shield-wall-success-${Date.now()}`,
-      timestamp: Date.now(),
-      type: 'action',
-      source: actor.id,
-      target: target.id,
-      message: `${actor.name} casts Shield Wall on ${targetPlayer.name}, granting ${shieldAmount} shield and ${Math.round(damageReduction * 100)}% damage reduction for ${duration} turns!`,
-      details: {
-        shieldAmount,
-        damageReduction,
-        duration
-      },
-      public: true,
-      isPublic: true,
-      priority: 'high'
-    });
+    log.push(createActionLog(
+      actor.id,
+      target.id,
+      `${actor.name} casts Shield Wall on ${targetPlayer.name}, granting ${shieldAmount} shield and ${Math.round(damageReduction * 100)}% damage reduction for ${duration} turns!`,
+      {
+        details: {
+          shieldAmount,
+          damageReduction,
+          duration
+        },
+        priority: 'high',
+        public: true
+      }
+    ));
 
     return true;
   }
@@ -124,7 +124,7 @@ export const handleMultiProtection: AbilityHandler = (
   // Apply protection to all living allies
   for (const protectionTarget of targets) {
     const statusResult = systems.statusEffectManager?.applyStatusEffect?.(protectionTarget as Player, {
-      id: `${effectName}-${Date.now()}-${(protectionTarget as any).id}`,
+      id: secureId(`${effectName}-${(protectionTarget as any).id}`),
       name: 'protected',
       type: 'buff',
       duration,
@@ -142,22 +142,21 @@ export const handleMultiProtection: AbilityHandler = (
   }
 
   if (protectedTargets > 0) {
-    log.push({
-      id: `multi-protection-success-${Date.now()}`,
-      timestamp: Date.now(),
-      type: 'action',
-      source: actor.id,
-      message: `${actor.name} casts ${ability['name']}, protecting ${protectedTargets} allies with ${protectionAmount} protection for ${duration} turns!`,
-      details: {
-        protectedCount: protectedTargets,
-        protectionAmount,
-        duration,
-        effectName
-      },
-      public: true,
-      isPublic: true,
-      priority: 'high'
-    });
+    log.push(createActionLog(
+      actor.id,
+      'multiple',
+      `${actor.name} casts ${ability['name']}, protecting ${protectedTargets} allies with ${protectionAmount} protection for ${duration} turns!`,
+      {
+        details: {
+          protectedCount: protectedTargets,
+          protectionAmount,
+          duration,
+          effectName
+        },
+        priority: 'high',
+        public: true
+      }
+    ));
 
     return true;
   }

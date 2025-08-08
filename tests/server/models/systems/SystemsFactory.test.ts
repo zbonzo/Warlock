@@ -66,9 +66,9 @@ describe('SystemsFactory (TypeScript)', () => {
       // Mock the systems creation process
       const mockSystems: GameSystems = {
         players: mockPlayers,
-        gameStateUtils: { 
+        gameStateUtils: {
           updateGameState: jest.fn(),
-          getPlayerStats: jest.fn() 
+          getPlayerStats: jest.fn()
         },
         statusEffectManager: {
           applyEffect: jest.fn(),
@@ -144,7 +144,7 @@ describe('SystemsFactory (TypeScript)', () => {
         statusEffectManager: { id: 'statusEffectManager' },
         warlockSystem: { dependencies: ['players', 'gameStateUtils'] },
         racialAbilitySystem: { dependencies: ['players', 'statusEffectManager'] },
-        monsterController: { 
+        monsterController: {
           dependencies: ['monster', 'players', 'statusEffectManager', 'racialAbilitySystem', 'gameStateUtils']
         },
         combatSystem: {
@@ -199,7 +199,7 @@ describe('SystemsFactory (TypeScript)', () => {
         racialAbilitySystem: { processRacialAbilities: jest.fn() },
         monsterController: { monster: mockMonster, processMonsterAction: jest.fn() },
         combatSystem: { processRound: jest.fn() },
-        abilityRegistry: { 
+        abilityRegistry: {
           registerHandler: jest.fn(),
           systems: { players: mockPlayers }
         }
@@ -224,7 +224,7 @@ describe('SystemsFactory (TypeScript)', () => {
       };
 
       const result = validateSystems(validSystems);
-      
+
       expect(result.valid).toBe(true);
       expect(result.errors).toHaveLength(0);
     });
@@ -251,7 +251,7 @@ describe('SystemsFactory (TypeScript)', () => {
       };
 
       const result = validateSystems(invalidSystems);
-      
+
       expect(result.valid).toBe(false);
       expect(result.errors).toContain('Missing required system: combatSystem');
       expect(result.errors).toContain('Missing required system: abilityRegistry');
@@ -263,7 +263,7 @@ describe('SystemsFactory (TypeScript)', () => {
 
       const validateSystemConnections = (systems: any) => {
         const errors: string[] = [];
-        
+
         if (systems.abilityRegistry && !systems.abilityRegistry.systems) {
           errors.push('AbilityRegistry missing systems reference');
         }
@@ -272,7 +272,7 @@ describe('SystemsFactory (TypeScript)', () => {
       };
 
       const result = validateSystemConnections(systemsWithoutRegistryRef);
-      
+
       expect(result.valid).toBe(false);
       expect(result.errors).toContain('AbilityRegistry missing systems reference');
     });
@@ -283,7 +283,7 @@ describe('SystemsFactory (TypeScript)', () => {
 
       const validatePlayers = (systems: any) => {
         const errors: string[] = [];
-        
+
         if (systems.players && systems.players.size === 0) {
           errors.push('Players map is empty');
         }
@@ -292,7 +292,7 @@ describe('SystemsFactory (TypeScript)', () => {
       };
 
       const result = validatePlayers(systemsWithEmptyPlayers);
-      
+
       expect(result.valid).toBe(false);
       expect(result.errors).toContain('Players map is empty');
     });
@@ -303,13 +303,13 @@ describe('SystemsFactory (TypeScript)', () => {
       const mockSystems = {
         players: mockPlayers,
         abilityRegistry: {
-          getDebugInfo: jest.fn().mockReturnValue({ 
+          getDebugInfo: jest.fn().mockReturnValue({
             totalHandlers: 25,
             registeredTypes: ['attack', 'heal', 'special']
           })
         },
         statusEffectSystem: { manager: {}, applyEffect: jest.fn() },
-        combatSystem: { 
+        combatSystem: {
           processRound: jest.fn(),
           eventBus: mockEventBus
         }
@@ -437,7 +437,7 @@ describe('SystemsFactory (TypeScript)', () => {
 
       // Should not throw, despite one cleanup failing
       await expect(cleanupSystems(mockSystems)).resolves.toBeUndefined();
-      
+
       expect(mockSystems.abilityRegistry.cleanup).toHaveBeenCalledTimes(1);
       expect(mockSystems.combatSystem.cleanup).toHaveBeenCalledTimes(1);
     });
@@ -473,9 +473,9 @@ describe('SystemsFactory (TypeScript)', () => {
       const mockSystems = {
         players: mockPlayers,
         monster: mockMonster,
-        gameStateUtils: { 
+        gameStateUtils: {
           players: mockPlayers,
-          updateGameState: jest.fn() 
+          updateGameState: jest.fn()
         },
         statusEffectManager: {
           players: mockPlayers,
@@ -559,7 +559,7 @@ describe('SystemsFactory (TypeScript)', () => {
       expect(mockAbilityRegistry.systems.players).toBe(mockPlayers);
       expect(mockAbilityRegistry.registerHandler).toHaveBeenCalledTimes(4);
       expect(mockAbilityRegistry.handlers.size).toBe(4);
-      
+
       const debugInfo = mockAbilityRegistry.getDebugInfo();
       expect(debugInfo.totalHandlers).toBe(4);
       expect(debugInfo.registeredTypes).toEqual(['attack', 'heal', 'fireball', 'shield']);
@@ -628,7 +628,7 @@ describe('SystemsFactory (TypeScript)', () => {
       };
 
       statusEffectSystem.applyEffect('player1', 'poison', { damage: 5, duration: 3 });
-      
+
       expect(statusEffectSystem.applyEffect).toHaveBeenCalledWith(
         'player1',
         'poison',
@@ -650,7 +650,7 @@ describe('SystemsFactory (TypeScript)', () => {
       };
 
       const mockListener = jest.fn();
-      
+
       eventBus.on('test.event', mockListener);
       eventBus.emit('test.event', { data: 'test' });
       eventBus.off('test.event', mockListener);
@@ -664,7 +664,7 @@ describe('SystemsFactory (TypeScript)', () => {
   describe('Error Handling and Edge Cases', () => {
     it('should handle empty players map', () => {
       const emptyPlayers = new Map();
-      
+
       const validateEmptyPlayers = (players: Map<string, any>) => {
         if (players.size === 0) {
           return { valid: false, error: 'No players available for system initialization' };
@@ -673,7 +673,7 @@ describe('SystemsFactory (TypeScript)', () => {
       };
 
       const result = validateEmptyPlayers(emptyPlayers);
-      
+
       expect(result.valid).toBe(false);
       expect(result.error).toBe('No players available for system initialization');
     });
@@ -694,7 +694,7 @@ describe('SystemsFactory (TypeScript)', () => {
       };
 
       const result = handleNullMonster(null);
-      
+
       expect(result.id).toBe('default_monster');
       expect(result.hp).toBe(100);
       expect(result.isAlive).toBe(true);
@@ -714,13 +714,13 @@ describe('SystemsFactory (TypeScript)', () => {
         throw new Error('System creation failed');
       };
 
-      const fallbackSystem = { 
+      const fallbackSystem = {
         type: 'fallback',
         processAction: jest.fn()
       };
 
       const result = createSystemSafely(failingCreator, fallbackSystem);
-      
+
       expect(result).toBe(fallbackSystem);
       expect(result.type).toBe('fallback');
     });

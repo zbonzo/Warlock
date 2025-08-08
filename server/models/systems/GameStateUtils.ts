@@ -105,7 +105,7 @@ class GameStateUtils {
     } = options;
 
     // Get all possible player targets
-    let possibleTargets = this.getAlivePlayers()
+    const possibleTargets = this.getAlivePlayers()
       .filter((p) => {
         // Exclude specified IDs (including actor if not excluded)
         if (p.id === actorId || excludeIds.includes(p.id)) return false;
@@ -148,7 +148,8 @@ class GameStateUtils {
     if (possibleTargets.length === 0) {
       return null;
     }
-    const selectedTarget = possibleTargets[Math.floor(Math.random() * possibleTargets.length)];
+    const { secureRandomChoice } = require('../utils/secureRandom.js');
+    const selectedTarget = secureRandomChoice(possibleTargets);
     return selectedTarget || null;
   }
 
@@ -164,12 +165,12 @@ class GameStateUtils {
       );
       return null; // Don't end game yet, resurrections are coming
     }
-    
+
     // If everyone is dead, Evil wins (no survivors means darkness prevails)
     if (aliveCount === 0) {
       return 'Evil';
     }
-    
+
     // Use win conditions from config
     const winConditions = (config as any)['gameBalance']?.['warlock']?.['winConditions'] || {};
 
@@ -285,8 +286,8 @@ class GameStateUtils {
    * Get players sorted by a specific property
    */
   getPlayersSortedBy(
-    property: keyof Player, 
-    ascending: boolean = true, 
+    property: keyof Player,
+    ascending: boolean = true,
     includeInvisible: boolean = true
   ): Player[] {
     const alivePlayers = this.getAlivePlayers();
@@ -392,9 +393,9 @@ class GameStateUtils {
    * Replace player ability (for Artisan Adaptability)
    */
   replacePlayerAbility(
-    playerId: string, 
-    oldAbilityType: string, 
-    newAbilityType: string, 
+    playerId: string,
+    oldAbilityType: string,
+    newAbilityType: string,
     level: number
   ): boolean {
     // Find the player
@@ -406,7 +407,7 @@ class GameStateUtils {
 
     // Find the old ability in player's abilities
     if (!player.abilities) return false;
-    
+
     const oldAbilityIndex = player.abilities.findIndex(
       (a) => a.type === oldAbilityType
     );
@@ -459,9 +460,9 @@ class GameStateUtils {
    * Check if a target is invisible and handle attack failure
    */
   static checkInvisibilityAndLog(
-    actor: Player, 
-    target: Player, 
-    systems: GameSystems, 
+    actor: Player,
+    target: Player,
+    systems: GameSystems,
     log: any[]
   ): boolean {
     // Check if target is invisible

@@ -3,6 +3,8 @@
  * Handles abilities that provide invisibility, stealth, and evasion
  */
 
+import { createActionLog } from '../../../../../utils/logEntry.js';
+import { secureId } from '../../../../../utils/secureRandom.js';
 import type { Player, Monster, Ability } from '../../../../../types/generated.js';
 import type {
   AbilityHandler,
@@ -47,7 +49,7 @@ export const handleInvisibility: AbilityHandler = (
 
   // Apply invisibility effect
   const statusResult = systems.statusEffectManager?.applyStatusEffect?.(target, {
-    id: `invisible-${Date.now()}`,
+    id: secureId('invisible'),
     name: 'invisible',
     type: 'buff',
     duration,
@@ -59,21 +61,19 @@ export const handleInvisibility: AbilityHandler = (
   }) || { success: false };
 
   if (statusResult.success) {
-    log.push({
-      id: `invisibility-success-${Date.now()}`,
-      timestamp: Date.now(),
-      type: 'action',
-      source: actor.id,
-      target: target.id,
-      message: `${actor.name} casts invisibility on ${targetPlayer.name}, granting ${Math.round(dodgeChance * 100)}% dodge chance for ${duration} turns!`,
-      details: {
-        duration,
-        dodgeChance
-      },
-      public: true,
-      isPublic: true,
-      priority: 'high'
-    });
+    log.push(createActionLog(
+      actor.id,
+      target.id,
+      `${actor.name} casts invisibility on ${targetPlayer.name}, granting ${Math.round(dodgeChance * 100)}% dodge chance for ${duration} turns!`,
+      {
+        details: {
+          duration,
+          dodgeChance
+        },
+        priority: 'high',
+        public: true
+      }
+    ));
 
     return true;
   }
@@ -115,7 +115,7 @@ export const handleShadowstep: AbilityHandler = (
   // Dodge next attack
   if (dodgeNextAttack) {
     const dodgeResult = systems.statusEffectManager?.applyStatusEffect?.(actualTarget, {
-      id: `shadowstep-dodge-${Date.now()}`,
+      id: secureId('shadowstep-dodge'),
       name: 'dodge_next_attack',
       type: 'buff',
       duration: 1, // Only lasts until next attack
@@ -130,7 +130,7 @@ export const handleShadowstep: AbilityHandler = (
   // Speed bonus
   if (speedBonus > 1) {
     const speedResult = systems.statusEffectManager?.applyStatusEffect?.(actualTarget, {
-      id: `shadowstep-speed-${Date.now()}`,
+      id: secureId('shadowstep-speed'),
       name: 'speed_boost',
       type: 'buff',
       duration,
@@ -145,23 +145,21 @@ export const handleShadowstep: AbilityHandler = (
 
   if (effects.length > 0) {
     const targetName = (actualTarget as Player).name || 'unknown';
-    
-    log.push({
-      id: `shadowstep-success-${Date.now()}`,
-      timestamp: Date.now(),
-      type: 'action',
-      source: actor.id,
-      target: actualTarget.id,
-      message: `${actor.name} performs Shadowstep on ${targetName}, granting ${effects.join(' and ')} effects!`,
-      details: {
-        effects,
-        duration,
-        speedBonus
-      },
-      public: true,
-      isPublic: true,
-      priority: 'high'
-    });
+
+    log.push(createActionLog(
+      actor.id,
+      actualTarget.id,
+      `${actor.name} performs Shadowstep on ${targetName}, granting ${effects.join(' and ')} effects!`,
+      {
+        details: {
+          effects,
+          duration,
+          speedBonus
+        },
+        priority: 'high',
+        public: true
+      }
+    ));
 
     return true;
   }

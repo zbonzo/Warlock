@@ -12,7 +12,7 @@ export class LazyModuleLoader<T> {
   private modulePromise: Promise<T> | null = null;
   private loadedModule: T | null = null;
 
-  constructor(private moduleFactory: () => Promise<T>) {}
+  constructor(private _moduleFactory: () => Promise<T>) {}
 
   /**
    * Load module lazily - only imports when first accessed
@@ -23,7 +23,7 @@ export class LazyModuleLoader<T> {
     }
 
     if (!this.modulePromise) {
-      this.modulePromise = this.moduleFactory();
+      this.modulePromise = this._moduleFactory();
     }
 
     this.loadedModule = await this.modulePromise;
@@ -53,14 +53,14 @@ export class ConditionalLoader<T> {
   private loader: LazyModuleLoader<T>;
 
   constructor(
-    private condition: () => boolean,
+    private _condition: () => boolean,
     moduleFactory: () => Promise<T>
   ) {
     this.loader = new LazyModuleLoader(moduleFactory);
   }
 
   async loadIfNeeded(): Promise<T | null> {
-    if (this.condition()) {
+    if (this._condition()) {
       return await this.loader.load();
     }
     return null;
@@ -119,7 +119,7 @@ export class ModuleRegistry {
  * Tree-shakable function registry
  * Allows conditional execution of functions based on runtime conditions
  */
-export class FunctionRegistry<T extends Record<string, (...args: any[]) => any>> {
+export class FunctionRegistry<T extends Record<string, (..._args: any[]) => any>> {
   private functions = new Map<keyof T, T[keyof T]>();
 
   /**
@@ -136,11 +136,11 @@ export class FunctionRegistry<T extends Record<string, (...args: any[]) => any>>
    */
   execute<K extends keyof T>(
     name: K,
-    ...args: T[K] extends (...args: any[]) => any ? Parameters<T[K]> : never[]
-  ): T[K] extends (...args: any[]) => any ? ReturnType<T[K]> | undefined : undefined {
+    ..._args: T[K] extends (..._args: any[]) => any ? Parameters<T[K]> : never[]
+  ): T[K] extends (..._args: any[]) => any ? ReturnType<T[K]> | undefined : undefined {
     const fn = this.functions.get(name);
     if (fn && typeof fn === 'function') {
-      return (fn as (...args: any[]) => any)(...args);
+      return (fn as (..._args: any[]) => any)(..._args);
     }
     return undefined as any;
   }
@@ -203,13 +203,14 @@ export const createTreeShakableExports = <T extends Record<string, any>>(
   usedExports: (keyof T)[]
 ): Partial<T> => {
   const optimized: Partial<T> = {};
-  
+
   usedExports.forEach(key => {
     if (key in exports) {
-      optimized[key] = exports[key];
+      // Dynamic property access needed for tree-shaking optimization
+      (optimized as any)[key] = (exports as any)[key];
     }
   });
-  
+
   return optimized;
 };
 
@@ -248,7 +249,7 @@ export interface TreeShakingReport {
 export const generateTreeShakingReport = (): TreeShakingReport => {
   const registered = moduleRegistry.getRegistered();
   const loaded = registered.filter(name => moduleRegistry.isLoaded(name));
-  
+
   return {
     modulesRegistered: registered.length,
     modulesLoaded: loaded.length,

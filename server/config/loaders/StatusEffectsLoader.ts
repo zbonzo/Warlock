@@ -1,14 +1,14 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { fileURLToPath } from 'url';
-import { 
-  StatusEffectsConfig, 
+import {
+  StatusEffectsConfig,
   StatusEffect,
   ProcessingOrder,
   GlobalSettings,
   EffectDefaults,
   validateStatusEffectsConfig,
-  safeValidateStatusEffectsConfig 
+  safeValidateStatusEffectsConfig
 } from '../schemas/statusEffects.schema.js';
 
 // ES module __dirname equivalent
@@ -158,7 +158,7 @@ export class StatusEffectsLoader {
    */
   public getEffectMessage(effectName: string, messageType: string, context: EffectMessageContext = {}): string {
     this.reloadIfChanged();
-    
+
     const effect = this.effectsConfig.effects[effectName];
     const template = effect?.messages[messageType];
 
@@ -193,7 +193,7 @@ export class StatusEffectsLoader {
    */
   public getEffectsByProperty(property: string, value: any): string[] {
     this.reloadIfChanged();
-    
+
     return Object.entries(this.effectsConfig.effects)
       .filter(([_, effect]) => (effect as any)[property] === value)
       .map(([effectName]) => effectName);
@@ -211,7 +211,7 @@ export class StatusEffectsLoader {
    */
   public getPermanentEffects(): string[] {
     this.reloadIfChanged();
-    
+
     return Object.entries(this.effectsConfig.effects)
       .filter(([_, effect]) => (effect as any).isPermanent === true)
       .map(([effectName]) => effectName);
@@ -222,7 +222,7 @@ export class StatusEffectsLoader {
    */
   public getPassiveEffects(): string[] {
     this.reloadIfChanged();
-    
+
     return Object.entries(this.effectsConfig.effects)
       .filter(([_, effect]) => (effect as any).isPassive === true)
       .map(([effectName]) => effectName);
@@ -247,7 +247,7 @@ export class StatusEffectsLoader {
    */
   public getEffectsInProcessingOrder(): string[] {
     this.reloadIfChanged();
-    
+
     return Object.entries(this.effectsConfig.processingOrder)
       .sort(([, a], [, b]) => a - b)
       .map(([effectName]) => effectName);
@@ -262,7 +262,7 @@ export class StatusEffectsLoader {
     errors: string[];
   } {
     this.reloadIfChanged();
-    
+
     const warnings: string[] = [];
     const errors: string[] = [];
 
@@ -270,7 +270,7 @@ export class StatusEffectsLoader {
     const effectsWithoutOrder = Object.keys(this.effectsConfig.effects).filter(
       effectName => !this.effectsConfig.processingOrder[effectName]
     );
-    
+
     if (effectsWithoutOrder.length > 0) {
       warnings.push(`Effects without processing order: ${effectsWithoutOrder.join(', ')}`);
     }
@@ -278,23 +278,23 @@ export class StatusEffectsLoader {
     // Check for effects with suspicious default values
     Object.entries(this.effectsConfig.effects).forEach(([effectName, effect]) => {
       const defaults = effect.default;
-      
+
       // Check for negative damage values
       if (defaults.damage && typeof defaults.damage === 'number' && defaults.damage < 0) {
         warnings.push(`Effect '${effectName}' has negative damage: ${defaults.damage}`);
       }
-      
+
       // Check for excessive turn duration
       if (defaults.turns && typeof defaults.turns === 'number' && defaults.turns > 10 && defaults.turns !== -1) {
         warnings.push(`Effect '${effectName}' has very long duration: ${defaults.turns} turns`);
       }
-      
+
       // Check for missing required message types
       const requiredMessages = ['applied', 'expired'];
       const missingMessages = requiredMessages.filter(
         msgType => !effect.messages[msgType]
       );
-      
+
       if (missingMessages.length > 0) {
         warnings.push(`Effect '${effectName}' missing messages: ${missingMessages.join(', ')}`);
       }
@@ -333,16 +333,16 @@ export class StatusEffectsLoader {
     };
   } {
     this.reloadIfChanged();
-    
+
     const effects = Object.values(this.effectsConfig.effects);
     const totalEffects = effects.length;
-    
+
     let stackableCount = 0;
     let permanentCount = 0;
     let passiveCount = 0;
     let damageCount = 0;
     let protectionCount = 0;
-    
+
     const categories = {
       damage: 0,
       protection: 0,
@@ -357,7 +357,7 @@ export class StatusEffectsLoader {
       if ((effect as any).isPassive) passiveCount++;
       if (effect.default.damage) damageCount++;
       if (effect.default.armor) protectionCount++;
-      
+
       // Categorize effects
       if (effect.default.damage || (effect as any).damagePerTurn) {
         categories.damage++;

@@ -66,13 +66,13 @@ describe('FinalScoresTable', () => {
   describe('Component Rendering', () => {
     it('should render the final scores title', () => {
       render(<FinalScoresTable players={mockPlayers} />);
-      
+
       expect(screen.getByText('FINAL SCORES')).toBeInTheDocument();
     });
 
     it('should render table headers', () => {
       render(<FinalScoresTable players={mockPlayers} />);
-      
+
       expect(screen.getByText('PLAYER')).toBeInTheDocument();
       expect(screen.getByText('💀')).toBeInTheDocument(); // Deaths header
       expect(screen.getByText('⚔️')).toBeInTheDocument(); // Damage header
@@ -82,7 +82,7 @@ describe('FinalScoresTable', () => {
 
     it('should render all players', () => {
       render(<FinalScoresTable players={mockPlayers} />);
-      
+
       expect(screen.getByText('Alice')).toBeInTheDocument();
       expect(screen.getByText('Bob')).toBeInTheDocument();
       expect(screen.getByText('Charlie')).toBeInTheDocument();
@@ -90,7 +90,7 @@ describe('FinalScoresTable', () => {
 
     it('should render with empty players array', () => {
       render(<FinalScoresTable players={[]} />);
-      
+
       expect(screen.getByText('FINAL SCORES')).toBeInTheDocument();
       expect(screen.getByText('PLAYER')).toBeInTheDocument();
     });
@@ -99,7 +99,7 @@ describe('FinalScoresTable', () => {
   describe('Player Statistics', () => {
     it('should display player stats correctly', () => {
       render(<FinalScoresTable players={mockPlayers} />);
-      
+
       const aliceRow = screen.getByText('Alice').closest('.player-row');
       expect(aliceRow).toHaveTextContent('0'); // Deaths
       expect(aliceRow).toHaveTextContent('150'); // Damage
@@ -114,12 +114,12 @@ describe('FinalScoresTable', () => {
         isWarlock: false,
         isAlive: true
       }];
-      
+
       render(<FinalScoresTable players={playerWithoutStats} />);
-      
+
       const playerRow = screen.getByText('TestPlayer').closest('.player-row');
       const statCells = playerRow?.querySelectorAll('.player-stat');
-      
+
       statCells?.forEach(cell => {
         expect(cell).toHaveTextContent('0');
       });
@@ -137,9 +137,9 @@ describe('FinalScoresTable', () => {
           // Missing other stats
         }
       }];
-      
+
       render(<FinalScoresTable players={playerWithPartialStats} />);
-      
+
       const playerRow = screen.getByText('TestPlayer').closest('.player-row');
       expect(playerRow).toHaveTextContent('0'); // timesDied (missing)
       expect(playerRow).toHaveTextContent('100'); // totalDamageDealt
@@ -154,13 +154,13 @@ describe('FinalScoresTable', () => {
         { id: '1', name: 'Dead', isWarlock: false, isAlive: false },
         { id: '2', name: 'Alive', isWarlock: false, isAlive: true }
       ];
-      
+
       render(<FinalScoresTable players={players} />);
-      
-      const playerRows = screen.getAllByText(/^(Dead|Alive)$/).map(el => 
+
+      const playerRows = screen.getAllByText(/^(Dead|Alive)$/).map(el =>
         el.closest('.player-row')
       );
-      
+
       expect(playerRows[0]).toHaveTextContent('Alive');
       expect(playerRows[1]).toHaveTextContent('Dead');
     });
@@ -170,13 +170,13 @@ describe('FinalScoresTable', () => {
         { id: '1', name: 'Warlock', isWarlock: true, isAlive: true },
         { id: '2', name: 'Player', isWarlock: false, isAlive: true }
       ];
-      
+
       render(<FinalScoresTable players={players} />);
-      
-      const playerRows = screen.getAllByText(/^(Player|Warlock)$/).map(el => 
+
+      const playerRows = screen.getAllByText(/^(Player|Warlock)$/).map(el =>
         el.closest('.player-row')
       );
-      
+
       expect(playerRows[0]).toHaveTextContent('Player');
       expect(playerRows[1]).toHaveTextContent('Warlock');
     });
@@ -187,13 +187,13 @@ describe('FinalScoresTable', () => {
         { id: '2', name: 'Alice', isWarlock: false, isAlive: true },
         { id: '3', name: 'Bob', isWarlock: false, isAlive: true }
       ];
-      
+
       render(<FinalScoresTable players={players} />);
-      
-      const playerNames = screen.getAllByText(/^(Alice|Bob|Zoe)$/).map(el => 
+
+      const playerNames = screen.getAllByText(/^(Alice|Bob|Zoe)$/).map(el =>
         el.textContent
       );
-      
+
       expect(playerNames).toEqual(['Alice', 'Bob', 'Zoe']);
     });
 
@@ -204,13 +204,13 @@ describe('FinalScoresTable', () => {
         { id: '3', name: 'Dead Player', isWarlock: false, isAlive: false },
         { id: '4', name: 'Alive Player', isWarlock: false, isAlive: true }
       ];
-      
+
       render(<FinalScoresTable players={players} />);
-      
-      const playerNames = screen.getAllByText(/^(Dead|Alive)/).map(el => 
+
+      const playerNames = screen.getAllByText(/^(Dead|Alive)/).map(el =>
         el.textContent
       );
-      
+
       expect(playerNames).toEqual([
         'Alive Player',    // Alive good player first
         'Alive Warlock',   // Then alive warlock
@@ -228,9 +228,9 @@ describe('FinalScoresTable', () => {
         isWarlock: false,
         isAlive: true
       }];
-      
+
       render(<FinalScoresTable players={goodPlayer} />);
-      
+
       const playerRow = screen.getByText('GoodPlayer').closest('.player-row');
       expect(playerRow).toHaveClass('player-row');
       expect(playerRow).toHaveClass('player-row-good');
@@ -245,9 +245,9 @@ describe('FinalScoresTable', () => {
         isWarlock: true,
         isAlive: true
       }];
-      
+
       render(<FinalScoresTable players={warlock} />);
-      
+
       const playerRow = screen.getByText('Warlock').closest('.player-row');
       expect(playerRow).toHaveClass('player-row');
       expect(playerRow).toHaveClass('warlock-row');
@@ -262,9 +262,9 @@ describe('FinalScoresTable', () => {
         isWarlock: false,
         isAlive: false
       }];
-      
+
       render(<FinalScoresTable players={deadPlayer} />);
-      
+
       const playerRow = screen.getByText('DeadPlayer').closest('.player-row');
       expect(playerRow).toHaveClass('player-row');
       expect(playerRow).toHaveClass('player-row-good');
@@ -278,9 +278,9 @@ describe('FinalScoresTable', () => {
         isWarlock: false,
         isAlive: false
       }];
-      
+
       render(<FinalScoresTable players={deadPlayer} />);
-      
+
       expect(screen.getByText('🪦')).toBeInTheDocument();
     });
 
@@ -291,9 +291,9 @@ describe('FinalScoresTable', () => {
         isWarlock: false,
         isAlive: true
       }];
-      
+
       render(<FinalScoresTable players={alivePlayer} />);
-      
+
       expect(screen.queryByText('🪦')).not.toBeInTheDocument();
     });
   });
@@ -307,9 +307,9 @@ describe('FinalScoresTable', () => {
         isWarlock: false,
         isAlive: true
       }];
-      
+
       render(<FinalScoresTable players={playerWithClass} />);
-      
+
       const classIcon = screen.getByAltText('Warrior');
       expect(classIcon).toBeInTheDocument();
       expect(classIcon).toHaveAttribute('src', '/images/classes/warrior.png');
@@ -322,9 +322,9 @@ describe('FinalScoresTable', () => {
         isWarlock: false,
         isAlive: true
       }];
-      
+
       render(<FinalScoresTable players={playerWithoutClass} />);
-      
+
       expect(screen.getByText('⚔️')).toBeInTheDocument();
     });
 
@@ -336,14 +336,14 @@ describe('FinalScoresTable', () => {
         isWarlock: false,
         isAlive: true
       }];
-      
+
       render(<FinalScoresTable players={playerWithClass} />);
-      
+
       const classIcon = screen.getByAltText('Warrior');
-      
+
       // Simulate image loading error
       fireEvent.error(classIcon);
-      
+
       // Image should be hidden and fallback emoji should be shown
       expect(classIcon.style.display).toBe('none');
     });
@@ -356,9 +356,9 @@ describe('FinalScoresTable', () => {
         isWarlock: false,
         isAlive: true
       }];
-      
+
       render(<FinalScoresTable players={playerWithClass} />);
-      
+
       const classIcon = screen.getByAltText('PyroMancer');
       expect(classIcon).toHaveAttribute('src', '/images/classes/pyromancer.png');
     });
@@ -378,7 +378,7 @@ describe('FinalScoresTable', () => {
         { id: '1' }, // Missing name, isWarlock, isAlive
         { name: 'Test' }, // Missing id, isWarlock, isAlive
       ] as any[];
-      
+
       expect(() => render(<FinalScoresTable players={malformedPlayers} />)).not.toThrow();
     });
   });

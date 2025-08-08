@@ -42,7 +42,7 @@ describe('Server Index', () => {
     it('should maintain critical import order', () => {
       // Test that imports happen in the correct sequence
       // moduleAliases must be first, then server
-      
+
       // Since we can't easily test import order directly in Jest,
       // we verify that the module loads without errors
       // which indicates proper ordering
@@ -75,13 +75,13 @@ describe('Server Index', () => {
     it('should complete initialization without hanging', () => {
       // Test that the module import completes successfully
       const startTime = Date.now();
-      
+
       delete require.cache[require.resolve('../../server/index')];
       require('../../server/index');
-      
+
       const endTime = Date.now();
       const duration = endTime - startTime;
-      
+
       // Should complete quickly (within 1 second for imports)
       expect(duration).toBeLessThan(1000);
     });
@@ -100,7 +100,7 @@ describe('Server Index', () => {
     it('should export proper module structure', () => {
       delete require.cache[require.resolve('../../server/index')];
       const serverModule = require('../../server/index');
-      
+
       // Should be an object (empty export object)
       expect(typeof serverModule).toBe('object');
       expect(serverModule).not.toBeNull();
@@ -140,9 +140,9 @@ describe('Server Index', () => {
       // This test verifies that the file structure is correct
       // The imports use .js extensions which is required for ES modules
       // but TypeScript compilation handles this correctly
-      
+
       delete require.cache[require.resolve('../../server/index')];
-      
+
       expect(() => {
         require('../../server/index');
       }).not.toThrow();
@@ -153,9 +153,9 @@ describe('Server Index', () => {
     it('should register module aliases as side effect', () => {
       // Test that importing causes module alias registration
       // This is a side effect of the import
-      
+
       delete require.cache[require.resolve('../../server/index')];
-      
+
       expect(() => {
         require('../../server/index');
         // If aliases are registered correctly, no errors should occur
@@ -165,9 +165,9 @@ describe('Server Index', () => {
     it('should start server as side effect', () => {
       // Test that importing causes server startup
       // This is a side effect of the import
-      
+
       delete require.cache[require.resolve('../../server/index')];
-      
+
       expect(() => {
         require('../../server/index');
         // If server starts correctly, no errors should occur
@@ -178,13 +178,13 @@ describe('Server Index', () => {
   describe('Performance', () => {
     it('should import quickly', () => {
       const startTime = process.hrtime.bigint();
-      
+
       delete require.cache[require.resolve('../../server/index')];
       require('../../server/index');
-      
+
       const endTime = process.hrtime.bigint();
       const durationMs = Number(endTime - startTime) / 1_000_000;
-      
+
       // Should import within reasonable time (100ms for module loading)
       expect(durationMs).toBeLessThan(100);
     });
@@ -192,20 +192,20 @@ describe('Server Index', () => {
     it('should not cause memory leaks on repeated imports', () => {
       // Test memory usage doesn't grow excessively
       const initialMemory = process.memoryUsage().heapUsed;
-      
+
       for (let i = 0; i < 5; i++) {
         delete require.cache[require.resolve('../../server/index')];
         require('../../server/index');
       }
-      
+
       // Force garbage collection if available
       if (global.gc) {
         global.gc();
       }
-      
+
       const finalMemory = process.memoryUsage().heapUsed;
       const memoryIncrease = finalMemory - initialMemory;
-      
+
       // Memory increase should be reasonable (less than 10MB)
       expect(memoryIncrease).toBeLessThan(10 * 1024 * 1024);
     });

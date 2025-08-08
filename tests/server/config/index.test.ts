@@ -351,7 +351,7 @@ describe('Server Config Index', () => {
     it('should return boolean for reload operations', () => {
       const abilityReload = config.reloadAbilities();
       const configReload = config.reloadConfiguration();
-      
+
       expect(typeof abilityReload).toBe('boolean');
       expect(typeof configReload).toBe('boolean');
     });

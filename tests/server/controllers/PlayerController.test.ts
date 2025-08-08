@@ -672,10 +672,10 @@ describe('PlayerController (TypeScript)', () => {
         if (!isDisconnect) {
           // Handle normal leave
           const success = game.removePlayer(socket.id);
-          
+
           if (success) {
             socket.leave(gameCode);
-            
+
             socket.to(gameCode).emit('player:left', {
               playerId: socket.id,
               playerName,
@@ -717,7 +717,7 @@ describe('PlayerController (TypeScript)', () => {
         if (isDisconnect && game.gameState.started) {
           // Handle disconnection during game
           mockGameService.handlePlayerDisconnection(game, socket.id);
-          
+
           socket.to(gameCode).emit('player:disconnected', {
             playerId: socket.id,
             playerName,
@@ -750,14 +750,14 @@ describe('PlayerController (TypeScript)', () => {
         }
 
         const reconnectResult = mockGameService.handlePlayerReconnection(game, socket, playerName);
-        
+
         if (reconnectResult.success) {
           const player = reconnectResult.player;
-          
+
           // Update socket mapping
           player.addSocketId(socket.id);
           socket.join(gameCode);
-          
+
           // Register with socket router
           if (game.socketEventRouter) {
             game.socketEventRouter.registerSocket(socket);

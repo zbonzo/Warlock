@@ -84,18 +84,18 @@ export interface Monster {
 export class PlayerAbilities {
   private playerId: string;
   private playerName: string;
-  
+
   // Class abilities
   private abilities: Ability[] = [];
   private unlocked: Ability[] = [];
   private abilityCooldowns: Record<string, number> = {};
-  
+
   // Racial ability tracking
   private racialAbility: RacialAbility | null = null;
   private racialUsesLeft: number = 0;
   private racialCooldown: number = 0;
   private racialEffects: Record<string, any> = {};
-  
+
   // Action submission tracking
   private hasSubmittedAction: boolean = false;
   private submittedAction: ActionSubmission | null = null;
@@ -121,8 +121,8 @@ export class PlayerAbilities {
    * @returns Submission result with success status and details
    */
   submitAction(
-    actionType: string, 
-    targetId: string, 
+    actionType: string,
+    targetId: string,
     additionalData: Record<string, any> = {}
   ): ActionSubmissionResult {
     const result: ActionSubmissionResult = {
@@ -605,12 +605,12 @@ export class PlayerAbilities {
    */
   static fromJSON(data: any): PlayerAbilities {
     const abilities = new PlayerAbilities(data.playerId, data.playerName);
-    
+
     if (data.abilities) abilities.setAbilities(data.abilities);
     if (data.unlocked) abilities.setUnlockedAbilities(data.unlocked);
     if (data.abilityCooldowns) abilities.abilityCooldowns = data.abilityCooldowns;
     if (data.racialAbility) abilities.setRacialAbility(data.racialAbility);
-    
+
     abilities.racialUsesLeft = data.racialUsesLeft || 0;
     abilities.racialCooldown = data.racialCooldown || 0;
     abilities.racialEffects = data.racialEffects || {};
@@ -619,7 +619,7 @@ export class PlayerAbilities {
     abilities.actionSubmissionTime = data.actionSubmissionTime || null;
     abilities.lastValidAction = data.lastValidAction || null;
     abilities.actionValidationState = data.actionValidationState || 'none';
-    
+
     return abilities;
   }
 

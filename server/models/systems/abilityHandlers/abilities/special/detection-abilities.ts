@@ -3,6 +3,7 @@
  * Handles abilities that detect warlocks or reveal hidden information
  */
 
+import { secureId } from '../../../../../utils/secureRandom.js';
 import type { Player as BasePlayer, Monster, Ability as BaseAbility } from '../../../../../types/generated.js';
 import type {
   AbilityHandler,
@@ -53,15 +54,15 @@ export const handleEyeOfFate: AbilityHandler = (
   if (isTargetWarlock) {
     // Warlock detected!
     log.push({
-      id: `eye-of-fate-warlock-detected-${Date.now()}`,
+      id: secureId('eye-of-fate-warlock-detected'),
       timestamp: Date.now(),
       type: 'action',
       source: actor['id'],
       target: target['id'],
       message: messages.getAbilityMessage('eye_of_fate', 'warlock_detected') || 'Warlock detected!',
-      details: { 
+      details: {
         detectedWarlock: true,
-        targetId: target['id'] 
+        targetId: target['id']
       },
       public: true,
       priority: 'critical'
@@ -69,13 +70,13 @@ export const handleEyeOfFate: AbilityHandler = (
 
     // Add private message to actor with more details
     log.push({
-      id: `eye-of-fate-private-${Date.now()}`,
+      id: secureId('eye-of-fate-private'),
       timestamp: Date.now(),
       type: 'action',
       source: actor['id'],
       target: target['id'],
       message: 'Target is a Warlock!',
-      details: { 
+      details: {
         isPrivate: true,
         recipientId: actor['id'],
         detectedRole: 'Warlock'
@@ -86,15 +87,15 @@ export const handleEyeOfFate: AbilityHandler = (
   } else {
     // Not a warlock
     log.push({
-      id: `eye-of-fate-not-warlock-${Date.now()}`,
+      id: secureId('eye-of-fate-not-warlock'),
       timestamp: Date.now(),
       type: 'action',
       source: actor['id'],
       target: target['id'],
       message: messages.getAbilityMessage('eye_of_fate', 'not_warlock') || 'No warlock detected.',
-      details: { 
+      details: {
         detectedWarlock: false,
-        targetId: target['id'] 
+        targetId: target['id']
       },
       public: true,
       priority: 'high'
@@ -102,13 +103,13 @@ export const handleEyeOfFate: AbilityHandler = (
 
     // Private confirmation to actor
     log.push({
-      id: `eye-of-fate-private-clear-${Date.now()}`,
+      id: secureId('eye-of-fate-private-clear'),
       timestamp: Date.now(),
       type: 'action',
       source: actor['id'],
       target: target['id'],
       message: 'Target is not a Warlock.',
-      details: { 
+      details: {
         isPrivate: true,
         recipientId: actor['id'],
         detectedRole: 'Good'
@@ -165,12 +166,12 @@ export const handlePrimalRoar: AbilityHandler = (
   }
 
   log.push({
-    id: `primal-roar-${Date.now()}`,
+    id: secureId('primal-roar'),
     timestamp: Date.now(),
     type: 'action',
     source: actor['id'],
     message: messages.getAbilityMessage('primal_roar', 'executed') || 'Primal roar executed!',
-    details: { 
+    details: {
       warlocksDetected,
       totalPlayersScanned: targets.length
     },
@@ -181,12 +182,12 @@ export const handlePrimalRoar: AbilityHandler = (
   // Private message to actor with specific details
   if (warlocksDetected > 0) {
     log.push({
-      id: `primal-roar-private-${Date.now()}`,
+      id: secureId('primal-roar-private'),
       timestamp: Date.now(),
       type: 'action',
       source: actor['id'],
       message: 'Detected warlocks privately',
-      details: { 
+      details: {
         isPrivate: true,
         recipientId: actor['id'],
         detectedWarlocks
@@ -196,12 +197,12 @@ export const handlePrimalRoar: AbilityHandler = (
     });
   } else {
     log.push({
-      id: `primal-roar-private-clear-${Date.now()}`,
+      id: secureId('primal-roar-private-clear'),
       timestamp: Date.now(),
       type: 'action',
       source: actor['id'],
       message: 'No warlocks detected',
-      details: { 
+      details: {
         isPrivate: true,
         recipientId: actor['id']
       },
@@ -234,7 +235,7 @@ export const handleSanctuaryOfTruth: AbilityHandler = (
   }
 
   const playerRoles: Array<{name: string, role: string}> = [];
-  
+
   // Gather all player roles
   for (const player of game.players.values()) {
     if ((player as any).isAlive !== false) {
@@ -247,7 +248,7 @@ export const handleSanctuaryOfTruth: AbilityHandler = (
   }
 
   log.push({
-    id: `sanctuary-of-truth-${Date.now()}`,
+    id: secureId('sanctuary-of-truth'),
     timestamp: Date.now(),
     type: 'action',
     source: actor['id'],
@@ -261,12 +262,12 @@ export const handleSanctuaryOfTruth: AbilityHandler = (
   for (const player of game.players.values()) {
     if ((player as any).isAlive !== false) {
       log.push({
-        id: `sanctuary-truth-reveal-${Date.now()}-${(player as any)['id']}`,
+        id: secureId(`sanctuary-truth-reveal-${(player as any)['id']}`),
         timestamp: Date.now(),
         type: 'action',
         source: actor['id'],
         message: 'All roles revealed to you privately',
-        details: { 
+        details: {
           isPrivate: true,
           recipientId: (player as any)['id'],
           revealedRoles: playerRoles

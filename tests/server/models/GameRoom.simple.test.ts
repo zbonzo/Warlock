@@ -36,7 +36,7 @@ describe('GameRoom Simple Test (TypeScript)', () => {
   it('should work with typed arrays and maps', () => {
     const playerIds: string[] = ['player1', 'player2', 'player3'];
     const playerMap = new Map<string, { name: string; level: number }>();
-    
+
     playerMap.set('player1', { name: 'Alice', level: 5 });
     playerMap.set('player2', { name: 'Bob', level: 3 });
 
@@ -54,13 +54,13 @@ describe('GameRoom Simple Test (TypeScript)', () => {
     };
 
     const result = await asyncOperation(10);
-    
+
     expect(result.result).toBe('completed');
   });
 
   it('should work with union types and type guards', () => {
     type Status = 'pending' | 'in_progress' | 'completed' | 'failed';
-    
+
     const checkStatus = (status: Status): boolean => {
       return ['completed', 'failed'].includes(status);
     };

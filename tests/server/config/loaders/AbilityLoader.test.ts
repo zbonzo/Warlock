@@ -69,7 +69,7 @@ describe('AbilityLoader', () => {
       name: 'Blood Frenzy',
       category: 'Attack' as const,
       description: 'Damage increases as HP decreases',
-      params: { 
+      params: {
         damage: 15,
         damageIncreasePerHpMissing: 1.5
       },
@@ -88,7 +88,7 @@ describe('AbilityLoader', () => {
       name: 'Multi Strike',
       category: 'Attack' as const,
       description: 'Hit multiple times',
-      params: { 
+      params: {
         damage: 8,
         hits: 3
       },
@@ -123,7 +123,7 @@ describe('AbilityLoader', () => {
       name: 'Poison Dart',
       category: 'Attack' as const,
       description: 'Poisonous projectile',
-      params: { 
+      params: {
         damage: 10,
         poison: {
           damage: 5,
@@ -177,7 +177,7 @@ describe('AbilityLoader', () => {
 
     it('should throw error if file does not exist', () => {
       mockFs.existsSync.mockReturnValue(false);
-      
+
       expect(() => new AbilityLoader('/nonexistent/path')).toThrow(
         'Abilities data file not found at: /nonexistent/path'
       );
@@ -215,7 +215,7 @@ describe('AbilityLoader', () => {
         success: true,
         data: mockAbilitiesData
       } as any);
-      
+
       loader = new AbilityLoader();
       jest.clearAllMocks();
     });
@@ -268,7 +268,7 @@ describe('AbilityLoader', () => {
         success: true,
         data: mockAbilitiesData
       } as any);
-      
+
       loader = new AbilityLoader();
     });
 
@@ -374,7 +374,7 @@ describe('AbilityLoader', () => {
         success: true,
         data: mockAbilitiesData
       } as any);
-      
+
       loader = new AbilityLoader();
     });
 
@@ -432,7 +432,7 @@ describe('AbilityLoader', () => {
         success: true,
         data: mockAbilitiesData
       } as any);
-      
+
       loader = new AbilityLoader();
     });
 
@@ -490,7 +490,7 @@ describe('AbilityLoader', () => {
         success: true,
         data: mockAbilitiesData
       } as any);
-      
+
       loader = new AbilityLoader();
     });
 
@@ -546,7 +546,7 @@ describe('AbilityLoader', () => {
         success: true,
         data: mockAbilitiesData
       } as any);
-      
+
       loader = new AbilityLoader();
     });
 
@@ -594,13 +594,13 @@ describe('AbilityLoader', () => {
         success: true,
         data: mockAbilitiesData
       } as any);
-      
+
       loader = new AbilityLoader();
     });
 
     it('should calculate ability statistics', () => {
       const stats = loader.getAbilityStats();
-      
+
       expect(stats.total).toBe(6);
       expect(stats.byCategory.Attack).toBe(4);
       expect(stats.byCategory.Heal).toBe(1);

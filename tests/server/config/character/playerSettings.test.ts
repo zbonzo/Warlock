@@ -160,7 +160,7 @@ describe('Player Settings Configuration', () => {
       const expectedHp = Math.floor(
         playerSettings.baseHp * Math.pow(1 + playerSettings.hpIncreasePerLevel, level - 1)
       );
-      
+
       expect(calculatePlayerHpAtLevel(level)).toBe(expectedHp);
     });
 
@@ -201,9 +201,9 @@ describe('Player Settings Configuration', () => {
 
     it('should use exponential growth formula', () => {
       const level = 4;
-      const expectedModifier = 
+      const expectedModifier =
         playerSettings.baseDamageMod * Math.pow(1 + playerSettings.damageIncreasePerLevel, level - 1);
-      
+
       expect(calculateDamageModifierAtLevel(level)).toBeCloseTo(expectedModifier, 10);
     });
 
@@ -247,7 +247,7 @@ describe('Player Settings Configuration', () => {
     it('should allow on the boundary conditions', () => {
       const maxAttempts = playerSettings.maxReconnectionAttempts - 1;
       const windowTime = playerSettings.reconnectionWindow;
-      
+
       expect(isReconnectionAllowed(maxAttempts, windowTime)).toBe(true);
     });
 
@@ -259,10 +259,10 @@ describe('Player Settings Configuration', () => {
     it('should validate both conditions together', () => {
       const maxAttempts = playerSettings.maxReconnectionAttempts;
       const windowTime = playerSettings.reconnectionWindow;
-      
+
       // Both conditions failed
       expect(isReconnectionAllowed(maxAttempts, windowTime + 1000)).toBe(false);
-      
+
       // One condition failed each
       expect(isReconnectionAllowed(maxAttempts, windowTime - 1000)).toBe(false);
       expect(isReconnectionAllowed(maxAttempts - 1, windowTime + 1000)).toBe(false);

@@ -63,7 +63,7 @@ describe('useMediaQuery (GamePage version)', () => {
 
       const query = '(max-width: 1024px)';
       renderHook(() => useMediaQuery(query));
-      
+
       expect(mockMatchMedia).toHaveBeenCalledWith(query);
     });
   });
@@ -135,7 +135,7 @@ describe('useMediaQuery (GamePage version)', () => {
       });
 
       const { result } = renderHook(() => useMediaQuery('(max-width: 768px)'));
-      
+
       // Should still return the initial matches value
       expect(result.current).toBe(false);
     });
@@ -248,7 +248,7 @@ describe('useMediaQuery (GamePage version)', () => {
   describe('event handling', () => {
     it('should handle multiple rapid changes', () => {
       const addEventListenerSpy = jest.fn();
-      
+
       mockMatchMedia.mockReturnValue({
         matches: false,
         addEventListener: addEventListenerSpy,
@@ -270,7 +270,7 @@ describe('useMediaQuery (GamePage version)', () => {
 
     it('should handle event objects with different structures', () => {
       const addEventListenerSpy = jest.fn();
-      
+
       mockMatchMedia.mockReturnValue({
         matches: false,
         addEventListener: addEventListenerSpy,
@@ -289,8 +289,8 @@ describe('useMediaQuery (GamePage version)', () => {
 
       // Test with extended event object
       act(() => {
-        changeHandler({ 
-          matches: false, 
+        changeHandler({
+          matches: false,
           media: '(max-width: 768px)',
           type: 'change'
         });
@@ -314,7 +314,7 @@ describe('useMediaQuery (GamePage version)', () => {
       const { unmount } = renderHook(() => useMediaQuery('(max-width: 768px)'));
 
       const changeHandler = addEventListenerSpy.mock.calls[0][1];
-      
+
       unmount();
 
       expect(removeEventListenerSpy).toHaveBeenCalledWith('change', changeHandler);

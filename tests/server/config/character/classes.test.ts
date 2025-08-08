@@ -39,7 +39,7 @@ describe('Character Classes Configuration', () => {
         'Alchemist', 'Assassin', 'Barbarian', 'Druid', 'Gunslinger',
         'Oracle', 'Priest', 'Pyromancer', 'Shaman', 'Tracker', 'Warrior', 'Wizard'
       ];
-      
+
       expectedClasses.forEach(className => {
         expect(availableClasses).toContain(className);
       });
@@ -123,11 +123,11 @@ describe('Character Classes Configuration', () => {
         expect(typeof attributes.hpModifier).toBe('number');
         expect(typeof attributes.armorModifier).toBe('number');
         expect(typeof attributes.damageModifier).toBe('number');
-        
+
         expect(attributes.hpModifier).toBeGreaterThan(0);
         expect(attributes.armorModifier).toBeGreaterThan(0);
         expect(attributes.damageModifier).toBeGreaterThan(0);
-        
+
         // Reasonable ranges
         expect(attributes.hpModifier).toBeLessThanOrEqual(2.0);
         expect(attributes.armorModifier).toBeLessThanOrEqual(2.0);
@@ -172,15 +172,15 @@ describe('Character Classes Configuration', () => {
     it('should have reasonable level progression', () => {
       Object.values(classAbilityProgression).forEach(progression => {
         const levels = progression.map(p => p.level).sort((a, b) => a - b);
-        
+
         // Should start at level 1
         expect(levels[0]).toBe(1);
-        
+
         // Should have consecutive or ascending levels
         for (let i = 1; i < levels.length; i++) {
           expect(levels[i]).toBeGreaterThanOrEqual(levels[i - 1]);
         }
-        
+
         // Should not exceed reasonable max level
         levels.forEach(level => {
           expect(level).toBeLessThanOrEqual(20);
@@ -211,7 +211,7 @@ describe('Character Classes Configuration', () => {
       expect(classCategories.Melee).toContain('Warrior');
       expect(classAttributes.Warrior).toBeDefined();
       expect(classAbilityProgression.Warrior).toBeDefined();
-      
+
       // Warrior should be tanky
       expect(classAttributes.Warrior.hpModifier).toBeGreaterThanOrEqual(1.0);
       expect(classAttributes.Warrior.armorModifier).toBeGreaterThanOrEqual(1.0);
@@ -291,7 +291,7 @@ describe('Character Classes Configuration', () => {
   describe('Module Integration', () => {
     it('should integrate with ability system', () => {
       const { getAbility } = require('../../../../server/config/character/abilities.js');
-      
+
       // Test that progression abilities can be retrieved
       Object.values(classAbilityProgression).forEach(progression => {
         progression.forEach(levelProgression => {

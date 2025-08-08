@@ -87,13 +87,13 @@ class NewStatusEffectManager {
   constructor(entities: Map<string, Entity> = new Map(), warlockSystem: WarlockSystem | null = null) {
     this.entities = entities; // Can include both players and monsters
     this.warlockSystem = warlockSystem;
-    
+
     // Map of entityId -> Array of StatusEffect instances
     this.effectsByEntity = new Map();
-    
+
     // Global effect counter for debugging
     this.totalEffectsApplied = 0;
-    
+
     logger.debug('NewStatusEffectManager initialized');
   }
 
@@ -130,7 +130,7 @@ class NewStatusEffectManager {
     let actualSourceId: string | null = sourceIdOrLog as string;
     let actualSourceName: string | null = sourceName;
     let actualLog: any[] = log;
-    
+
     if (Array.isArray(sourceIdOrLog) && sourceName === null) {
       // Legacy signature detected: (targetId, effectType, params, log)
       actualSourceId = 'System';
@@ -203,7 +203,7 @@ class NewStatusEffectManager {
   removeEffect(targetId: string, effectId: string, log: any[] = []): boolean {
     const effects = this.effectsByEntity.get(targetId) || [];
     const effectIndex = effects.findIndex(e => e.id === effectId);
-    
+
     if (effectIndex === -1) return false;
 
     const effect = effects[effectIndex];
@@ -225,7 +225,7 @@ class NewStatusEffectManager {
   removeEffectsByType(targetId: string, effectType: string, log: any[] = []): number {
     const effects = this.effectsByEntity.get(targetId) || [];
     const toRemove = effects.filter(e => e.type === effectType);
-    
+
     let removed = 0;
     for (const effect of toRemove) {
       if (this.removeEffect(targetId, effect.id, log)) {
@@ -242,7 +242,7 @@ class NewStatusEffectManager {
   processTimedEffects(log: any[] = []): void {
     for (const [entityId, entity] of this.entities.entries()) {
       if (!entity.isAlive && entity.isAlive !== undefined) continue; // Skip dead entities
-      
+
       this.processEntityEffects(entityId, entity, log);
     }
   }
@@ -264,7 +264,7 @@ class NewStatusEffectManager {
       // Ensure entity has proper isAlive property
       const entityWithAlive = { ...entity, isAlive: entity.isAlive ?? true };
       const result = effect.processTurn(entityWithAlive, log);
-      
+
       // Handle any side effects
       for (const sideEffect of result.effects || []) {
         this.handleSideEffect(sideEffect, entityId, entity, log);
@@ -311,7 +311,7 @@ class NewStatusEffectManager {
    */
   calculateModifiedValue(entityId: string, calculationType: string, baseValue: number): number {
     const effects = this.getAllEffects(entityId);
-    
+
     let additive = 0;
     let percentageTotal = 0;
     let multiplicative = 1;
@@ -423,7 +423,7 @@ class NewStatusEffectManager {
         if (this.warlockSystem && this.warlockSystem.markWarlockDetected) {
           this.warlockSystem.markWarlockDetected(sideEffect.targetId!, log);
         }
-        
+
         const detectionLog: LogEntry = {
           type: 'healing_over_time_detection',
           public: true,
@@ -451,7 +451,7 @@ class NewStatusEffectManager {
     // Create a simple status effect message
     const playerName = target.name || 'Monster';
     let message = `${playerName} ${messageType} ${effectType}`;
-    
+
     if (params.damage) {
       message += ` (${params.damage} damage)`;
     }
@@ -476,7 +476,7 @@ class NewStatusEffectManager {
    */
   clearAllEffects(entityId: string): void {
     const effects = this.effectsByEntity.get(entityId) || [];
-    
+
     // Deactivate all effects
     for (const effect of effects) {
       effect.isActive = false;
@@ -512,7 +512,7 @@ class NewStatusEffectManager {
 
       for (const effect of activeEffects) {
         effectsByType[effect.type] = (effectsByType[effect.type] || 0) + 1;
-        
+
         if (!entitiesWithEffect[effect.type]) {
           entitiesWithEffect[effect.type] = new Set();
         }
@@ -577,7 +577,7 @@ class NewStatusEffectManager {
   }
 
   /**
-   * Check if a player is invisible (legacy compatibility method) 
+   * Check if a player is invisible (legacy compatibility method)
    */
   isPlayerInvisible(playerId: string): boolean {
     return this.hasEffect(playerId, 'invisible');
@@ -590,7 +590,7 @@ class NewStatusEffectManager {
   getPlayerEffects(playerId: string): Record<string, any> {
     const effects: Record<string, any> = {};
     const activeEffects = this.getAllEffects(playerId);
-    
+
     // Convert to legacy format (single effect per type)
     for (const effect of activeEffects) {
       if (effect.isActive) {
@@ -600,7 +600,7 @@ class NewStatusEffectManager {
         };
       }
     }
-    
+
     return effects;
   }
 
@@ -643,7 +643,7 @@ class NewStatusEffectManager {
   getEffectDuration(playerId: string, effectName: string): number {
     const effects = this.getEffectsByType(playerId, effectName);
     if (effects.length === 0) return 0;
-    
+
     // Return the longest duration if multiple effects of same type
     return Math.max(...effects.map(e => e.turnsRemaining));
   }
@@ -671,14 +671,14 @@ class NewStatusEffectManager {
 
     // Count effects by type and entity
     const entitiesWithEffects = new Set<string>();
-    
+
     for (const [entityId, effects] of this.effectsByEntity.entries()) {
       const activeEffects = effects.filter(e => e.isActive);
-      
+
       for (const effect of activeEffects) {
         stats.totalEffects++;
         stats.effectsByType[effect.type] = (stats.effectsByType[effect.type] || 0) + 1;
-        
+
         // Count entities with specific effect types
         if (stats.playersCounts.hasOwnProperty(effect.type)) {
           if (!entitiesWithEffects.has(`${entityId}-${effect.type}`)) {

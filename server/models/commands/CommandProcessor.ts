@@ -33,17 +33,17 @@ import type { GameRoom } from '../GameRoom.js';
 export class CommandProcessor {
   private gameRoom: GameRoom;
   private eventBus: any;
-  
+
   // Command queues
   private pendingCommands: Map<string, PlayerActionCommand[]> = new Map();
   private executingCommands: Map<string, PlayerActionCommand> = new Map();
   private completedCommands: Map<string, PlayerActionCommand> = new Map();
-  
+
   // Processing state
   private isProcessing: boolean = false;
   private readonly maxHistorySize: number = 100;
   private readonly batchSize: number = 10; // Max commands to process in one batch
-  
+
   // Statistics
   private stats = {
     commandsProcessed: 0,
@@ -75,7 +75,7 @@ export class CommandProcessor {
     }
 
     const playerId = command.playerId;
-    
+
     // Initialize player queue if needed
     if (!this.pendingCommands.has(playerId)) {
       this.pendingCommands.set(playerId, []);
@@ -118,7 +118,7 @@ export class CommandProcessor {
         if (command) {
           command.cancel();
           queue.splice(commandIndex, 1);
-          
+
           this.eventBus.emit(EventTypes.ACTION.CANCELLED, {
             playerId: command.playerId,
             actionType: command.actionType,
@@ -179,7 +179,7 @@ export class CommandProcessor {
    */
   hasPlayerSubmittedAction(playerId: string): boolean {
     const commands = this.getPendingCommands(playerId);
-    return commands.length > 0 && commands.some(cmd => 
+    return commands.length > 0 && commands.some(cmd =>
       cmd.status === 'pending' && cmd.actionType === 'ability'
     );
   }
@@ -191,7 +191,7 @@ export class CommandProcessor {
   getPlayersWithSubmittedActions(): Set<string> {
     const playersWithActions = new Set<string>();
     for (const [playerId, commands] of this.pendingCommands.entries()) {
-      if (commands.length > 0 && commands.some(cmd => 
+      if (commands.length > 0 && commands.some(cmd =>
         cmd.status === 'pending' && cmd.actionType === 'ability'
       )) {
         playersWithActions.add(playerId);
@@ -208,13 +208,13 @@ export class CommandProcessor {
   clearPlayerCommands(playerId: string): number {
     const queue = this.pendingCommands.get(playerId) || [];
     const count = queue.length;
-    
+
     // Cancel all pending commands
     queue.forEach(command => command.cancel());
-    
+
     // Clear the queue
     this.pendingCommands.delete(playerId);
-    
+
     return count;
   }
 
@@ -278,7 +278,7 @@ export class CommandProcessor {
    */
   private async _processCommand(command: PlayerActionCommand): Promise<any> {
     const startTime = Date.now();
-    
+
     try {
       // Move to executing state
       this.executingCommands.set(command.id, command);
@@ -453,10 +453,10 @@ export class CommandProcessor {
   private _clearProcessedCommands(): void {
     for (const [playerId, queue] of this.pendingCommands.entries()) {
       // Remove completed and failed commands
-      const remainingCommands = queue.filter(cmd => 
+      const remainingCommands = queue.filter(cmd =>
         cmd.status === 'pending' || cmd.status === 'executing'
       );
-      
+
       if (remainingCommands.length === 0) {
         this.pendingCommands.delete(playerId);
       } else {

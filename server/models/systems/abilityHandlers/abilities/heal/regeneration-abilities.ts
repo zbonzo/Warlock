@@ -3,6 +3,8 @@
  * Handles abilities that provide sustained healing effects
  */
 
+import { createActionLog, createHealLog } from '../../../../../utils/logEntry.js';
+import { secureId } from '../../../../../utils/secureRandom.js';
 import type { Player, Monster, Ability } from '../../../../../types/generated.js';
 import type {
   AbilityHandler,
@@ -55,24 +57,19 @@ export const handleHealingOverTime: AbilityHandler = (
     });
 
     if (immediateResult?.success) {
-      log.push({
-        id: `hot-immediate-${Date.now()}`,
-        timestamp: Date.now(),
-        type: 'action',
-        source: actor.id,
-        target: target.id,
-        message: `${actor.name} immediately heals ${targetPlayer.name} for ${immediateResult.finalHealing} HP!`,
-        details: { immediateHealing: immediateResult.finalHealing },
-        public: true,
-        isPublic: true,
-        priority: 'medium'
-      });
+      log.push(createHealLog(
+        actor.id,
+        target.id,
+        immediateResult.finalHealing,
+        `${actor.name} immediately heals ${targetPlayer.name} for ${immediateResult.finalHealing} HP!`,
+        { details: { immediateHealing: immediateResult.finalHealing }, priority: 'medium', public: true }
+      ));
     }
   }
 
   // Apply healing over time effect
   const statusResult = systems.statusEffectManager?.applyStatusEffect?.(target, {
-    id: `healing-over-time-${Date.now()}`,
+    id: secureId('healing-over-time'),
     name: 'regeneration',
     type: 'buff',
     duration,
@@ -85,7 +82,7 @@ export const handleHealingOverTime: AbilityHandler = (
 
   if (statusResult.success) {
     log.push({
-      id: `hot-applied-${Date.now()}`,
+      id: secureId('hot-applied'),
       timestamp: Date.now(),
       type: 'action',
       source: actor.id,
@@ -141,7 +138,7 @@ export const handleRapidRegeneration: AbilityHandler = (
 
   // Apply rapid regeneration effect
   const statusResult = systems.statusEffectManager?.applyStatusEffect?.(target, {
-    id: `rapid-regeneration-${Date.now()}`,
+    id: secureId('rapid-regeneration'),
     name: 'rapid_regeneration',
     type: 'buff',
     duration,
@@ -155,7 +152,7 @@ export const handleRapidRegeneration: AbilityHandler = (
 
   if (statusResult.success) {
     log.push({
-      id: `rapid-regen-success-${Date.now()}`,
+      id: secureId('rapid-regen-success'),
       timestamp: Date.now(),
       type: 'action',
       source: actor.id,
@@ -198,7 +195,7 @@ export const handleLifeSteal: AbilityHandler = (
 
   // Apply life steal effect to the actor
   const statusResult = systems.statusEffectManager?.applyStatusEffect?.(actor, {
-    id: `life-steal-${Date.now()}`,
+    id: secureId('life-steal'),
     name: 'life_steal',
     type: 'buff',
     duration,
@@ -211,7 +208,7 @@ export const handleLifeSteal: AbilityHandler = (
 
   if (statusResult.success) {
     log.push({
-      id: `life-steal-success-${Date.now()}`,
+      id: secureId('life-steal-success'),
       timestamp: Date.now(),
       type: 'action',
       source: actor.id,

@@ -529,8 +529,8 @@ describe('StatusEffectSystemFactory', () => {
 
 // Mock config module
 jest.mock('../../../../server/config', () => {
-  let mockConfig = {};
-  
+  const mockConfig = {};
+
   return {
     __esModule: true,
     default: mockConfig,

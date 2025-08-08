@@ -9,7 +9,7 @@ import logger from '../../utils/logger.js';
 import type { GameRoom } from '../GameRoom.js';
 import type { Player } from '../Player.js';
 import type { Monster } from '../../types/generated.js';
-import type { 
+import type {
   Ability
 } from '../../types/generated.js';
 
@@ -117,9 +117,9 @@ export class ActionProcessor {
    * Add a class ability action for a player
    */
   addAction(
-    actorId: string, 
-    actionType: string, 
-    targetId: string, 
+    actorId: string,
+    actionType: string,
+    targetId: string,
     options: Partial<PendingAction> = {}
   ): boolean {
     if (!this.gameRoom.gameState.hasStarted()) return false;
@@ -287,7 +287,7 @@ export class ActionProcessor {
    */
   processPlayerActions(log: string[]): { results: ActionProcessingResult[]; coordination: CoordinationAnalysis } {
     const coordination = this.analyzeCoordination();
-    
+
     // Log coordination bonuses
     if (coordination.coordinatedDamage) {
       log.push(
@@ -395,12 +395,13 @@ export class ActionProcessor {
         // Handle invisible target redirection
         const potentialTargets = Array.from(this.gameRoom.gameState.getPlayersMap().values())
           .filter(p => (p as any)['isAlive'] && (p as any).id !== actorId && !(p as any).hasStatusEffect('invisible'));
-        
+
         if (potentialTargets.length === 0) {
           return { success: false, targetId: '', reason: 'No valid targets available' };
         }
-        
-        const redirectTarget = potentialTargets[Math.floor(Math.random() * potentialTargets.length)];
+
+        const { secureRandomChoice } = require('../../utils/secureRandom.js');
+        const redirectTarget = secureRandomChoice(potentialTargets);
         return { success: true, targetId: (redirectTarget as any).id };
       }
     }
@@ -409,8 +410,8 @@ export class ActionProcessor {
   }
 
   private validateRacialTarget(
-    actorId: string, 
-    targetId: string, 
+    actorId: string,
+    targetId: string,
     racialAbility: PendingRacialAction['racialAbility']
   ): TargetValidationResult {
     // Validate racial ability target
@@ -435,12 +436,12 @@ export class ActionProcessor {
   }
 
   private calculateCoordinatedActions(
-    actions: PendingAction[], 
+    actions: PendingAction[],
     coordinationMap: Map<string, string[]>
   ): Map<string, CoordinationBonus> | null {
     // Implementation for calculating coordination bonuses
     const coordinated = new Map<string, CoordinationBonus>();
-    
+
     for (const [targetId, actors] of coordinationMap) {
       if (actors.length > 1) {
         coordinated.set(targetId, {
@@ -488,8 +489,8 @@ export class ActionProcessor {
   }
 
   private processSingleTargetAction(
-    action: PendingAction, 
-    target: any, 
+    action: PendingAction,
+    target: any,
     log: string[]
   ): ActionProcessingResult {
     if (!target) {
@@ -502,7 +503,7 @@ export class ActionProcessor {
     }
 
     const coordinationInfo = this.gameRoom.systems.combatSystem.trackCoordination(
-      action.actorId, 
+      action.actorId,
       action.targetId
     );
 
@@ -516,38 +517,38 @@ export class ActionProcessor {
         this.gameRoom.systems,
         coordinationInfo
       );
-      
+
       return { success, action, target };
     } catch (error) {
       logger.error(`Error executing ability ${action.actionType}:`, { error, context: 'ActionProcessor' });
-      return { 
-        success: false, 
-        reason: 'Execution error', 
-        error: error instanceof Error ? error : new Error('Unknown error') 
+      return {
+        success: false,
+        reason: 'Execution error',
+        error: error instanceof Error ? error : new Error('Unknown error')
       };
     }
   }
 
   private processMultiTargetAction(
-    action: PendingAction, 
-    targets: Array<any>, 
+    action: PendingAction,
+    targets: Array<any>,
     log: string[]
   ): ActionProcessingResult {
     // Process multi-target action implementation
     const results: ActionProcessingResult[] = [];
     for (const target of targets) {
       const result = this.processSingleTargetAction(
-        { ...action, targetId: (target as any).id }, 
-        target, 
+        { ...action, targetId: (target as any).id },
+        target,
         log
       );
       results.push(result);
     }
-    
-    return { 
-      success: results.some(r => r.success), 
-      results, 
-      action 
+
+    return {
+      success: results.some(r => r.success),
+      results,
+      action
     };
   }
 }

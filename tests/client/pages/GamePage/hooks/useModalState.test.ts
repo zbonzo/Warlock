@@ -14,7 +14,7 @@ describe('useModalState', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    
+
     mockAbilities = [
       {
         id: 'fireball',
@@ -213,9 +213,9 @@ describe('useModalState', () => {
       });
 
       // Then update with partial data
-      const updateData = { 
-        winner: 'Alice', 
-        trophyAward: { name: 'Victory Trophy', description: 'Won the battle' } 
+      const updateData = {
+        winner: 'Alice',
+        trophyAward: { name: 'Victory Trophy', description: 'Won the battle' }
       };
 
       act(() => {
@@ -300,7 +300,7 @@ describe('useModalState', () => {
       const { result } = renderHook(() => useModalState());
 
       const initialData = { round: 1, winner: 'Alice' };
-      
+
       act(() => {
         result.current.showBattleResultsModal(initialData);
       });

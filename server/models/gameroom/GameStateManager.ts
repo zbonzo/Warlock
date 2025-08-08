@@ -6,6 +6,7 @@
 
 import config from '../../config/index.js';
 import logger from '../../utils/logger.js';
+import { secureId } from '../../utils/secureRandom.js';
 // Messages are now accessed through the config system
 import type { GameRoom } from '../GameRoom.js';
 import type { Player } from '../Player.js';
@@ -45,34 +46,34 @@ export class GameStateManager {
    */
   processRound(): LogEntry[] {
     const log: LogEntry[] = [];
-    
+
     // Process round start
     this.handleRoundStart(log);
-    
+
     // Process racial abilities first
     (this.gameRoom as any)['actionProcessor']?.['processRacialAbilities']?.(log);
-    
+
     // Process player actions
     (this.gameRoom as any)['actionProcessor']?.['processPlayerActions']?.(log);
-    
+
     // Process monster actions
     this.processMonsterTurn(log);
-    
+
     // Handle level progression
     const oldLevel = (this.gameRoom.gamePhase as any)['level'] || 1;
     this.updateGameLevel();
-    
+
     if (((this.gameRoom.gamePhase as any)['level'] || 1) > oldLevel) {
       this.handleLevelUp(oldLevel, log);
     }
-    
+
     // Process end of round effects
     this.handleRoundEnd(log);
-    
+
     // Clear actions for next round
     (this.gameRoom as any)['actionProcessor']?.['clearPendingActions']?.();
     this.clearPlayerActionStates();
-    
+
     return log;
   }
 
@@ -84,10 +85,10 @@ export class GameStateManager {
     for (const player of ((this.gameRoom.gameState as any)['players'] || new Map()).values()) {
       (player as any)['resetForNewRound']?.();
     }
-    
+
     // Process any start-of-round effects
     this.processStatusEffectTicks(log, 'start');
-    
+
     // Update comeback mechanics
     this.gameRoom.systems.combatSystem.updateComebackStatus();
   }
@@ -100,10 +101,10 @@ export class GameStateManager {
     if (!monster || monster.hp <= 0) {
       return; // Monster is dead
     }
-    
+
     // Process monster abilities and effects
     const alivePlayers = this.getAlivePlayers();
-    
+
     // Apply any monster-specific logic here
     for (const player of alivePlayers) {
       if ((player as any)['race'] === 'Kinfolk' && (player as any)['isAlive']) {
@@ -111,7 +112,7 @@ export class GameStateManager {
         this.processKinfolkEndOfRound(player as any, log);
       }
     }
-    
+
     // Process class-specific end-of-round effects
     for (const player of alivePlayers) {
       if ((player as any)['isAlive']) {
@@ -120,7 +121,7 @@ export class GameStateManager {
           log.push(...classEffectResult);
         }
       }
-      
+
       // Handle players who died during round processing
       if ((player as any)['isAlive'] && (player as any)['hp'] <= 0) {
         this.handlePlayerDeath(player as any, log);
@@ -136,12 +137,12 @@ export class GameStateManager {
     const aliveCount = alivePlayers.length;
     const totalPlayers = ((this.gameRoom.gameState as any)['players'] || new Map()).size;
     const monster = (this.gameRoom.gameState as any)['monster'];
-    
+
     if (!monster) return;
-    
+
     // Calculate level based on game progression rules
     const newLevel = this.calculateGameLevel(aliveCount, totalPlayers, monster?.hp || 0);
-    
+
     if (newLevel !== ((this.gameRoom.gamePhase as any)['level'] || 1)) {
       (this.gameRoom.gamePhase as any)['level'] = newLevel;
       logger.debug('game.level.updated', { level: newLevel });
@@ -153,7 +154,7 @@ export class GameStateManager {
    */
   private handleLevelUp(oldLevel: number, log: LogEntry[]): void {
     const levelUpEntry: LogEntry = {
-      id: `level-up-${Date.now()}`,
+      id: secureId('level-up'),
       timestamp: Date.now(),
       type: 'system',
       source: 'game',
@@ -163,17 +164,17 @@ export class GameStateManager {
       details: { eventType: 'level_up' }
     };
     log.push(levelUpEntry);
-    
+
     // Unlock new abilities for all players
     this.updateUnlockedAbilities(log);
-    
+
     // Apply level up bonuses
     for (const player of ((this.gameRoom.gameState as any)['players'] || new Map()).values()) {
       if ((player as any)['isAlive']) {
         this.applyLevelUpBonuses(player as any, oldLevel, log);
       }
     }
-    
+
     // Enhance monster if needed
     this.enhanceMonsterForLevel(((this.gameRoom.gamePhase as any)['level'] || 1), log);
   }
@@ -184,13 +185,13 @@ export class GameStateManager {
   private handleRoundEnd(log: LogEntry[]): void {
     // Process status effects that tick at end of round
     this.processStatusEffectTicks(log, 'end');
-    
+
     // Process pending deaths
     (this.gameRoom.systems as any)['combatSystem']?.['processPendingDeaths']?.(log);
-    
+
     // Update game statistics
     this.updateGameStatistics();
-    
+
     // Check for game end conditions
     this.checkGameEndConditions(log);
   }
@@ -201,27 +202,27 @@ export class GameStateManager {
   private updateUnlockedAbilities(log: LogEntry[]): void {
     for (const player of ((this.gameRoom.gameState as any)['players'] || new Map()).values()) {
       const newlyUnlocked: Ability[] = [];
-      
+
       for (const ability of ((player as any)['abilities'] || [])) {
         const alreadyUnlocked = ((player as any)['unlockedAbilities'] || []).some(
           (a: Ability) => a.type === ability.type
         );
-        
+
         if (ability.unlockAt <= ((this.gameRoom.gamePhase as any)['level'] || 1) && !alreadyUnlocked) {
           ((player as any)['unlockedAbilities'] = (player as any)['unlockedAbilities'] || []).push(ability);
           newlyUnlocked.push(ability);
-          
+
           // Activate passive abilities immediately
           if (ability.effect === 'passive') {
             this.activatePassiveAbility(player as any, ability, log);
           }
         }
       }
-      
+
       if (newlyUnlocked.length > 0) {
         const abilityNames = newlyUnlocked.map(a => a.name).join(', ');
         const unlockedEntry: LogEntry = {
-          id: `ability-unlock-${Date.now()}`,
+          id: secureId('ability-unlock'),
           timestamp: Date.now(),
           type: 'system',
           source: 'game',
@@ -233,7 +234,7 @@ export class GameStateManager {
         };
         log.push(unlockedEntry);
       }
-      
+
       // Handle class-specific level up effects
       if ((player as any)['class'] && (player as any).classEffects?.relentlessFury) {
         // Special class logic
@@ -256,7 +257,7 @@ export class GameStateManager {
       tempLog,
       systems
     );
-    
+
     if (success && tempLog.length > 0) {
       log.push(...tempLog);
       // Store passive activation for later processing
@@ -283,21 +284,21 @@ export class GameStateManager {
    */
   allActionsSubmitted(): boolean {
     const alivePlayers = this.getAlivePlayers();
-    
+
     // Count players who haven't submitted actions
     let playersWhoCanAct = 0;
     const playersWithRecentSubmissions: string[] = [];
-    
+
     for (const player of alivePlayers) {
       if (!(player as any)['isAlive']) {
         continue;
       }
-      
+
       // Players who submitted actions this round
       if ((player as any)['hasSubmittedAction']) {
         playersWithRecentSubmissions.push((player as any)['id']);
       }
-      
+
       // Players who can potentially act
       if ((player as any)['hasSubmittedAction']) {
         // Player has acted
@@ -305,25 +306,25 @@ export class GameStateManager {
         playersWhoCanAct++;
       }
     }
-    
+
     // Check if we can proceed
     const activePlayerCount = alivePlayers.length;
-    
+
     if (activePlayerCount === 0) {
       return true; // No players alive, can proceed
     }
-    
+
     // All players who can act have acted
     if (playersWhoCanAct === 0) {
       return true;
     }
-    
+
     // Check for timeout or other conditions
     const playersWhoCanActCount = playersWhoCanAct;
     if (playersWhoCanActCount > 0 && playersWithRecentSubmissions.length < playersWhoCanActCount) {
       return false; // Still waiting for actions
     }
-    
+
     return true;
   }
 
@@ -333,11 +334,11 @@ export class GameStateManager {
   private canPlayerAct(player: any): boolean {
     if (!(player as any)['isAlive']) return false;
     if ((player as any)['hasSubmittedAction']) return false;
-    
+
     // Check for status effects that prevent action
     if ((player as any)['hasStatusEffect']?.('stunned')) return false;
     if ((player as any)['hasStatusEffect']?.('paralyzed')) return false;
-    
+
     return true;
   }
 
@@ -348,12 +349,12 @@ export class GameStateManager {
     // Implement level calculation logic
     const baseLevel = Math.max(1, totalPlayers - aliveCount + 1);
     const monster = (this.gameRoom.gameState as any)['monster'];
-    
+
     if (!monster) return baseLevel;
-    
+
     // Adjust based on monster health
     const monsterHealthFactor = Math.floor((1 - monsterHp / (monster?.maxHp || 100)) * 2);
-    
+
     return Math.min(baseLevel + monsterHealthFactor, (config as any)['maxLevel'] || 10);
   }
 
@@ -365,9 +366,9 @@ export class GameStateManager {
     const healthBonus = 5;
     (player as any)['maxHp'] = ((player as any)['maxHp'] || 100) + healthBonus;
     (player as any)['hp'] = Math.min(((player as any)['hp'] || 100) + healthBonus, (player as any)['maxHp']);
-    
+
     const levelUpBonusEntry: LogEntry = {
-      id: `level-up-bonus-${Date.now()}`,
+      id: secureId('level-up-bonus'),
       timestamp: Date.now(),
       type: 'system',
       source: 'game',
@@ -386,14 +387,14 @@ export class GameStateManager {
   private enhanceMonsterForLevel(level: number, log: LogEntry[]): void {
     const monster = (this.gameRoom.gameState as any)['monster'];
     if (!monster) return;
-    
+
     // Implement monster enhancement logic
     const healthBonus = level * 10;
     monster.maxHp = (monster.maxHp || 100) + healthBonus;
     monster.hp = (monster.hp || 100) + healthBonus;
-    
+
     const monsterEnhanceEntry: LogEntry = {
-      id: `monster-enhancement-${Date.now()}`,
+      id: secureId('monster-enhancement'),
       timestamp: Date.now(),
       type: 'system',
       source: 'monster',
@@ -412,8 +413,8 @@ export class GameStateManager {
     for (const player of ((this.gameRoom.gameState as any)['players'] || new Map()).values()) {
       if ((player as any)['isAlive']) {
         (this.gameRoom.systems as any)['statusEffectManager']?.['processStatusEffects']?.(
-          player, 
-          timing, 
+          player,
+          timing,
           log
         );
       }
@@ -426,9 +427,9 @@ export class GameStateManager {
   private handlePlayerDeath(player: any, log: LogEntry[]): void {
     (player as any)['isAlive'] = false;
     (this.gameRoom.gameState as any)['aliveCount'] = ((this.gameRoom.gameState as any)['aliveCount'] || 0) - 1;
-    
+
     const deathEntry: LogEntry = {
-      id: `player-death-${Date.now()}`,
+      id: secureId('player-death'),
       timestamp: Date.now(),
       type: 'status',
       source: 'game',
@@ -439,7 +440,7 @@ export class GameStateManager {
       message: `💀 ${(player as any)['name']} has fallen!`
     };
     log.push(deathEntry);
-    
+
     // Process death-related effects
     (this.gameRoom.systems as any)['combatSystem']?.['handlePotentialDeath']?.(player, null, log);
   }
@@ -454,7 +455,7 @@ export class GameStateManager {
       const packBonus = this.calculatePackHuntingBonus(player);
       if (packBonus > 0) {
         const kinfolkEntry: LogEntry = {
-          id: `kinfolk-pack-hunting-${Date.now()}`,
+          id: secureId('kinfolk-pack-hunting'),
           timestamp: Date.now(),
           type: 'action',
           source: player.id,
@@ -474,7 +475,7 @@ export class GameStateManager {
    */
   private processClassEndOfRoundEffects(player: any, _log: LogEntry[]): LogEntry[] {
     const additionalLog: LogEntry[] = [];
-    
+
     const playerClass = (player as any)['class'];
     switch (playerClass) {
       case 'Paladin':
@@ -486,7 +487,7 @@ export class GameStateManager {
         break;
       // Add other classes as needed
     }
-    
+
     return additionalLog;
   }
 
@@ -499,7 +500,7 @@ export class GameStateManager {
       const bonus = this.calculateClassBonus(player);
       if (bonus > 0) {
         const classEntry: LogEntry = {
-          id: `class-effect-${Date.now()}`,
+          id: secureId('class-effect'),
           timestamp: Date.now(),
           type: 'system',
           source: 'game',
@@ -521,11 +522,11 @@ export class GameStateManager {
     // Class-specific level up bonuses
     if ((player as any)['classEffects']?.['relentlessFury']) {
       const furyBonus = Math.floor(((this.gameRoom.gamePhase as any)['level'] || 1) / 2);
-      (player as any)['classEffects']['relentlessFury']['damage'] = 
+      (player as any)['classEffects']['relentlessFury']['damage'] =
         ((player as any)['classEffects']['relentlessFury']['damage'] || 0) + furyBonus;
-      
+
       const furyEntry: LogEntry = {
-        id: `class-level-up-${Date.now()}`,
+        id: secureId('class-level-up'),
         timestamp: Date.now(),
         type: 'system',
         source: 'game',
@@ -545,7 +546,7 @@ export class GameStateManager {
   private updateGameStatistics(): void {
     // Update round counter
     (this.gameRoom.gamePhase as any)['round'] = ((this.gameRoom.gamePhase as any)['round'] || 0) + 1;
-    
+
     // Update other statistics as needed
     (this.gameRoom as any)['totalDamageDealt'] = ((this.gameRoom as any)['totalDamageDealt'] || 0);
     (this.gameRoom as any)['totalHealingDone'] = ((this.gameRoom as any)['totalHealingDone'] || 0);
@@ -557,11 +558,11 @@ export class GameStateManager {
   private checkGameEndConditions(log: LogEntry[]): boolean {
     const alivePlayers = this.getAlivePlayers();
     const monster = (this.gameRoom.gameState as any)['monster'];
-    
+
     // Check win conditions
     if (monster && monster.hp <= 0) {
       const victoryEntry: LogEntry = {
-        id: `game-victory-${Date.now()}`,
+        id: secureId('game-victory'),
         timestamp: Date.now(),
         type: 'phase',
         source: 'game',
@@ -575,11 +576,11 @@ export class GameStateManager {
       (this.gameRoom as any)['victory'] = true;
       return true;
     }
-    
+
     // Check loss conditions
     if (alivePlayers.length === 0) {
       const defeatEntry: LogEntry = {
-        id: `game-defeat-${Date.now()}`,
+        id: secureId('game-defeat'),
         timestamp: Date.now(),
         type: 'phase',
         source: 'game',
@@ -593,7 +594,7 @@ export class GameStateManager {
       (this.gameRoom as any)['victory'] = false;
       return true;
     }
-    
+
     return false;
   }
 
@@ -612,7 +613,7 @@ export class GameStateManager {
   // Helper methods for calculating bonuses
   private calculatePackHuntingBonus(player: any): number {
     // Implement pack hunting bonus calculation
-    const nearbyAllies = this.getAlivePlayers().filter((p: any) => 
+    const nearbyAllies = this.getAlivePlayers().filter((p: any) =>
       (p as any)['id'] !== (player as any)['id'] && (p as any)['race'] === 'Kinfolk'
     ).length;
     return nearbyAllies * 0.1; // 10% bonus per nearby Kinfolk ally

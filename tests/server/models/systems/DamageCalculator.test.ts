@@ -113,7 +113,7 @@ describe('DamageCalculator (TypeScript)', () => {
         if (options.coordinated) {
           const coordCount = this.getCoordinationCount();
           if (coordCount > 1) {
-            const coordBonus = 1 + (coordCount - 1) * 0.1;
+            const coordBonus = 1 + ((coordCount - 1) * 0.1);
             damage *= coordBonus;
             modifiers.push(`Coordination (+${((coordBonus - 1) * 100).toFixed(0)}%)`);
             calculationLog.push(`Coordination bonus: ${damage}`);
@@ -210,8 +210,8 @@ describe('DamageCalculator (TypeScript)', () => {
         return Math.floor(healing);
       },
       _actualCalculateMonsterDamage: function(baseDamage: number, level: number, playerCount: number): number {
-        let damage = baseDamage * (1 + (level - 1) * 0.1);
-        const playerScaling = 1 + (playerCount - 3) * 0.05;
+        let damage = baseDamage * (1 + ((level - 1) * 0.1));
+        const playerScaling = 1 + ((playerCount - 3) * 0.05);
         damage *= playerScaling;
         return Math.floor(damage);
       }
@@ -480,9 +480,9 @@ describe('DamageCalculator (TypeScript)', () => {
       const params = {
         baseDamage: 15,
         target: mockTarget,
-        options: { 
+        options: {
           comboMultiplier: 2.5,
-          ignoreArmor: true 
+          ignoreArmor: true
         },
         log: []
       };
@@ -500,10 +500,10 @@ describe('DamageCalculator (TypeScript)', () => {
       const params = {
         baseDamage: 10,
         target: mockTarget,
-        options: { 
+        options: {
           coordinated: true,
           comboMultiplier: 2,
-          ignoreArmor: true 
+          ignoreArmor: true
         },
         log: []
       };
@@ -607,7 +607,7 @@ describe('DamageCalculator (TypeScript)', () => {
       });
 
       const isCrit = damageCalculator._calculateCriticalHit(blessedAttacker);
-      
+
       expect(damageCalculator._calculateCriticalHit).toHaveBeenCalledWith(blessedAttacker);
       expect(isCrit).toBe(true); // Should crit due to blessed + luck
     });
@@ -749,7 +749,7 @@ describe('DamageCalculator (TypeScript)', () => {
         baseDamage: 20,
         target: complexTarget,
         attacker: complexAttacker,
-        options: { 
+        options: {
           coordinated: true,
           comboMultiplier: 1.5
         },
@@ -802,7 +802,7 @@ describe('DamageCalculator (TypeScript)', () => {
 
     it('should create instance from JSON data', () => {
       const jsonData = { playerCount: 2 };
-      
+
       const fromJSON = (data: any, players: Map<string, any>, getComebackStatus: any, getCoordinationCount: any) => {
         return {
           players,
@@ -958,9 +958,9 @@ describe('DamageCalculator (TypeScript)', () => {
       const params = {
         baseDamage: 10,
         target: mockTarget,
-        options: { 
+        options: {
           comboMultiplier: 100,
-          ignoreArmor: true 
+          ignoreArmor: true
         },
         log: []
       };

@@ -5,10 +5,10 @@
 
 import config from '../../config/index.js';
 import logger from '../../utils/logger.js';
-import type { 
-  StatusEffect, 
+import type {
+  StatusEffect,
   PlayerRace,
-  PlayerClass 
+  PlayerClass
 } from '../../types/generated.js';
 
 interface Player {
@@ -38,9 +38,9 @@ interface StatusEffectData {
 
 interface RacialEffects {
   stoneArmor?: { armor: number; intact: boolean };
-  undeadNature?: { 
+  undeadNature?: {
     immuneToPoisonDamage: boolean;
-    immuneToCharisma: boolean; 
+    immuneToCharisma: boolean;
   };
   packHunting?: { bonusPerAlly: number };
 }
@@ -106,9 +106,9 @@ class StatusEffectManager {
         break;
       case 'Lich':
         this.racialEffects = {
-          undeadNature: { 
+          undeadNature: {
             immuneToPoisonDamage: true,
-            immuneToCharisma: true 
+            immuneToCharisma: true
           }
         };
         if (!this.classEffects.immunities) {
@@ -157,7 +157,7 @@ class StatusEffectManager {
    */
   private updateStatusEffect(effectType: string, effectData: StatusEffectData): void {
     const existing = this.statusEffects[effectType];
-    
+
     // Handle stacking effects
     if (effectData.stacks && existing && existing.stacks) {
       effectData.stacks = Math.min(
@@ -210,7 +210,7 @@ class StatusEffectManager {
    */
   isImmuneToEffect(effectType: string): boolean {
     // Check class immunities
-    if (this.classEffects.immunities && 
+    if (this.classEffects.immunities &&
         this.classEffects.immunities.includes(effectType)) {
       return true;
     }
@@ -226,7 +226,7 @@ class StatusEffectManager {
     }
 
     // Check temporary immunities
-    if (this.statusEffects['immune'] && 
+    if (this.statusEffects['immune'] &&
         this.statusEffects['immune'].effectTypes &&
         this.statusEffects['immune'].effectTypes.includes(effectType)) {
       return true;
@@ -361,7 +361,7 @@ class StatusEffectManager {
    */
   getStatusEffectsSummary(): StatusEffectsSummary {
     const summary: StatusEffectsSummary = {};
-    
+
     for (const [effectType, effectData] of Object.entries(this.statusEffects)) {
       summary[effectType] = {
         duration: effectData.duration,

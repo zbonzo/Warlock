@@ -92,10 +92,10 @@ export function calculatePlayerHpAtLevel(level: number): number {
   if (level < 1) {
     throw new Error('Player level must be 1 or greater');
   }
-  
+
   const baseHp = playerSettings.baseHp;
   const hpIncrease = playerSettings.hpIncreasePerLevel;
-  
+
   // HP = baseHp * (1 + hpIncrease)^(level-1)
   return Math.floor(baseHp * Math.pow(1 + hpIncrease, level - 1));
 }
@@ -109,10 +109,10 @@ export function calculateDamageModifierAtLevel(level: number): number {
   if (level < 1) {
     throw new Error('Player level must be 1 or greater');
   }
-  
+
   const baseDamageMod = playerSettings.baseDamageMod;
   const damageIncrease = playerSettings.damageIncreasePerLevel;
-  
+
   // DamageMod = baseDamageMod * (1 + damageIncrease)^(level-1)
   return baseDamageMod * Math.pow(1 + damageIncrease, level - 1);
 }

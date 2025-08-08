@@ -35,16 +35,16 @@ describe('Trophies Configuration', () => {
       trophies.forEach((trophy, index) => {
         expect(trophy).toBeDefined();
         expect(typeof trophy).toBe('object');
-        
+
         // Required properties
         expect(trophy.name).toBeDefined();
         expect(typeof trophy.name).toBe('string');
         expect(trophy.name.length).toBeGreaterThan(0);
-        
+
         expect(trophy.description).toBeDefined();
         expect(typeof trophy.description).toBe('string');
         expect(trophy.description.length).toBeGreaterThan(0);
-        
+
         expect(trophy.getWinner).toBeDefined();
         expect(typeof trophy.getWinner).toBe('function');
       });
@@ -67,7 +67,7 @@ describe('Trophies Configuration', () => {
   describe('Trophy winner calculation', () => {
     describe('The Participant trophy', () => {
       const participantTrophy = trophies.find(t => t.name === 'The Participant');
-      
+
       it('should exist and be defined', () => {
         expect(participantTrophy).toBeDefined();
       });
@@ -77,7 +77,7 @@ describe('Trophies Configuration', () => {
           createMockPlayer({}),
           createMockPlayer({})
         ];
-        
+
         const winner = participantTrophy!.getWinner(players);
         expect(winner).toBeDefined();
         expect(players).toContain(winner);
@@ -91,14 +91,14 @@ describe('Trophies Configuration', () => {
 
     describe('The Gladiator trophy', () => {
       const gladiatorTrophy = trophies.find(t => t.name === 'The Gladiator');
-      
+
       it('should award to player with most damage dealt', () => {
         const players = [
           createMockPlayer({ totalDamageDealt: 50 }),
           createMockPlayer({ totalDamageDealt: 100 }),
           createMockPlayer({ totalDamageDealt: 75 })
         ];
-        
+
         const winner = gladiatorTrophy!.getWinner(players);
         expect(winner).toBe(players[1]); // Player with 100 damage
       });
@@ -108,7 +108,7 @@ describe('Trophies Configuration', () => {
           { stats: null, isWarlock: false, isAlive: true } as any,
           { stats: null, isWarlock: false, isAlive: true } as any
         ];
-        
+
         const winner = gladiatorTrophy!.getWinner(players);
         expect(winner).toBeNull();
       });
@@ -118,7 +118,7 @@ describe('Trophies Configuration', () => {
           createMockPlayer({ totalDamageDealt: 0 }),
           createMockPlayer({ totalDamageDealt: 0 })
         ];
-        
+
         const winner = gladiatorTrophy!.getWinner(players);
         expect(winner).toBeDefined();
         expect(players).toContain(winner);
@@ -127,14 +127,14 @@ describe('Trophies Configuration', () => {
 
     describe('The Savior trophy', () => {
       const saviorTrophy = trophies.find(t => t.name === 'The Savior');
-      
+
       it('should award to player with most healing done', () => {
         const players = [
           createMockPlayer({ totalHealingDone: 30 }),
           createMockPlayer({ totalHealingDone: 80 }),
           createMockPlayer({ totalHealingDone: 0 })
         ];
-        
+
         const winner = saviorTrophy!.getWinner(players);
         expect(winner).toBe(players[1]); // Player with 80 healing
       });
@@ -144,7 +144,7 @@ describe('Trophies Configuration', () => {
           createMockPlayer({ totalHealingDone: 0 }),
           createMockPlayer({ totalHealingDone: 0 })
         ];
-        
+
         const winner = saviorTrophy!.getWinner(players);
         expect(winner).toBeNull();
       });
@@ -152,14 +152,14 @@ describe('Trophies Configuration', () => {
 
     describe('The Punching Bag trophy', () => {
       const punchingBagTrophy = trophies.find(t => t.name === 'The Punching Bag');
-      
+
       it('should award to player who took most damage', () => {
         const players = [
           createMockPlayer({ damageTaken: 120 }),
           createMockPlayer({ damageTaken: 200 }),
           createMockPlayer({ damageTaken: 50 })
         ];
-        
+
         const winner = punchingBagTrophy!.getWinner(players);
         expect(winner).toBe(players[1]); // Player with 200 damage taken
       });
@@ -169,7 +169,7 @@ describe('Trophies Configuration', () => {
           createMockPlayer({ damageTaken: 0 }),
           createMockPlayer({ damageTaken: 0 })
         ];
-        
+
         const winner = punchingBagTrophy!.getWinner(players);
         expect(winner).toBeNull();
       });
@@ -177,14 +177,14 @@ describe('Trophies Configuration', () => {
 
     describe('The Pacifist trophy', () => {
       const pacifistTrophy = trophies.find(t => t.name === 'The Pacifist');
-      
+
       it('should award to player with zero damage dealt', () => {
         const players = [
           createMockPlayer({ totalDamageDealt: 50 }),
           createMockPlayer({ totalDamageDealt: 0 }),
           createMockPlayer({ totalDamageDealt: 0 })
         ];
-        
+
         const winner = pacifistTrophy!.getWinner(players);
         expect(winner).toBeDefined();
         expect([players[1], players[2]]).toContain(winner);
@@ -196,7 +196,7 @@ describe('Trophies Configuration', () => {
           createMockPlayer({ totalDamageDealt: 50 }),
           createMockPlayer({ totalDamageDealt: 30 })
         ];
-        
+
         const winner = pacifistTrophy!.getWinner(players);
         expect(winner).toBeNull();
       });
@@ -204,14 +204,14 @@ describe('Trophies Configuration', () => {
 
     describe('The Berserker trophy', () => {
       const berserkerTrophy = trophies.find(t => t.name === 'The Berserker');
-      
+
       it('should award to player with highest single hit', () => {
         const players = [
           createMockPlayer({ highestSingleHit: 45 }),
           createMockPlayer({ highestSingleHit: 80 }),
           createMockPlayer({ highestSingleHit: 60 })
         ];
-        
+
         const winner = berserkerTrophy!.getWinner(players);
         expect(winner).toBe(players[1]); // Player with 80 single hit
       });
@@ -219,14 +219,14 @@ describe('Trophies Configuration', () => {
 
     describe('The Phoenix trophy', () => {
       const phoenixTrophy = trophies.find(t => t.name === 'The Phoenix');
-      
+
       it('should award to winning player who died and came back', () => {
         const players = [
           createMockPlayer({ timesDied: 1 }, false, true), // Good player who died
           createMockPlayer({ timesDied: 0 }, false, true), // Good player who never died
           createMockPlayer({ timesDied: 2 }, true, true)   // Warlock who died
         ];
-        
+
         const gameResult: GameResult = { winner: 'Good' };
         const winner = phoenixTrophy!.getWinner(players, gameResult);
         expect(winner).toBe(players[0]); // Only good player who died
@@ -243,7 +243,7 @@ describe('Trophies Configuration', () => {
           createMockPlayer({ timesDied: 0 }, false, true),
           createMockPlayer({ timesDied: 1 }, true, true) // Warlock died but good won
         ];
-        
+
         const gameResult: GameResult = { winner: 'Good' };
         const winner = phoenixTrophy!.getWinner(players, gameResult);
         expect(winner).toBeNull();
@@ -252,14 +252,14 @@ describe('Trophies Configuration', () => {
 
     describe('The Healer trophy', () => {
       const healerTrophy = trophies.find(t => t.name === 'The Healer');
-      
+
       it('should award to player with most self heals', () => {
         const players = [
           createMockPlayer({ selfHeals: 15 }),
           createMockPlayer({ selfHeals: 30 }),
           createMockPlayer({ selfHeals: 5 })
         ];
-        
+
         const winner = healerTrophy!.getWinner(players);
         expect(winner).toBe(players[1]); // Player with 30 self heals
       });
@@ -267,14 +267,14 @@ describe('Trophies Configuration', () => {
 
     describe('The Overachiever trophy', () => {
       const overachieverTrophy = trophies.find(t => t.name === 'The Overachiever');
-      
+
       it('should award to player with most abilities used', () => {
         const players = [
           createMockPlayer({ abilitiesUsed: 12 }),
           createMockPlayer({ abilitiesUsed: 25 }),
           createMockPlayer({ abilitiesUsed: 8 })
         ];
-        
+
         const winner = overachieverTrophy!.getWinner(players);
         expect(winner).toBe(players[1]); // Player with 25 abilities used
       });
@@ -282,14 +282,14 @@ describe('Trophies Configuration', () => {
 
     describe('Master of Deception trophy', () => {
       const deceptionTrophy = trophies.find(t => t.name === 'Master of Deception');
-      
+
       it('should award to unrevealed warlock when evil wins', () => {
         const players = [
           createMockPlayer({}, false, true), // Good player
           createMockPlayer({}, true, true)   // Unrevealed warlock
         ];
         players[1].isRevealed = false;
-        
+
         const gameResult: GameResult = { winner: 'Evil' };
         const winner = deceptionTrophy!.getWinner(players, gameResult);
         expect(winner).toBe(players[1]);
@@ -299,7 +299,7 @@ describe('Trophies Configuration', () => {
         const players = [
           createMockPlayer({}, true, true) // Warlock
         ];
-        
+
         const gameResult: GameResult = { winner: 'Good' };
         const winner = deceptionTrophy!.getWinner(players, gameResult);
         expect(winner).toBeNull();
@@ -310,7 +310,7 @@ describe('Trophies Configuration', () => {
           createMockPlayer({}, true, true) // Revealed warlock
         ];
         players[0].isRevealed = true;
-        
+
         const gameResult: GameResult = { winner: 'Evil' };
         const winner = deceptionTrophy!.getWinner(players, gameResult);
         expect(winner).toBeNull();
@@ -319,14 +319,14 @@ describe('Trophies Configuration', () => {
 
     describe('The Last Stand trophy', () => {
       const lastStandTrophy = trophies.find(t => t.name === 'The Last Stand');
-      
+
       it('should award to last player alive', () => {
         const players = [
           createMockPlayer({}, false, false), // Dead
           createMockPlayer({}, false, true),  // Alive
           createMockPlayer({}, true, false)   // Dead warlock
         ];
-        
+
         const gameResult: GameResult = { winner: 'Good' };
         const winner = lastStandTrophy!.getWinner(players, gameResult);
         expect(winner).toBe(players[1]); // Only alive player
@@ -337,7 +337,7 @@ describe('Trophies Configuration', () => {
           createMockPlayer({}, false, true),
           createMockPlayer({}, false, true)
         ];
-        
+
         const gameResult: GameResult = { winner: 'Good' };
         const winner = lastStandTrophy!.getWinner(players, gameResult);
         expect(winner).toBeNull();
@@ -365,7 +365,7 @@ describe('Trophies Configuration', () => {
         { stats: null, isWarlock: false, isAlive: true } as any,
         { stats: undefined, isWarlock: false, isAlive: true } as any
       ];
-      
+
       trophies.forEach(trophy => {
         expect(() => {
           trophy.getWinner(invalidPlayers);
@@ -379,16 +379,16 @@ describe('Trophies Configuration', () => {
         createMockPlayer({ totalDamageDealt: 50 }),
         createMockPlayer({ totalDamageDealt: 50 })
       ];
-      
+
       const gladiatorTrophy = trophies.find(t => t.name === 'The Gladiator')!;
-      
+
       // Run multiple times to check that different players can win
       const winners = new Set();
       for (let i = 0; i < 20; i++) {
         const winner = gladiatorTrophy.getWinner(tiedPlayers);
         if (winner) winners.add(winner);
       }
-      
+
       // Should have some variation in winners (though this test could occasionally fail due to randomness)
       expect(winners.size).toBeGreaterThan(0);
     });
@@ -409,7 +409,7 @@ describe('Trophies Configuration', () => {
         'Master of Deception',
         'The Last Stand'
       ];
-      
+
       const actualNames = trophies.map(t => t.name);
       expectedTrophyNames.forEach(expectedName => {
         expect(actualNames).toContain(expectedName);
@@ -420,10 +420,10 @@ describe('Trophies Configuration', () => {
       const gladiator = trophies.find(t => t.name === 'The Gladiator')!;
       expect(gladiator.description.toLowerCase()).toContain('damage');
       expect(gladiator.description.toLowerCase()).toContain('monster');
-      
+
       const savior = trophies.find(t => t.name === 'The Savior')!;
       expect(savior.description.toLowerCase()).toContain('heal');
-      
+
       const pacifist = trophies.find(t => t.name === 'The Pacifist')!;
       expect(pacifist.description.toLowerCase()).toContain('zero');
       expect(pacifist.description.toLowerCase()).toContain('damage');

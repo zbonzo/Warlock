@@ -68,34 +68,34 @@ export function isApiError(response: ApiResponse<any>): response is ApiError {
  * Helper function to collect validation errors
  */
 export function collectValidationErrors<T>(
-  validators: Array<(value: T) => ValidationResult<T>>,
+  validators: Array<(_value: T) => ValidationResult<T>>,
   value: T
 ): ValidationResult<T> {
   const errors: string[] = [];
-  
+
   for (const validator of validators) {
     const result = validator(value);
     if (!result.success) {
       errors.push(...result.errors);
     }
   }
-  
+
   if (errors.length > 0) {
     return { success: false, data: undefined as never, errors };
   }
-  
+
   return { success: true, data: value, errors: undefined as never };
 }
 
 /**
  * JSON serialization types
  */
-export type JSONValue = 
-  | string 
-  | number 
-  | boolean 
-  | null 
-  | JSONObject 
+export type JSONValue =
+  | string
+  | number
+  | boolean
+  | null
+  | JSONObject
   | JSONArray;
 
 export interface JSONObject {
@@ -107,11 +107,11 @@ export interface JSONArray extends Array<JSONValue> {}
 /**
  * Serializable type check
  */
-export type Serializable<T> = T extends 
-  | string 
-  | number 
-  | boolean 
-  | null 
+export type Serializable<T> = T extends
+  | string
+  | number
+  | boolean
+  | null
   | undefined
   ? T
   : T extends Array<infer U>

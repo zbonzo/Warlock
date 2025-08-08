@@ -22,7 +22,7 @@ jest.mock('../../../../../../client/src/contexts/ThemeContext', () => ({
 jest.mock('../../../../../../client/src/components/modals/AdaptabilityModal/components/AbilityCard', () => {
   return function MockAbilityCard({ ability, onSelect }: { ability: Ability; onSelect: () => void }) {
     return (
-      <div 
+      <div
         data-testid={`ability-card-${ability.type}`}
         onClick={onSelect}
       >
@@ -82,7 +82,7 @@ describe('AbilityList', () => {
   describe('Basic Rendering', () => {
     it('should render all ability levels', () => {
       render(<AbilityList {...defaultProps} />);
-      
+
       expect(screen.getByText('Level 1 Abilities')).toBeInTheDocument();
       expect(screen.getByText('Level 2 Abilities')).toBeInTheDocument();
       expect(screen.getByText('Level 3 Abilities')).toBeInTheDocument();
@@ -90,7 +90,7 @@ describe('AbilityList', () => {
 
     it('should render all abilities from all levels', () => {
       render(<AbilityList {...defaultProps} />);
-      
+
       expect(screen.getByText('Slash')).toBeInTheDocument();
       expect(screen.getByText('Minor Heal')).toBeInTheDocument();
       expect(screen.getByText('Shield Wall')).toBeInTheDocument();
@@ -99,7 +99,7 @@ describe('AbilityList', () => {
 
     it('should render ability cards with correct props', () => {
       render(<AbilityList {...defaultProps} />);
-      
+
       expect(screen.getByTestId('ability-card-attack')).toBeInTheDocument();
       expect(screen.getByTestId('ability-card-heal')).toBeInTheDocument();
       expect(screen.getByTestId('ability-card-shield')).toBeInTheDocument();
@@ -108,15 +108,15 @@ describe('AbilityList', () => {
 
     it('should group abilities correctly by level', () => {
       const { container } = render(<AbilityList {...defaultProps} />);
-      
+
       const levelGroups = container.querySelectorAll('.ability-level-group');
       expect(levelGroups).toHaveLength(3);
-      
+
       // Check that each level group has the correct number of abilities
       const level1Cards = levelGroups[0].querySelectorAll('[data-testid^="ability-card-"]');
       const level2Cards = levelGroups[1].querySelectorAll('[data-testid^="ability-card-"]');
       const level3Cards = levelGroups[2].querySelectorAll('[data-testid^="ability-card-"]');
-      
+
       expect(level1Cards).toHaveLength(2);
       expect(level2Cards).toHaveLength(1);
       expect(level3Cards).toHaveLength(1);
@@ -126,7 +126,7 @@ describe('AbilityList', () => {
   describe('Hide Level Functionality', () => {
     it('should hide level titles when hideLevel is true', () => {
       render(<AbilityList {...defaultProps} hideLevel={true} />);
-      
+
       expect(screen.queryByText('Level 1 Abilities')).not.toBeInTheDocument();
       expect(screen.queryByText('Level 2 Abilities')).not.toBeInTheDocument();
       expect(screen.queryByText('Level 3 Abilities')).not.toBeInTheDocument();
@@ -134,7 +134,7 @@ describe('AbilityList', () => {
 
     it('should still render abilities when hideLevel is true', () => {
       render(<AbilityList {...defaultProps} hideLevel={true} />);
-      
+
       expect(screen.getByText('Slash')).toBeInTheDocument();
       expect(screen.getByText('Minor Heal')).toBeInTheDocument();
       expect(screen.getByText('Shield Wall')).toBeInTheDocument();
@@ -143,7 +143,7 @@ describe('AbilityList', () => {
 
     it('should show level titles by default', () => {
       render(<AbilityList {...defaultProps} />);
-      
+
       expect(screen.getByText('Level 1 Abilities')).toBeInTheDocument();
       expect(screen.getByText('Level 2 Abilities')).toBeInTheDocument();
       expect(screen.getByText('Level 3 Abilities')).toBeInTheDocument();
@@ -154,9 +154,9 @@ describe('AbilityList', () => {
     it('should call onAbilitySelect when ability card is clicked', () => {
       const onAbilitySelect = jest.fn();
       render(<AbilityList {...defaultProps} onAbilitySelect={onAbilitySelect} />);
-      
+
       fireEvent.click(screen.getByText('Slash'));
-      
+
       expect(onAbilitySelect).toHaveBeenCalledTimes(1);
       expect(onAbilitySelect).toHaveBeenCalledWith(mockAbilities['1'][0]);
     });
@@ -164,19 +164,19 @@ describe('AbilityList', () => {
     it('should call onAbilitySelect with correct ability data', () => {
       const onAbilitySelect = jest.fn();
       render(<AbilityList {...defaultProps} onAbilitySelect={onAbilitySelect} />);
-      
+
       fireEvent.click(screen.getByText('Fireball'));
-      
+
       expect(onAbilitySelect).toHaveBeenCalledWith(mockAbilities['3'][0]);
     });
 
     it('should handle multiple ability selections', () => {
       const onAbilitySelect = jest.fn();
       render(<AbilityList {...defaultProps} onAbilitySelect={onAbilitySelect} />);
-      
+
       fireEvent.click(screen.getByText('Slash'));
       fireEvent.click(screen.getByText('Shield Wall'));
-      
+
       expect(onAbilitySelect).toHaveBeenCalledTimes(2);
       expect(onAbilitySelect).toHaveBeenNthCalledWith(1, mockAbilities['1'][0]);
       expect(onAbilitySelect).toHaveBeenNthCalledWith(2, mockAbilities['2'][0]);
@@ -186,7 +186,7 @@ describe('AbilityList', () => {
   describe('Empty Data Handling', () => {
     it('should handle empty ability options', () => {
       render(<AbilityList abilityOptions={{}} onAbilitySelect={jest.fn()} />);
-      
+
       // Should render without errors but show no content
       expect(screen.queryByText(/Level \d+ Abilities/)).not.toBeInTheDocument();
     });
@@ -196,23 +196,23 @@ describe('AbilityList', () => {
         '1': [],
         '2': [mockAbilities['2'][0]]
       };
-      
+
       render(
-        <AbilityList 
-          abilityOptions={emptyLevelAbilities} 
-          onAbilitySelect={jest.fn()} 
+        <AbilityList
+          abilityOptions={emptyLevelAbilities}
+          onAbilitySelect={jest.fn()}
         />
       );
-      
+
       expect(screen.getByText('Level 1 Abilities')).toBeInTheDocument();
       expect(screen.getByText('Level 2 Abilities')).toBeInTheDocument();
       expect(screen.getByText('Shield Wall')).toBeInTheDocument();
-      
+
       // Level 1 should have no ability cards
       const { container } = render(
-        <AbilityList 
-          abilityOptions={emptyLevelAbilities} 
-          onAbilitySelect={jest.fn()} 
+        <AbilityList
+          abilityOptions={emptyLevelAbilities}
+          onAbilitySelect={jest.fn()}
         />
       );
       const levelGroups = container.querySelectorAll('.ability-level-group');
@@ -227,14 +227,14 @@ describe('AbilityList', () => {
         '1': [mockAbilities['1'][0]],
         '2': [mockAbilities['2'][0]]
       };
-      
+
       render(
-        <AbilityList 
-          abilityOptions={singleAbilityPerLevel} 
-          onAbilitySelect={jest.fn()} 
+        <AbilityList
+          abilityOptions={singleAbilityPerLevel}
+          onAbilitySelect={jest.fn()}
         />
       );
-      
+
       expect(screen.getByText('Slash')).toBeInTheDocument();
       expect(screen.getByText('Shield Wall')).toBeInTheDocument();
     });
@@ -245,14 +245,14 @@ describe('AbilityList', () => {
         '5': [mockAbilities['2'][0]],
         '10': [mockAbilities['3'][0]]
       };
-      
+
       render(
-        <AbilityList 
-          abilityOptions={nonSequentialLevels} 
-          onAbilitySelect={jest.fn()} 
+        <AbilityList
+          abilityOptions={nonSequentialLevels}
+          onAbilitySelect={jest.fn()}
         />
       );
-      
+
       expect(screen.getByText('Level 1 Abilities')).toBeInTheDocument();
       expect(screen.getByText('Level 5 Abilities')).toBeInTheDocument();
       expect(screen.getByText('Level 10 Abilities')).toBeInTheDocument();
@@ -263,14 +263,14 @@ describe('AbilityList', () => {
         'beginner': [mockAbilities['1'][0]],
         'advanced': [mockAbilities['2'][0]]
       };
-      
+
       render(
-        <AbilityList 
-          abilityOptions={stringLevels} 
-          onAbilitySelect={jest.fn()} 
+        <AbilityList
+          abilityOptions={stringLevels}
+          onAbilitySelect={jest.fn()}
         />
       );
-      
+
       expect(screen.getByText('Level beginner Abilities')).toBeInTheDocument();
       expect(screen.getByText('Level advanced Abilities')).toBeInTheDocument();
     });
@@ -279,7 +279,7 @@ describe('AbilityList', () => {
   describe('CSS Structure', () => {
     it('should have correct CSS class structure', () => {
       const { container } = render(<AbilityList {...defaultProps} />);
-      
+
       expect(container.querySelector('.ability-list')).toBeInTheDocument();
       expect(container.querySelectorAll('.ability-level-group')).toHaveLength(3);
       expect(container.querySelectorAll('.level-title')).toHaveLength(3);
@@ -288,7 +288,7 @@ describe('AbilityList', () => {
 
     it('should not render level titles when hideLevel is true', () => {
       const { container } = render(<AbilityList {...defaultProps} hideLevel={true} />);
-      
+
       expect(container.querySelectorAll('.level-title')).toHaveLength(0);
     });
   });
@@ -299,9 +299,9 @@ describe('AbilityList', () => {
         isDarkMode: true,
         toggleTheme: jest.fn()
       });
-      
+
       render(<AbilityList {...defaultProps} />);
-      
+
       expect(screen.getByText('Level 1 Abilities')).toBeInTheDocument();
       expect(screen.getByText('Slash')).toBeInTheDocument();
     });
@@ -311,9 +311,9 @@ describe('AbilityList', () => {
         isDarkMode: false,
         toggleTheme: jest.fn()
       });
-      
+
       render(<AbilityList {...defaultProps} />);
-      
+
       expect(screen.getByText('Level 1 Abilities')).toBeInTheDocument();
       expect(screen.getByText('Slash')).toBeInTheDocument();
     });
@@ -330,14 +330,14 @@ describe('AbilityList', () => {
           } as Ability
         ]
       };
-      
+
       render(
-        <AbilityList 
-          abilityOptions={incompleteAbilities} 
-          onAbilitySelect={jest.fn()} 
+        <AbilityList
+          abilityOptions={incompleteAbilities}
+          onAbilitySelect={jest.fn()}
         />
       );
-      
+
       expect(screen.getByText('Incomplete Ability')).toBeInTheDocument();
     });
 
@@ -352,12 +352,12 @@ describe('AbilityList', () => {
           }
         ]
       };
-      
+
       expect(() => {
         render(
-          <AbilityList 
-            abilityOptions={nullNameAbilities} 
-            onAbilitySelect={jest.fn()} 
+          <AbilityList
+            abilityOptions={nullNameAbilities}
+            onAbilitySelect={jest.fn()}
           />
         );
       }).not.toThrow();

@@ -68,24 +68,24 @@ describe('server', () => {
 
   it('should create Express app and HTTP server', () => {
     require('../../server/server');
-    
+
     expect(http.createServer).toHaveBeenCalled();
   });
 
   it('should start listening on configured port', () => {
     require('../../server/server');
-    
+
     expect(mockListen).toHaveBeenCalledWith(3001, '0.0.0.0', expect.any(Function));
   });
 
   it('should handle process uncaught exceptions', () => {
     const mockProcessOn = jest.spyOn(process, 'on').mockImplementation();
-    
+
     require('../../server/server');
-    
+
     expect(mockProcessOn).toHaveBeenCalledWith('uncaughtException', expect.any(Function));
     expect(mockProcessOn).toHaveBeenCalledWith('unhandledRejection', expect.any(Function));
-    
+
     mockProcessOn.mockRestore();
   });
 });

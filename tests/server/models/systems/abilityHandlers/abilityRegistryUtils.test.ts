@@ -39,7 +39,7 @@ describe('abilityRegistryUtils', () => {
   describe('registerAbilitiesByCategory', () => {
     it('should register all abilities of specified category', () => {
       const result = registerAbilitiesByCategory(mockRegistry, 'Attack', jest.fn());
-      
+
       expect(result).toContain('slash');
       expect(result).toContain('fireball');
       expect(result).toContain('poison_bolt');
@@ -50,7 +50,7 @@ describe('abilityRegistryUtils', () => {
   describe('registerAbilitiesByEffectAndTarget', () => {
     it('should register abilities with matching effect and target', () => {
       const result = registerAbilitiesByEffectAndTarget(mockRegistry, 'poison', 'Single', jest.fn());
-      
+
       expect(result).toContain('poison_bolt');
       expect(mockRegistry.registerClassAbilities).toHaveBeenCalled();
     });
@@ -60,7 +60,7 @@ describe('abilityRegistryUtils', () => {
     it('should register abilities matching multiple criteria', () => {
       const criteria = { category: 'Attack', target: 'Single' };
       const result = registerAbilitiesByCriteria(mockRegistry, criteria, jest.fn());
-      
+
       expect(result.length).toBeGreaterThan(0);
       expect(mockRegistry.registerClassAbilities).toHaveBeenCalled();
     });
@@ -69,7 +69,7 @@ describe('abilityRegistryUtils', () => {
   describe('findAbilitiesByTypePattern', () => {
     it('should find abilities matching type pattern', () => {
       const result = findAbilitiesByTypePattern('poison');
-      
+
       expect(result).toContain('poison_bolt');
     });
   });
@@ -77,7 +77,7 @@ describe('abilityRegistryUtils', () => {
   describe('getAllAbilities', () => {
     it('should return comprehensive ability breakdown', () => {
       const result = getAllAbilities();
-      
+
       expect(result.byCategory.Attack).toContain('slash');
       expect(result.byEffect.poison).toContain('poison_bolt');
       expect(result.byTarget.Single).toContain('fireball');
@@ -94,9 +94,9 @@ describe('abilityRegistryUtils', () => {
       };
       const actor = { id: 'player1', getEffectiveArmor: () => 5 };
       const ability = { type: 'slash' };
-      
+
       applyThreatForAbility(actor, '__monster__', ability, 10, 5, mockSystems);
-      
+
       expect(mockSystems.monsterController.addThreat).toHaveBeenCalledWith(
         'player1', 10, 10, 5, 5
       );

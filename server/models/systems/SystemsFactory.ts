@@ -78,19 +78,19 @@ export class SystemsFactory {
   ): GameSystems {
     // Create individual systems
     const gameStateUtils = new GameStateUtils(players);
-    
+
     // Create NEW status effect system
     const warlockSystem = new WarlockSystem(players, gameStateUtils);
     const newStatusEffectSystem: StatusEffectSystem = StatusEffectSystemFactory.createSystem(
-      players, 
-      monster, 
-      warlockSystem, 
+      players,
+      monster,
+      warlockSystem,
       true // Migrate existing status effects
     );
-    
+
     // Use the new status effect manager
     const statusEffectManager = newStatusEffectSystem.manager;
-    
+
     const racialAbilitySystem = new RacialAbilitySystemClass(
       players,
       gameStateUtils,

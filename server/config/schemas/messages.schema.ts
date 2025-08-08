@@ -4,7 +4,7 @@ import { z } from 'zod';
 const MessageTemplateSchema = z.string().min(1);
 
 // Schema for nested message categories - allows recursive nesting
-const MessageCategorySchema: z.ZodType<Record<string, any>> = z.lazy(() => 
+const MessageCategorySchema: z.ZodType<Record<string, any>> = z.lazy(() =>
   z.record(z.string(), z.union([MessageTemplateSchema, MessageCategorySchema]))
 );
 
@@ -47,7 +47,7 @@ export const MessagesConfigSchemaRefined = MessagesConfigSchema.refine(
   (config) => {
     // Ensure all message templates contain valid placeholder syntax
     const allMessages: string[] = [];
-    
+
     // Flatten all messages for validation
     const flattenMessages = (obj: any, path: string = '') => {
       for (const [key, value] of Object.entries(obj)) {
@@ -59,9 +59,9 @@ export const MessagesConfigSchemaRefined = MessagesConfigSchema.refine(
         }
       }
     };
-    
+
     flattenMessages(config);
-    
+
     // Check for invalid placeholder syntax (unclosed braces, etc.)
     const invalidPlaceholders = allMessages.filter(message => {
       // Count opening and closing braces
@@ -69,7 +69,7 @@ export const MessagesConfigSchemaRefined = MessagesConfigSchema.refine(
       const closeBraces = (message.match(/}/g) || []).length;
       return openBraces !== closeBraces;
     });
-    
+
     return invalidPlaceholders.length === 0;
   },
   {
@@ -85,11 +85,11 @@ export const MessagesConfigSchemaRefined = MessagesConfigSchema.refine(
       'invalidAction',
       'playerDead'
     ];
-    
+
     const missingErrors = requiredErrors.filter(
       errorKey => !config.errors[errorKey]
     );
-    
+
     return missingErrors.length === 0;
   },
   {
@@ -103,7 +103,7 @@ export const MessagesConfigSchemaRefined = MessagesConfigSchema.refine(
     const emptyCategories = abilityCategories.filter(
       category => Object.keys(category).length === 0
     );
-    
+
     return emptyCategories.length === 0;
   },
   {

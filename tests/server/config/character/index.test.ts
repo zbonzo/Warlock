@@ -64,13 +64,13 @@ describe('Character Configuration Index', () => {
   describe('Legacy compatibility', () => {
     it('should provide deprecated classAbilities getter with warning', () => {
       const consoleSpy = jest.spyOn(console, 'warn').mockImplementation();
-      
+
       const classAbilities = characterConfig.classAbilities;
       expect(classAbilities).toEqual({});
       expect(consoleSpy).toHaveBeenCalledWith(
         'Accessing classAbilities directly is deprecated. Use getClassAbilities() instead.'
       );
-      
+
       consoleSpy.mockRestore();
     });
   });
@@ -93,12 +93,12 @@ describe('Character Configuration Index', () => {
       expect(['object'].includes(typeof characterConfig.races)).toBe(true);
       expect(['object'].includes(typeof characterConfig.raceAttributes)).toBe(true);
       expect(['object'].includes(typeof characterConfig.racialAbilities)).toBe(true);
-      
+
       // Classes should be objects or arrays
       expect(['object'].includes(typeof characterConfig.classes)).toBe(true);
       expect(['object'].includes(typeof characterConfig.classCategories)).toBe(true);
       expect(['object'].includes(typeof characterConfig.classAttributes)).toBe(true);
-      
+
       // Abilities should be objects
       expect(typeof characterConfig.abilities).toBe('object');
     });

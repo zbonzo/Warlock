@@ -53,13 +53,13 @@ export function registerAbilityHandlers(registry: AbilityRegistry): DebugInfo {
     console.error('Error registering ability handlers:', error);
     throw new Error(`Failed to register ability handlers: ${error?.message || 'Unknown error'}`);
   }
-  
+
   // For debugging: check if all abilities have been registered
   const unregisteredAbilities = checkUnregisteredAbilities(registry);
-  
+
   // Return debug info about registered handlers
   const debugInfo = registry.getDebugInfo();
-  
+
   return {
     registeredHandlers: Array.isArray(debugInfo['handlers']) ? debugInfo['handlers'] : [],
     totalHandlers: typeof debugInfo['total'] === 'number' ? debugInfo['total'] : 0,
@@ -77,16 +77,16 @@ export function registerAbilityHandlers(registry: AbilityRegistry): DebugInfo {
 function checkUnregisteredAbilities(registry: AbilityRegistry): string[] {
   try {
     const allAbilities: AllAbilitiesResponse = getAllAbilities();
-    
+
     // Check for unregistered abilities
-    const unregistered = allAbilities.all.filter(abilityType => 
+    const unregistered = allAbilities.all.filter(abilityType =>
       !registry.hasClassAbility(abilityType)
     );
-    
+
     if (unregistered.length > 0) {
       console.warn(`Warning: The following abilities don't have registered handlers: ${unregistered.join(', ')}`);
     }
-    
+
     return unregistered;
   } catch (error: any) {
     console.error('Error checking unregistered abilities:', error);
@@ -133,24 +133,24 @@ export function getAbilityHandlerModules(): AbilityHandlerModule[] {
 export function validateAbilityHandlerModules(): boolean {
   const requiredModules = [
     'attackAbilities',
-    'healAbilities', 
+    'healAbilities',
     'defenseAbilities',
     'specialAbilities',
     'racialAbilities'
   ];
-  
+
   const availableModules = getAbilityHandlerModules();
-  
+
   if (availableModules.length !== requiredModules.length) {
     console.error(`Expected ${requiredModules.length} ability handler modules, but found ${availableModules.length}`);
     return false;
   }
-  
+
   return true;
 }
 
 // Re-export types for external use
-export type { 
+export type {
   AbilityRegistry,
   AbilityHandler,
   AllAbilitiesResponse

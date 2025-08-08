@@ -25,21 +25,21 @@ import { isString, isNumber, isBoolean, isObject } from './type-guards.js';
  */
 export function isPlayerState(value: unknown): value is PlayerState {
   if (!isObject(value)) return false;
-  
+
   const state = value as Record<string, unknown>;
   if (!isString(state['status'])) return false;
-  
+
   switch (state['status']) {
     case 'alive':
       return isNumber(state['hp']) && isNumber(state['maxHp']);
     case 'dead':
       return isNumber(state['deathTime']) && isString(state['causeOfDeath']) && isBoolean(state['canBeRevived']);
     case 'revived':
-      return isNumber(state['revivedTime']) && isString(state['revivedBy']) && 
+      return isNumber(state['revivedTime']) && isString(state['revivedBy']) &&
              isNumber(state['revivedAt']) && isNumber(state['reviveCount']);
     case 'spectating':
-      return isNumber(state['leftGameTime']) && 
-             isString(state['reason']) && 
+      return isNumber(state['leftGameTime']) &&
+             isString(state['reason']) &&
              ['quit', 'kicked', 'connection_lost'].includes(state['reason'] as string);
     default:
       return false;

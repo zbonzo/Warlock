@@ -169,7 +169,7 @@ export class RacialAbilitySystem {
         if (!redirectTarget) {
           return false;
         }
-        
+
         finalTargetId = redirectTarget;
       }
     }

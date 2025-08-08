@@ -103,7 +103,7 @@ describe('TurnResolver (TypeScript)', () => {
       actionQueue: [],
       currentTurn: 0,
       systems: mockSystems,
-      
+
       // Mock implementation methods
       queueAction: jest.fn().mockImplementation(function(action: any, priority: number = 0) {
         const queueItem = {
@@ -113,23 +113,23 @@ describe('TurnResolver (TypeScript)', () => {
         };
         this.actionQueue.push(queueItem);
       }),
-      
+
       clearQueue: jest.fn().mockImplementation(function() {
         this.actionQueue = [];
       }),
-      
+
       getCurrentTurn: jest.fn().mockImplementation(function() {
         return this.currentTurn;
       }),
-      
+
       getQueuedActionCount: jest.fn().mockImplementation(function() {
         return this.actionQueue.length;
       }),
-      
+
       // Core resolution logic
       _actualResolveTurn: function(context: any) {
         this.currentTurn++;
-        
+
         // Sort actions by priority
         this.actionQueue.sort((a: any, b: any) => {
           if (a.priority !== b.priority) {
@@ -177,7 +177,7 @@ describe('TurnResolver (TypeScript)', () => {
         this.clearQueue();
         return turnResult;
       },
-      
+
       _resolveAction: function(action: any, context: any) {
         const actor = context.players.get(action.playerId);
         if (!actor) {
@@ -220,7 +220,7 @@ describe('TurnResolver (TypeScript)', () => {
             };
         }
       },
-      
+
       _resolveAttackAction: function(action: any, context: any) {
         const actor = context.players.get(action.playerId);
         const target = action.targetId ? context.players.get(action.targetId) || context.monster : null;
@@ -252,7 +252,7 @@ describe('TurnResolver (TypeScript)', () => {
           message: `${actor.name} attacks for ${damageResult.actualDamage} damage`
         };
       },
-      
+
       _resolveHealAction: function(action: any, context: any) {
         const actor = context.players.get(action.playerId);
         const target = action.targetId ? context.players.get(action.targetId) : actor;
@@ -278,7 +278,7 @@ describe('TurnResolver (TypeScript)', () => {
           message: `${actor.name} heals for ${finalHealing} HP`
         };
       },
-      
+
       _resolveAbilityAction: function(action: any, context: any) {
         return {
           actionId: action.actionType,
@@ -287,10 +287,10 @@ describe('TurnResolver (TypeScript)', () => {
           message: 'Ability used'
         };
       },
-      
+
       _resolveDefendAction: function(action: any, context: any) {
         const actor = context.players.get(action.playerId);
-        
+
         this.systems.effectManager.applyEffect(action.playerId, {
           id: 'defending',
           name: 'Defending',
@@ -307,7 +307,7 @@ describe('TurnResolver (TypeScript)', () => {
           message: `${actor.name} takes a defensive stance`
         };
       },
-      
+
       _applyActionResult: function(result: any, context: any) {
         if (result.damage && result.targetId) {
           const target = context.players.get(result.targetId);
@@ -326,7 +326,7 @@ describe('TurnResolver (TypeScript)', () => {
           }
         }
       },
-      
+
       _processEndOfTurnEffects: function(context: any, gameEvents: string[]) {
         for (const [playerId, player] of context.players) {
           const expiredEffects = this.systems.effectManager.processEffectDurations(playerId);
@@ -335,21 +335,21 @@ describe('TurnResolver (TypeScript)', () => {
           }
         }
       },
-      
+
       _determineNextPhase: function(context: any) {
         const alivePlayers = Array.from(context.players.values()).filter((p: any) => p.status === 'alive');
-        
+
         if (alivePlayers.length === 0) {
           return 'ended';
         }
-        
+
         if (context.monster && context.monster.hp <= 0) {
           return 'ended';
         }
 
         return 'results';
       },
-      
+
       toJSON: jest.fn().mockReturnValue({
         gameCode: 'GAME123',
         actionQueue: [],
@@ -471,7 +471,7 @@ describe('TurnResolver (TypeScript)', () => {
 
     it('should increment turn number', () => {
       turnResolver.queueAction({ actionType: 'attack', playerId: 'player1' });
-      
+
       expect(turnResolver.currentTurn).toBe(0);
       turnResolver._actualResolveTurn(mockContext);
       expect(turnResolver.currentTurn).toBe(1);
@@ -613,9 +613,9 @@ describe('TurnResolver (TypeScript)', () => {
   describe('Player Status Validation', () => {
     it('should prevent dead players from acting', () => {
       mockPlayer1.status = 'dead';
-      
+
       const action = {
-        actionType: 'attack',  
+        actionType: 'attack',
         playerId: 'player1',
         targetId: 'player2'
       };
@@ -628,7 +628,7 @@ describe('TurnResolver (TypeScript)', () => {
 
     it('should prevent stunned players from acting', () => {
       mockSystems.statusEffectManager.isPlayerStunned.mockReturnValue(true);
-      
+
       const action = {
         actionType: 'attack',
         playerId: 'player1',
@@ -725,14 +725,14 @@ describe('TurnResolver (TypeScript)', () => {
     it('should return "ended" when all players are dead', () => {
       mockPlayer1.status = 'dead';
       mockPlayer2.status = 'dead';
-      
+
       const phase = turnResolver._determineNextPhase(mockContext);
       expect(phase).toBe('ended');
     });
 
     it('should return "ended" when monster is dead', () => {
       mockContext.monster.hp = 0;
-      
+
       const phase = turnResolver._determineNextPhase(mockContext);
       expect(phase).toBe('ended');
     });
@@ -742,7 +742,7 @@ describe('TurnResolver (TypeScript)', () => {
         ...mockContext,
         monster: null
       };
-      
+
       const phase = turnResolver._determineNextPhase(contextWithoutMonster);
       expect(phase).toBe('results');
     });
@@ -751,17 +751,17 @@ describe('TurnResolver (TypeScript)', () => {
   describe('Turn State Tracking', () => {
     it('should return current turn number', () => {
       expect(turnResolver.getCurrentTurn()).toBe(0);
-      
+
       turnResolver._actualResolveTurn(mockContext);
       expect(turnResolver.getCurrentTurn()).toBe(1);
     });
 
     it('should track queued action count', () => {
       expect(turnResolver.getQueuedActionCount()).toBe(0);
-      
+
       turnResolver.queueAction({ actionType: 'attack', playerId: 'player1' });
       expect(turnResolver.getQueuedActionCount()).toBe(1);
-      
+
       turnResolver.queueAction({ actionType: 'heal', playerId: 'player2' });
       expect(turnResolver.getQueuedActionCount()).toBe(2);
     });
@@ -820,7 +820,7 @@ describe('TurnResolver (TypeScript)', () => {
   describe('Serialization and Deserialization', () => {
     it('should serialize to JSON correctly', () => {
       turnResolver.queueAction({ actionType: 'attack', playerId: 'player1' });
-      
+
       const result = turnResolver.toJSON();
 
       expect(result.gameCode).toBe('GAME123');

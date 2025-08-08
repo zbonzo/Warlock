@@ -3,6 +3,8 @@
  * Handles abilities that target multiple enemies with damage
  */
 
+import { createActionLog, createDamageLog } from '../../../../../utils/logEntry.js';
+import { secureId } from '../../../../../utils/secureRandom.js';
 import type { Player, Monster, Ability } from '../../../../../types/generated.js';
 import type {
   AbilityHandler,
@@ -61,8 +63,8 @@ export const handleAoeDamage: AbilityHandler = (
 
   // For AOE damage, typically hit all players except self, and potentially the monster
   for (const player of game.players.values()) {
-    if (player.id !== actor.id && 
-        (player as any).isAlive !== false && 
+    if (player.id !== actor.id &&
+        (player as any).isAlive !== false &&
         (player as any).hp > 0) {
       // Skip invisible players
       if (!(player.statusEffects && (player.statusEffects as any).invisible)) {
@@ -72,25 +74,20 @@ export const handleAoeDamage: AbilityHandler = (
   }
 
   // Add monster if it's alive and ability can target monsters
-  if (game.monster && 
-      (game.monster as any).isAlive && 
+  if (game.monster &&
+      (game.monster as any).isAlive &&
       (game.monster as any).hp > 0) {
     // Most AOE abilities can target the monster unless specifically excluded
     targets.push(game.monster);
   }
 
   if (targets.length === 0) {
-    log.push({
-      id: `aoe-no-targets-${Date.now()}`,
-      timestamp: Date.now(),
-      type: 'action',
-      source: actor.id,
-      message: `${actor.name} finds no valid targets for ${ability['name']}!`,
-      details: { reason: 'no_valid_targets' },
-      public: true,
-      isPublic: true,
-      priority: 'medium'
-    });
+    log.push(createActionLog(
+      actor.id,
+      'none',
+      `${actor.name} finds no valid targets for ${ability['name']}!`,
+      { details: { reason: 'no_valid_targets' }, priority: 'medium', public: true }
+    ));
     return false;
   }
 
@@ -115,42 +112,34 @@ export const handleAoeDamage: AbilityHandler = (
       hitTargets++;
 
       const targetName = (aoeTarget as Player).name || (aoeTarget as Monster).name;
-      
-      log.push({
-        id: `aoe-hit-${Date.now()}-${aoeTarget.id}`,
-        timestamp: Date.now(),
-        type: 'damage',
-        source: actor.id,
-        target: aoeTarget.id,
-        message: `${actor.name} hits ${targetName} with ${ability['name']} for ${damageResult.finalDamage} damage!`,
-        details: {
-          damage: damageResult.finalDamage
-        },
-        public: true,
-        isPublic: true,
-        priority: 'high'
-      });
+
+      log.push(createDamageLog(
+        actor.id,
+        aoeTarget.id,
+        damageResult.finalDamage,
+        `${actor.name} hits ${targetName} with ${ability['name']} for ${damageResult.finalDamage} damage!`,
+        { priority: 'high', public: true }
+      ));
     }
   }
 
   if (hitTargets > 0) {
     // Log overall AOE success
-    log.push({
-      id: `aoe-summary-${Date.now()}`,
-      timestamp: Date.now(),
-      type: 'action',
-      source: actor.id,
-      message: `${actor.name} completes ${ability['name']}: ${hitTargets}/${targets.length} targets hit for ${totalDamageDealt} total damage!`,
-      details: {
-        hitTargets,
-        totalTargets: targets.length,
-        totalDamageDealt,
-        coordinationBonus
-      },
-      public: true,
-      isPublic: true,
-      priority: 'high'
-    });
+    log.push(createActionLog(
+      actor.id,
+      'multiple',
+      `${actor.name} completes ${ability['name']}: ${hitTargets}/${targets.length} targets hit for ${totalDamageDealt} total damage!`,
+      {
+        details: {
+          hitTargets,
+          totalTargets: targets.length,
+          totalDamageDealt,
+          coordinationBonus
+        },
+        priority: 'high',
+        public: true
+      }
+    ));
 
     // Apply threat for total AoE damage
     // Use the first target for threat calculation, but account for total damage
@@ -177,7 +166,7 @@ export const handleInfernoBlast: AbilityHandler = (
 ): boolean => {
   // First deal normal damage with coordination bonuses
   const aoeSuccess = handleAoeDamage(actor, target, ability, log, systems, coordinationInfo);
-  
+
   if (!aoeSuccess) {
     return false;
   }
@@ -196,12 +185,12 @@ export const handleInfernoBlast: AbilityHandler = (
 
   // Apply burn to all living enemies
   for (const player of game.players.values()) {
-    if (player.id !== actor.id && 
-        (player as any).isAlive !== false && 
+    if (player.id !== actor.id &&
+        (player as any).isAlive !== false &&
         (player as any).hp > 0) {
-      
+
       const statusResult = systems.statusEffectManager?.applyStatusEffect?.(player, {
-        id: `burn-${Date.now()}-${player.id}`,
+        id: secureId(`burn-${player.id}`),
         name: 'burn',
         type: 'debuff',
         duration: burnDuration,
@@ -219,21 +208,21 @@ export const handleInfernoBlast: AbilityHandler = (
   }
 
   if (burnTargets > 0) {
-    log.push({
-      id: `inferno-burn-${Date.now()}`,
-      timestamp: Date.now(),
-      type: 'status',
-      source: actor.id,
-      message: `${actor.name}'s Inferno Blast applies burning to ${burnTargets} targets (${burnDamage} damage/turn for ${burnDuration} turns)!`,
-      details: {
-        burnTargets,
-        burnDamage,
-        burnDuration
-      },
-      public: true,
-      isPublic: true,
-      priority: 'medium'
-    });
+    log.push(createActionLog(
+      actor.id,
+      'multiple',
+      `${actor.name}'s Inferno Blast applies burning to ${burnTargets} targets (${burnDamage} damage/turn for ${burnDuration} turns)!`,
+      {
+        type: 'status',
+        details: {
+          burnTargets,
+          burnDamage,
+          burnDuration
+        },
+        priority: 'medium',
+        public: true
+      }
+    ));
   }
 
   return true;

@@ -116,10 +116,10 @@ class RefactoredCombatSystem {
    * Apply damage to a player with all modifiers
    */
   applyDamage(
-    target: Player, 
-    baseDamage: number, 
-    attacker: Player | null, 
-    damageType: string = 'physical', 
+    target: Player,
+    baseDamage: number,
+    attacker: Player | null,
+    damageType: string = 'physical',
     options: any = {}
   ): number {
     // Calculate coordination bonus
@@ -155,10 +155,10 @@ class RefactoredCombatSystem {
    * Apply healing to a player
    */
   applyHealing(
-    healer: Player | null, 
-    target: Player, 
-    baseAmount: number, 
-    log: string[] = [], 
+    healer: Player | null,
+    target: Player,
+    baseAmount: number,
+    log: string[] = [],
     options: any = {}
   ): number {
     // Calculate comeback bonus
@@ -187,7 +187,7 @@ class RefactoredCombatSystem {
    */
   getEnemyTargets(actor: Player): (Monster | Player)[] {
     const enemies: (Monster | Player)[] = [];
-    
+
     // Add monster as enemy if it's alive
     const monster = this.monsterController.getMonster();
     if (monster && monster.hp > 0) {
@@ -220,7 +220,7 @@ class RefactoredCombatSystem {
    */
   getAllyTargets(actor: Player): Player[] {
     const allies: Player[] = [];
-    
+
     // Add players of same alignment
     for (const player of this.players.values()) {
       if (player.id !== actor.id && player.isAlive && player.isWarlock === actor.isWarlock) {

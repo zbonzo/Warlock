@@ -67,12 +67,12 @@ describe('useCharacterUtils', () => {
 
   describe('toZalgo function', () => {
     it('should corrupt text with zalgo characters', () => {
-      const { result } = renderHook(() => 
+      const { result } = renderHook(() =>
         useCharacterUtils(mockPlayer, mockPlayers)
       );
 
       const corruptedText = result.current.toZalgo('Hello');
-      
+
       expect(corruptedText).not.toBe('Hello');
       expect(corruptedText.length).toBeGreaterThan(5); // Should be longer due to combining chars
       expect(corruptedText).toContain('H');
@@ -82,7 +82,7 @@ describe('useCharacterUtils', () => {
     });
 
     it('should handle empty string', () => {
-      const { result } = renderHook(() => 
+      const { result } = renderHook(() =>
         useCharacterUtils(mockPlayer, mockPlayers)
       );
 
@@ -91,7 +91,7 @@ describe('useCharacterUtils', () => {
     });
 
     it('should handle single character', () => {
-      const { result } = renderHook(() => 
+      const { result } = renderHook(() =>
         useCharacterUtils(mockPlayer, mockPlayers)
       );
 
@@ -110,7 +110,7 @@ describe('useCharacterUtils', () => {
         .mockReturnValueOnce(0.1) // charType = 0 (above again)
         .mockReturnValueOnce(0.5); // array index
 
-      const { result } = renderHook(() => 
+      const { result } = renderHook(() =>
         useCharacterUtils(mockPlayer, mockPlayers)
       );
 
@@ -122,7 +122,7 @@ describe('useCharacterUtils', () => {
 
   describe('getCharacterTitle function', () => {
     it('should return formatted character title for normal players', () => {
-      const { result } = renderHook(() => 
+      const { result } = renderHook(() =>
         useCharacterUtils(mockPlayer, mockPlayers)
       );
 
@@ -132,7 +132,7 @@ describe('useCharacterUtils', () => {
 
     it('should return zalgo-corrupted title for warlocks', () => {
       const warlockPlayer = { ...mockPlayer, isWarlock: true };
-      const { result } = renderHook(() => 
+      const { result } = renderHook(() =>
         useCharacterUtils(warlockPlayer, mockPlayers)
       );
 
@@ -145,13 +145,13 @@ describe('useCharacterUtils', () => {
     });
 
     it('should handle missing race/class information', () => {
-      const incompletePlayer = { 
-        ...mockPlayer, 
-        race: null, 
-        class: null 
+      const incompletePlayer = {
+        ...mockPlayer,
+        race: null,
+        class: null
       } as Player;
-      
-      const { result } = renderHook(() => 
+
+      const { result } = renderHook(() =>
         useCharacterUtils(incompletePlayer, mockPlayers)
       );
 
@@ -160,7 +160,7 @@ describe('useCharacterUtils', () => {
     });
 
     it('should handle null player', () => {
-      const { result } = renderHook(() => 
+      const { result } = renderHook(() =>
         useCharacterUtils(null, mockPlayers)
       );
 
@@ -169,13 +169,13 @@ describe('useCharacterUtils', () => {
     });
 
     it('should handle undefined race or class', () => {
-      const partialPlayer = { 
-        ...mockPlayer, 
-        race: undefined, 
-        class: 'Warrior' 
+      const partialPlayer = {
+        ...mockPlayer,
+        race: undefined,
+        class: 'Warrior'
       } as any;
-      
-      const { result } = renderHook(() => 
+
+      const { result } = renderHook(() =>
         useCharacterUtils(partialPlayer, mockPlayers)
       );
 
@@ -186,7 +186,7 @@ describe('useCharacterUtils', () => {
 
   describe('healthPercent calculation', () => {
     it('should calculate correct health percentage', () => {
-      const { result } = renderHook(() => 
+      const { result } = renderHook(() =>
         useCharacterUtils(mockPlayer, mockPlayers)
       );
 
@@ -195,7 +195,7 @@ describe('useCharacterUtils', () => {
 
     it('should handle full health', () => {
       const fullHealthPlayer = { ...mockPlayer, hp: 100 };
-      const { result } = renderHook(() => 
+      const { result } = renderHook(() =>
         useCharacterUtils(fullHealthPlayer, mockPlayers)
       );
 
@@ -204,7 +204,7 @@ describe('useCharacterUtils', () => {
 
     it('should handle zero health', () => {
       const deadPlayer = { ...mockPlayer, hp: 0 };
-      const { result } = renderHook(() => 
+      const { result } = renderHook(() =>
         useCharacterUtils(deadPlayer, mockPlayers)
       );
 
@@ -213,7 +213,7 @@ describe('useCharacterUtils', () => {
 
     it('should handle null hp values', () => {
       const nullHpPlayer = { ...mockPlayer, hp: null, maxHp: null } as any;
-      const { result } = renderHook(() => 
+      const { result } = renderHook(() =>
         useCharacterUtils(nullHpPlayer, mockPlayers)
       );
 
@@ -222,7 +222,7 @@ describe('useCharacterUtils', () => {
 
     it('should handle zero maxHp', () => {
       const zeroMaxHpPlayer = { ...mockPlayer, maxHp: 0 };
-      const { result } = renderHook(() => 
+      const { result } = renderHook(() =>
         useCharacterUtils(zeroMaxHpPlayer, mockPlayers)
       );
 
@@ -230,7 +230,7 @@ describe('useCharacterUtils', () => {
     });
 
     it('should handle null player', () => {
-      const { result } = renderHook(() => 
+      const { result } = renderHook(() =>
         useCharacterUtils(null, mockPlayers)
       );
 
@@ -240,7 +240,7 @@ describe('useCharacterUtils', () => {
 
   describe('alivePlayers calculation', () => {
     it('should filter alive players correctly', () => {
-      const { result } = renderHook(() => 
+      const { result } = renderHook(() =>
         useCharacterUtils(mockPlayer, mockPlayers)
       );
 
@@ -251,7 +251,7 @@ describe('useCharacterUtils', () => {
 
     it('should handle all players dead', () => {
       const allDeadPlayers = mockPlayers.map(p => ({ ...p, isAlive: false }));
-      const { result } = renderHook(() => 
+      const { result } = renderHook(() =>
         useCharacterUtils(mockPlayer, allDeadPlayers)
       );
 
@@ -259,7 +259,7 @@ describe('useCharacterUtils', () => {
     });
 
     it('should handle empty players array', () => {
-      const { result } = renderHook(() => 
+      const { result } = renderHook(() =>
         useCharacterUtils(mockPlayer, [])
       );
 
@@ -268,7 +268,7 @@ describe('useCharacterUtils', () => {
 
     it('should handle all players alive', () => {
       const allAlivePlayers = mockPlayers.map(p => ({ ...p, isAlive: true }));
-      const { result } = renderHook(() => 
+      const { result } = renderHook(() =>
         useCharacterUtils(mockPlayer, allAlivePlayers)
       );
 
@@ -278,7 +278,7 @@ describe('useCharacterUtils', () => {
 
   describe('readyProgress calculation', () => {
     it('should calculate ready progress correctly', () => {
-      const { result } = renderHook(() => 
+      const { result } = renderHook(() =>
         useCharacterUtils(mockPlayer, mockPlayers)
       );
 
@@ -290,12 +290,12 @@ describe('useCharacterUtils', () => {
     });
 
     it('should handle all players ready', () => {
-      const allReadyPlayers = mockPlayers.map(p => ({ 
-        ...p, 
-        isReady: true 
+      const allReadyPlayers = mockPlayers.map(p => ({
+        ...p,
+        isReady: true
       } as any));
-      
-      const { result } = renderHook(() => 
+
+      const { result } = renderHook(() =>
         useCharacterUtils(mockPlayer, allReadyPlayers)
       );
 
@@ -307,12 +307,12 @@ describe('useCharacterUtils', () => {
     });
 
     it('should handle no players ready', () => {
-      const noReadyPlayers = mockPlayers.map(p => ({ 
-        ...p, 
-        isReady: false 
+      const noReadyPlayers = mockPlayers.map(p => ({
+        ...p,
+        isReady: false
       } as any));
-      
-      const { result } = renderHook(() => 
+
+      const { result } = renderHook(() =>
         useCharacterUtils(mockPlayer, noReadyPlayers)
       );
 
@@ -325,7 +325,7 @@ describe('useCharacterUtils', () => {
 
     it('should handle no alive players', () => {
       const allDeadPlayers = mockPlayers.map(p => ({ ...p, isAlive: false }));
-      const { result } = renderHook(() => 
+      const { result } = renderHook(() =>
         useCharacterUtils(mockPlayer, allDeadPlayers)
       );
 
@@ -337,7 +337,7 @@ describe('useCharacterUtils', () => {
     });
 
     it('should handle empty players array', () => {
-      const { result } = renderHook(() => 
+      const { result } = renderHook(() =>
         useCharacterUtils(mockPlayer, [])
       );
 
@@ -357,12 +357,12 @@ describe('useCharacterUtils', () => {
       );
 
       const firstResult = result.current;
-      
+
       // Rerender with same props
       rerender({ me: mockPlayer, players: mockPlayers });
-      
+
       const secondResult = result.current;
-      
+
       // Should be the same references due to memoization
       expect(firstResult.alivePlayers).toBe(secondResult.alivePlayers);
       expect(firstResult.readyProgress).toBe(secondResult.readyProgress);
@@ -399,7 +399,7 @@ describe('useCharacterUtils', () => {
         isAlive: true,
         isReady: true
       } as Player;
-      
+
       const updatedPlayers = [...mockPlayers, newPlayer];
       rerender({ me: mockPlayer, players: updatedPlayers });
 
@@ -411,7 +411,7 @@ describe('useCharacterUtils', () => {
 
   describe('edge cases and error handling', () => {
     it('should handle undefined/null values gracefully', () => {
-      const { result } = renderHook(() => 
+      const { result } = renderHook(() =>
         useCharacterUtils(undefined as any, undefined as any)
       );
 
@@ -428,8 +428,8 @@ describe('useCharacterUtils', () => {
     it('should handle malformed player objects', () => {
       const malformedPlayer = { name: 'Test' } as Player;
       const malformedPlayers = [{ isAlive: true }] as Player[];
-      
-      const { result } = renderHook(() => 
+
+      const { result } = renderHook(() =>
         useCharacterUtils(malformedPlayer, malformedPlayers)
       );
 
@@ -448,9 +448,9 @@ describe('useCharacterUtils', () => {
 
       const firstToZalgo = result.current.toZalgo;
       const firstGetCharacterTitle = result.current.getCharacterTitle;
-      
+
       rerender({ me: mockPlayer, players: mockPlayers });
-      
+
       expect(result.current.toZalgo).toBe(firstToZalgo);
       expect(result.current.getCharacterTitle).toBe(firstGetCharacterTitle);
     });

@@ -3,6 +3,8 @@
  * Handles standard healing abilities and restoration effects
  */
 
+import { createActionLog, createHealLog } from '../../../../../utils/logEntry.js';
+import { secureId } from '../../../../../utils/secureRandom.js';
 import type { Player, Monster, Ability } from '../../../../../types/generated.js';
 import type {
   AbilityHandler,
@@ -39,18 +41,12 @@ export const handleHeal: AbilityHandler = (
 
   // Check if target is alive
   if ((targetPlayer as any).isAlive === false || (targetPlayer as any).hp <= 0) {
-    log.push({
-      id: `heal-dead-target-${Date.now()}`,
-      timestamp: Date.now(),
-      type: 'action',
-      source: actor.id,
-      target: target.id,
-      message: `${actor.name} cannot heal ${targetPlayer.name} - target is dead!`,
-      details: { reason: 'target_dead' },
-      public: true,
-      isPublic: true,
-      priority: 'medium'
-    });
+    log.push(createActionLog(
+      actor.id,
+      target.id,
+      `${actor.name} cannot heal ${targetPlayer.name} - target is dead!`,
+      { details: { reason: 'target_dead' }, priority: 'medium', public: true }
+    ));
     return false;
   }
 
@@ -64,21 +60,20 @@ export const handleHeal: AbilityHandler = (
     coordinationBonus = Math.floor(Number(baseHealing) * Number(coordinationInfo.bonusMultiplier));
     finalHealing += Number(coordinationBonus);
 
-    log.push({
-      id: `heal-coordination-bonus-${Date.now()}`,
-      timestamp: Date.now(),
-      type: 'action',
-      source: actor.id,
-      message: `${actor.name} receives coordination bonus: +${coordinationBonus} healing`,
-      details: { 
-        coordinationBonus,
-        baseBonus: coordinationInfo.bonusMultiplier,
-        participants: coordinationInfo.participantNames 
-      },
-      public: true,
-      isPublic: true,
-      priority: 'medium'
-    });
+    log.push(createActionLog(
+      actor.id,
+      'self',
+      `${actor.name} receives coordination bonus: +${coordinationBonus} healing`,
+      {
+        details: {
+          coordinationBonus,
+          baseBonus: coordinationInfo.bonusMultiplier,
+          participants: coordinationInfo.participantNames
+        },
+        priority: 'medium',
+        public: true
+      }
+    ));
   }
 
   // Apply healing modifiers (class bonuses, equipment, etc.)
@@ -94,23 +89,22 @@ export const handleHeal: AbilityHandler = (
   }) || { success: true, finalHealing: Number(finalHealing), wasOverhealing: false };
 
   if (healingResult.success) {
-    log.push({
-      id: `heal-success-${Date.now()}`,
-      timestamp: Date.now(),
-      type: 'action',
-      source: actor.id,
-      target: target.id,
-      message: `${actor.name} heals ${targetPlayer.name} with ${ability['name']} for ${healingResult.finalHealing} HP!`,
-      details: {
-        baseHealing,
-        finalHealing: healingResult.finalHealing,
-        coordinationBonus,
-        wasOverhealing: healingResult.wasOverhealing
-      },
-      public: true,
-      isPublic: true,
-      priority: 'high'
-    });
+    log.push(createHealLog(
+      actor.id,
+      target.id,
+      healingResult.finalHealing,
+      `${actor.name} heals ${targetPlayer.name} with ${ability['name']} for ${healingResult.finalHealing} HP!`,
+      {
+        details: {
+          baseHealing,
+          finalHealing: healingResult.finalHealing,
+          coordinationBonus,
+          wasOverhealing: healingResult.wasOverhealing
+        },
+        priority: 'high',
+        public: true
+      }
+    ));
 
     // Apply threat for healing (generates some threat for helping)
     applyThreatForAbility(actor, target, ability, 0, Number(healingResult.finalHealing), systems);
@@ -152,7 +146,7 @@ export const handleMultiHeal: AbilityHandler = (
 
   const baseHealing = Number(ability['healing']) || Number((ability as any).params?.healing) || 15;
   let coordinationBonus = 0;
-  
+
   if (coordinationInfo && coordinationInfo.isActive) {
     coordinationBonus = Math.floor(Number(baseHealing) * Number(coordinationInfo.bonusMultiplier));
   }
@@ -163,7 +157,7 @@ export const handleMultiHeal: AbilityHandler = (
   // Apply healing to all targets
   for (const healTarget of targets) {
     let finalHealing = Number(baseHealing) + Number(coordinationBonus);
-    
+
     // Apply healing modifiers for each target
     const healingModifiers = systems.calculateDamageModifiers?.(actor, healTarget as Player, ability) || 1;
     finalHealing = Math.floor(Number(finalHealing) * Number(healingModifiers));
@@ -179,41 +173,39 @@ export const handleMultiHeal: AbilityHandler = (
       totalHealingApplied += Number(healingResult.finalHealing);
       healedTargets++;
 
-      log.push({
-        id: `multi-heal-target-${Date.now()}-${(healTarget as Player).id}`,
-        timestamp: Date.now(),
-        type: 'action',
-        source: actor.id,
-        target: (healTarget as Player).id,
-        message: `${actor.name} heals ${(healTarget as Player).name} for ${healingResult.finalHealing} HP!`,
-        details: {
-          healing: healingResult.finalHealing,
-          wasOverhealing: healingResult.wasOverhealing
-        },
-        public: true,
-        isPublic: true,
-        priority: 'high'
-      });
+      log.push(createHealLog(
+        actor.id,
+        (healTarget as Player).id,
+        healingResult.finalHealing,
+        `${actor.name} heals ${(healTarget as Player).name} for ${healingResult.finalHealing} HP!`,
+        {
+          details: {
+            healing: healingResult.finalHealing,
+            wasOverhealing: healingResult.wasOverhealing
+          },
+          priority: 'high',
+          public: true
+        }
+      ));
     }
   }
 
   if (healedTargets > 0) {
-    log.push({
-      id: `multi-heal-summary-${Date.now()}`,
-      timestamp: Date.now(),
-      type: 'action',
-      source: actor.id,
-      message: `${actor.name} completes ${ability['name']}: healed ${healedTargets}/${targets.length} allies for ${totalHealingApplied} total HP!`,
-      details: {
-        healedTargets,
-        totalTargets: targets.length,
-        totalHealingApplied,
-        coordinationBonus
-      },
-      public: true,
-      isPublic: true,
-      priority: 'high'
-    });
+    log.push(createActionLog(
+      actor.id,
+      'multiple',
+      `${actor.name} completes ${ability['name']}: healed ${healedTargets}/${targets.length} allies for ${totalHealingApplied} total HP!`,
+      {
+        details: {
+          healedTargets,
+          totalTargets: targets.length,
+          totalHealingApplied,
+          coordinationBonus
+        },
+        priority: 'high',
+        public: true
+      }
+    ));
 
     return true;
   }

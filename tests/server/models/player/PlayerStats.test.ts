@@ -20,7 +20,7 @@ describe('PlayerStats', () => {
   describe('constructor', () => {
     it('should initialize with default stats', () => {
       const stats = playerStats.getStats();
-      
+
       expect(stats).toEqual({
         totalDamageDealt: 0,
         totalHealingDone: 0,
@@ -259,7 +259,7 @@ describe('PlayerStats', () => {
     describe('getStats', () => {
       it('should return a copy of stats', () => {
         playerStats.addDamageDealt(100);
-        
+
         const stats1 = playerStats.getStats();
         const stats2 = playerStats.getStats();
 
@@ -388,7 +388,7 @@ describe('PlayerStats', () => {
         };
 
         const stats = PlayerStats.fromJSON('NewPlayer', data);
-        
+
         expect(stats.getStats()).toEqual(data);
         expect(stats.getStat('totalDamageDealt')).toBe(200);
       });
@@ -422,7 +422,7 @@ describe('PlayerStats', () => {
   describe('complex scenarios', () => {
     it('should track multiple damage instances correctly', () => {
       const damages = [10, 25, 15, 30, 20];
-      
+
       damages.forEach(damage => playerStats.addDamageDealt(damage));
 
       const stats = playerStats.getStats();

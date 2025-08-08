@@ -62,7 +62,7 @@ class EntityAdapter {
     if (!player.id && (player as any).socketId) {
       player.id = (player as any).socketId;
     }
-    
+
     if (!player.name) {
       player.name = `Player_${player.id}`;
     }
@@ -85,7 +85,7 @@ class EntityAdapter {
 
     // Add status effect calculation helpers
     this.addCalculationHelpers(player as Player);
-    
+
     // Add legacy compatibility methods
     this.addLegacyCompatibility(player as Player);
 
@@ -100,7 +100,7 @@ class EntityAdapter {
     if (!monster.id) {
       monster.id = '__monster__';
     }
-    
+
     if (!monster.name) {
       monster.name = 'Monster';
     }
@@ -155,11 +155,11 @@ class EntityAdapter {
       if ((this as Player).race === 'Rockhewn' && (this as any).stoneArmorIntact) {
         const degradation = Math.min(damage, 1); // Degrade by 1 per hit
         (this as any).stoneArmorValue = Math.max(0, ((this as any).stoneArmorValue || 0) - degradation);
-        
+
         if ((this as any).stoneArmorValue <= 0) {
           (this as any).stoneArmorIntact = false;
         }
-        
+
         logger.debug(`Stone armor degraded: ${this.name} armor: ${(this as any).stoneArmorValue}`);
       }
     };
@@ -228,7 +228,7 @@ class EntityAdapter {
    */
   static validateEntity(entity: Partial<Entity>): boolean {
     const required = ['id', 'name', 'hp', 'maxHp', 'isAlive', 'entityType'];
-    
+
     for (const prop of required) {
       if ((entity as any)[prop] === undefined) {
         logger.error(`Entity missing required property: ${prop}`, entity);

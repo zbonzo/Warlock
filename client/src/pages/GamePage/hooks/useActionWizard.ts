@@ -63,6 +63,7 @@ export const useActionWizard = (me: Player | null): ActionWizardState => {
   useEffect(() => {
     const shouldShowWizard = me?.['isAlive'] && !me?.statusEffects?.stunned;
     
+    /* eslint-disable-next-line no-console */
     console.log('🔍 useActionWizard effect:', {
       shouldShowWizard,
       isMobile,
@@ -80,6 +81,7 @@ export const useActionWizard = (me: Player | null): ActionWizardState => {
         setIsWizardOpen(true);
         // Only reset to step 1 if not already submitted
         if (!submitted) {
+          /* eslint-disable-next-line no-console */
           console.log('🔍 Mobile: Resetting to step 1 (not submitted)');
           setCurrentStep(1);
         }
@@ -91,6 +93,7 @@ export const useActionWizard = (me: Player | null): ActionWizardState => {
       setIsWizardOpen(shouldShowWizard);
       if (shouldShowWizard && !submitted) {
         // Only reset to step 1 if not already submitted
+        /* eslint-disable-next-line no-console */
         console.log('🔍 Desktop: Resetting to step 1 (not submitted)');
         setCurrentStep(1);
       }
@@ -121,16 +124,19 @@ export const useActionWizard = (me: Player | null): ActionWizardState => {
    * Handle tab change for mobile navigation
    */
   const handleTabChange = useCallback((tab: TabType) => {
+    /* eslint-disable-next-line no-console */
     console.log('Tab change requested:', tab);
     
     if (tab === 'action') {
       // Check if player can take action
       if (!me?.['isAlive']) {
+        /* eslint-disable-next-line no-console */
         console.log('Cannot switch to action tab - player is dead');
         return;
       }
       
       if (me?.statusEffects?.stunned) {
+        /* eslint-disable-next-line no-console */
         console.log('Cannot switch to action tab - player is stunned');
         return;
       }
@@ -145,6 +151,7 @@ export const useActionWizard = (me: Player | null): ActionWizardState => {
    * Handle ability selection (don't auto-advance to step 2 - use Continue button)
    */
   const handleAbilitySelect = useCallback((ability: Ability) => {
+    /* eslint-disable-next-line no-console */
     console.log('Ability selected:', ability);
     setSelectedAbility(ability);
     // Don't automatically move to step 2 - wait for Continue button
@@ -154,6 +161,7 @@ export const useActionWizard = (me: Player | null): ActionWizardState => {
    * Handle target selection
    */
   const handleTargetSelect = useCallback((targetId: string) => {
+    /* eslint-disable-next-line no-console */
     console.log('Target selected:', targetId);
     setSelectedTarget(targetId);
   }, []);
@@ -162,6 +170,7 @@ export const useActionWizard = (me: Player | null): ActionWizardState => {
    * Handle action submission (keep wizard open for waiting state)
    */
   const handleSubmitAction = useCallback(() => {
+    /* eslint-disable-next-line no-console */
     console.log('🔍 handleSubmitAction called:', { 
       ability: selectedAbility?.name || 'none', 
       target: selectedTarget,
@@ -178,6 +187,7 @@ export const useActionWizard = (me: Player | null): ActionWizardState => {
    * Show GameState drawer (mobile only) - replaces close/cancel
    */
   const handleShowGameState = useCallback(() => {
+    /* eslint-disable-next-line no-console */
     console.log('Showing GameState drawer');
     
     if (isMobile) {
@@ -190,6 +200,7 @@ export const useActionWizard = (me: Player | null): ActionWizardState => {
    * Close GameState drawer and return to actions
    */
   const handleBackToActions = useCallback(() => {
+    /* eslint-disable-next-line no-console */
     console.log('Back to actions from GameState');
     
     if (isMobile) {
@@ -202,6 +213,7 @@ export const useActionWizard = (me: Player | null): ActionWizardState => {
    * Close GameState drawer completely
    */
   const handleCloseGameState = useCallback(() => {
+    /* eslint-disable-next-line no-console */
     console.log('Closing GameState drawer');
     setShowGameState(false);
   }, []);
@@ -210,6 +222,7 @@ export const useActionWizard = (me: Player | null): ActionWizardState => {
    * Close wizard (desktop only - mobile uses GameState instead)
    */
   const handleCloseWizard = useCallback(() => {
+    /* eslint-disable-next-line no-console */
     console.log('Closing wizard');
     
     if (!isMobile) {
@@ -227,6 +240,7 @@ export const useActionWizard = (me: Player | null): ActionWizardState => {
    * Reset wizard state (called externally)
    */
   const resetWizard = useCallback(() => {
+    /* eslint-disable-next-line no-console */
     console.log('🔍 resetWizard called!', {
       previousStep: currentStep,
       previousAbility: selectedAbility?.name || 'none',

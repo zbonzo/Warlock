@@ -125,7 +125,7 @@ describe('AbilityCommand', () => {
 
     it('should set canUndo to false by default', () => {
       const command = new AbilityCommand('player1', 'fireball');
-      
+
       // canUndo is typically not directly accessible, but we can test behavior
       expect(command.actionType).toBe('ability');
     });
@@ -502,7 +502,7 @@ describe('AbilityCommand', () => {
   describe('execution', () => {
     it('should execute ability successfully', async () => {
       const command = new AbilityCommand('player1', 'fireball', { targetId: 'player2' });
-      
+
       await command.validate(mockGameContext);
       const result = await command.execute(mockGameContext);
 
@@ -537,7 +537,7 @@ describe('AbilityCommand', () => {
       });
 
       const command = new AbilityCommand('player1', 'fireball', { targetId: 'player2' });
-      
+
       await command.validate(mockGameContext);
 
       await expect(command.execute(mockGameContext)).rejects.toThrow('Game phase error');
@@ -553,7 +553,7 @@ describe('AbilityCommand', () => {
 
     it('should handle missing ability during execution', async () => {
       const command = new AbilityCommand('player1', 'fireball', { targetId: 'player2' });
-      
+
       // Remove ability after validation
       mockPlayer.abilities = [];
 
@@ -566,7 +566,7 @@ describe('AbilityCommand', () => {
       mockGame.gamePhase = undefined;
 
       const command = new AbilityCommand('player1', 'fireball', { targetId: 'player2' });
-      
+
       await command.validate(mockGameContext);
       const result = await command.execute(mockGameContext);
 
@@ -576,7 +576,7 @@ describe('AbilityCommand', () => {
 
     it('should handle missing player during execution', async () => {
       const command = new AbilityCommand('player1', 'fireball', { targetId: 'player2' });
-      
+
       await command.validate(mockGameContext);
 
       // Remove player after validation
@@ -590,11 +590,11 @@ describe('AbilityCommand', () => {
 
     it('should execute with metadata', async () => {
       const metadata = { intensity: 'high', element: 'fire' };
-      const command = new AbilityCommand('player1', 'fireball', { 
+      const command = new AbilityCommand('player1', 'fireball', {
         targetId: 'player2',
         metadata
       });
-      
+
       await command.validate(mockGameContext);
       await command.execute(mockGameContext);
 
@@ -611,7 +611,7 @@ describe('AbilityCommand', () => {
     it('should detect warlock abilities by category', () => {
       mockAbility.category = 'Warlock';
       const command = new AbilityCommand('player1', 'fireball');
-      
+
       // Test private method through reflection
       const isWarlock = (command as any)._isWarlockAbility(mockAbility);
       expect(isWarlock).toBe(true);
@@ -620,7 +620,7 @@ describe('AbilityCommand', () => {
     it('should detect warlock abilities by flag', () => {
       mockAbility.isWarlockAbility = true;
       const command = new AbilityCommand('player1', 'fireball');
-      
+
       const isWarlock = (command as any)._isWarlockAbility(mockAbility);
       expect(isWarlock).toBe(true);
     });
@@ -629,7 +629,7 @@ describe('AbilityCommand', () => {
       mockAbility.category = 'Combat';
       mockAbility.isWarlockAbility = false;
       const command = new AbilityCommand('player1', 'fireball');
-      
+
       const isWarlock = (command as any)._isWarlockAbility(mockAbility);
       expect(isWarlock).toBe(false);
     });
@@ -638,21 +638,21 @@ describe('AbilityCommand', () => {
   describe('target resolution', () => {
     it('should resolve player target', () => {
       const command = new AbilityCommand('player1', 'fireball', { targetId: 'player2' });
-      
+
       const target = (command as any)._resolveTarget(mockGameContext);
       expect(target).toBe(mockPlayer); // mockGame.getPlayerById returns mockPlayer
     });
 
     it('should resolve monster target', () => {
       const command = new AbilityCommand('player1', 'fireball', { targetId: '__monster__' });
-      
+
       const target = (command as any)._resolveTarget(mockGameContext);
       expect(target).toBe(mockGame.monster);
     });
 
     it('should resolve AoE target (all players)', () => {
       const command = new AbilityCommand('player1', 'fireball');
-      
+
       const target = (command as any)._resolveTarget(mockGameContext);
       expect(Array.isArray(target)).toBe(true);
       expect(target.length).toBe(2); // Two players in the map
@@ -663,7 +663,7 @@ describe('AbilityCommand', () => {
     it('should execute ability through registry', async () => {
       const command = new AbilityCommand('player1', 'fireball', { targetId: 'player2' });
       const mockTarget = mockPlayer;
-      
+
       const result = await (command as any)._executeAbility(mockGameContext, mockAbility, mockTarget);
 
       expect(mockGame.systems.abilityRegistry.executePlayerAbility).toHaveBeenCalledWith(
@@ -682,12 +682,12 @@ describe('AbilityCommand', () => {
 
     it('should execute ability with coordination info', async () => {
       const coordinationInfo = { bonus: 1.5, participants: ['player1', 'player3'] };
-      const command = new AbilityCommand('player1', 'fireball', { 
+      const command = new AbilityCommand('player1', 'fireball', {
         targetId: 'player2',
         coordinationInfo
       });
       const mockTarget = mockPlayer;
-      
+
       const result = await (command as any)._executeAbility(mockGameContext, mockAbility, mockTarget);
 
       expect(mockGame.systems.abilityRegistry.executePlayerAbility).toHaveBeenCalledWith(
@@ -705,7 +705,7 @@ describe('AbilityCommand', () => {
     it('should handle missing game systems', async () => {
       mockGame.systems = undefined;
       const command = new AbilityCommand('player1', 'fireball', { targetId: 'player2' });
-      
+
       await expect((command as any)._executeAbility(mockGameContext, mockAbility, mockPlayer))
         .rejects.toThrow('Game systems not initialized');
     });
@@ -713,7 +713,7 @@ describe('AbilityCommand', () => {
     it('should handle missing ability registry', async () => {
       mockGame.systems.abilityRegistry = undefined;
       const command = new AbilityCommand('player1', 'fireball', { targetId: 'player2' });
-      
+
       await expect((command as any)._executeAbility(mockGameContext, mockAbility, mockPlayer))
         .rejects.toThrow('Game systems not initialized');
     });
@@ -723,7 +723,7 @@ describe('AbilityCommand', () => {
     it('should set ability cooldown', () => {
       const command = new AbilityCommand('player1', 'fireball');
       mockAbility.cooldown = 3;
-      
+
       (command as any)._setCooldown(mockPlayer, mockAbility);
 
       expect(mockPlayer.playerAbilities.setCooldown).toHaveBeenCalledWith('fireball', 3);
@@ -732,7 +732,7 @@ describe('AbilityCommand', () => {
     it('should not set cooldown when ability has no cooldown', () => {
       const command = new AbilityCommand('player1', 'fireball');
       mockAbility.cooldown = 0;
-      
+
       (command as any)._setCooldown(mockPlayer, mockAbility);
 
       expect(mockPlayer.playerAbilities.setCooldown).not.toHaveBeenCalled();
@@ -741,7 +741,7 @@ describe('AbilityCommand', () => {
     it('should not set cooldown when player has no playerAbilities', () => {
       const command = new AbilityCommand('player1', 'fireball');
       mockPlayer.playerAbilities = undefined;
-      
+
       (command as any)._setCooldown(mockPlayer, mockAbility);
 
       // Should not throw error

@@ -61,7 +61,7 @@ import testConfig from './environments/test.js';
  */
 const loadEnvConfig = (): Record<string, any> => {
   const env = process.env['NODE_ENV'] || 'development';
-  
+
   switch (env) {
     case 'development':
       return developmentConfig;
@@ -119,13 +119,13 @@ const abilityFunctions = {
   getAbility: (abilityId: string) => abilityLoader.getAbility(abilityId),
   getAbilities: (abilityIds: string[]) => abilityLoader.getAbilities(abilityIds),
   getAbilitiesByTag: (tag: string) => abilityLoader.getAbilitiesByTag(tag),
-  getAbilitiesByCategory: (category: 'Attack' | 'Defense' | 'Heal' | 'Special') => 
+  getAbilitiesByCategory: (category: 'Attack' | 'Defense' | 'Heal' | 'Special') =>
     abilityLoader.getAbilitiesByCategory(category),
   getAllAbilityIds: () => abilityLoader.getAllAbilityIds(),
   getAbilityButtonText: (abilityId: string) => abilityLoader.getAbilityButtonText(abilityId),
-  
+
   // Enhanced functions with business logic
-  isAbilityAvailable: (abilityId: string, context: any = {}) => 
+  isAbilityAvailable: (abilityId: string, context: any = {}) =>
     abilityLoader.isAbilityAvailable(abilityId, context),
   calculateAbilityDamage: (abilityId: string, context: any = {}) => {
     const ability = abilityLoader.getAbility(abilityId);
@@ -133,15 +133,15 @@ const abilityFunctions = {
   },
   getAbilityCooldown: (abilityId: string) => abilityLoader.getCooldownInfo(abilityId),
   getAbilityEffect: (abilityId: string) => abilityLoader.getEffectInfo(abilityId),
-  
+
   // Access to the raw abilities object for backwards compatibility
   get abilities() {
     return abilityLoader.getAllAbilities();
   },
-  
+
   // Hot reload function
   reloadAbilities: () => abilityLoader.reloadIfChanged(),
-  
+
   // Statistics and debugging
   getAbilityStats: () => abilityLoader.getAbilityStats(),
 };
@@ -159,7 +159,7 @@ const classFunctions = {
   calculateClassStats: (className: string, context?: any) => classLoader.calculateClassStats(className, context),
   validateClassAbilities: () => classLoader.validateClassAbilities(),
   isValidClass: (className: string) => classLoader.isValidClass(className),
-  
+
   // Legacy compatibility
   get availableClasses() {
     return classLoader.getAvailableClasses();
@@ -185,7 +185,7 @@ const raceFunctions = {
   isValidCombination: (raceName: string, className: string) => raceLoader.isValidCombination(raceName, className),
   calculateRaceStats: (raceName: string, context?: any) => raceLoader.calculateRaceStats(raceName, context),
   isValidRace: (raceName: string) => raceLoader.isValidRace(raceName),
-  
+
   // Legacy compatibility
   get availableRaces() {
     return raceLoader.getAvailableRaces();
@@ -209,7 +209,7 @@ const messageFunctions = {
   getSuccess: (key: string, data?: any) => messagesLoader.getSuccess(key, data),
   getEvent: (key: string, data?: any) => messagesLoader.getEvent(key, data),
   formatMessage: (template: string, data?: any) => messagesLoader.formatMessage(template, data),
-  
+
   // Enhanced message functions
   getPrivateMessage: (key: string, context?: any) => messagesLoader.getPrivateMessage(key, context),
   getWinCondition: (key: string, context?: any) => messagesLoader.getWinCondition(key, context),
@@ -219,7 +219,7 @@ const messageFunctions = {
   getPlayerMessage: (key: string, context?: any) => messagesLoader.getPlayerMessage(key, context),
   getUIMessage: (key: string, context?: any) => messagesLoader.getUIMessage(key, context),
   getServerLogMessage: (level: any, key: string, context?: any) => messagesLoader.getServerLogMessage(level, key, context),
-  
+
   // Legacy compatibility
   get messages() {
     return messagesLoader.getLegacyMessages().messages;
@@ -315,16 +315,16 @@ const config = {
     isGoodPlayer: boolean,
     comebackActive: boolean
   ) => gameBalanceLoader.applyComebackBonus(baseAmount, type, isGoodPlayer, comebackActive),
-  
+
   // Enhanced status effects functions
   getEffectDefaults: (effectName: string) => statusEffectsLoader.getEffectDefaults(effectName),
   isEffectStackable: (effectName: string) => statusEffectsLoader.isEffectStackable(effectName),
   isEffectRefreshable: (effectName: string) => statusEffectsLoader.isEffectRefreshable(effectName),
-  getEffectMessage: (effectName: string, messageType: string, context?: any) => 
+  getEffectMessage: (effectName: string, messageType: string, context?: any) =>
     statusEffectsLoader.getEffectMessage(effectName, messageType, context),
-  formatEffectMessage: (template: string, context?: any) => 
+  formatEffectMessage: (template: string, context?: any) =>
     statusEffectsLoader.formatEffectMessage(template, context),
-  
+
   // Legacy compatibility properties
   get gameBalance() {
     return gameBalanceLoader.getAllBalanceData();
@@ -350,7 +350,7 @@ const config = {
   get isDevelopment(): boolean {
     return this.env === 'development';
   },
-  
+
   get isProduction(): boolean {
     return this.env === 'production';
   },
@@ -359,21 +359,21 @@ const config = {
   validateConfiguration: (): { valid: boolean; errors: string[]; warnings: string[] } => {
     const errors: string[] = [];
     const warnings: string[] = [];
-    
+
     try {
       // Validate abilities
       const abilityStats = abilityLoader.getAbilityStats();
       if (abilityStats.total === 0) {
         errors.push('No abilities loaded');
       }
-      
+
       // Validate classes
       const classValidation = classLoader.validateClassAbilities();
       if (!classValidation.isValid) {
         errors.push(...classValidation.missing);
         warnings.push(...classValidation.warnings);
       }
-      
+
       // Validate races
       const raceValidation = raceLoader.validateCompatibility();
       if (!raceValidation.isValid) {
@@ -381,38 +381,38 @@ const config = {
         errors.push(...raceValidation.orphanedRaces.map(r => `Race '${r}' has no compatible classes`));
         warnings.push(...raceValidation.warnings);
       }
-      
+
       // Validate balance
       const balanceValidation = gameBalanceLoader.validateBalanceCoherence();
       if (!balanceValidation.isValid) {
         errors.push(...balanceValidation.errors);
         warnings.push(...balanceValidation.warnings);
       }
-      
+
       // Validate status effects
       const statusValidation = statusEffectsLoader.validateEffectIntegrity();
       if (!statusValidation.isValid) {
         errors.push(...statusValidation.errors);
         warnings.push(...statusValidation.warnings);
       }
-      
+
       // Validate messages
       const messageValidation = messagesLoader.validateMessagePlaceholders();
       if (!messageValidation.isValid) {
         warnings.push(...messageValidation.warnings);
       }
-      
+
     } catch (error: any) {
       errors.push(`Configuration validation failed: ${error.message}`);
     }
-    
+
     return {
       valid: errors.length === 0,
       errors,
       warnings
     };
   },
-  
+
   // Hot reload all configurations
   reloadConfiguration: (): boolean => {
     let reloaded = false;
@@ -424,7 +424,7 @@ const config = {
     reloaded = messagesLoader.reloadIfChanged() || reloaded;
     return reloaded;
   },
-  
+
   // Get comprehensive configuration statistics
   getConfigurationStats: () => {
     return {

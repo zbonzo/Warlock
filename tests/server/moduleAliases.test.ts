@@ -21,7 +21,7 @@ describe('moduleAliases', () => {
   it('should register module aliases correctly', () => {
     // Import the module to trigger alias registration
     require('../../server/moduleAliases');
-    
+
     const expectedAliases = {
       '@config': path.resolve(__dirname, '../../server', 'config'),
       '@controllers': path.resolve(__dirname, '../../server', 'controllers'),
@@ -38,7 +38,7 @@ describe('moduleAliases', () => {
 
   it('should log success message', () => {
     require('../../server/moduleAliases');
-    
+
     expect(mockConsoleLog).toHaveBeenCalledWith('Module aliases registered successfully');
   });
 

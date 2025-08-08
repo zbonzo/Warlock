@@ -42,7 +42,7 @@ describe('GameEventBus (TypeScript)', () => {
   beforeEach(() => {
     // Reset all mocks
     jest.clearAllMocks();
-    
+
     // Create new event bus instance
     eventBus = new GameEventBus(gameCode);
   });
@@ -120,11 +120,11 @@ describe('GameEventBus (TypeScript)', () => {
       const eventType: TestEventType = 'TEST.EVENT';
 
       const unsubscribe = eventBus.on(eventType, mockListener);
-      
+
       expect(eventBus.getListenerCount(eventType)).toBe(1);
-      
+
       const result = unsubscribe();
-      
+
       expect(result).toBe(true);
       expect(eventBus.getListenerCount(eventType)).toBe(0);
     });
@@ -572,7 +572,7 @@ describe('GameEventBus (TypeScript)', () => {
 
       eventBus.addMiddleware(jest.fn());
       eventBus.on(eventType, mockListener);
-      
+
       // Add some history
       (eventBus as any)._addToHistory({
         type: eventType,
@@ -604,7 +604,7 @@ describe('GameEventBus (TypeScript)', () => {
       }
 
       const typedListener = jest.fn<void, [TypedTestEvent]>();
-      
+
       eventBus.on('TYPED.TEST' as EventType, typedListener);
 
       await eventBus.emit('TYPED.TEST' as EventType, {
@@ -630,7 +630,7 @@ describe('GameEventBus (TypeScript)', () => {
       const unsubscribe = eventBus.on('TEST.EVENT', mockListener);
 
       expect(typeof unsubscribe).toBe('function');
-      
+
       const result = unsubscribe();
       expect(typeof result).toBe('boolean');
       expect(result).toBe(true);
@@ -638,13 +638,13 @@ describe('GameEventBus (TypeScript)', () => {
 
     it('should handle listener options with proper types', () => {
       const mockListener = jest.fn();
-      
+
       // Test all option types
       const unsubscribe1 = eventBus.on('TEST.EVENT', mockListener, { once: true });
       const unsubscribe2 = eventBus.on('TEST.EVENT', mockListener, { priority: 5 });
-      const unsubscribe3 = eventBus.on('TEST.EVENT', mockListener, { 
-        once: true, 
-        priority: 10 
+      const unsubscribe3 = eventBus.on('TEST.EVENT', mockListener, {
+        once: true,
+        priority: 10
       });
 
       expect(typeof unsubscribe1).toBe('function');
@@ -656,7 +656,7 @@ describe('GameEventBus (TypeScript)', () => {
   describe('Error Handling', () => {
     it('should handle emission errors gracefully', async () => {
       const eventType: TestEventType = 'TEST.EVENT';
-      
+
       // Force an error by corrupting internal state
       (eventBus as any).listeners = null;
 
@@ -711,13 +711,13 @@ describe('GameEventBus (TypeScript)', () => {
     it('should calculate average processing time correctly', () => {
       // Access private method for testing
       const updateAvg = (eventBus as any)._updateAverageProcessingTime.bind(eventBus);
-      
+
       // Set initial state
       (eventBus as any).stats.eventsProcessed = 1;
       (eventBus as any).stats.averageProcessingTime = 100;
-      
+
       updateAvg(200); // Add a second event with 200ms processing time
-      
+
       expect((eventBus as any).stats.averageProcessingTime).toBe(150); // (100 + 200) / 2
     });
   });

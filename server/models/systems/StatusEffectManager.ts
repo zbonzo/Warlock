@@ -5,6 +5,7 @@
 import config from '../../config/index.js';
 import messages from '../../config/messages/index.js';
 import logger from '../../utils/logger.js';
+import { secureRandomFloat } from '../../utils/secureRandom.js';
 
 interface Player {
   id: string;
@@ -265,8 +266,8 @@ class StatusEffectManager {
       if (player.isWarlock && actualHeal > 0 && effectData.healerId) {
         const gameBalance = config.gameBalance as GameBalance;
         const detectionChance = gameBalance?.player?.healing?.antiDetection?.detectionChance || 0.05;
-        
-        if (Math.random() < detectionChance) {
+
+        if (secureRandomFloat() < detectionChance) {
           // Mark warlock as detected
           if (this.warlockSystem && this.warlockSystem.markWarlockDetected) {
             this.warlockSystem.markWarlockDetected(player.id, log);
@@ -382,12 +383,12 @@ class StatusEffectManager {
       // Clear any pending action submission when stun expires
       if (player.hasSubmittedAction && player.clearActionSubmission) {
         player.clearActionSubmission();
-        logger.debug('ClearedSubmissionOnStunExpiry', { 
+        logger.debug('ClearedSubmissionOnStunExpiry', {
           playerName: player.name,
-          hadSubmission: true 
+          hadSubmission: true
         });
       }
-      
+
       // Log stun expiration
       const stunExpiredMessage = `${player.name} is no longer stunned and can act again.`;
       log.push({

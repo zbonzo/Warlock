@@ -75,8 +75,8 @@ export class DebugLogger {
   }
 
   private shouldLog(level: keyof DebugConfig['levels'] = 'info'): boolean {
-    return debugConfig.enabled && 
-           debugConfig.features[this.feature] && 
+    return debugConfig.enabled &&
+           debugConfig.features[this.feature] &&
            debugConfig.levels[level];
   }
 
@@ -112,7 +112,7 @@ export class DebugLogger {
 
 // Export a factory function for creating debug loggers
 export const createDebugLogger = (
-  feature: keyof DebugConfig['features'], 
+  feature: keyof DebugConfig['features'],
   context: string
 ): DebugLogger => {
   return new DebugLogger(feature, context);

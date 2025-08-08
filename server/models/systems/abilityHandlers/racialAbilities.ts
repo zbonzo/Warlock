@@ -1,13 +1,13 @@
 /**
  * @fileoverview Racial ability handlers (Refactored)
- * 
+ *
  * This file has been refactored to use modular ability handlers.
  * Individual handlers have been moved to:
- * 
+ *
  * - abilities/racial/adaptability-abilities.ts: Adaptability and evolution abilities
  * - abilities/racial/combat-racial-abilities.ts: Combat-focused racial abilities
  * - abilities/racial/utility-racial-abilities.ts: Utility and support racial abilities
- * 
+ *
  * This provides better organization and easier maintenance.
  */
 
@@ -17,12 +17,12 @@ import type { AbilityRegistry } from './abilityRegistryUtils.js';
 import {
   // Adaptability abilities
   handleAdaptability,
-  
+
   // Combat racial abilities
   handleBloodRage,
   handleUndying,
   handleStoneArmor,
-  
+
   // Utility racial abilities
   handlePackBond,
   handleDespairAura,
@@ -38,12 +38,12 @@ export function register(registry: AbilityRegistry): void {
   if (registry.registerRacialAbility) {
     // Adaptability abilities
     registry.registerRacialAbility('adaptability', handleAdaptability);
-    
+
     // Combat racial abilities
     registry.registerRacialAbility('bloodRage', handleBloodRage);
     registry.registerRacialAbility('undying', handleUndying);
     registry.registerRacialAbility('stoneArmor', handleStoneArmor);
-    
+
     // Utility racial abilities
     registry.registerRacialAbility('packBond', handlePackBond);
     registry.registerRacialAbility('despairAura', handleDespairAura);

@@ -12,9 +12,9 @@ import type { GameEventBus } from '@models/events/GameEventBus';
 import type { CommandProcessor } from '@models/commands/CommandProcessor';
 import type { EventTypes } from '@models/events/EventTypes';
 import type SystemsFactory from '@models/systems/SystemsFactory';
-import type { 
+import type {
   GameCode,
-  PlayerRace, 
+  PlayerRace,
   PlayerClass,
   GamePhase as GamePhaseEnum,
   Monster,
@@ -53,7 +53,7 @@ const mockMessages = {
 // Mock all dependencies
 jest.mock('@models/Player');
 jest.mock('@models/game/GameState');
-jest.mock('@models/game/GamePhase'); 
+jest.mock('@models/game/GamePhase');
 jest.mock('@models/game/GameRules');
 jest.mock('@models/events/GameEventBus');
 jest.mock('@models/commands/CommandProcessor');
@@ -88,7 +88,7 @@ describe('GameRoom (TypeScript)', () => {
 
     // Setup mock players map
     mockPlayers = new Map();
-    
+
     // Setup mock monster
     mockMonster = {
       hp: 100,
@@ -210,10 +210,10 @@ describe('GameRoom (TypeScript)', () => {
   describe('Property Delegation', () => {
     it('should delegate players property to gameState', () => {
       const newPlayers = new Map([['test', {} as Player]]);
-      
+
       // Test getter
       expect((gameRoom as any).players).toBe(mockGameState.players);
-      
+
       // Test setter
       (gameRoom as any).players = newPlayers;
       expect(mockGameState.players).toBe(newPlayers);
@@ -221,14 +221,14 @@ describe('GameRoom (TypeScript)', () => {
 
     it('should delegate started property to gameState', () => {
       expect((gameRoom as any).started).toBe(mockGameState.started);
-      
+
       (gameRoom as any).started = true;
       expect(mockGameState.started).toBe(true);
     });
 
     it('should delegate phase property to gamePhase', () => {
       expect((gameRoom as any).phase).toBe('lobby');
-      
+
       (gameRoom as any).phase = 'action';
       expect(mockGamePhase.setPhase).toHaveBeenCalledWith('action');
     });
@@ -236,7 +236,7 @@ describe('GameRoom (TypeScript)', () => {
     it('should delegate round property to gameState', () => {
       mockGameState.round = 5;
       expect((gameRoom as any).round).toBe(5);
-      
+
       (gameRoom as any).round = 10;
       expect(mockGameState.round).toBe(10);
     });
@@ -309,7 +309,7 @@ describe('GameRoom (TypeScript)', () => {
     it('should handle removing warlock player with systems initialized', () => {
       const mockPlayer = createMockPlayer('player1', 'Warlock');
       mockPlayer.isWarlock = true;
-      
+
       const mockSystems = {
         warlockSystem: {
           decrementWarlockCount: jest.fn()
@@ -460,7 +460,7 @@ describe('GameRoom (TypeScript)', () => {
         targetId: 'monster',
         additionalData: { power: 5 }
       };
-      
+
       mockGameState.getPlayer.mockReturnValue(mockPlayer);
       mockPlayer.submitAction.mockReturnValue({ success: true });
 
@@ -484,7 +484,7 @@ describe('GameRoom (TypeScript)', () => {
         playerId: 'nonexistent',
         actionType: 'attack'
       };
-      
+
       mockGameState.getPlayer.mockReturnValue(undefined);
 
       const result: ActionResult = await gameRoom.submitAction(actionData);
@@ -496,14 +496,14 @@ describe('GameRoom (TypeScript)', () => {
     it('should validate actions for all alive players', async () => {
       const mockPlayer1 = createMockPlayer('player1', 'Alice');
       const mockPlayer2 = createMockPlayer('player2', 'Bob');
-      
+
       mockPlayer1.isAlive = true;
       mockPlayer2.isAlive = true;
       (mockPlayer1 as any).hasSubmittedAction = true;
       (mockPlayer2 as any).hasSubmittedAction = false;
-      
+
       mockPlayer1.validateSubmittedAction.mockReturnValue({ valid: true, playerId: 'player1' });
-      
+
       mockGameState.players = new Map([
         ['player1', mockPlayer1],
         ['player2', mockPlayer2]
@@ -540,7 +540,7 @@ describe('GameRoom (TypeScript)', () => {
         }
       };
       gameRoom.systems = mockSystems;
-      
+
       // Mock gameState.getAliveCount
       (gameRoom as any).gameState = {
         getAliveCount: jest.fn().mockReturnValue(3)
@@ -568,12 +568,12 @@ describe('GameRoom (TypeScript)', () => {
         }
       };
       gameRoom.systems = mockSystems;
-      
+
       // Mock gameState.getAliveCount
       (gameRoom as any).gameState = {
         getAliveCount: jest.fn().mockReturnValue(2)
       };
-      
+
       const endGameSpy = jest.spyOn(gameRoom, 'endGame').mockImplementation();
 
       await gameRoom.processRound();
@@ -609,7 +609,7 @@ describe('GameRoom (TypeScript)', () => {
   describe('Socket Integration', () => {
     it('should set socket server and create event router', () => {
       const mockIo = {} as SocketIOServer;
-      
+
       gameRoom.setSocketServer(mockIo);
 
       expect(gameRoom.socketEventRouter).not.toBeNull();
@@ -647,10 +647,10 @@ describe('GameRoom (TypeScript)', () => {
     it('should generate client data correctly', () => {
       const mockPlayer1 = createMockPlayer('p1', 'Player1');
       const mockPlayer2 = createMockPlayer('p2', 'Player2');
-      
+
       mockPlayer1.toClientData.mockReturnValue({ id: 'p1', name: 'Player1' });
       mockPlayer2.toClientData.mockReturnValue({ id: 'p2', name: 'Player2' });
-      
+
       mockGameState.players = new Map([
         ['p1', mockPlayer1],
         ['p2', mockPlayer2]
@@ -689,7 +689,7 @@ describe('GameRoom (TypeScript)', () => {
     it('should generate JSON data with Zod validation', () => {
       const mockPlayer = createMockPlayer('p1', 'Player1');
       mockPlayer.toJSON.mockReturnValue({ id: 'p1', name: 'Player1' });
-      
+
       mockGameState.players = new Map([['p1', mockPlayer]]);
       mockGameState.winner = undefined;
       mockGameState.created = '2024-01-01T00:00:00Z';
@@ -764,7 +764,7 @@ describe('GameRoom (TypeScript)', () => {
     it('should enforce correct types for GameCode', () => {
       const validCode: GameCode = 'VALID1' as GameCode;
       const room = new GameRoom(validCode);
-      
+
       expect(room.code).toBe(validCode);
     });
 
@@ -773,14 +773,14 @@ describe('GameRoom (TypeScript)', () => {
         success: true,
         data: { test: 'data' }
       };
-      
+
       expect(result.success).toBe(true);
       expect(result.data).toEqual({ test: 'data' });
     });
 
     it('should enforce correct types for GameStats', () => {
       const stats: GameStats = gameRoom.getGameStats();
-      
+
       expect(typeof stats.playersCount).toBe('number');
       expect(typeof stats.aliveCount).toBe('number');
       expect(typeof stats.round).toBe('number');

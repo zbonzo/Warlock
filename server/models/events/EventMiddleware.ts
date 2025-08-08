@@ -139,7 +139,7 @@ export class EventMiddleware {
         } else {
           logger.warn(`Invalid event type detected: "${event.type}" (${typeof event.type})`);
         }
-        
+
         if (strict) {
           return next(false); // Cancel event
         }
@@ -190,13 +190,13 @@ export class EventMiddleware {
 
       const now = Date.now();
       const gameCode = 'gameCode' in event ? (event as any).gameCode : 'unknown';
-      
+
       if (!eventCounts.has(gameCode)) {
         eventCounts.set(gameCode, { count: 0, windowStart: now });
       }
 
       const stats = eventCounts.get(gameCode)!;
-      
+
       // Reset window if expired
       if (now - stats.windowStart > windowMs) {
         stats.count = 0;
@@ -233,7 +233,7 @@ export class EventMiddleware {
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : 'Unknown error';
         const gameCode = 'gameCode' in event ? (event as any).gameCode : 'unknown';
-        
+
         logger.error('Event middleware error:', {
           eventType: event.type,
           gameCode: gameCode,
@@ -260,11 +260,11 @@ export class EventMiddleware {
 
     return (event: GameEvent, next) => {
       const startTime = Date.now();
-      
+
       next();
-      
+
       const processingTime = Date.now() - startTime;
-      
+
       if (processingTime > slowEventThreshold) {
         const gameCode = 'gameCode' in event ? (event as any).gameCode : 'unknown';
         logger.warn('Slow event processing detected:', {
@@ -385,8 +385,8 @@ export class EventMiddleware {
 
     // Performance monitoring
     if (enablePerformance) {
-      middleware.push(EventMiddleware.performance({ 
-        slowEventThreshold 
+      middleware.push(EventMiddleware.performance({
+        slowEventThreshold
       }));
     }
 
@@ -405,7 +405,7 @@ export class EventMiddleware {
 
     // Logging should be last to capture final event state
     if (enableLogging) {
-      middleware.push(EventMiddleware.logging({ 
+      middleware.push(EventMiddleware.logging({
         logData: logEventData,
         excludeTypes: ['system.performance' as EventType] // Don't log performance events to avoid spam
       }));

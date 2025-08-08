@@ -240,7 +240,7 @@ describe('GameState Domain Model', () => {
 
       gameState.addDisconnectedPlayer(disconnectedPlayer);
       const disconnected = gameState.getDisconnectedPlayers();
-      
+
       expect(disconnected).toContain(disconnectedPlayer);
     });
 
@@ -253,7 +253,7 @@ describe('GameState Domain Model', () => {
 
       gameState.addDisconnectedPlayer(disconnectedPlayer);
       gameState.removeDisconnectedPlayer('player123');
-      
+
       const disconnected = gameState.getDisconnectedPlayers();
       expect(disconnected).not.toContain(disconnectedPlayer);
     });
@@ -267,7 +267,7 @@ describe('GameState Domain Model', () => {
 
       gameState.addDisconnectedPlayer(expiredPlayer);
       gameState.clearExpiredDisconnectedPlayers(60000); // 1 minute timeout
-      
+
       const disconnected = gameState.getDisconnectedPlayers();
       expect(disconnected).not.toContain(expiredPlayer);
     });
@@ -276,7 +276,7 @@ describe('GameState Domain Model', () => {
   describe('Game State Snapshot', () => {
     it('should create valid snapshot', () => {
       const snapshot = gameState.createSnapshot();
-      
+
       expect(snapshot).toHaveProperty('code');
       expect(snapshot).toHaveProperty('hostId');
       expect(snapshot).toHaveProperty('started');
@@ -289,15 +289,15 @@ describe('GameState Domain Model', () => {
 
     it('should restore from snapshot', () => {
       const originalSnapshot = gameState.createSnapshot();
-      
+
       // Modify state
       gameState.start();
       gameState.nextRound();
       gameState.levelUp();
-      
+
       // Restore from snapshot
       gameState.restoreFromSnapshot(originalSnapshot);
-      
+
       expect(gameState.started).toBe(originalSnapshot.started);
       expect(gameState.round).toBe(originalSnapshot.round);
       expect(gameState.level).toBe(originalSnapshot.level);
@@ -307,14 +307,14 @@ describe('GameState Domain Model', () => {
   describe('Game Status Checks', () => {
     it('should check if game is in progress', () => {
       expect(gameState.isInProgress()).toBe(false);
-      
+
       gameState.start();
       expect(gameState.isInProgress()).toBe(true);
     });
 
     it('should check if monster is alive', () => {
       expect(gameState.isMonsterAlive()).toBe(true);
-      
+
       gameState.updateMonsterHp(0);
       expect(gameState.isMonsterAlive()).toBe(false);
     });
@@ -322,7 +322,7 @@ describe('GameState Domain Model', () => {
     it('should check if game can start', () => {
       gameState.setPlayerCount(1);
       expect(gameState.canStart()).toBe(false); // Need minimum players
-      
+
       gameState.setPlayerCount(4);
       expect(gameState.canStart()).toBe(true);
     });
@@ -330,7 +330,7 @@ describe('GameState Domain Model', () => {
     it('should check if level up is needed', () => {
       gameState.updateMonsterHp(0);
       expect(gameState.needsLevelUp()).toBe(true);
-      
+
       gameState.updateMonsterHp(50);
       expect(gameState.needsLevelUp()).toBe(false);
     });
@@ -366,7 +366,7 @@ describe('GameState Domain Model', () => {
     it('should serialize to JSON', () => {
       const json = gameState.toJSON();
       expect(typeof json).toBe('string');
-      
+
       const parsed = JSON.parse(json);
       expect(parsed.code).toBe(gameState.code);
       expect(parsed.hostId).toBe(gameState.hostId);
@@ -374,10 +374,10 @@ describe('GameState Domain Model', () => {
 
     it('should restore from JSON', () => {
       const originalJson = gameState.toJSON();
-      
+
       // Create new instance and restore
       const newGameState = GameState.fromJSON(originalJson, mockConfig);
-      
+
       expect(newGameState.code).toBe(gameState.code);
       expect(newGameState.hostId).toBe(gameState.hostId);
       expect(newGameState.started).toBe(gameState.started);
@@ -397,7 +397,7 @@ describe('GameState Domain Model', () => {
       };
 
       const customGameState = new GameState('CUSTOM123', 'host456', customConfig);
-      
+
       expect(customGameState.monster.maxHp).toBe(200);
       expect(customGameState.monster.baseDmg).toBe(50);
       expect(customGameState.monster.age).toBe(1);

@@ -32,6 +32,7 @@ export const useRacialAbilities = (): RacialAbilitiesState => {
    * Handle racial ability usage
    */
   const handleRacialAbilityUse = useCallback((abilityType: string) => {
+    /* eslint-disable-next-line no-console */
     console.log('Racial ability used:', abilityType);
     
     if (abilityType === 'bloodRage') {

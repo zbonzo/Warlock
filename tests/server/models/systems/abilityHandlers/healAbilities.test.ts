@@ -60,7 +60,7 @@ describe('healAbilities', () => {
 
     // Mock messages
     mockMessages.getAbilityMessage = jest.fn((category, key) => `${category}.${key}`);
-    mockMessages.formatMessage = jest.fn((template, params) => 
+    mockMessages.formatMessage = jest.fn((template, params) =>
       `Formatted: ${template} with ${JSON.stringify(params)}`
     );
 
@@ -282,8 +282,8 @@ describe('healAbilities', () => {
           mockWarlockTarget.id,
           log
         );
-        expect(log.some(entry => 
-          entry.type === 'healing_detection' && 
+        expect(log.some(entry =>
+          entry.type === 'healing_detection' &&
           entry.message?.includes('IS a Warlock')
         )).toBe(true);
 
@@ -363,8 +363,8 @@ describe('healAbilities', () => {
       expect(mockActor.addHealingDone).toHaveBeenCalledWith(35);
 
       // Should log coordination bonus
-      expect(log.some(entry => 
-        entry.type === 'coordination_healing_applied' && 
+      expect(log.some(entry =>
+        entry.type === 'coordination_healing_applied' &&
         entry.privateMessage?.includes('40%')
       )).toBe(true);
     });

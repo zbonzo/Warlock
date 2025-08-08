@@ -32,7 +32,7 @@ describe('Environment Configurations', () => {
         expect(typeof config.gameTimeout).toBe('number');
         expect(config.gameTimeout).toBeGreaterThan(0);
       }
-      
+
       if (config.roundTimeout) {
         expect(typeof config.roundTimeout).toBe('number');
         expect(config.roundTimeout).toBeGreaterThan(0);
@@ -45,7 +45,7 @@ describe('Environment Configurations', () => {
         expect(typeof config.actionCooldowns.createGame).toBe('number');
         expect(typeof config.actionCooldowns.joinGame).toBe('number');
         expect(typeof config.actionCooldowns.playerReady).toBe('number');
-        
+
         expect(config.actionCooldowns.createGame).toBeGreaterThanOrEqual(0);
         expect(config.actionCooldowns.joinGame).toBeGreaterThanOrEqual(0);
         expect(config.actionCooldowns.playerReady).toBeGreaterThanOrEqual(0);
@@ -57,14 +57,14 @@ describe('Environment Configurations', () => {
         expect(typeof config.rateLimiting).toBe('object');
         expect(typeof config.rateLimiting.defaultLimit).toBe('number');
         expect(typeof config.rateLimiting.defaultTimeWindow).toBe('number');
-        
+
         expect(config.rateLimiting.defaultLimit).toBeGreaterThan(0);
         expect(config.rateLimiting.defaultTimeWindow).toBeGreaterThan(0);
-        
+
         if (config.rateLimiting.actionLimits) {
           const { actionLimits } = config.rateLimiting;
           expect(typeof actionLimits).toBe('object');
-          
+
           Object.values(actionLimits).forEach(limitConfig => {
             expect(typeof limitConfig.limit).toBe('number');
             expect(typeof limitConfig.window).toBe('number');
@@ -80,12 +80,12 @@ describe('Environment Configurations', () => {
         expect(typeof config.minPlayers).toBe('number');
         expect(config.minPlayers).toBeGreaterThan(0);
       }
-      
+
       if (config.maxPlayers) {
         expect(typeof config.maxPlayers).toBe('number');
         expect(config.maxPlayers).toBeGreaterThan(0);
       }
-      
+
       if (config.minPlayers && config.maxPlayers) {
         expect(config.maxPlayers).toBeGreaterThanOrEqual(config.minPlayers);
       }
@@ -134,13 +134,13 @@ describe('Environment Configurations', () => {
       expect(productionConfig.performance).toBeDefined();
       expect(productionConfig.maxGames).toBeDefined();
       expect(productionConfig.serverMemoryThreshold).toBeDefined();
-      
+
       if (productionConfig.security) {
         expect(typeof productionConfig.security.enableRateLimiting).toBe('boolean');
         expect(typeof productionConfig.security.logSuspiciousActivity).toBe('boolean');
         expect(typeof productionConfig.security.maxConnectionsPerIP).toBe('number');
       }
-      
+
       if (productionConfig.performance) {
         expect(typeof productionConfig.performance.enableGzip).toBe('boolean');
         expect(typeof productionConfig.performance.enableEtag).toBe('boolean');
@@ -153,12 +153,12 @@ describe('Environment Configurations', () => {
   describe('Test environment specifics', () => {
     it('should have test-appropriate settings', () => {
       expect(testConfig.logLevel).toBe('warn');
-      
+
       if (testConfig.database) {
         expect(testConfig.database.inMemory).toBe(true);
         expect(testConfig.database.logging).toBe(false);
       }
-      
+
       if (testConfig.testing) {
         expect(typeof testConfig.testing.enableTestHelpers).toBe('boolean');
         expect(typeof testConfig.testing.automaticCleanup).toBe('boolean');
@@ -169,15 +169,15 @@ describe('Environment Configurations', () => {
   describe('Environment consistency', () => {
     it('should have consistent property types across environments', () => {
       const allConfigs = Object.values(configs);
-      
+
       // Check that when a property exists in multiple configs, it has the same type
       const commonProperties = ['logLevel', 'gameTimeout', 'roundTimeout'] as const;
-      
+
       commonProperties.forEach(prop => {
         const types = allConfigs
           .filter(config => config[prop] !== undefined)
           .map(config => typeof config[prop]);
-        
+
         if (types.length > 1) {
           const uniqueTypes = [...new Set(types)];
           expect(uniqueTypes).toHaveLength(1);

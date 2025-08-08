@@ -5,8 +5,8 @@
 
 // Import type guards - using relative path for now due to import issues
 import * as Guards from '../../../server/types/guards';
-import type { 
-  Player, 
+import type {
+  Player,
   PlayerStats,
   PlayerAbilities,
   PlayerEffects,
@@ -72,7 +72,7 @@ describe('Type Guards Validation', () => {
         };
 
         const result = Guards.isPlayer(validPlayer);
-        
+
         expect(result).toBe(true);
       });
 
@@ -87,7 +87,7 @@ describe('Type Guards Validation', () => {
         };
 
         const result = Guards.isPlayer(invalidPlayer);
-        
+
         expect(result).toBe(false);
       });
 
@@ -121,7 +121,7 @@ describe('Type Guards Validation', () => {
         };
 
         const result = Guards.isPlayerStats(validStats);
-        
+
         expect(result).toBe(true);
       });
 
@@ -135,7 +135,7 @@ describe('Type Guards Validation', () => {
         };
 
         const result = Guards.isPlayerStats(invalidStats);
-        
+
         expect(result).toBe(false);
       });
     });
@@ -154,7 +154,7 @@ describe('Type Guards Validation', () => {
         };
 
         const result = Guards.isPlayerAbilities(validAbilities);
-        
+
         expect(result).toBe(true);
       });
 
@@ -167,7 +167,7 @@ describe('Type Guards Validation', () => {
         };
 
         const result = Guards.isPlayerAbilities(invalidAbilities);
-        
+
         expect(result).toBe(false);
       });
     });
@@ -184,7 +184,7 @@ describe('Type Guards Validation', () => {
         };
 
         const result = Guards.isPlayerEffects(validEffects);
-        
+
         expect(result).toBe(true);
       });
 
@@ -197,7 +197,7 @@ describe('Type Guards Validation', () => {
         };
 
         const result = Guards.isPlayerEffects(invalidEffects);
-        
+
         expect(result).toBe(false);
       });
     });
@@ -212,7 +212,7 @@ describe('Type Guards Validation', () => {
         };
 
         const result = Guards.isStatusEffect(validStatusEffect);
-        
+
         expect(result).toBe(true);
       });
 
@@ -226,7 +226,7 @@ describe('Type Guards Validation', () => {
         };
 
         const result = Guards.isStatusEffect(invalidStatusEffect);
-        
+
         expect(result).toBe(false);
       });
     });
@@ -473,7 +473,7 @@ describe('Type Guards Validation', () => {
     it('should not call schema validation multiple times for same input', () => {
       const testObj = { id: 'test', name: 'Test' };
       const MockedSchemas = require('../../../server/models/validation/ZodSchemas');
-      
+
       Guards.isPlayer(testObj);
       Guards.isPlayer(testObj);
 

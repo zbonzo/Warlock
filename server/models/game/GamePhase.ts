@@ -167,7 +167,7 @@ export class GamePhase {
   addPendingAction(action: PendingAction): void {
     const validatedAction = PendingActionSchema.parse(action);
     this.pendingActions.push(validatedAction);
-    
+
     logger.debug('ActionAdded', {
       gameCode: this.gameCode,
       actorId: action.actorId,
@@ -184,7 +184,7 @@ export class GamePhase {
   addPendingRacialAction(racialAction: PendingRacialAction): void {
     const validatedAction = PendingRacialActionSchema.parse(racialAction);
     this.pendingRacialActions.push(validatedAction);
-    
+
     logger.debug('RacialActionAdded', {
       gameCode: this.gameCode,
       actorId: racialAction.actorId,
@@ -223,7 +223,7 @@ export class GamePhase {
   }
 
   /**
-   * Set pending racial actions  
+   * Set pending racial actions
    * @param actions - Array of pending racial actions
    */
   setPendingRacialActions(actions: PendingRacialAction[] | Map<string, any>): void {
@@ -260,7 +260,7 @@ export class GamePhase {
   clearPendingActions(): void {
     const actionCount = this.pendingActions.length;
     const racialCount = this.pendingRacialActions.length;
-    
+
     this.pendingActions = [];
     this.pendingRacialActions = [];
 
@@ -357,7 +357,7 @@ export class GamePhase {
   setPlayerNotReady(playerId: string): void {
     const wasReady = this.nextReady.has(playerId);
     this.nextReady.delete(playerId);
-    
+
     if (wasReady) {
       logger.debug('PlayerSetNotReady', {
         gameCode: this.gameCode,
@@ -487,14 +487,14 @@ export class GamePhase {
    */
   static fromJSON(data: any): GamePhase {
     const gamePhase = new GamePhase(data.gameCode);
-    
+
     gamePhase.phase = data.phase || 'lobby';
     gamePhase.pendingActions = data.pendingActions || [];
     gamePhase.pendingRacialActions = data.pendingRacialActions || [];
     gamePhase.nextReady = new Set(data.nextReady || []);
     gamePhase.pendingDisconnectEvents = data.pendingDisconnectEvents || [];
     gamePhase.pendingPassiveActivations = data.pendingPassiveActivations || [];
-    
+
     return gamePhase;
   }
 }

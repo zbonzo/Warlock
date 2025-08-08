@@ -18,7 +18,7 @@ describe('CharacterSelectPage Constants', () => {
     it('should have all expected races', () => {
       const expectedRaces = ['Artisan', 'Rockhewn', 'Lich', 'Orc', 'Crestfallen', 'Kinfolk'];
       const raceIds = RACES.map(race => race.id);
-      
+
       expect(raceIds).toEqual(expect.arrayContaining(expectedRaces));
       expect(raceIds.length).toBe(6);
     });
@@ -48,7 +48,7 @@ describe('CharacterSelectPage Constants', () => {
         'Priest', 'Oracle', 'Seer', 'Shaman', 'Gunslinger', 'Tracker', 'Druid'
       ];
       const classIds = CLASSES.map(cls => cls.id);
-      
+
       expect(classIds).toEqual(expect.arrayContaining(expectedClasses));
       expect(classIds.length).toBe(12);
     });
@@ -83,14 +83,14 @@ describe('CharacterSelectPage Constants', () => {
     it('should have mappings for all classes', () => {
       const classIds = CLASSES.map(cls => cls.id);
       const mappedClasses = Object.keys(CLASS_TO_RACES);
-      
+
       expect(mappedClasses).toEqual(expect.arrayContaining(classIds));
       expect(mappedClasses.length).toBe(classIds.length);
     });
 
     it('should only reference valid races', () => {
       const validRaceIds = RACES.map(race => race.id);
-      
+
       Object.values(CLASS_TO_RACES).forEach(races => {
         races.forEach(raceId => {
           expect(validRaceIds).toContain(raceId);
@@ -115,7 +115,7 @@ describe('CharacterSelectPage Constants', () => {
     it('should return classes compatible with Artisan race', () => {
       const compatibleClasses = getCompatibleClasses('Artisan');
       const expectedClasses = ['Warrior', 'Wizard', 'Assassin', 'Alchemist', 'Priest', 'Gunslinger'];
-      
+
       expect(compatibleClasses).toEqual(expect.arrayContaining(expectedClasses));
       expect(compatibleClasses.length).toBe(expectedClasses.length);
     });
@@ -123,7 +123,7 @@ describe('CharacterSelectPage Constants', () => {
     it('should return classes compatible with Orc race', () => {
       const compatibleClasses = getCompatibleClasses('Orc');
       const expectedClasses = ['Pyromancer', 'Oracle', 'Seer', 'Shaman', 'Tracker', 'Druid'];
-      
+
       expect(compatibleClasses).toEqual(expect.arrayContaining(expectedClasses));
       expect(compatibleClasses.length).toBe(expectedClasses.length);
     });
@@ -215,11 +215,11 @@ describe('CharacterSelectPage Constants', () => {
     it('should ensure all races appear in at least one class mapping', () => {
       const raceIds = RACES.map(race => race.id);
       const referencedRaces = new Set<string>();
-      
+
       Object.values(CLASS_TO_RACES).forEach(races => {
         races.forEach(raceId => referencedRaces.add(raceId));
       });
-      
+
       raceIds.forEach(raceId => {
         expect(referencedRaces.has(raceId)).toBe(true);
       });
@@ -228,7 +228,7 @@ describe('CharacterSelectPage Constants', () => {
     it('should ensure symmetry between race-class relationships', () => {
       RACES.forEach(race => {
         const compatibleClasses = getCompatibleClasses(race.id);
-        
+
         compatibleClasses.forEach(classId => {
           const compatibleRaces = getCompatibleRaces(classId);
           expect(compatibleRaces).toContain(race.id);

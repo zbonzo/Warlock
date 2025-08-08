@@ -34,7 +34,7 @@ describe('ClassLoader', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    
+
     // Setup mock classes config
     mockClassesConfig = {
       availableClasses: ['Warrior', 'Mage', 'Cleric'],
@@ -108,7 +108,7 @@ describe('ClassLoader', () => {
   describe('constructor and initialization', () => {
     it('should create ClassLoader with default path', () => {
       classLoader = new ClassLoader();
-      
+
       expect(mockPath.join).toHaveBeenCalledWith(__dirname, '../data/classes.json');
       expect(mockFS.existsSync).toHaveBeenCalled();
       expect(mockFS.readFileSync).toHaveBeenCalled();
@@ -118,19 +118,19 @@ describe('ClassLoader', () => {
     it('should create ClassLoader with custom path', () => {
       const customPath = '/custom/classes.json';
       classLoader = new ClassLoader(customPath);
-      
+
       expect(mockFS.existsSync).toHaveBeenCalledWith(customPath);
     });
 
     it('should throw error when file does not exist', () => {
       mockFS.existsSync.mockReturnValue(false);
-      
+
       expect(() => new ClassLoader()).toThrow('Classes data file not found');
     });
 
     it('should throw error when JSON is invalid', () => {
       mockFS.readFileSync.mockReturnValue('invalid json');
-      
+
       expect(() => new ClassLoader()).toThrow();
       expect(consoleSpy.error).toHaveBeenCalledWith('Failed to load classes:', expect.any(Error));
     });
@@ -140,7 +140,7 @@ describe('ClassLoader', () => {
         availableClasses: 'not an array' // Should be array
       };
       mockFS.readFileSync.mockReturnValue(JSON.stringify(invalidConfig));
-      
+
       expect(() => new ClassLoader()).toThrow('Invalid classes data');
     });
   });
@@ -153,16 +153,16 @@ describe('ClassLoader', () => {
     it('should reload when file is modified', () => {
       const newMtime = Date.now() + 10000;
       mockFS.statSync.mockReturnValue({ mtimeMs: newMtime } as any);
-      
+
       const reloaded = classLoader.reloadIfChanged();
-      
+
       expect(reloaded).toBe(true);
       expect(mockFS.readFileSync).toHaveBeenCalledTimes(2); // Once in constructor, once in reload
     });
 
     it('should not reload when file is unchanged', () => {
       const reloaded = classLoader.reloadIfChanged();
-      
+
       expect(reloaded).toBe(false);
       expect(mockFS.readFileSync).toHaveBeenCalledTimes(1); // Only in constructor
     });
@@ -171,9 +171,9 @@ describe('ClassLoader', () => {
       mockFS.statSync.mockImplementation(() => {
         throw new Error('File stat error');
       });
-      
+
       const reloaded = classLoader.reloadIfChanged();
-      
+
       expect(reloaded).toBe(false);
       expect(consoleSpy.error).toHaveBeenCalledWith('Error checking for class config changes:', expect.any(Error));
     });
@@ -187,7 +187,7 @@ describe('ClassLoader', () => {
     describe('getAvailableClasses', () => {
       it('should return available class names', () => {
         const classes = classLoader.getAvailableClasses();
-        
+
         expect(classes).toEqual(['Warrior', 'Mage', 'Cleric']);
         expect(classes).not.toBe(mockClassesConfig.availableClasses); // Should be a copy
       });
@@ -196,7 +196,7 @@ describe('ClassLoader', () => {
     describe('getClassCategories', () => {
       it('should return class categories', () => {
         const categories = classLoader.getClassCategories();
-        
+
         expect(categories).toEqual({
           'Melee': ['Warrior'],
           'Caster': ['Mage'],
@@ -221,7 +221,7 @@ describe('ClassLoader', () => {
     describe('getClassAttributes', () => {
       it('should return attributes for valid class', () => {
         const attributes = classLoader.getClassAttributes('Warrior');
-        
+
         expect(attributes).toEqual({
           hpModifier: 1.2,
           armorModifier: 1.1,
@@ -238,7 +238,7 @@ describe('ClassLoader', () => {
     describe('getClassAbilityProgression', () => {
       it('should return progression for valid class', () => {
         const progression = classLoader.getClassAbilityProgression('Mage');
-        
+
         expect(progression).toEqual({
           level1: 'fireball',
           level2: 'frostbolt',
@@ -272,7 +272,7 @@ describe('ClassLoader', () => {
     describe('getClassAbilities', () => {
       it('should return abilities with unlock levels', () => {
         const abilities = classLoader.getClassAbilities('Warrior', 3);
-        
+
         expect(abilities).toHaveLength(3);
         expect(abilities[0]).toEqual({
           id: 'slash',
@@ -299,7 +299,7 @@ describe('ClassLoader', () => {
 
       it('should handle missing abilities gracefully', () => {
         mockAbilityLoader.getAbility.mockReturnValue(null);
-        
+
         const abilities = classLoader.getClassAbilities('Warrior');
         expect(abilities).toEqual([]);
       });
@@ -348,7 +348,7 @@ describe('ClassLoader', () => {
     describe('getClassInfo', () => {
       it('should return complete class information', () => {
         const classInfo = classLoader.getClassInfo('Warrior');
-        
+
         expect(classInfo).toEqual({
           name: 'Warrior',
           category: 'Melee',
@@ -383,10 +383,10 @@ describe('ClassLoader', () => {
           level1: 'basic'
         };
         mockFS.readFileSync.mockReturnValue(JSON.stringify(mockClassesConfig));
-        
+
         classLoader = new ClassLoader();
         const classInfo = classLoader.getClassInfo('Orphan');
-        
+
         expect(classInfo?.category).toBe('Melee'); // Default fallback
       });
     });
@@ -415,9 +415,9 @@ describe('ClassLoader', () => {
           baseArmor: 10,
           baseDamage: 25
         };
-        
+
         const stats = classLoader.calculateClassStats('Warrior', context);
-        
+
         expect(stats).toEqual({
           hp: 120, // 100 * 1.2
           armor: 11, // 10 * 1.1
@@ -427,7 +427,7 @@ describe('ClassLoader', () => {
 
       it('should use default values when context is empty', () => {
         const stats = classLoader.calculateClassStats('Mage');
-        
+
         expect(stats).toEqual({
           hp: 80, // 100 * 0.8
           armor: 9, // 10 * 0.9
@@ -441,9 +441,9 @@ describe('ClassLoader', () => {
           baseArmor: 10,
           baseDamage: 25
         };
-        
+
         const stats = classLoader.calculateClassStats('InvalidClass', context);
-        
+
         expect(stats).toEqual({
           hp: 100,
           armor: 10,
@@ -453,7 +453,7 @@ describe('ClassLoader', () => {
 
       it('should handle missing context gracefully', () => {
         const stats = classLoader.calculateClassStats('Cleric');
-        
+
         expect(stats.hp).toBe(100); // Default 100 * 1.0
         expect(stats.armor).toBe(10); // Default 10 * 1.0
         expect(stats.damage).toBe(22); // Default 25 * 0.9 (floored)
@@ -469,7 +469,7 @@ describe('ClassLoader', () => {
     describe('validateClassAbilities', () => {
       it('should validate when all abilities exist', () => {
         const validation = classLoader.validateClassAbilities();
-        
+
         expect(validation.isValid).toBe(true);
         expect(validation.missing).toEqual([]);
         expect(validation.warnings).toEqual([]);
@@ -484,9 +484,9 @@ describe('ClassLoader', () => {
             type: 'active'
           };
         });
-        
+
         const validation = classLoader.validateClassAbilities();
-        
+
         expect(validation.isValid).toBe(false);
         expect(validation.missing).toContain('Mage level 1: ability \'fireball\' not found');
       });
@@ -498,10 +498,10 @@ describe('ClassLoader', () => {
           level3: 'ability3' // Missing level2
         };
         mockFS.readFileSync.mockReturnValue(JSON.stringify(mockClassesConfig));
-        
+
         classLoader = new ClassLoader();
         const validation = classLoader.validateClassAbilities();
-        
+
         expect(validation.warnings).toContain('TestClass missing ability for level 2');
       });
     });
@@ -509,7 +509,7 @@ describe('ClassLoader', () => {
     describe('getClassBalanceStats', () => {
       it('should calculate comprehensive balance statistics', () => {
         const stats = classLoader.getClassBalanceStats();
-        
+
         expect(stats.classes).toBe(3);
         expect(stats.categories).toEqual({
           'Melee': 1,
@@ -518,7 +518,7 @@ describe('ClassLoader', () => {
         });
         expect(stats.averageModifiers.hp).toBeCloseTo(1.0); // (1.2 + 0.8 + 1.0) / 3
         expect(stats.averageModifiers.damage).toBeCloseTo(1.1); // (1.1 + 1.3 + 0.9) / 3
-        
+
         expect(stats.extremes.highestHp).toEqual({ class: 'Warrior', value: 1.2 });
         expect(stats.extremes.lowestHp).toEqual({ class: 'Mage', value: 0.8 });
         expect(stats.extremes.highestDamage).toEqual({ class: 'Mage', value: 1.3 });
@@ -528,10 +528,10 @@ describe('ClassLoader', () => {
       it('should handle empty class list', () => {
         mockClassesConfig.availableClasses = [];
         mockFS.readFileSync.mockReturnValue(JSON.stringify(mockClassesConfig));
-        
+
         classLoader = new ClassLoader();
         const stats = classLoader.getClassBalanceStats();
-        
+
         expect(stats.classes).toBe(0);
         expect(stats.averageModifiers.hp).toBeNaN(); // Division by zero
       });
@@ -546,12 +546,12 @@ describe('ClassLoader', () => {
     describe('getAllClassData', () => {
       it('should return complete config as copies', () => {
         const allData = classLoader.getAllClassData();
-        
+
         expect(allData.availableClasses).toEqual(mockClassesConfig.availableClasses);
         expect(allData.classCategories).toEqual(mockClassesConfig.classCategories);
         expect(allData.classAttributes).toEqual(mockClassesConfig.classAttributes);
         expect(allData.classAbilityProgression).toEqual(mockClassesConfig.classAbilityProgression);
-        
+
         // Should be copies, not references
         expect(allData.availableClasses).not.toBe(mockClassesConfig.availableClasses);
         expect(allData.classCategories).not.toBe(mockClassesConfig.classCategories);
@@ -564,20 +564,20 @@ describe('ClassLoader', () => {
       mockFS.readFileSync.mockImplementation(() => {
         throw new Error('Permission denied');
       });
-      
+
       expect(() => new ClassLoader()).toThrow('Permission denied');
       expect(consoleSpy.error).toHaveBeenCalled();
     });
 
     it('should handle malformed JSON gracefully', () => {
       mockFS.readFileSync.mockReturnValue('{ "invalid": json }');
-      
+
       expect(() => new ClassLoader()).toThrow();
     });
 
     it('should handle empty file', () => {
       mockFS.readFileSync.mockReturnValue('');
-      
+
       expect(() => new ClassLoader()).toThrow();
     });
 
@@ -589,9 +589,9 @@ describe('ClassLoader', () => {
         classAbilityProgression: {}
       };
       mockFS.readFileSync.mockReturnValue(JSON.stringify(partialConfig));
-      
+
       classLoader = new ClassLoader();
-      
+
       expect(classLoader.getClassAttributes('Warrior')).toBeNull();
       expect(classLoader.getClassAbilityProgression('Warrior')).toBeNull();
     });
@@ -599,13 +599,13 @@ describe('ClassLoader', () => {
     it('should not reload when file timestamps are equal', () => {
       const fixedTime = Date.now();
       mockFS.statSync.mockReturnValue({ mtimeMs: fixedTime } as any);
-      
+
       classLoader = new ClassLoader();
-      
+
       // Reset call count and try reload
       mockFS.readFileSync.mockClear();
       const reloaded = classLoader.reloadIfChanged();
-      
+
       expect(reloaded).toBe(false);
       expect(mockFS.readFileSync).not.toHaveBeenCalled();
     });
@@ -620,12 +620,12 @@ describe('ClassLoader', () => {
       // 1. Get available classes
       const classes = classLoader.getAvailableClasses();
       expect(classes.length).toBeGreaterThan(0);
-      
+
       // 2. Select a class and get its info
       const className = classes[0];
       const classInfo = classLoader.getClassInfo(className);
       expect(classInfo).toBeDefined();
-      
+
       // 3. Calculate stats for the class
       const stats = classLoader.calculateClassStats(className, {
         baseHp: 100,
@@ -633,7 +633,7 @@ describe('ClassLoader', () => {
         baseDamage: 25
       });
       expect(stats.hp).toBeGreaterThan(0);
-      
+
       // 4. Get abilities for the class
       const abilities = classLoader.getAllClassAbilities(className);
       expect(abilities.length).toBeLessThanOrEqual(4);
@@ -642,13 +642,13 @@ describe('ClassLoader', () => {
     it('should provide consistent data across multiple calls', () => {
       const classes1 = classLoader.getAvailableClasses();
       const classes2 = classLoader.getAvailableClasses();
-      
+
       expect(classes1).toEqual(classes2);
       expect(classes1).not.toBe(classes2); // Different instances
-      
+
       const attributes1 = classLoader.getClassAttributes('Warrior');
       const attributes2 = classLoader.getClassAttributes('Warrior');
-      
+
       expect(attributes1).toEqual(attributes2);
     });
   });
@@ -660,13 +660,13 @@ describe('ClassLoader', () => {
 
     it('should enforce ClassWithAbilities interface', () => {
       const classInfo = classLoader.getClassInfo('Warrior');
-      
+
       if (classInfo) {
         expect(typeof classInfo.name).toBe('string');
         expect(typeof classInfo.category).toBe('string');
         expect(typeof classInfo.attributes).toBe('object');
         expect(Array.isArray(classInfo.abilities)).toBe(true);
-        
+
         if (classInfo.abilities.length > 0) {
           const ability = classInfo.abilities[0];
           expect(typeof ability.unlockAt).toBe('number');
@@ -683,9 +683,9 @@ describe('ClassLoader', () => {
         baseDamage: 25,
         customProperty: 'test'
       };
-      
+
       const stats = classLoader.calculateClassStats('Warrior', context);
-      
+
       expect(typeof stats.hp).toBe('number');
       expect(typeof stats.armor).toBe('number');
       expect(typeof stats.damage).toBe('number');

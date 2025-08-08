@@ -110,7 +110,7 @@ export class AbilityCommand extends PlayerActionCommand {
       abilityId,
       canUndo: false // Abilities typically cannot be undone
     });
-    
+
     this.coordinationInfo = options.coordinationInfo || null;
     this.originalTargetId = this.targetId; // Store original target for validation
   }
@@ -135,7 +135,7 @@ export class AbilityCommand extends PlayerActionCommand {
         targetId: this.targetId,
         timestamp: this.timestamp
       });
-      
+
       if (!validationResult.success) {
         this.validationErrors.push(...validationResult.errors);
       }
@@ -259,7 +259,7 @@ export class AbilityCommand extends PlayerActionCommand {
   private _findAbility(player: Player | undefined): Ability | undefined {
     if (!player?.abilities) return undefined;
     // Try to find by id first, then by type (for backward compatibility)
-    return player.abilities.find(ability => 
+    return player.abilities.find(ability =>
       ability.id === this.abilityId || ability.type === this.abilityId
     );
   }
@@ -274,7 +274,7 @@ export class AbilityCommand extends PlayerActionCommand {
   private _isAbilityUnlocked(player: Player | undefined, ability: Ability): boolean {
     if (!player?.unlocked) return false;
     // Check by both id and type for backward compatibility
-    return player.unlocked.some(unlockedAbility => 
+    return player.unlocked.some(unlockedAbility =>
       unlockedAbility.id === this.abilityId || unlockedAbility.type === this.abilityId
     );
   }
@@ -341,7 +341,7 @@ export class AbilityCommand extends PlayerActionCommand {
           this.validationErrors.push('Single-target ability requires a target');
           return;
         }
-        
+
         if (this.targetId === '__monster__' || this.targetId === 'monster') {
           if (!(game as Game).monster || (game as Game).monster!.hp <= 0) {
             this.validationErrors.push('Cannot target dead or non-existent monster');
@@ -389,10 +389,10 @@ export class AbilityCommand extends PlayerActionCommand {
 
     // Check health requirements
     if (ability.requiresHealth) {
-      const requiredHealth = typeof ability.requiresHealth === 'number' 
-        ? ability.requiresHealth 
+      const requiredHealth = typeof ability.requiresHealth === 'number'
+        ? ability.requiresHealth
         : Math.ceil((player.maxHp || 100) * ability.requiresHealth);
-      
+
       if ((player.hp || 0) < requiredHealth) {
         this.validationErrors.push(`Not enough health (requires ${requiredHealth}, have ${player.hp || 0})`);
       }
@@ -490,7 +490,7 @@ export class AbilityCommand extends PlayerActionCommand {
    */
   static fromActionData(playerId: string, actionData: Record<string, unknown>): AbilityCommand {
     const { targetId, abilityId, metadata } = actionData;
-    
+
     return new AbilityCommand(playerId, abilityId as string, {
       targetId: targetId as string,
       metadata: metadata as Record<string, unknown>

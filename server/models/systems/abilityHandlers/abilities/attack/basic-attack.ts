@@ -3,6 +3,8 @@
  * Handles standard single-target damage abilities
  */
 
+import { secureId } from '../../../../../utils/secureRandom.js';
+import { getCurrentTimestamp } from '../../../../../utils/timestamp.js';
 import type { Player, Monster, Ability } from '../../../../../types/generated.js';
 import type {
   AbilityHandler,
@@ -36,8 +38,8 @@ export const handleAttack: AbilityHandler = (
 ): boolean => {
   if (!actor || !target || !ability) {
     log.push({
-      id: `attack-error-${Date.now()}`,
-      timestamp: Date.now(),
+      id: secureId('attack-error'),
+      timestamp: getCurrentTimestamp(),
       type: 'system',
       source: 'system',
       message: 'Invalid attack parameters',
@@ -59,8 +61,8 @@ export const handleAttack: AbilityHandler = (
     const targetPlayer = target as Player;
     if (targetPlayer.statusEffects && (targetPlayer.statusEffects as any)['invisible']) {
       log.push({
-        id: `attack-invisible-${Date.now()}`,
-        timestamp: Date.now(),
+        id: secureId('attack-invisible'),
+        timestamp: getCurrentTimestamp(),
         type: 'action',
         source: actor.id,
         target: target.id,
@@ -87,17 +89,17 @@ export const handleAttack: AbilityHandler = (
   if (coordinationInfo?.isActive) {
     coordinationBonus = Math.floor(Number(baseDamage) * Number(coordinationInfo.bonusMultiplier || 1));
     finalDamage += Number(coordinationBonus);
-    
+
     log.push({
-      id: `coordination-bonus-${Date.now()}`,
-      timestamp: Date.now(),
+      id: secureId('coordination-bonus'),
+      timestamp: getCurrentTimestamp(),
       type: 'action',
       source: actor.id,
       message: `${actor.name} receives coordination bonus: +${coordinationBonus} damage`,
-      details: { 
+      details: {
         coordinationBonus,
         baseBonus: coordinationInfo.bonusMultiplier,
-        participants: coordinationInfo.participantNames 
+        participants: coordinationInfo.participantNames
       },
       public: true,
       isPublic: true,
@@ -111,10 +113,10 @@ export const handleAttack: AbilityHandler = (
     const comebackBonus = Number(comebackSystem.getBonus(actor.id)) || 0;
     if (comebackBonus > 0) {
       finalDamage += Number(comebackBonus);
-      
+
       log.push({
-        id: `comeback-bonus-${Date.now()}`,
-        timestamp: Date.now(),
+        id: secureId('comeback-bonus'),
+        timestamp: getCurrentTimestamp(),
         type: 'action',
         source: actor.id,
         message: `${actor.name} gets comeback bonus: +${comebackBonus} damage`,
@@ -139,8 +141,8 @@ export const handleAttack: AbilityHandler = (
 
   if (!damageResult.success) {
     log.push({
-      id: `attack-failed-${Date.now()}`,
-      timestamp: Date.now(),
+      id: secureId('attack-failed'),
+      timestamp: getCurrentTimestamp(),
       type: 'system',
       source: actor.id,
       target: target.id,
@@ -156,8 +158,8 @@ export const handleAttack: AbilityHandler = (
   // Log the successful attack
   const targetName = (target as Player).name || (target as Monster).name;
   log.push({
-    id: `attack-success-${Date.now()}`,
-    timestamp: Date.now(),
+    id: secureId('attack-success'),
+    timestamp: getCurrentTimestamp(),
     type: 'damage',
     source: actor.id,
     target: target.id,

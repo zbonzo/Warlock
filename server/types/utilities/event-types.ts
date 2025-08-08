@@ -13,22 +13,22 @@ export type EventMap = {
 /**
  * Event handler type
  */
-export type EventHandler<T = any> = (payload: T) => void | Promise<void>;
+export type EventHandler<T = any> = (_payload: T) => void | Promise<void>;
 
 /**
  * Typed event emitter interface
  */
 export type TypedEventEmitter<Events extends EventMap> = {
-  on<K extends keyof Events>(event: K, handler: EventHandler<Events[K]>): void;
-  off<K extends keyof Events>(event: K, handler: EventHandler<Events[K]>): void;
-  emit<K extends keyof Events>(event: K, payload: Events[K]): void;
-  once<K extends keyof Events>(event: K, handler: EventHandler<Events[K]>): void;
+  on<K extends keyof Events>(_event: K, _handler: EventHandler<Events[K]>): void;
+  off<K extends keyof Events>(_event: K, _handler: EventHandler<Events[K]>): void;
+  emit<K extends keyof Events>(_event: K, _payload: Events[K]): void;
+  once<K extends keyof Events>(_event: K, _handler: EventHandler<Events[K]>): void;
 };
 
 /**
  * Game event payload types
  */
-export type GameEventPayload<T extends string> = 
+export type GameEventPayload<T extends string> =
   T extends 'damage_applied' ? DamageAppliedPayload :
   T extends 'player_healed' ? PlayerHealedPayload :
   T extends 'ability_used' ? AbilityUsedPayload :

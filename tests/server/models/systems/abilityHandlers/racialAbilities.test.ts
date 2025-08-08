@@ -23,7 +23,7 @@ describe('racialAbilities', () => {
   describe('register', () => {
     it('should register racial abilities with registry', () => {
       register(mockRegistry);
-      
+
       expect(mockRegistry.registerRacialAbility || mockRegistry.registerClassAbility)
         .toHaveBeenCalledWith('adaptability', expect.any(Function));
       expect(mockRegistry.registerRacialAbility || mockRegistry.registerClassAbility)
@@ -34,9 +34,9 @@ describe('racialAbilities', () => {
 
     it('should fallback to class abilities if racial not supported', () => {
       delete mockRegistry.registerRacialAbility;
-      
+
       register(mockRegistry);
-      
+
       expect(mockRegistry.registerClassAbility).toHaveBeenCalledTimes(3);
     });
   });

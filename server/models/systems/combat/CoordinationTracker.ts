@@ -54,7 +54,7 @@ class CoordinationTracker {
     if (!this.coordinationMap.has(targetId)) {
       this.coordinationMap.set(targetId, []);
     }
-    
+
     const attackers = this.coordinationMap.get(targetId)!;
     if (!attackers.includes(actorId)) {
       attackers.push(actorId);
@@ -75,7 +75,7 @@ class CoordinationTracker {
    */
   calculateCoordinationBonus(actorId: string, targetId: string): CoordinationBonus {
     const otherAttackers = this.getCoordinationCount(targetId, actorId);
-    
+
     if (otherAttackers === 0) {
       return { bonus: 0, count: 0 };
     }
@@ -83,7 +83,7 @@ class CoordinationTracker {
     // Calculate bonus based on number of other attackers
     const bonusPerAttacker = config.gameBalance.coordinationBonus.damageBonus / 100 || 0.15;
     const maxBonus = config.gameBalance.coordinationBonus.maxBonusTargets || 0.5;
-    
+
     const rawBonus = otherAttackers * bonusPerAttacker;
     const bonus = Math.min(rawBonus, maxBonus);
 

@@ -81,7 +81,7 @@ describe('attackAbilities', () => {
 
     // Mock messages
     mockMessages.getAbilityMessage = jest.fn((category, key) => `${category}.${key}`);
-    mockMessages.formatMessage = jest.fn((template, params) => 
+    mockMessages.formatMessage = jest.fn((template, params) =>
       `Formatted: ${template} with ${JSON.stringify(params)}`
     );
     mockMessages.getError = jest.fn((key) => `Error: ${key}`);
@@ -258,8 +258,8 @@ describe('attackAbilities', () => {
       );
 
       // Should log coordination bonus
-      expect(log.some(entry => 
-        entry.type === 'coordination_damage_applied' && 
+      expect(log.some(entry =>
+        entry.type === 'coordination_damage_applied' &&
         entry.privateMessage?.includes('25%')
       )).toBe(true);
     });
@@ -284,8 +284,8 @@ describe('attackAbilities', () => {
       );
 
       // Should log comeback bonus
-      expect(log.some(entry => 
-        entry.type === 'comeback_damage_applied' && 
+      expect(log.some(entry =>
+        entry.type === 'comeback_damage_applied' &&
         entry.privateMessage?.includes('25%')
       )).toBe(true);
     });
@@ -957,7 +957,7 @@ describe('attackAbilities', () => {
       );
 
       expect(result).toBe(true);
-      expect(log.some(entry => 
+      expect(log.some(entry =>
         entry.includes('recklessStrikeSelfDamage')
       )).toBe(true);
     });

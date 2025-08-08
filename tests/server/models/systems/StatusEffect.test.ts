@@ -39,7 +39,7 @@ describe('StatusEffect', () => {
   describe('constructor', () => {
     it('should create status effect with default values', () => {
       statusEffect = new StatusEffect('poison', { turns: 3, damage: 5 });
-      
+
       expect(statusEffect.id).toBe('test-uuid');
       expect(statusEffect.type).toBe('poison');
       expect(statusEffect.turnsRemaining).toBe(3);
@@ -51,9 +51,9 @@ describe('StatusEffect', () => {
     it('should process poison damage', () => {
       statusEffect = new StatusEffect('poison', { turns: 2, damage: 10 });
       const log: any[] = [];
-      
+
       const result = statusEffect.processTurn(mockTarget, log);
-      
+
       expect(mockTarget.hp).toBe(90);
       expect(statusEffect.turnsRemaining).toBe(1);
       expect(result.shouldRemove).toBe(false);
@@ -62,9 +62,9 @@ describe('StatusEffect', () => {
     it('should remove expired effect', () => {
       statusEffect = new StatusEffect('poison', { turns: 1, damage: 5 });
       const log: any[] = [];
-      
+
       const result = statusEffect.processTurn(mockTarget, log);
-      
+
       expect(result.shouldRemove).toBe(true);
       expect(statusEffect.isActive).toBe(false);
     });
@@ -73,9 +73,9 @@ describe('StatusEffect', () => {
   describe('getCalculationContribution', () => {
     it('should return vulnerability contribution', () => {
       statusEffect = new StatusEffect('vulnerable', { damageIncrease: 0.3 });
-      
+
       const contribution = statusEffect.getCalculationContribution('damageTaken');
-      
+
       expect(contribution.percentage).toBe(30);
     });
   });
@@ -83,9 +83,9 @@ describe('StatusEffect', () => {
   describe('refresh', () => {
     it('should extend duration and stack damage', () => {
       statusEffect = new StatusEffect('poison', { turns: 2, damage: 5 });
-      
+
       statusEffect.refresh({ turns: 4, damage: 3 }, true);
-      
+
       expect(statusEffect.turnsRemaining).toBe(4);
       expect(statusEffect.params.damage).toBe(8);
     });

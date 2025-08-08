@@ -24,19 +24,19 @@ describe('Tooltip', () => {
   describe('Basic Rendering', () => {
     it('should render children', () => {
       render(<Tooltip {...defaultProps} />);
-      
+
       expect(screen.getByText('Hover me')).toBeInTheDocument();
     });
 
     it('should not show tooltip initially', () => {
       render(<Tooltip {...defaultProps} />);
-      
+
       expect(screen.queryByText('This is a tooltip')).not.toBeInTheDocument();
     });
 
     it('should have tooltip container with correct class', () => {
       const { container } = render(<Tooltip {...defaultProps} />);
-      
+
       expect(container.querySelector('.tooltip-container')).toBeInTheDocument();
     });
   });
@@ -44,22 +44,22 @@ describe('Tooltip', () => {
   describe('Mouse Interactions', () => {
     it('should show tooltip on mouse enter', () => {
       const { container } = render(<Tooltip {...defaultProps} />);
-      
+
       const tooltipContainer = container.querySelector('.tooltip-container');
       fireEvent.mouseEnter(tooltipContainer!);
-      
+
       expect(screen.getByText('This is a tooltip')).toBeInTheDocument();
     });
 
     it('should hide tooltip on mouse leave', () => {
       const { container } = render(<Tooltip {...defaultProps} />);
-      
+
       const tooltipContainer = container.querySelector('.tooltip-container');
-      
+
       // Show tooltip
       fireEvent.mouseEnter(tooltipContainer!);
       expect(screen.getByText('This is a tooltip')).toBeInTheDocument();
-      
+
       // Hide tooltip
       fireEvent.mouseLeave(tooltipContainer!);
       expect(screen.queryByText('This is a tooltip')).not.toBeInTheDocument();
@@ -67,20 +67,20 @@ describe('Tooltip', () => {
 
     it('should show tooltip multiple times', () => {
       const { container } = render(<Tooltip {...defaultProps} />);
-      
+
       const tooltipContainer = container.querySelector('.tooltip-container');
-      
+
       // First show/hide cycle
       fireEvent.mouseEnter(tooltipContainer!);
       expect(screen.getByText('This is a tooltip')).toBeInTheDocument();
-      
+
       fireEvent.mouseLeave(tooltipContainer!);
       expect(screen.queryByText('This is a tooltip')).not.toBeInTheDocument();
-      
+
       // Second show/hide cycle
       fireEvent.mouseEnter(tooltipContainer!);
       expect(screen.getByText('This is a tooltip')).toBeInTheDocument();
-      
+
       fireEvent.mouseLeave(tooltipContainer!);
       expect(screen.queryByText('This is a tooltip')).not.toBeInTheDocument();
     });
@@ -89,22 +89,22 @@ describe('Tooltip', () => {
   describe('Focus Interactions', () => {
     it('should show tooltip on focus', () => {
       const { container } = render(<Tooltip {...defaultProps} />);
-      
+
       const tooltipContainer = container.querySelector('.tooltip-container');
       fireEvent.focus(tooltipContainer!);
-      
+
       expect(screen.getByText('This is a tooltip')).toBeInTheDocument();
     });
 
     it('should hide tooltip on blur', () => {
       const { container } = render(<Tooltip {...defaultProps} />);
-      
+
       const tooltipContainer = container.querySelector('.tooltip-container');
-      
+
       // Show tooltip
       fireEvent.focus(tooltipContainer!);
       expect(screen.getByText('This is a tooltip')).toBeInTheDocument();
-      
+
       // Hide tooltip
       fireEvent.blur(tooltipContainer!);
       expect(screen.queryByText('This is a tooltip')).not.toBeInTheDocument();
@@ -116,12 +116,12 @@ describe('Tooltip', () => {
           <button>Focusable button</button>
         </Tooltip>
       );
-      
+
       const button = screen.getByText('Focusable button');
-      
+
       // Focus the button (should bubble to container)
       fireEvent.focus(button);
-      
+
       // The tooltip might not show directly on the button, but the container should handle it
       const button2 = screen.getByText('Focusable button');
       expect(button2).toBeInTheDocument();
@@ -131,10 +131,10 @@ describe('Tooltip', () => {
   describe('Position Prop', () => {
     it('should apply default position (top)', () => {
       const { container } = render(<Tooltip {...defaultProps} />);
-      
+
       const tooltipContainer = container.querySelector('.tooltip-container');
       fireEvent.mouseEnter(tooltipContainer!);
-      
+
       const tooltip = container.querySelector('.tooltip');
       expect(tooltip).toHaveClass('tooltip-top');
     });
@@ -143,10 +143,10 @@ describe('Tooltip', () => {
       const { container } = render(
         <Tooltip {...defaultProps} position="top" />
       );
-      
+
       const tooltipContainer = container.querySelector('.tooltip-container');
       fireEvent.mouseEnter(tooltipContainer!);
-      
+
       const tooltip = container.querySelector('.tooltip');
       expect(tooltip).toHaveClass('tooltip-top');
     });
@@ -155,10 +155,10 @@ describe('Tooltip', () => {
       const { container } = render(
         <Tooltip {...defaultProps} position="right" />
       );
-      
+
       const tooltipContainer = container.querySelector('.tooltip-container');
       fireEvent.mouseEnter(tooltipContainer!);
-      
+
       const tooltip = container.querySelector('.tooltip');
       expect(tooltip).toHaveClass('tooltip-right');
     });
@@ -167,10 +167,10 @@ describe('Tooltip', () => {
       const { container } = render(
         <Tooltip {...defaultProps} position="bottom" />
       );
-      
+
       const tooltipContainer = container.querySelector('.tooltip-container');
       fireEvent.mouseEnter(tooltipContainer!);
-      
+
       const tooltip = container.querySelector('.tooltip');
       expect(tooltip).toHaveClass('tooltip-bottom');
     });
@@ -179,10 +179,10 @@ describe('Tooltip', () => {
       const { container } = render(
         <Tooltip {...defaultProps} position="left" />
       );
-      
+
       const tooltipContainer = container.querySelector('.tooltip-container');
       fireEvent.mouseEnter(tooltipContainer!);
-      
+
       const tooltip = container.querySelector('.tooltip');
       expect(tooltip).toHaveClass('tooltip-left');
     });
@@ -195,10 +195,10 @@ describe('Tooltip', () => {
           <div>Target</div>
         </Tooltip>
       );
-      
+
       const tooltipContainer = container.querySelector('.tooltip-container');
       fireEvent.mouseEnter(tooltipContainer!);
-      
+
       expect(screen.getByText('Simple string tooltip')).toBeInTheDocument();
     });
 
@@ -210,16 +210,16 @@ describe('Tooltip', () => {
           <em>Italic text</em>
         </div>
       );
-      
+
       const { container } = render(
         <Tooltip content={reactContent}>
           <div>Target</div>
         </Tooltip>
       );
-      
+
       const tooltipContainer = container.querySelector('.tooltip-container');
       fireEvent.mouseEnter(tooltipContainer!);
-      
+
       expect(screen.getByText('Bold text')).toBeInTheDocument();
       expect(screen.getByText('Italic text')).toBeInTheDocument();
     });
@@ -235,16 +235,16 @@ describe('Tooltip', () => {
           <button>Tooltip Button</button>
         </div>
       );
-      
+
       const { container } = render(
         <Tooltip content={complexContent}>
           <div>Target</div>
         </Tooltip>
       );
-      
+
       const tooltipContainer = container.querySelector('.tooltip-container');
       fireEvent.mouseEnter(tooltipContainer!);
-      
+
       expect(screen.getByText('Tooltip Title')).toBeInTheDocument();
       expect(screen.getByText('Item 1')).toBeInTheDocument();
       expect(screen.getByText('Item 2')).toBeInTheDocument();
@@ -257,10 +257,10 @@ describe('Tooltip', () => {
           <div>Target</div>
         </Tooltip>
       );
-      
+
       const tooltipContainer = container.querySelector('.tooltip-container');
       fireEvent.mouseEnter(tooltipContainer!);
-      
+
       const tooltip = container.querySelector('.tooltip');
       expect(tooltip).toBeInTheDocument();
       expect(tooltip).toHaveTextContent('');
@@ -272,10 +272,10 @@ describe('Tooltip', () => {
           <div>Target</div>
         </Tooltip>
       );
-      
+
       const tooltipContainer = container.querySelector('.tooltip-container');
       fireEvent.mouseEnter(tooltipContainer!);
-      
+
       const tooltip = container.querySelector('.tooltip');
       expect(tooltip).toBeInTheDocument();
     });
@@ -288,7 +288,7 @@ describe('Tooltip', () => {
           <button>Single child</button>
         </Tooltip>
       );
-      
+
       expect(screen.getByText('Single child')).toBeInTheDocument();
     });
 
@@ -299,7 +299,7 @@ describe('Tooltip', () => {
           <span>Second child</span>
         </Tooltip>
       );
-      
+
       expect(screen.getByText('First child')).toBeInTheDocument();
       expect(screen.getByText('Second child')).toBeInTheDocument();
     });
@@ -313,7 +313,7 @@ describe('Tooltip', () => {
           </div>
         </Tooltip>
       );
-      
+
       expect(screen.getByText('Nested Title')).toBeInTheDocument();
       expect(screen.getByText('Nested paragraph')).toBeInTheDocument();
     });
@@ -324,7 +324,7 @@ describe('Tooltip', () => {
           Just plain text
         </Tooltip>
       );
-      
+
       expect(screen.getByText('Just plain text')).toBeInTheDocument();
     });
   });
@@ -341,19 +341,19 @@ describe('Tooltip', () => {
           </Tooltip>
         </div>
       );
-      
+
       const tooltipContainers = container.querySelectorAll('.tooltip-container');
-      
+
       // Show first tooltip
       fireEvent.mouseEnter(tooltipContainers[0]);
       expect(screen.getByText('First tooltip')).toBeInTheDocument();
       expect(screen.queryByText('Second tooltip')).not.toBeInTheDocument();
-      
+
       // Show second tooltip
       fireEvent.mouseEnter(tooltipContainers[1]);
       expect(screen.getByText('First tooltip')).toBeInTheDocument();
       expect(screen.getByText('Second tooltip')).toBeInTheDocument();
-      
+
       // Hide first tooltip
       fireEvent.mouseLeave(tooltipContainers[0]);
       expect(screen.queryByText('First tooltip')).not.toBeInTheDocument();
@@ -362,34 +362,34 @@ describe('Tooltip', () => {
 
     it('should handle rapid show/hide events', () => {
       const { container } = render(<Tooltip {...defaultProps} />);
-      
+
       const tooltipContainer = container.querySelector('.tooltip-container');
-      
+
       // Rapid mouse enter/leave events
       fireEvent.mouseEnter(tooltipContainer!);
       fireEvent.mouseLeave(tooltipContainer!);
       fireEvent.mouseEnter(tooltipContainer!);
       fireEvent.mouseLeave(tooltipContainer!);
       fireEvent.mouseEnter(tooltipContainer!);
-      
+
       // Should end up showing the tooltip
       expect(screen.getByText('This is a tooltip')).toBeInTheDocument();
     });
 
     it('should handle mixed mouse and focus events', () => {
       const { container } = render(<Tooltip {...defaultProps} />);
-      
+
       const tooltipContainer = container.querySelector('.tooltip-container');
-      
+
       // Mouse enter, then focus (should still show)
       fireEvent.mouseEnter(tooltipContainer!);
       fireEvent.focus(tooltipContainer!);
       expect(screen.getByText('This is a tooltip')).toBeInTheDocument();
-      
+
       // Mouse leave, but still focused (should hide)
       fireEvent.mouseLeave(tooltipContainer!);
       expect(screen.queryByText('This is a tooltip')).not.toBeInTheDocument();
-      
+
       // Blur (should remain hidden)
       fireEvent.blur(tooltipContainer!);
       expect(screen.queryByText('This is a tooltip')).not.toBeInTheDocument();
@@ -399,28 +399,28 @@ describe('Tooltip', () => {
   describe('CSS Classes', () => {
     it('should have correct base CSS classes', () => {
       const { container } = render(<Tooltip {...defaultProps} />);
-      
+
       expect(container.querySelector('.tooltip-container')).toBeInTheDocument();
-      
+
       const tooltipContainer = container.querySelector('.tooltip-container');
       fireEvent.mouseEnter(tooltipContainer!);
-      
+
       expect(container.querySelector('.tooltip')).toBeInTheDocument();
     });
 
     it('should apply position-specific CSS classes', () => {
       const positions = ['top', 'right', 'bottom', 'left'] as const;
-      
+
       positions.forEach(position => {
         const { container } = render(
           <Tooltip content="test" position={position}>
             <div>Test</div>
           </Tooltip>
         );
-        
+
         const tooltipContainer = container.querySelector('.tooltip-container');
         fireEvent.mouseEnter(tooltipContainer!);
-        
+
         const tooltip = container.querySelector('.tooltip');
         expect(tooltip).toHaveClass(`tooltip-${position}`);
       });
@@ -430,10 +430,10 @@ describe('Tooltip', () => {
   describe('Accessibility', () => {
     it('should be accessible to screen readers', () => {
       const { container } = render(<Tooltip {...defaultProps} />);
-      
+
       const tooltipContainer = container.querySelector('.tooltip-container');
       fireEvent.mouseEnter(tooltipContainer!);
-      
+
       const tooltip = container.querySelector('.tooltip');
       expect(tooltip).toBeInTheDocument();
     });
@@ -444,9 +444,9 @@ describe('Tooltip', () => {
           <button>Keyboard button</button>
         </Tooltip>
       );
-      
+
       const button = screen.getByText('Keyboard button');
-      
+
       // Tab to focus button
       button.focus();
       expect(document.activeElement).toBe(button);
@@ -458,14 +458,14 @@ describe('Tooltip', () => {
           <input type="text" placeholder="Focus me" />
         </Tooltip>
       );
-      
+
       const tooltipContainer = container.querySelector('.tooltip-container');
       const input = screen.getByPlaceholderText('Focus me');
-      
+
       // Focus should work with focusable elements inside
       input.focus();
       expect(document.activeElement).toBe(input);
-      
+
       // Container focus events should still work
       fireEvent.focus(tooltipContainer!);
       fireEvent.blur(tooltipContainer!);
@@ -520,37 +520,37 @@ describe('Tooltip', () => {
           {42}
         </Tooltip>
       );
-      
+
       expect(screen.getByText('42')).toBeInTheDocument();
     });
 
     it('should handle very long tooltip content', () => {
       const longContent = 'This is a very long tooltip content that might cause display issues or wrapping problems in some layouts but should still render correctly';
-      
+
       const { container } = render(
         <Tooltip content={longContent}>
           <div>Target</div>
         </Tooltip>
       );
-      
+
       const tooltipContainer = container.querySelector('.tooltip-container');
       fireEvent.mouseEnter(tooltipContainer!);
-      
+
       expect(screen.getByText(longContent)).toBeInTheDocument();
     });
 
     it('should handle content with special characters', () => {
       const specialContent = 'Content with <>&"\'{}[]() special characters!';
-      
+
       const { container } = render(
         <Tooltip content={specialContent}>
           <div>Target</div>
         </Tooltip>
       );
-      
+
       const tooltipContainer = container.querySelector('.tooltip-container');
       fireEvent.mouseEnter(tooltipContainer!);
-      
+
       expect(screen.getByText(specialContent)).toBeInTheDocument();
     });
   });

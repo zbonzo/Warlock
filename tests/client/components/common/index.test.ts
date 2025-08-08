@@ -54,7 +54,7 @@ describe('Common Components Index', () => {
     it('should export all expected components', () => {
       const expectedExports = [
         'PlayerCard',
-        'ErrorBoundary', 
+        'ErrorBoundary',
         'LoadingScreen',
         'ThemeToggle'
       ];
@@ -69,7 +69,7 @@ describe('Common Components Index', () => {
       const expectedExports = [
         'PlayerCard',
         'ErrorBoundary',
-        'LoadingScreen', 
+        'LoadingScreen',
         'ThemeToggle'
       ];
 

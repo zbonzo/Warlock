@@ -5,8 +5,8 @@
 
 import { PlayerManager } from '@models/gameroom/PlayerManager';
 import { Player } from '@models/Player';
-import type { 
-  PlayerRace, 
+import type {
+  PlayerRace,
   PlayerClass,
   PlayerInfo,
   PlayerActionSummary
@@ -52,7 +52,7 @@ describe('PlayerManager (TypeScript)', () => {
     it('should initialize with empty player map', () => {
       const emptyMap = new Map<string, Player>();
       const manager = new PlayerManager(emptyMap);
-      
+
       expect(manager).toBeInstanceOf(PlayerManager);
     });
   });
@@ -114,7 +114,7 @@ describe('PlayerManager (TypeScript)', () => {
     it('should get all players info correctly', () => {
       const mockPlayer1 = createMockPlayer('player1', 'Alice');
       const mockPlayer2 = createMockPlayer('player2', 'Bob');
-      
+
       mockPlayer1.toClientData.mockReturnValue({
         id: 'player1',
         name: 'Alice',
@@ -166,7 +166,7 @@ describe('PlayerManager (TypeScript)', () => {
     it('should get alive players correctly', () => {
       const alivePlayer = createMockPlayer('alive', 'Alive');
       const deadPlayer = createMockPlayer('dead', 'Dead');
-      
+
       alivePlayer.isAlive = true;
       deadPlayer.isAlive = false;
 
@@ -183,7 +183,7 @@ describe('PlayerManager (TypeScript)', () => {
       const alivePlayer1 = createMockPlayer('alive1', 'Alive1');
       const alivePlayer2 = createMockPlayer('alive2', 'Alive2');
       const deadPlayer = createMockPlayer('dead', 'Dead');
-      
+
       alivePlayer1.isAlive = true;
       alivePlayer2.isAlive = true;
       deadPlayer.isAlive = false;
@@ -220,7 +220,7 @@ describe('PlayerManager (TypeScript)', () => {
     it('should check if all players are ready', () => {
       const readyPlayer = createMockPlayer('ready', 'Ready');
       const notReadyPlayer = createMockPlayer('notReady', 'NotReady');
-      
+
       readyPlayer.isCharacterReady.mockReturnValue(true);
       notReadyPlayer.isCharacterReady.mockReturnValue(false);
 
@@ -235,7 +235,7 @@ describe('PlayerManager (TypeScript)', () => {
     it('should return true when all players are ready', () => {
       const readyPlayer1 = createMockPlayer('ready1', 'Ready1');
       const readyPlayer2 = createMockPlayer('ready2', 'Ready2');
-      
+
       readyPlayer1.isCharacterReady.mockReturnValue(true);
       readyPlayer2.isCharacterReady.mockReturnValue(true);
 
@@ -250,7 +250,7 @@ describe('PlayerManager (TypeScript)', () => {
     it('should clear ready states', () => {
       const player1 = createMockPlayer('p1', 'Player1');
       const player2 = createMockPlayer('p2', 'Player2');
-      
+
       player1.isReady = true;
       player2.isReady = true;
 
@@ -269,15 +269,15 @@ describe('PlayerManager (TypeScript)', () => {
       const alivePlayer = createMockPlayer('alive', 'Alive');
       const deadPlayer = createMockPlayer('dead', 'Dead');
       const stunnedPlayer = createMockPlayer('stunned', 'Stunned');
-      
+
       alivePlayer.isAlive = true;
       alivePlayer.hasSubmittedAction = true;
       alivePlayer.hasStatusEffect.mockReturnValue(false);
-      
+
       deadPlayer.isAlive = false;
       deadPlayer.hasSubmittedAction = false;
       deadPlayer.hasStatusEffect.mockReturnValue(false);
-      
+
       stunnedPlayer.isAlive = true;
       stunnedPlayer.hasSubmittedAction = false;
       stunnedPlayer.hasStatusEffect.mockImplementation((effect) => effect === 'stunned');
@@ -320,7 +320,7 @@ describe('PlayerManager (TypeScript)', () => {
     it('should return false when new ID already exists', () => {
       const player1 = createMockPlayer('player1', 'Player1');
       const player2 = createMockPlayer('player2', 'Player2');
-      
+
       mockPlayers.set('player1', player1);
       mockPlayers.set('player2', player2);
 
@@ -335,7 +335,7 @@ describe('PlayerManager (TypeScript)', () => {
   describe('Type Safety', () => {
     it('should enforce correct types for PlayerInfo', () => {
       const mockPlayer = createMockPlayer('player1', 'Alice');
-      
+
       mockPlayer.toClientData.mockReturnValue({
         id: 'player1',
         name: 'Alice',

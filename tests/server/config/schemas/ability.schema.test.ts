@@ -4,8 +4,8 @@
  */
 
 import { z } from 'zod';
-import { 
-  AbilitySchema, 
+import {
+  AbilitySchema,
   AbilitiesMapSchema,
   validateAbility,
   validateAbilitiesMap,
@@ -39,7 +39,7 @@ describe('Ability Schema Validation', () => {
       };
 
       const result = AbilitySchema.safeParse(validAbility);
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.data.id).toBe('fireball');
@@ -64,7 +64,7 @@ describe('Ability Schema Validation', () => {
       };
 
       const result = AbilitySchema.safeParse(abilityWithNullEffect);
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.data.effect).toBeNull();
@@ -86,7 +86,7 @@ describe('Ability Schema Validation', () => {
       };
 
       const result = AbilitySchema.safeParse(invalidAbility);
-      
+
       expect(result.success).toBe(false);
       if (!result.success) {
         expect(result.error.issues[0].path).toContain('category');
@@ -108,7 +108,7 @@ describe('Ability Schema Validation', () => {
       };
 
       const result = AbilitySchema.safeParse(invalidAbility);
-      
+
       expect(result.success).toBe(false);
       if (!result.success) {
         expect(result.error.issues[0].path).toContain('target');
@@ -130,7 +130,7 @@ describe('Ability Schema Validation', () => {
       };
 
       const result = AbilitySchema.safeParse(invalidAbility);
-      
+
       expect(result.success).toBe(false);
       if (!result.success) {
         expect(result.error.issues[0].path).toContain('cooldown');
@@ -153,7 +153,7 @@ describe('Ability Schema Validation', () => {
       };
 
       const result = AbilitySchema.safeParse(invalidAbility);
-      
+
       expect(result.success).toBe(false);
       if (!result.success) {
         expect(result.error.issues[0].path).toContain('tags');
@@ -181,7 +181,7 @@ describe('Ability Schema Validation', () => {
       };
 
       const result = AbilitySchema.safeParse(complexAbility);
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.data.params.poisonEffect).toBeDefined();
@@ -219,7 +219,7 @@ describe('Ability Schema Validation', () => {
       };
 
       const result = AbilitiesMapSchema.safeParse(abilitiesMap);
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(Object.keys(result.data)).toHaveLength(2);
@@ -245,7 +245,7 @@ describe('Ability Schema Validation', () => {
       };
 
       const result = AbilitiesMapSchema.safeParse(invalidMap);
-      
+
       expect(result.success).toBe(false);
     });
   });
@@ -267,7 +267,7 @@ describe('Ability Schema Validation', () => {
     describe('validateAbility', () => {
       it('should validate and return valid ability', () => {
         const result = validateAbility(validAbility);
-        
+
         expect(result.id).toBe('testability');
         expect(result.name).toBe('Test Ability');
         expect(result.category).toBe('Special');
@@ -275,7 +275,7 @@ describe('Ability Schema Validation', () => {
 
       it('should throw on invalid ability', () => {
         const invalidAbility = { ...validAbility, category: 'Invalid' };
-        
+
         expect(() => validateAbility(invalidAbility)).toThrow();
       });
     });
@@ -283,7 +283,7 @@ describe('Ability Schema Validation', () => {
     describe('safeValidateAbility', () => {
       it('should return success result for valid ability', () => {
         const result = safeValidateAbility(validAbility);
-        
+
         expect(result.success).toBe(true);
         if (result.success) {
           expect(result.data.id).toBe('testability');
@@ -293,7 +293,7 @@ describe('Ability Schema Validation', () => {
       it('should return error result for invalid ability', () => {
         const invalidAbility = { ...validAbility, cooldown: -1 };
         const result = safeValidateAbility(invalidAbility);
-        
+
         expect(result.success).toBe(false);
         if (!result.success) {
           expect(result.error.issues.length).toBeGreaterThan(0);
@@ -305,13 +305,13 @@ describe('Ability Schema Validation', () => {
       it('should validate abilities map', () => {
         const map = { test: validAbility };
         const result = validateAbilitiesMap(map);
-        
+
         expect(result.test.name).toBe('Test Ability');
       });
 
       it('should throw on invalid abilities map', () => {
         const invalidMap = { test: { ...validAbility, name: '' } };
-        
+
         expect(() => validateAbilitiesMap(invalidMap)).toThrow();
       });
     });
@@ -320,7 +320,7 @@ describe('Ability Schema Validation', () => {
       it('should return success for valid map', () => {
         const map = { test: validAbility };
         const result = safeValidateAbilitiesMap(map);
-        
+
         expect(result.success).toBe(true);
         if (result.success) {
           expect(result.data.test.name).toBe('Test Ability');
@@ -330,7 +330,7 @@ describe('Ability Schema Validation', () => {
       it('should return error for invalid map', () => {
         const invalidMap = { test: { ...validAbility, tags: [] } };
         const result = safeValidateAbilitiesMap(invalidMap);
-        
+
         expect(result.success).toBe(false);
       });
     });
@@ -340,7 +340,7 @@ describe('Ability Schema Validation', () => {
     it('should provide correct TypeScript types', () => {
       type AbilityType = z.infer<typeof AbilitySchema>;
       type AbilitiesMapType = z.infer<typeof AbilitiesMapSchema>;
-      
+
       const ability: AbilityType = {
         id: 'test',
         name: 'Test',

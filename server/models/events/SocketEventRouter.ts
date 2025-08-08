@@ -77,15 +77,15 @@ export class SocketEventRouter {
   private gameCode: string;
   private validator: SocketValidationMiddleware;
   private commandProcessor: CommandProcessor;
-  
+
   // Socket management
   private sockets: Map<string, Socket> = new Map();
   private playerSockets: Map<string, string> = new Map();
-  
+
   // Event mapping configurations
   private incomingEventMap: IncomingEventMap;
   private outgoingEventMap: OutgoingEventMap;
-  
+
   // Statistics
   private stats: Omit<RouterStats, 'activeSockets' | 'mappedPlayers'> = {
     socketsConnected: 0,
@@ -104,15 +104,15 @@ export class SocketEventRouter {
     this.eventBus = gameRoom.eventBus;
     this.io = io;
     this.gameCode = gameRoom.code;
-    
+
     // Socket validation middleware
     this.validator = new SocketValidationMiddleware({
       enableLogging: true
     });
-    
+
     // Command processor for handling socket actions
     this.commandProcessor = new CommandProcessor(gameRoom);
-    
+
     // Event mapping configurations
     this.incomingEventMap = this._createIncomingEventMap();
     this.outgoingEventMap = this._createOutgoingEventMap();
@@ -128,7 +128,7 @@ export class SocketEventRouter {
   registerSocket(socket: Socket): void {
     this.sockets.set(socket.id, socket);
     this.stats.socketsConnected++;
-    
+
     logger.info('Socket registered with router:', {
       gameCode: this.gameCode,
       socketId: socket.id,
@@ -137,7 +137,7 @@ export class SocketEventRouter {
 
     // Set up socket event handlers
     this._setupSocketHandlers(socket);
-    
+
     // Handle socket disconnection
     socket.on('disconnect', () => {
       this._handleSocketDisconnect(socket);
@@ -170,7 +170,7 @@ export class SocketEventRouter {
       const socket = this.sockets.get(socketId)!;
       socket.emit(eventName, data);
       this.stats.eventsRouted++;
-      
+
       logger.debug('Event emitted to player:', {
         gameCode: this.gameCode,
         playerId,
@@ -188,7 +188,7 @@ export class SocketEventRouter {
   broadcastToGame(eventName: string, data: any): void {
     this.io.to(this.gameCode).emit(eventName, data);
     this.stats.eventsRouted++;
-    
+
     logger.debug('Event broadcasted to game:', {
       gameCode: this.gameCode,
       eventName,
@@ -221,12 +221,12 @@ export class SocketEventRouter {
       [EventTypes.GAME.CREATED, 'gameCreated'],
       [EventTypes.GAME.STARTED, 'gameStarted'],
       [EventTypes.GAME.ENDED, 'gameEnded'],
-      
+
       // Phase Events
       [EventTypes.PHASE.CHANGED, 'phaseChanged'],
       [EventTypes.PHASE.COUNTDOWN_STARTED, 'countdownStarted'],
       [EventTypes.PHASE.COUNTDOWN_TICK, 'countdownTick'],
-      
+
       // Player Events
       [EventTypes.PLAYER.JOINED, 'playerJoined'],
       [EventTypes.PLAYER.LEFT, 'playerLeft'],
@@ -234,19 +234,19 @@ export class SocketEventRouter {
       [EventTypes.PLAYER.RECONNECTED, 'gameReconnected'],
       [EventTypes.PLAYER.DIED, 'playerDied'],
       [EventTypes.PLAYER.STATUS_UPDATED, 'playerList'],
-      
+
       // Action Events
       [EventTypes.ACTION.SUBMITTED, 'actionSubmitted'],
       [EventTypes.ACTION.EXECUTED, 'actionExecuted'],
       [EventTypes.ABILITY.FAILED, 'actionFailed'],
       [EventTypes.ABILITY.USED, 'racialAbilityUsed'],
       [EventTypes.ABILITY.EXECUTED, 'adaptabilityComplete'],
-      
+
       // Combat Events
       [EventTypes.DAMAGE.APPLIED, 'damageApplied'],
       [EventTypes.HEAL.APPLIED, 'healingApplied'],
       [EventTypes.EFFECT.APPLIED, 'effectApplied'],
-      
+
       // Error Events
       [EventTypes.GAME.ERROR, 'errorMessage'],
       ['validation.error', 'validationError']
@@ -335,10 +335,10 @@ export class SocketEventRouter {
   private _setupSocketHandlers(socket: Socket): void {
     // Note: socket.join is handled by the main server during connection
     // We don't need to join here to avoid conflicts
-    
+
     // No event handlers to register - all events handled by main server
     // SocketEventRouter focuses on outgoing EventBus → Socket.IO routing
-    
+
     // For future expansion, incoming event handlers can be added here
     // when we want to gradually migrate events from main server to EventBus
   }
@@ -353,10 +353,10 @@ export class SocketEventRouter {
    * @private
    */
   private async _handleIncomingEvent(
-    socket: Socket, 
-    eventName: string, 
-    data: any, 
-    callback?: Function, 
+    socket: Socket,
+    eventName: string,
+    data: any,
+    callback?: Function,
     config?: EventConfig
   ): Promise<void> {
     try {
@@ -407,7 +407,7 @@ export class SocketEventRouter {
     try {
       // Transform event data for client consumption
       const clientData = this._transformEventDataForClient(eventBusType, eventData);
-      
+
       // Determine routing strategy
       if (eventData.playerId && this.playerSockets.has(eventData.playerId)) {
         // Send to specific player
@@ -439,12 +439,12 @@ export class SocketEventRouter {
   private _transformEventDataForClient(eventType: string, eventData: any): ClientEventData {
     // Remove internal properties that shouldn't go to client
     const { eventBus, gameRoom, ...clientData } = eventData;
-    
+
     // Add standard fields for client events
     if (!clientData.timestamp) {
       clientData.timestamp = new Date().toISOString();
     }
-    
+
     if (!clientData.gameCode) {
       clientData.gameCode = this.gameCode;
     }
@@ -459,12 +459,12 @@ export class SocketEventRouter {
    */
   private _handleSocketDisconnect(socket: Socket): void {
     this.sockets.delete(socket.id);
-    
+
     // Find and remove player mapping
     for (const [playerId, socketId] of this.playerSockets) {
       if (socketId === socket.id) {
         this.playerSockets.delete(playerId);
-        
+
         // Emit player disconnected event
         this.eventBus.emit(EventTypes.PLAYER.DISCONNECTED, {
           playerId,
@@ -510,7 +510,7 @@ export class SocketEventRouter {
   private async _handleSubmitAction(socket: Socket, data: SocketEventData, callback?: Function): Promise<void> {
     try {
       const { actionType, targetId, gameCode } = data;
-      
+
       // Find the player for this socket
       const player = this.gameRoom.getPlayerBySocketId(socket.id);
       if (!player) {
@@ -574,7 +574,7 @@ export class SocketEventRouter {
   private async _handleRacialAbility(socket: Socket, data: SocketEventData, callback?: Function): Promise<void> {
     try {
       const { gameCode } = data;
-      
+
       // Emit racial ability event through EventBus
       this.eventBus.emit(EventTypes.ABILITY.USED, {
         socketId: socket.id,
@@ -607,7 +607,7 @@ export class SocketEventRouter {
   private async _handleAdaptability(socket: Socket, data: SocketEventData, callback?: Function): Promise<void> {
     try {
       const { gameCode, abilityName } = data;
-      
+
       // Emit adaptability event through EventBus
       this.eventBus.emit(EventTypes.ABILITY.EXECUTED, {
         socketId: socket.id,
@@ -642,7 +642,7 @@ export class SocketEventRouter {
   private async _handleNameCheck(socket: Socket, data: SocketEventData, callback?: Function): Promise<void> {
     try {
       const { gameCode, playerName } = data;
-      
+
       // Emit name check event through EventBus
       this.eventBus.emit(EventTypes.PLAYER.NAME_CHECK, {
         socketId: socket.id,
@@ -676,7 +676,7 @@ export class SocketEventRouter {
   private async _handleClassAbilitiesRequest(socket: Socket, data: SocketEventData, callback?: Function): Promise<void> {
     try {
       const { gameCode, className } = data;
-      
+
       // Emit class abilities request through EventBus
       this.eventBus.emit(EventTypes.PLAYER.CLASS_ABILITIES_REQUEST, {
         socketId: socket.id,

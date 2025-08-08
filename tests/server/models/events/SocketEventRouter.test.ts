@@ -67,7 +67,7 @@ describe('SocketEventRouter', () => {
 
     // Create router instance
     socketEventRouter = new SocketEventRouter(mockGameRoom, mockIO);
-    
+
     // Replace internal command processor with our mock
     (socketEventRouter as any).commandProcessor = mockCommandProcessor;
   });
@@ -81,7 +81,7 @@ describe('SocketEventRouter', () => {
 
     it('should set up event bus listeners', () => {
       expect(mockEventBus.on).toHaveBeenCalledTimes(expect.any(Number));
-      
+
       // Check that specific event types are registered
       const eventCalls = mockEventBus.on.mock.calls.map(call => call[0]);
       expect(eventCalls).toContain(EventTypes.PLAYER.NAME_CHECK);
@@ -91,7 +91,7 @@ describe('SocketEventRouter', () => {
 
     it('should initialize with empty socket maps', () => {
       const stats = socketEventRouter.getStats();
-      
+
       expect(stats.activeSockets).toBe(0);
       expect(stats.mappedPlayers).toBe(0);
       expect(stats.socketsConnected).toBe(0);
@@ -103,7 +103,7 @@ describe('SocketEventRouter', () => {
     describe('registerSocket', () => {
       it('should register socket successfully', () => {
         socketEventRouter.registerSocket(mockSocket);
-        
+
         const stats = socketEventRouter.getStats();
         expect(stats.activeSockets).toBe(1);
         expect(stats.socketsConnected).toBe(1);
@@ -119,16 +119,16 @@ describe('SocketEventRouter', () => {
 
       it('should set up disconnect handler', () => {
         socketEventRouter.registerSocket(mockSocket);
-        
+
         expect(mockSocket.on).toHaveBeenCalledWith('disconnect', expect.any(Function));
       });
 
       it('should handle multiple socket registrations', () => {
         const mockSocket2 = { ...mockSocket, id: 'socket456' } as any;
-        
+
         socketEventRouter.registerSocket(mockSocket);
         socketEventRouter.registerSocket(mockSocket2);
-        
+
         const stats = socketEventRouter.getStats();
         expect(stats.activeSockets).toBe(2);
         expect(stats.socketsConnected).toBe(2);
@@ -142,7 +142,7 @@ describe('SocketEventRouter', () => {
 
       it('should map player to socket', () => {
         socketEventRouter.mapPlayerSocket('player1', 'socket123');
-        
+
         const stats = socketEventRouter.getStats();
         expect(stats.mappedPlayers).toBe(1);
         expect(mockLogger.debug).toHaveBeenCalledWith(
@@ -158,10 +158,10 @@ describe('SocketEventRouter', () => {
       it('should allow multiple player mappings', () => {
         const mockSocket2 = { ...mockSocket, id: 'socket456' } as any;
         socketEventRouter.registerSocket(mockSocket2);
-        
+
         socketEventRouter.mapPlayerSocket('player1', 'socket123');
         socketEventRouter.mapPlayerSocket('player2', 'socket456');
-        
+
         const stats = socketEventRouter.getStats();
         expect(stats.mappedPlayers).toBe(2);
       });
@@ -177,11 +177,11 @@ describe('SocketEventRouter', () => {
     describe('emitToPlayer', () => {
       it('should emit event to specific player', () => {
         const eventData = { message: 'Hello player' };
-        
+
         socketEventRouter.emitToPlayer('player1', 'testEvent', eventData);
-        
+
         expect(mockSocket.emit).toHaveBeenCalledWith('testEvent', eventData);
-        
+
         const stats = socketEventRouter.getStats();
         expect(stats.eventsRouted).toBe(1);
         expect(mockLogger.debug).toHaveBeenCalledWith(
@@ -196,13 +196,13 @@ describe('SocketEventRouter', () => {
 
       it('should handle non-existent player gracefully', () => {
         socketEventRouter.emitToPlayer('nonexistent', 'testEvent', {});
-        
+
         expect(mockSocket.emit).not.toHaveBeenCalled();
       });
 
       it('should handle unmapped player gracefully', () => {
         socketEventRouter.emitToPlayer('unmapped', 'testEvent', {});
-        
+
         expect(mockSocket.emit).not.toHaveBeenCalled();
       });
     });
@@ -210,12 +210,12 @@ describe('SocketEventRouter', () => {
     describe('broadcastToGame', () => {
       it('should broadcast event to all players in game', () => {
         const eventData = { message: 'Hello everyone' };
-        
+
         socketEventRouter.broadcastToGame('broadcastEvent', eventData);
-        
+
         expect(mockIO.to).toHaveBeenCalledWith('GAME123');
         expect(mockIO.to('GAME123').emit).toHaveBeenCalledWith('broadcastEvent', eventData);
-        
+
         const stats = socketEventRouter.getStats();
         expect(stats.eventsRouted).toBe(1);
         expect(mockLogger.debug).toHaveBeenCalledWith(
@@ -354,7 +354,7 @@ describe('SocketEventRouter', () => {
         const stats = socketEventRouter.getStats();
         expect(stats.activeSockets).toBe(0);
         expect(stats.mappedPlayers).toBe(0);
-        
+
         expect(mockEventBus.emit).toHaveBeenCalledWith(
           EventTypes.PLAYER.DISCONNECTED,
           expect.objectContaining({
@@ -413,9 +413,9 @@ describe('SocketEventRouter', () => {
 
     it('should emit error messages to socket', () => {
       const router = socketEventRouter as any;
-      
+
       router._emitError(mockSocket, 'testError', 'Test error message');
-      
+
       expect(mockSocket.emit).toHaveBeenCalledWith('errorMessage', {
         type: 'testError',
         message: 'Test error message',
@@ -426,7 +426,7 @@ describe('SocketEventRouter', () => {
 
     it('should handle event transformation errors', () => {
       const router = socketEventRouter as any;
-      
+
       // Should not throw even with problematic data
       expect(() => {
         router._transformEventDataForClient('test', { circular: {} });
@@ -438,10 +438,10 @@ describe('SocketEventRouter', () => {
     it('should track event routing statistics', () => {
       socketEventRouter.registerSocket(mockSocket);
       socketEventRouter.mapPlayerSocket('player1', 'socket123');
-      
+
       socketEventRouter.emitToPlayer('player1', 'test1', {});
       socketEventRouter.broadcastToGame('test2', {});
-      
+
       const stats = socketEventRouter.getStats();
       expect(stats.eventsRouted).toBe(2);
       expect(stats.activeSockets).toBe(1);
@@ -451,17 +451,17 @@ describe('SocketEventRouter', () => {
 
     it('should track error statistics', () => {
       const router = socketEventRouter as any;
-      
+
       // Simulate error in event handling
       router.stats.errorsHandled = 5;
-      
+
       const stats = socketEventRouter.getStats();
       expect(stats.errorsHandled).toBe(5);
     });
 
     it('should provide comprehensive statistics', () => {
       const stats = socketEventRouter.getStats();
-      
+
       expect(typeof stats.socketsConnected).toBe('number');
       expect(typeof stats.eventsRouted).toBe('number');
       expect(typeof stats.commandsProcessed).toBe('number');
@@ -479,7 +479,7 @@ describe('SocketEventRouter', () => {
 
     it('should handle submit action events', async () => {
       const router = socketEventRouter as any;
-      
+
       await router._handleSubmitAction(mockSocket, {
         actionType: 'ability',
         targetId: 'fireball',
@@ -487,7 +487,7 @@ describe('SocketEventRouter', () => {
       });
 
       expect(mockCommandProcessor.submitCommand).toHaveBeenCalled();
-      expect(mockSocket.emit).toHaveBeenCalledWith('actionSubmitted', 
+      expect(mockSocket.emit).toHaveBeenCalledWith('actionSubmitted',
         expect.objectContaining({
           actionType: 'ability',
           success: true
@@ -497,7 +497,7 @@ describe('SocketEventRouter', () => {
 
     it('should handle racial ability events', async () => {
       const router = socketEventRouter as any;
-      
+
       await router._handleRacialAbility(mockSocket, {
         gameCode: 'GAME123'
       });
@@ -513,7 +513,7 @@ describe('SocketEventRouter', () => {
 
     it('should handle adaptability events', async () => {
       const router = socketEventRouter as any;
-      
+
       await router._handleAdaptability(mockSocket, {
         gameCode: 'GAME123',
         abilityName: 'newAbility'
@@ -530,7 +530,7 @@ describe('SocketEventRouter', () => {
 
     it('should handle name check events', async () => {
       const router = socketEventRouter as any;
-      
+
       await router._handleNameCheck(mockSocket, {
         gameCode: 'GAME123',
         playerName: 'TestPlayer'
@@ -547,7 +547,7 @@ describe('SocketEventRouter', () => {
 
     it('should handle errors in action submission gracefully', async () => {
       mockGameRoom.getPlayerBySocketId.mockReturnValue(null);
-      
+
       const router = socketEventRouter as any;
       await router._handleSubmitAction(mockSocket, {
         actionType: 'ability',
@@ -555,7 +555,7 @@ describe('SocketEventRouter', () => {
         gameCode: 'GAME123'
       });
 
-      expect(mockSocket.emit).toHaveBeenCalledWith('errorMessage', 
+      expect(mockSocket.emit).toHaveBeenCalledWith('errorMessage',
         expect.objectContaining({
           type: 'playerNotFound'
         })
@@ -567,7 +567,7 @@ describe('SocketEventRouter', () => {
     it('should create proper incoming event mappings', () => {
       const router = socketEventRouter as any;
       const incomingMap = router.incomingEventMap;
-      
+
       expect(incomingMap).toBeInstanceOf(Map);
       // Currently no events are mapped in incoming
       expect(incomingMap.size).toBe(0);
@@ -576,10 +576,10 @@ describe('SocketEventRouter', () => {
     it('should create proper outgoing event mappings', () => {
       const router = socketEventRouter as any;
       const outgoingMap = router.outgoingEventMap;
-      
+
       expect(outgoingMap).toBeInstanceOf(Map);
       expect(outgoingMap.size).toBeGreaterThan(0);
-      
+
       // Check specific mappings
       expect(outgoingMap.get(EventTypes.GAME.CREATED)).toBe('gameCreated');
       expect(outgoingMap.get(EventTypes.PLAYER.JOINED)).toBe('playerJoined');
@@ -589,7 +589,7 @@ describe('SocketEventRouter', () => {
     it('should handle all mapped outgoing events', () => {
       const router = socketEventRouter as any;
       const outgoingMap = router.outgoingEventMap;
-      
+
       // Verify all mapped events have handlers registered
       for (const eventType of outgoingMap.keys()) {
         const hasHandler = mockEventBus.on.mock.calls.some(
@@ -604,7 +604,7 @@ describe('SocketEventRouter', () => {
   describe('type safety and interfaces', () => {
     it('should enforce RouterStats interface', () => {
       const stats = socketEventRouter.getStats();
-      
+
       expect(typeof stats.socketsConnected).toBe('number');
       expect(typeof stats.eventsRouted).toBe('number');
       expect(typeof stats.commandsProcessed).toBe('number');

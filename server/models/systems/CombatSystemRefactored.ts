@@ -18,8 +18,8 @@ import { CoordinationSystem } from './combat/coordination/CoordinationSystem.js'
 import { EndOfRoundProcessor } from './combat/effects/EndOfRoundProcessor.js';
 import { GameStateUpdater } from './combat/state/GameStateUpdater.js';
 
-import type { 
-  Monster, 
+import type {
+  Monster,
   Player,
   GameRoom
 } from '../../types/generated.js';
@@ -28,9 +28,9 @@ import type {
   EventType,
   EventPayload
 } from '../events/EventTypes.js';
-import { 
-  CombatSystemInterface, 
-  DamageCalculation, 
+import {
+  CombatSystemInterface,
+  DamageCalculation,
   SystemConfig,
   AbstractGameSystem,
   DamageModifier
@@ -91,7 +91,7 @@ export interface CombatSystemDependencies {
 export class CombatSystemRefactored extends AbstractGameSystem<GameRoom, GameEvent> implements CombatSystemInterface {
   readonly name = 'CombatSystemRefactored';
   readonly version = '2.1.0';
-  
+
   private readonly players: Map<string, Player>;
   private readonly eventBus: GameEventBus | null;
 
@@ -108,7 +108,7 @@ export class CombatSystemRefactored extends AbstractGameSystem<GameRoom, GameEve
 
   constructor(dependencies: CombatSystemDependencies) {
     super();
-    
+
     const {
       players,
       monsterController,
@@ -191,14 +191,14 @@ export class CombatSystemRefactored extends AbstractGameSystem<GameRoom, GameEve
 
       // Phase 1: Validate and collect all player actions
       const validationResults = await this.actionProcessor.validateSubmittedActions();
-      
+
       // Phase 2: Analyze coordination opportunities
       const allValidActions = validationResults.filter(r => r.valid);
       const coordinationMap = this.coordinationSystem.analyzeCoordinationBonuses(allValidActions);
-      
+
       // Phase 3: Process actions (coordinated first, then individual)
       let playerActions = new Map<string, any>();
-      
+
       if (coordinationMap.size > 0) {
         // Process coordinated actions with bonuses
         const coordinatedResults = await this.coordinationSystem.processCoordinatedActions(
@@ -209,12 +209,12 @@ export class CombatSystemRefactored extends AbstractGameSystem<GameRoom, GameEve
         );
         playerActions = new Map([...playerActions, ...coordinatedResults]);
       }
-      
+
       // Process remaining individual actions
-      const remainingActions = allValidActions.filter(a => 
+      const remainingActions = allValidActions.filter(a =>
         !Array.from(coordinationMap.values()).some(c => c.playerIds.includes(a.playerId))
       );
-      
+
       if (remainingActions.length > 0) {
         const individualResults = await this.actionProcessor.processPlayerActions(
           remainingActions.map(a => ({ ...a, valid: true })),
@@ -250,7 +250,7 @@ export class CombatSystemRefactored extends AbstractGameSystem<GameRoom, GameEve
 
     } catch (error) {
       logger.error('Error processing combat round:', error as any);
-      
+
       log.push({
         type: 'system',
         message: 'Combat round failed to process due to system error',
@@ -276,7 +276,7 @@ export class CombatSystemRefactored extends AbstractGameSystem<GameRoom, GameEve
     try {
       // Get alive players for monster targeting
       const alivePlayers = Array.from(this.players.values()).filter(player => player.isAlive);
-      
+
       if (alivePlayers.length === 0) {
         return null; // No players to attack
       }
@@ -313,15 +313,15 @@ export class CombatSystemRefactored extends AbstractGameSystem<GameRoom, GameEve
       case EventTypes.ACTION.SUBMITTED:
         // Action processing is handled by ActionProcessor
         return state;
-        
+
       case EventTypes.COMBAT.TURN_ENDED as any:
         // End of round is handled by EndOfRoundProcessor
         return state;
-        
+
       case EventTypes.GAME.ENDED:
         // Game state updates are handled by GameStateUpdater
         return state;
-        
+
       default:
         return state;
     }
@@ -359,11 +359,11 @@ export class CombatSystemRefactored extends AbstractGameSystem<GameRoom, GameEve
    */
   validateState(state: GameRoom): ValidationResult<GameRoom> {
     const errors: string[] = [];
-    
+
     if (!state.players || state.players.size === 0) {
       errors.push('No players in game room');
     }
-    
+
     if (!state.monster) {
       errors.push('No monster in game room');
     }
@@ -410,11 +410,11 @@ export class CombatSystemRefactored extends AbstractGameSystem<GameRoom, GameEve
   validate(event: GameEvent): ValidationResult<GameEvent> {
     // Basic event validation
     const errors: string[] = [];
-    
+
     if (!event.type) {
       errors.push('Event type is required');
     }
-    
+
     return errors.length === 0
       ? { success: true, data: event, errors: undefined as never }
       : { success: false, data: undefined as never, errors };

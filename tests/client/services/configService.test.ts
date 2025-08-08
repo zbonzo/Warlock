@@ -186,7 +186,7 @@ describe('configService', () => {
 
     it('should cache abilities per class', async () => {
       mockedAxios.get.mockResolvedValueOnce({ data: mockClassAbilities });
-      
+
       await configService.getClassAbilities('warrior');
       const cachedResult = await configService.getClassAbilities('warrior');
 

@@ -64,7 +64,7 @@ describe('GameStateManager (TypeScript)', () => {
     // Create mock players
     mockPlayers = new Map();
     const mockPlayer1 = createMockPlayer('player1', 'Alice', 'Human', 'Warrior');
-    const mockPlayer2 = createMockPlayer('player2', 'Bob', 'Dwarf', 'Warrior'); 
+    const mockPlayer2 = createMockPlayer('player2', 'Bob', 'Dwarf', 'Warrior');
     mockPlayers.set('player1', mockPlayer1);
     mockPlayers.set('player2', mockPlayer2);
 
@@ -121,7 +121,7 @@ describe('GameStateManager (TypeScript)', () => {
 
       // Should increment round
       expect(mockGameRoom.round).toBe(2);
-      
+
       // Should process player effects
       mockPlayers.forEach(player => {
         expect(player.processAbilityCooldowns).toHaveBeenCalled();
@@ -158,7 +158,7 @@ describe('GameStateManager (TypeScript)', () => {
 
     it('should handle monster aging', () => {
       const initialAge = mockGameRoom.monster.age;
-      
+
       gameStateManager.processRound();
 
       expect(mockGameRoom.monster.age).toBe(initialAge + 1);
@@ -176,7 +176,7 @@ describe('GameStateManager (TypeScript)', () => {
       // Set monster to defeated state
       mockGameRoom.monster.hp = 0;
       mockGameRoom.isGameOver = jest.fn().mockReturnValue(false);
-      
+
       const log = gameStateManager.processRound();
 
       expect(mockGameRoom.level).toBe(2);
@@ -190,7 +190,7 @@ describe('GameStateManager (TypeScript)', () => {
       gameStateManager.processRound();
 
       expect(mockGameRoom.level).toBe(initialLevel + 1);
-      
+
       // Check that players had their stats updated
       mockPlayers.forEach(player => {
         expect(player.stats.updateStats).toHaveBeenCalled();
@@ -267,7 +267,7 @@ describe('GameStateManager (TypeScript)', () => {
       // Set up players with different passive abilities
       const player1 = mockPlayers.get('player1')!;
       const player2 = mockPlayers.get('player2')!;
-      
+
       player1.abilities.abilities = [
         { type: 'regeneration', name: 'Regeneration', passive: true }
       ];

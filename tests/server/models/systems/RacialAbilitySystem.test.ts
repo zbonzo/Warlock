@@ -236,7 +236,7 @@ describe('RacialAbilitySystem', () => {
         hasStatusEffect: jest.fn().mockReturnValue(true)
       };
       players.set('player2', targetPlayer);
-      
+
       gameStateUtils.getRandomTarget.mockReturnValue('player3');
 
       const result = racialAbilitySystem.validateAndQueueRacialAction(
@@ -261,7 +261,7 @@ describe('RacialAbilitySystem', () => {
         hasStatusEffect: jest.fn().mockReturnValue(true)
       };
       players.set('player2', targetPlayer);
-      
+
       gameStateUtils.getRandomTarget.mockReturnValue(null);
 
       const result = racialAbilitySystem.validateAndQueueRacialAction(
@@ -302,7 +302,7 @@ describe('RacialAbilitySystem', () => {
         isAlive: false,
         racialCooldown: 1
       };
-      
+
       players.set('player1', player1);
       players.set('player2', player2);
     });
@@ -341,7 +341,7 @@ describe('RacialAbilitySystem', () => {
     it('should cap healing at max HP', () => {
       player1.hp = 95;
       player1.racialEffects.healOverTime.amount = 10;
-      
+
       racialAbilitySystem.processEndOfRoundEffects(log);
 
       expect(player1.hp).toBe(100); // Capped at maxHp
@@ -350,7 +350,7 @@ describe('RacialAbilitySystem', () => {
     it('should skip healing when amount is 0 or negative', () => {
       player1.racialEffects.healOverTime.amount = 0;
       const originalHp = player1.hp;
-      
+
       racialAbilitySystem.processEndOfRoundEffects(log);
 
       expect(player1.hp).toBe(originalHp); // No healing applied
@@ -358,7 +358,7 @@ describe('RacialAbilitySystem', () => {
 
     it('should handle players without racial effects', () => {
       player1.racialEffects = undefined;
-      
+
       expect(() => {
         racialAbilitySystem.processEndOfRoundEffects(log);
       }).not.toThrow();
@@ -366,7 +366,7 @@ describe('RacialAbilitySystem', () => {
 
     it('should handle players without healing over time', () => {
       player1.racialEffects = { other: { someData: true } };
-      
+
       expect(() => {
         racialAbilitySystem.processEndOfRoundEffects(log);
       }).not.toThrow();
@@ -376,7 +376,7 @@ describe('RacialAbilitySystem', () => {
       player1.isAlive = false;
       const originalCooldown = player1.racialCooldown;
       const originalHp = player1.hp;
-      
+
       racialAbilitySystem.processEndOfRoundEffects(log);
 
       expect(player1.racialCooldown).toBe(originalCooldown);

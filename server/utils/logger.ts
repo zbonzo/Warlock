@@ -91,6 +91,7 @@ const currentLevel = process.env['LOG_LEVEL']
  * Retrieves and interpolates a log message from the logs configuration.
  */
 function getFormattedMessage(level: string, eventKey: string, context: LogContext = {}): string {
+  // Dynamic message template access needed for flexible logging system
   let messageTemplate = (serverLogMessages as any)[level]?.[eventKey] || eventKey;
 
   for (const key in context) {
@@ -121,8 +122,8 @@ function getFormattedMessage(level: string, eventKey: string, context: LogContex
  * Writes the structured log entry to a file.
  * TODO: Commented until I can find a better way to handle all the file writing
  */
-function writeLogToFile(logEntry: FileLogEntry | TrackLogEntry): void {
-  /*const logString = JSON.stringify(logEntry) + '\n'; // Add newline for each entry
+function writeLogToFile(_logEntry: FileLogEntry | TrackLogEntry): void {
+  /* const logString = JSON.stringify(logEntry) + '\n'; // Add newline for each entry
   fs.appendFile(LOG_FILE_PATH, logString, (err) => {
     if (err) {
       // Fallback to console if file logging fails
@@ -138,20 +139,20 @@ function writeLogToFile(logEntry: FileLogEntry | TrackLogEntry): void {
 function processLog(level: string, eventKey: string, context: LogContext = {}, gameContext: GameContext = {}): void {
   const timestamp = new Date().toISOString();
   const levelUpper = level.toUpperCase();
-  
+
   // Enhanced format: [dev:server] [timestamp] [LEVEL] [GameCode] [SocketID] [PlayerName] message
   const gameCode = gameContext.gameCode || 'none';
   const socketId = gameContext.socketId || 'null';
   const playerName = gameContext.playerName || 'system  '; // 8 chars
-  
+
   // Format socket ID (first 4 chars unless debug)
   const formattedSocketId = (level === 'debug' ? socketId : socketId.substring(0, 4));
-  
+
   // Format player name (first 8 chars, padded to 8 if shorter)
-  const formattedPlayerName = level === 'debug' 
-    ? playerName 
+  const formattedPlayerName = level === 'debug'
+    ? playerName
     : playerName.substring(0, 8).padEnd(8, ' ');
-  
+
   // Build the enhanced console message
   let consoleMessage: string;
   if (gameContext.gameCode || gameContext.socketId || gameContext.playerName) {
@@ -179,25 +180,28 @@ function processLog(level: string, eventKey: string, context: LogContext = {}, g
     socketId: gameContext.socketId,
     playerName: gameContext.playerName,
   };
-  
+
   // Add context properties except for conflicting ones
   Object.keys(context).forEach(key => {
     if (key !== 'message') {
+      // Dynamic property assignment needed for flexible logging context
       (fileLogEntry as any)[key] = context[key];
     }
   });
-  
+
   if (context.error) {
     const errorObj = context.error instanceof Error ? context.error : new Error(String(context.error));
     fileLogEntry.error = {
       message: errorObj.message,
       stack: errorObj.stack,
+      // Dynamic property access needed for custom error types
       type: (errorObj as any).type,
       name: errorObj.name,
     };
   }
 
   // 3. Log to console
+  // Dynamic console method access needed for flexible log levels
   const consoleMethod = (console as any)[level] || console.log;
   consoleMethod(consoleMessage);
 

@@ -3,6 +3,8 @@
  * Handles abilities that deal damage and apply poison effects
  */
 
+import { createActionLog, createDamageLog } from '../../../../../utils/logEntry.js';
+import { secureId } from '../../../../../utils/secureRandom.js';
 import type { Player, Monster, Ability } from '../../../../../types/generated.js';
 import type {
   AbilityHandler,
@@ -32,18 +34,12 @@ export const handlePoisonStrike: AbilityHandler = (
 
   // Check if target is invisible
   if ((target as any).statusEffects && (target as any).statusEffects.invisible) {
-    log.push({
-      id: `poison-strike-invisible-${Date.now()}`,
-      timestamp: Date.now(),
-      type: 'action',
-      source: actor.id,
-      target: target.id,
-      message: `${actor.name} attacks ${(target as Player).name} but misses due to invisibility!`,
-      details: { reason: 'target_invisible' },
-      public: true,
-      isPublic: true,
-      priority: 'medium'
-    });
+    log.push(createActionLog(
+      actor.id,
+      target.id,
+      `${actor.name} attacks ${(target as Player).name} but misses due to invisibility!`,
+      { details: { reason: 'target_invisible' }, priority: 'medium', public: true }
+    ));
     return false;
   }
 
@@ -76,7 +72,7 @@ export const handlePoisonStrike: AbilityHandler = (
 
     // Apply poison status effect
     const statusResult = systems.statusEffectManager?.applyStatusEffect?.(target, {
-      id: `poison-${Date.now()}`,
+      id: secureId('poison'),
       name: 'poison',
       type: 'debuff',
       duration: poisonDuration,
@@ -89,45 +85,39 @@ export const handlePoisonStrike: AbilityHandler = (
 
     if (statusResult.success) {
       const targetName = (target as Player).name || (target as Monster).name;
-      
-      log.push({
-        id: `poison-strike-success-${Date.now()}`,
-        timestamp: Date.now(),
-        type: 'damage',
-        source: actor.id,
-        target: target.id,
-        message: `${actor.name} strikes ${targetName} for ${damageResult.finalDamage} damage and applies poison (${poisonDamage}/turn for ${poisonDuration} turns)!`,
-        details: {
-          damage: damageResult.finalDamage,
-          poisonDamage,
-          poisonDuration
-        },
-        public: true,
-        isPublic: true,
-        priority: 'high'
-      });
+
+      log.push(createDamageLog(
+        actor.id,
+        target.id,
+        damageResult.finalDamage,
+        `${actor.name} strikes ${targetName} for ${damageResult.finalDamage} damage and applies poison (${poisonDamage}/turn for ${poisonDuration} turns)!`,
+        {
+          details: {
+            damage: damageResult.finalDamage,
+            poisonDamage,
+            poisonDuration
+          },
+          priority: 'high',
+          public: true
+        }
+      ));
 
       // Apply threat for both damage and poison
       applyThreatForAbility(actor, target, ability, Number(finalDamage) + Number(poisonDamage), 0, systems);
-      
+
       return true;
     }
   }
 
   // Just log the damage if poison failed to apply
   const targetName = (target as Player).name || (target as Monster).name;
-  log.push({
-    id: `poison-strike-partial-${Date.now()}`,
-    timestamp: Date.now(),
-    type: 'damage',
-    source: actor.id,
-    target: target.id,
-    message: `${actor.name} attacks ${targetName} with ${ability['name']} for ${damageResult.finalDamage} damage!`,
-    details: { damage: damageResult.finalDamage },
-    public: true,
-    isPublic: true,
-    priority: 'high'
-  });
+  log.push(createDamageLog(
+    actor.id,
+    target.id,
+    damageResult.finalDamage,
+    `${actor.name} attacks ${targetName} with ${ability['name']} for ${damageResult.finalDamage} damage!`,
+    { details: { damage: damageResult.finalDamage }, priority: 'high', public: true }
+  ));
 
   applyThreatForAbility(actor, target, ability, Number(finalDamage), 0, systems);
   return true;
@@ -155,7 +145,7 @@ export const handleDeathMark: AbilityHandler = (
   const duration = Number(params.duration) || 5;
 
   const statusResult = systems.statusEffectManager?.applyStatusEffect?.(target, {
-    id: `death-mark-${Date.now()}`,
+    id: secureId('death-mark'),
     name: 'death_mark',
     type: 'debuff',
     duration,
@@ -169,23 +159,22 @@ export const handleDeathMark: AbilityHandler = (
 
   if (statusResult.success) {
     const targetName = (target as Player).name || (target as Monster).name;
-    
-    log.push({
-      id: `death-mark-applied-${Date.now()}`,
-      timestamp: Date.now(),
-      type: 'status',
-      source: actor.id,
-      target: target.id,
-      message: `${actor.name} applies Death Mark to ${targetName} (starts at ${initialDamage} damage/turn, grows by ${growthRate} each turn for ${duration} turns)!`,
-      details: {
-        initialDamage,
-        growthRate,
-        duration
-      },
-      public: true,
-      isPublic: true,
-      priority: 'high'
-    });
+
+    log.push(createActionLog(
+      actor.id,
+      target.id,
+      `${actor.name} applies Death Mark to ${targetName} (starts at ${initialDamage} damage/turn, grows by ${growthRate} each turn for ${duration} turns)!`,
+      {
+        type: 'status',
+        details: {
+          initialDamage,
+          growthRate,
+          duration
+        },
+        priority: 'high',
+        public: true
+      }
+    ));
 
     return true;
   }
@@ -213,7 +202,7 @@ export const handlePoisonTrap: AbilityHandler = (
   if (!game) return false;
 
   const targets = [];
-  
+
   // Add all living players except the actor
   for (const player of game.players.values()) {
     if (player.id !== actor.id && (player as any).isAlive !== false && (player as any).hp > 0) {
@@ -238,7 +227,7 @@ export const handlePoisonTrap: AbilityHandler = (
   // Apply poison to all targets
   for (const trapTarget of targets) {
     const statusResult = systems.statusEffectManager?.applyStatusEffect?.(trapTarget, {
-      id: `poison-trap-${Date.now()}-${trapTarget.id}`,
+      id: secureId(`poison-trap-${trapTarget.id}`),
       name: 'poison',
       type: 'debuff',
       duration,
@@ -255,21 +244,20 @@ export const handlePoisonTrap: AbilityHandler = (
   }
 
   if (affectedTargets > 0) {
-    log.push({
-      id: `poison-trap-success-${Date.now()}`,
-      timestamp: Date.now(),
-      type: 'action',
-      source: actor.id,
-      message: `${actor.name} sets a poison trap, affecting ${affectedTargets} targets with poison (${poisonDamage} damage/turn for ${duration} turns)!`,
-      details: {
-        affectedTargets: affectedTargets,
-        poisonDamage,
-        duration
-      },
-      public: true,
-      isPublic: true,
-      priority: 'high'
-    });
+    log.push(createActionLog(
+      actor.id,
+      'multiple',
+      `${actor.name} sets a poison trap, affecting ${affectedTargets} targets with poison (${poisonDamage} damage/turn for ${duration} turns)!`,
+      {
+        details: {
+          affectedTargets: affectedTargets,
+          poisonDamage,
+          duration
+        },
+        priority: 'high',
+        public: true
+      }
+    ));
 
     return true;
   }

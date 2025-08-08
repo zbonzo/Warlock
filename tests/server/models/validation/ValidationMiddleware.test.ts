@@ -4,10 +4,10 @@
  */
 
 import { z } from 'zod';
-import ValidationMiddleware, { 
-  ValidationError, 
-  strictValidator, 
-  lenientValidator, 
+import ValidationMiddleware, {
+  ValidationError,
+  strictValidator,
+  lenientValidator,
   silentValidator,
   ValidationUtils,
   schemas
@@ -72,7 +72,7 @@ describe('ValidationMiddleware', () => {
     it('should log validation errors when enabled', () => {
       const logValidator = new ValidationMiddleware({ logValidationErrors: true });
       const invalidData = { name: '', age: -5 };
-      
+
       logValidator.validate(invalidData, testSchema);
 
       expect(mockLogger.warn).toHaveBeenCalled();
@@ -81,7 +81,7 @@ describe('ValidationMiddleware', () => {
     it('should not log validation errors when disabled', () => {
       const noLogValidator = new ValidationMiddleware({ logValidationErrors: false });
       const invalidData = { name: '', age: -5 };
-      
+
       noLogValidator.validate(invalidData, testSchema);
 
       expect(mockLogger.warn).not.toHaveBeenCalled();
@@ -146,7 +146,7 @@ describe('ValidationMiddleware', () => {
     it('should log debug message for failed validation', () => {
       const logValidator = new ValidationMiddleware({ logValidationErrors: true });
       const invalidData = { name: 123, count: 'invalid' };
-      
+
       logValidator.validateSafe(invalidData, testSchema);
 
       expect(mockLogger.debug).toHaveBeenCalled();
@@ -155,7 +155,7 @@ describe('ValidationMiddleware', () => {
     it('should not log when logging is disabled', () => {
       const noLogValidator = new ValidationMiddleware({ logValidationErrors: false });
       const invalidData = { name: 123, count: 'invalid' };
-      
+
       noLogValidator.validateSafe(invalidData, testSchema);
 
       expect(mockLogger.debug).not.toHaveBeenCalled();
@@ -261,10 +261,10 @@ describe('ValidationMiddleware', () => {
 
     it('should validate socket event data successfully', () => {
       const validData = { action: 'test', data: { key: 'value' } };
-      
+
       const middlewareFactory = validator.socket(testSchema);
       const middleware = middlewareFactory(mockSocket as Socket);
-      
+
       middleware(validData, mockCallback);
 
       expect(mockCallback).toHaveBeenCalledWith(null, validData);
@@ -273,10 +273,10 @@ describe('ValidationMiddleware', () => {
 
     it('should fail validation and emit error', () => {
       const invalidData = { action: 123, data: 'invalid' };
-      
+
       const middlewareFactory = validator.socket(testSchema);
       const middleware = middlewareFactory(mockSocket as Socket);
-      
+
       middleware(invalidData, mockCallback);
 
       expect(mockSocket.emit).toHaveBeenCalledWith('error', {
@@ -289,10 +289,10 @@ describe('ValidationMiddleware', () => {
 
     it('should work without callback', () => {
       const invalidData = { action: 123, data: 'invalid' };
-      
+
       const middlewareFactory = validator.socket(testSchema);
       const middleware = middlewareFactory(mockSocket as Socket);
-      
+
       expect(() => middleware(invalidData)).not.toThrow();
       expect(mockSocket.emit).toHaveBeenCalled();
     });
@@ -498,7 +498,7 @@ describe('ValidationMiddleware', () => {
     describe('extractErrorMessages', () => {
       it('should extract messages from ZodError', () => {
         const schema = z.object({ name: z.string(), age: z.number() });
-        
+
         try {
           schema.parse({ name: 123, age: 'invalid' });
         } catch (error) {
@@ -620,7 +620,7 @@ describe('ValidationMiddleware', () => {
       };
 
       const result = validator.validate(inputData, transformSchema);
-      
+
       expect(result.success).toBe(true);
       expect(result.data?.name).toBe('john doe');
       expect(result.data?.tags).toEqual(['warrior', 'mage', 'healer']);

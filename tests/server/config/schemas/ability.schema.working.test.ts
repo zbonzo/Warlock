@@ -6,8 +6,8 @@
 import { z } from 'zod';
 
 // Import directly using relative path for now
-import { 
-  AbilitySchema, 
+import {
+  AbilitySchema,
   AbilitiesMapSchema,
   validateAbility,
   type Ability,
@@ -31,7 +31,7 @@ describe('Ability Schema Validation (Working)', () => {
       };
 
       const result = AbilitySchema.safeParse(validAbility);
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.data.id).toBe('fireball');
@@ -55,7 +55,7 @@ describe('Ability Schema Validation (Working)', () => {
       };
 
       const result = AbilitySchema.safeParse(invalidAbility);
-      
+
       expect(result.success).toBe(false);
     });
 
@@ -74,7 +74,7 @@ describe('Ability Schema Validation (Working)', () => {
       };
 
       const result = AbilitySchema.safeParse(invalidAbility);
-      
+
       expect(result.success).toBe(false);
     });
 
@@ -97,7 +97,7 @@ describe('Ability Schema Validation (Working)', () => {
       };
 
       const result = AbilitySchema.safeParse(abilityWithButtonText);
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.data.buttonText?.ready).toBe('Cast Heal');
@@ -126,7 +126,7 @@ describe('Ability Schema Validation (Working)', () => {
       };
 
       const result = AbilitiesMapSchema.safeParse(abilitiesMap);
-      
+
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.data.test.name).toBe('Test');
@@ -150,7 +150,7 @@ describe('Ability Schema Validation (Working)', () => {
 
     it('should validate ability with validateAbility function', () => {
       const result = validateAbility(validAbility);
-      
+
       expect(result.id).toBe('testability');
       expect(result.name).toBe('Test Ability');
       expect(result.category).toBe('Defense');
@@ -158,7 +158,7 @@ describe('Ability Schema Validation (Working)', () => {
 
     it('should throw on invalid ability', () => {
       const invalidAbility = { ...validAbility, id: '' };
-      
+
       expect(() => validateAbility(invalidAbility)).toThrow();
     });
   });

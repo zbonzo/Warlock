@@ -36,7 +36,7 @@ describe('Game Balance Configuration', () => {
       const monster = gameBalance.monster;
       expect(monster).toBeDefined();
       expect(typeof monster).toBe('object');
-      
+
       expect(monster).toHaveProperty('baseHp');
       expect(monster).toHaveProperty('baseDamage');
       expect(monster).toHaveProperty('baseAge');
@@ -61,7 +61,7 @@ describe('Game Balance Configuration', () => {
       const damageScaling = gameBalance.monster.damageScaling;
       expect(damageScaling).toHaveProperty('ageMultiplier');
       expect(damageScaling).toHaveProperty('maxAge');
-      
+
       expect(damageScaling.ageMultiplier).toBeGreaterThan(0);
       if (damageScaling.maxAge !== null) {
         expect(damageScaling.maxAge).toBeGreaterThan(0);
@@ -75,7 +75,7 @@ describe('Game Balance Configuration', () => {
       expect(targeting).toHaveProperty('canAttackInvisible');
       expect(targeting).toHaveProperty('fallbackToHighestHp');
       expect(targeting).toHaveProperty('canAttackWarlock');
-      
+
       expect(typeof targeting.preferLowestHp).toBe('boolean');
       expect(typeof targeting.useThreatSystem).toBe('boolean');
       expect(typeof targeting.canAttackInvisible).toBe('boolean');
@@ -90,7 +90,7 @@ describe('Game Balance Configuration', () => {
       expect(threat).toHaveProperty('damageMultiplier');
       expect(threat).toHaveProperty('healingMultiplier');
       expect(threat).toHaveProperty('decayRate');
-      
+
       expect(typeof threat.enabled).toBe('boolean');
       expect(threat.armorMultiplier).toBeGreaterThanOrEqual(0);
       expect(threat.damageMultiplier).toBeGreaterThanOrEqual(0);
@@ -113,7 +113,7 @@ describe('Game Balance Configuration', () => {
       expect(armor).toHaveProperty('reductionRate');
       expect(armor).toHaveProperty('maxReduction');
       expect(armor).toHaveProperty('minReduction');
-      
+
       expect(armor.reductionRate).toBeGreaterThan(0);
       expect(armor.maxReduction).toBeGreaterThanOrEqual(0);
       expect(armor.maxReduction).toBeLessThanOrEqual(1);
@@ -126,7 +126,7 @@ describe('Game Balance Configuration', () => {
       expect(levelUp).toHaveProperty('hpIncrease');
       expect(levelUp).toHaveProperty('damageIncrease');
       expect(levelUp).toHaveProperty('fullHealOnLevelUp');
-      
+
       expect(levelUp.hpIncrease).toBeGreaterThanOrEqual(0);
       expect(levelUp.damageIncrease).toBeGreaterThanOrEqual(0);
       expect(typeof levelUp.fullHealOnLevelUp).toBe('boolean');
@@ -147,7 +147,7 @@ describe('Game Balance Configuration', () => {
       expect(conversion).toHaveProperty('playerCountModifier');
       expect(conversion).toHaveProperty('min');
       expect(conversion).toHaveProperty('max');
-      
+
       expect(conversion.base).toBeGreaterThanOrEqual(0);
       expect(conversion.base).toBeLessThanOrEqual(1);
       expect(conversion.min).toBeGreaterThanOrEqual(0);
@@ -161,7 +161,7 @@ describe('Game Balance Configuration', () => {
       expect(countCalc).toHaveProperty('baseRatio');
       expect(countCalc).toHaveProperty('minWarlocks');
       expect(countCalc).toHaveProperty('maxWarlocks');
-      
+
       expect(typeof countCalc.method).toBe('string');
       expect(countCalc.baseRatio).toBeGreaterThan(0);
       expect(countCalc.baseRatio).toBeLessThanOrEqual(1);
@@ -184,7 +184,7 @@ describe('Game Balance Configuration', () => {
       expect(bonusCalc).toHaveProperty('damageBonus');
       expect(bonusCalc).toHaveProperty('healingBonus');
       expect(bonusCalc).toHaveProperty('maxBonus');
-      
+
       expect(bonusCalc.damageBonus).toBeGreaterThanOrEqual(0);
       expect(bonusCalc.healingBonus).toBeGreaterThanOrEqual(0);
       expect(bonusCalc.maxBonus).toBeGreaterThanOrEqual(0);
@@ -195,7 +195,7 @@ describe('Game Balance Configuration', () => {
       expect(requirements).toHaveProperty('minPlayers');
       expect(requirements).toHaveProperty('maxTurnDelay');
       expect(requirements).toHaveProperty('sameAbilityRequired');
-      
+
       expect(requirements.minPlayers).toBeGreaterThan(1);
       expect(requirements.maxTurnDelay).toBeGreaterThanOrEqual(0);
       expect(typeof requirements.sameAbilityRequired).toBe('boolean');
@@ -216,7 +216,7 @@ describe('Game Balance Configuration', () => {
       expect(triggers).toHaveProperty('playerCountThreshold');
       expect(triggers).toHaveProperty('hpThreshold');
       expect(triggers).toHaveProperty('roundThreshold');
-      
+
       expect(triggers.playerCountThreshold).toBeGreaterThan(0);
       expect(triggers.hpThreshold).toBeGreaterThanOrEqual(0);
       expect(triggers.hpThreshold).toBeLessThanOrEqual(1);
@@ -229,7 +229,7 @@ describe('Game Balance Configuration', () => {
       expect(effects).toHaveProperty('healingBonus');
       expect(effects).toHaveProperty('armorBonus');
       expect(effects).toHaveProperty('duration');
-      
+
       expect(effects.damageBonus).toBeGreaterThanOrEqual(0);
       expect(effects.healingBonus).toBeGreaterThanOrEqual(0);
       expect(effects.armorBonus).toBeGreaterThanOrEqual(0);
@@ -243,7 +243,7 @@ describe('Game Balance Configuration', () => {
       expect(gameCode).toBeDefined();
       expect(gameCode).toHaveProperty('minValue');
       expect(gameCode).toHaveProperty('maxValue');
-      
+
       expect(gameCode.minValue).toBeGreaterThan(0);
       expect(gameCode.maxValue).toBeGreaterThan(gameCode.minValue);
       expect(gameCode.minValue).toBeGreaterThanOrEqual(1000);
@@ -254,11 +254,11 @@ describe('Game Balance Configuration', () => {
   describe('Balance Validation', () => {
     it('should have reasonable monster scaling', () => {
       const monster = gameBalance.monster;
-      
+
       // Monster should get stronger but not too quickly
       expect(monster.hpScalingMultiplier).toBeGreaterThan(1);
       expect(monster.hpScalingMultiplier).toBeLessThanOrEqual(2);
-      
+
       // Base values should be reasonable
       expect(monster.baseHp).toBeGreaterThanOrEqual(50);
       expect(monster.baseHp).toBeLessThanOrEqual(1000);
@@ -268,7 +268,7 @@ describe('Game Balance Configuration', () => {
 
     it('should have balanced player progression', () => {
       const player = gameBalance.player;
-      
+
       // Player growth should be meaningful but not excessive
       expect(player.levelUp.hpIncrease).toBeGreaterThan(0);
       expect(player.levelUp.hpIncrease).toBeLessThanOrEqual(1);
@@ -278,11 +278,11 @@ describe('Game Balance Configuration', () => {
 
     it('should have reasonable warlock ratios', () => {
       const warlock = gameBalance.warlock;
-      
+
       // Warlock count should be reasonable portion of players
       expect(warlock.countCalculation.baseRatio).toBeGreaterThan(0.1);
       expect(warlock.countCalculation.baseRatio).toBeLessThanOrEqual(0.5);
-      
+
       // Conversion chance should be balanced
       expect(warlock.conversionChance.base).toBeGreaterThan(0);
       expect(warlock.conversionChance.base).toBeLessThanOrEqual(0.3);
@@ -290,7 +290,7 @@ describe('Game Balance Configuration', () => {
 
     it('should have reasonable coordination bonuses', () => {
       const coordination = gameBalance.coordination;
-      
+
       if (coordination.enabled) {
         expect(coordination.bonusCalculation.damageBonus).toBeLessThanOrEqual(1);
         expect(coordination.bonusCalculation.healingBonus).toBeLessThanOrEqual(1);
@@ -300,7 +300,7 @@ describe('Game Balance Configuration', () => {
 
     it('should have reasonable comeback mechanics', () => {
       const comeback = gameBalance.comeback;
-      
+
       if (comeback.enabled) {
         expect(comeback.effects.damageBonus).toBeLessThanOrEqual(1);
         expect(comeback.effects.healingBonus).toBeLessThanOrEqual(1);
@@ -314,7 +314,7 @@ describe('Game Balance Configuration', () => {
     it('should have consistent threat system settings', () => {
       const threat = gameBalance.monster.threat;
       const targeting = gameBalance.monster.targeting;
-      
+
       if (threat.enabled) {
         expect(targeting.useThreatSystem).toBe(true);
       }
@@ -322,14 +322,14 @@ describe('Game Balance Configuration', () => {
 
     it('should have consistent armor calculations', () => {
       const armor = gameBalance.player.armor;
-      
+
       expect(armor.minReduction).toBeLessThanOrEqual(armor.maxReduction);
       expect(armor.reductionRate).toBeGreaterThan(0);
     });
 
     it('should have consistent warlock settings', () => {
       const warlock = gameBalance.warlock;
-      
+
       expect(warlock.conversionChance.min).toBeLessThanOrEqual(warlock.conversionChance.max);
       expect(warlock.countCalculation.minWarlocks).toBeLessThan(warlock.countCalculation.maxWarlocks);
     });
@@ -413,7 +413,7 @@ describe('Game Balance Configuration', () => {
   describe('Advanced Balance Mechanics', () => {
     it('should support threat decay mechanics', () => {
       const threat = gameBalance.monster.threat;
-      
+
       if (threat.enabled) {
         expect(threat.decayRate).toBeGreaterThanOrEqual(0);
         expect(threat.decayRate).toBeLessThanOrEqual(1);
@@ -423,7 +423,7 @@ describe('Game Balance Configuration', () => {
 
     it('should support comeback trigger conditions', () => {
       const comeback = gameBalance.comeback;
-      
+
       if (comeback.enabled) {
         expect(comeback.triggers.playerCountThreshold).toBeGreaterThan(0);
         expect(comeback.triggers.hpThreshold).toBeGreaterThanOrEqual(0);
@@ -433,7 +433,7 @@ describe('Game Balance Configuration', () => {
 
     it('should support coordination requirements', () => {
       const coordination = gameBalance.coordination;
-      
+
       if (coordination.enabled) {
         expect(coordination.requirements.minPlayers).toBeGreaterThan(1);
         expect(coordination.requirements.maxTurnDelay).toBeGreaterThanOrEqual(0);

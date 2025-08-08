@@ -65,36 +65,36 @@ export class GameRules {
    * @returns Validation result
    */
   validateActionSubmission(
-    actor: Player, 
-    actionType: string, 
-    targetId: string, 
+    actor: Player,
+    actionType: string,
+    targetId: string,
     systems: GameSystems
   ): ValidationResult {
     // Basic validation
     if (!actor || actor.status !== 'alive') {
-      return ValidationResultSchema.parse({ 
-        valid: false, 
-        reason: 'Actor not alive' 
+      return ValidationResultSchema.parse({
+        valid: false,
+        reason: 'Actor not alive'
       });
     }
 
     if (systems.statusEffectManager.isPlayerStunned(actor.id)) {
-      return ValidationResultSchema.parse({ 
-        valid: false, 
-        reason: 'Actor is stunned' 
+      return ValidationResultSchema.parse({
+        valid: false,
+        reason: 'Actor is stunned'
       });
     }
 
     // Check if already submitted (this would need to be tracked separately)
     // if (actor.hasSubmittedAction) {
-    //   return ValidationResultSchema.parse({ 
-    //     valid: false, 
-    //     reason: 'Action already submitted' 
+    //   return ValidationResultSchema.parse({
+    //     valid: false,
+    //     reason: 'Action already submitted'
     //   });
     // }
 
-    return ValidationResultSchema.parse({ 
-      valid: true 
+    return ValidationResultSchema.parse({
+      valid: true
     });
   }
 
@@ -115,7 +115,7 @@ export class GameRules {
    */
   calculateCoordinationBonus(actions: any[]): number {
     if (actions.length < 2) return 1.0;
-    
+
     // Simple coordination bonus based on number of coordinated actions
     return 1.0 + (actions.length - 1) * 0.1;
   }

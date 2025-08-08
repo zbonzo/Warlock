@@ -110,7 +110,9 @@ export const useGameEvents = (
     if (!socket) return;
 
     const handlePlayerDisconnected = (data: { playerId: string; playerName: string; message?: string }) => {
+      /* eslint-disable-next-line no-console */
       console.log('Player disconnected:', data);
+      /* eslint-disable-next-line no-console */
       console.log(`${data.playerName} has left the game: ${data.message}`);
     };
 
@@ -127,6 +129,7 @@ export const useGameEvents = (
     if ((me as any)?.submissionStatus) {
       const { hasSubmitted, isValid, validationState } = (me as any).submissionStatus;
 
+      /* eslint-disable-next-line no-console */
       console.log('🔍 Submission status changed:', {
         hasSubmitted,
         isValid,
@@ -138,11 +141,13 @@ export const useGameEvents = (
 
       // If player has submitted and it's valid, show submitted state
       if (hasSubmitted && isValid && validationState === 'valid') {
+        /* eslint-disable-next-line no-console */
         console.log('🔍 Valid submission detected - keeping current state');
         // This will be handled by the action state hook
       }
       // If player submitted but it's now invalid, reset to selection
       else if (hasSubmitted && (!isValid || validationState === 'invalid')) {
+        /* eslint-disable-next-line no-console */
         console.log('⚠️ Action became invalid, resetting to selection...', {
           hasSubmitted,
           isValid,
@@ -155,6 +160,7 @@ export const useGameEvents = (
         if (lastValidActionRef.current) {
           const timeSinceValid = Date.now() - lastValidActionRef.current.timestamp;
           if (timeSinceValid < 30000) {
+            /* eslint-disable-next-line no-console */
             console.log('🔍 Recent valid action found, could restore');
             // Will be handled by action state hook
           }
@@ -162,6 +168,7 @@ export const useGameEvents = (
       }
       // If player hasn't submitted, ensure we're in selection mode
       else if (!hasSubmitted) {
+        /* eslint-disable-next-line no-console */
         console.log('🔍 No submission yet - selection mode');
         // Will be handled by action state hook
       }
@@ -173,6 +180,7 @@ export const useGameEvents = (
     if (!socket) return;
 
     const handleRoundResult = (data: RoundResultData) => {
+      /* eslint-disable-next-line no-console */
       console.log('Received round results:', data);
 
       // Show the battle results modal
@@ -208,7 +216,9 @@ export const useGameEvents = (
     if (!socket) return;
 
     const handleTrophyAwarded = (trophyData: TrophyData) => {
+      /* eslint-disable-next-line no-console */
       console.log('🏆 CLIENT RECEIVED trophyAwarded event:', trophyData);
+      /* eslint-disable-next-line no-console */
       console.log('🏆 Trophy data structure:', {
         playerName: trophyData?.playerName,
         trophyName: trophyData?.trophyName,
@@ -226,6 +236,7 @@ export const useGameEvents = (
         players: [], 
         trophyAward: trophyData 
       });
+      /* eslint-disable-next-line no-console */
       console.log('🏆 Updated battle results with trophy data');
     };
 
@@ -241,6 +252,7 @@ export const useGameEvents = (
     if (!socket) return;
 
     const handleResume = () => {
+      /* eslint-disable-next-line no-console */
       console.log('Game resumed, switching to action phase');
       setPhase('action');
       resetActionState();
@@ -253,6 +265,7 @@ export const useGameEvents = (
     };
 
     const handleGameStateUpdate = (data: GameStateUpdateData) => {
+      /* eslint-disable-next-line no-console */
       console.log('Game state update received:', data);
       
       // Find the current player in the updated game state
@@ -260,6 +273,7 @@ export const useGameEvents = (
       const updatedPlayerData = data.players?.find((p: Player) => p['id'] === currentPlayerId);
       const hasSubmittedAction = updatedPlayerData?.['hasSubmittedAction'] || false;
       
+      /* eslint-disable-next-line no-console */
       console.log('🔍 Game state update - player status:', {
         playerId: currentPlayerId,
         hasSubmittedAction,
@@ -273,6 +287,7 @@ export const useGameEvents = (
       
       // Only reset if we're in action phase AND the player hasn't submitted yet
       if (data.phase === 'action' && !hasSubmittedAction) {
+        /* eslint-disable-next-line no-console */
         console.log('🔍 Resetting action state - player has not submitted');
         resetActionState();
         setReadyClicked(false);
@@ -282,11 +297,13 @@ export const useGameEvents = (
           resetMobileWizard();
         }
       } else if (data.phase === 'action' && hasSubmittedAction) {
+        /* eslint-disable-next-line no-console */
         console.log('🔍 Keeping current state - player already submitted');
       }
     };
 
     const handlePhaseChanged = (data: PhaseChangedData) => {
+      /* eslint-disable-next-line no-console */
       console.log('Phase changed:', data);
       if (data.phase) {
         setPhase(data.phase);
@@ -294,7 +311,9 @@ export const useGameEvents = (
     };
 
     const handleRoundResults = (data: any) => {
+      /* eslint-disable-next-line no-console */
       console.log('🎯 [CLIENT] Round results received:', data);
+      /* eslint-disable-next-line no-console */
       console.log('🎯 [CLIENT] Round results structure:', {
         hasResults: !!data.results,
         hasLog: !!data.results?.log,
@@ -308,10 +327,12 @@ export const useGameEvents = (
       });
       
       if (data.results && data.results.log) {
+        /* eslint-disable-next-line no-console */
         console.log('🎯 [CLIENT] Showing battle results modal with events:', data.results.log);
         
         // Extract round number from server data - try different sources
         const roundNumber = data.results.round || data.round || 1;
+        /* eslint-disable-next-line no-console */
         console.log('🎯 [CLIENT] Round number extracted:', { 
           fromResults: data.results.round, 
           fromData: data.round, 
@@ -323,6 +344,7 @@ export const useGameEvents = (
           turn: roundNumber, 
           events: data.results.log 
         });
+        /* eslint-disable-next-line no-console */
         console.log('🎯 [CLIENT] Added events to log for round:', roundNumber);
         
         // Show battle results
@@ -334,11 +356,13 @@ export const useGameEvents = (
           players: data.results.players || [],
         });
       } else {
+        /* eslint-disable-next-line no-console */
         console.warn('⚠️ [CLIENT] No log data in round results!');
       }
       
       // Reset states for new round (if no winner)
       if (!data.results?.winner) {
+        /* eslint-disable-next-line no-console */
         console.log('🎯 [CLIENT] No winner, resetting for next round');
         resetActionState();
         setReadyClicked(false);
@@ -350,6 +374,7 @@ export const useGameEvents = (
       }
       
       if (data.newPhase) {
+        /* eslint-disable-next-line no-console */
         console.log('🎯 [CLIENT] Setting phase to:', data.newPhase);
         setPhase(data.newPhase);
       }
@@ -373,6 +398,7 @@ export const useGameEvents = (
     if (!socket) return;
 
     const handleAdaptabilityChoose = (data: any) => {
+      /* eslint-disable-next-line no-console */
       console.log('Received adaptabilityChooseAbility event in GamePage:', data);
 
       if (data?.abilities) {

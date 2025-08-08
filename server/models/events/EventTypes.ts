@@ -301,7 +301,7 @@ const SocketUpdateRequiredEventSchema = BaseEventDataSchema.extend({
  * Discriminated Union for Game Events
  * This provides type-safe event handling with proper payload types
  */
-export type GameEvent = 
+export type GameEvent =
   | { type: typeof EventTypes.GAME.CREATED; payload: z.infer<typeof GameCreatedEventSchema> }
   | { type: typeof EventTypes.GAME.STARTED; payload: z.infer<typeof GameStartedEventSchema> }
   | { type: typeof EventTypes.GAME.ENDED; payload: z.infer<typeof GameEndedEventSchema> }

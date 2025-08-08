@@ -100,7 +100,7 @@ describe('reconnectionStorage utility', () => {
 
     it('should save character session when reconnection is enabled', () => {
       reconnectionStorage.setReconnectionEnabled(true);
-      
+
       reconnectionStorage.saveCharacterSession(mockCharacterData, mockSocketId, mockGameCode);
 
       expect(localStorageMock.setItem).toHaveBeenCalledWith(
@@ -116,7 +116,7 @@ describe('reconnectionStorage utility', () => {
 
     it('should not save character session when reconnection is disabled', () => {
       reconnectionStorage.setReconnectionEnabled(false);
-      
+
       reconnectionStorage.saveCharacterSession(mockCharacterData, mockSocketId, mockGameCode);
 
       expect(localStorageMock.setItem).not.toHaveBeenCalledWith(
@@ -128,7 +128,7 @@ describe('reconnectionStorage utility', () => {
     it('should include current timestamp in saved data', () => {
       const mockTimestamp = 1234567890;
       jest.spyOn(Date, 'now').mockReturnValue(mockTimestamp);
-      
+
       reconnectionStorage.setReconnectionEnabled(true);
       reconnectionStorage.saveCharacterSession(mockCharacterData, mockSocketId, mockGameCode);
 
@@ -160,7 +160,7 @@ describe('reconnectionStorage utility', () => {
 
     it('should return null when no data is stored', () => {
       reconnectionStorage.setReconnectionEnabled(true);
-      
+
       const result = reconnectionStorage.getCharacterSession();
       expect(result).toBeNull();
     });
@@ -174,14 +174,14 @@ describe('reconnectionStorage utility', () => {
     });
 
     it('should clear expired session data (older than 1 hour)', () => {
-      const expiredTimestamp = 1000000 - (60 * 60 * 1000 + 1); // 1 hour + 1ms ago
+      const expiredTimestamp = 1000000 - ((60 * 60 * 1000) + 1); // 1 hour + 1ms ago
       const expiredSessionData = { ...mockSessionData, timestamp: expiredTimestamp };
-      
+
       reconnectionStorage.setReconnectionEnabled(true);
       localStorageMock.setItem('warlock_character_data', JSON.stringify(expiredSessionData));
 
       const result = reconnectionStorage.getCharacterSession();
-      
+
       expect(result).toBeNull();
       expect(localStorageMock.removeItem).toHaveBeenCalledWith('warlock_character_data');
     });
@@ -189,7 +189,7 @@ describe('reconnectionStorage utility', () => {
     it('should return valid session data within 1 hour', () => {
       const recentTimestamp = 1000000 - (30 * 60 * 1000); // 30 minutes ago
       const recentSessionData = { ...mockSessionData, timestamp: recentTimestamp };
-      
+
       reconnectionStorage.setReconnectionEnabled(true);
       localStorageMock.setItem('warlock_character_data', JSON.stringify(recentSessionData));
 
@@ -202,7 +202,7 @@ describe('reconnectionStorage utility', () => {
       localStorageMock.setItem('warlock_character_data', 'invalid json');
 
       const result = reconnectionStorage.getCharacterSession();
-      
+
       expect(result).toBeNull();
       expect(consoleErrorSpy).toHaveBeenCalledWith(
         'Error parsing character session data:',
@@ -214,7 +214,7 @@ describe('reconnectionStorage utility', () => {
     it('should handle edge case of exactly 1 hour old data', () => {
       const exactlyOneHourAgo = 1000000 - (60 * 60 * 1000); // Exactly 1 hour ago
       const edgeSessionData = { ...mockSessionData, timestamp: exactlyOneHourAgo };
-      
+
       reconnectionStorage.setReconnectionEnabled(true);
       localStorageMock.setItem('warlock_character_data', JSON.stringify(edgeSessionData));
 
@@ -247,7 +247,7 @@ describe('reconnectionStorage utility', () => {
     it('should update socket ID and timestamp when session exists', () => {
       const newTimestamp = 1100000;
       jest.spyOn(Date, 'now').mockReturnValue(newTimestamp);
-      
+
       reconnectionStorage.setReconnectionEnabled(true);
       localStorageMock.setItem('warlock_character_data', JSON.stringify(mockSessionData));
 
@@ -267,7 +267,7 @@ describe('reconnectionStorage utility', () => {
 
     it('should do nothing when no session exists', () => {
       reconnectionStorage.setReconnectionEnabled(true);
-      
+
       reconnectionStorage.updateSocketId('newSocket123');
 
       // Should not call setItem for character data
@@ -279,7 +279,7 @@ describe('reconnectionStorage utility', () => {
     it('should do nothing when reconnection is disabled', () => {
       reconnectionStorage.setReconnectionEnabled(false);
       localStorageMock.setItem('warlock_character_data', JSON.stringify(mockSessionData));
-      
+
       reconnectionStorage.updateSocketId('newSocket123');
 
       // Should not update the session data
@@ -306,7 +306,7 @@ describe('reconnectionStorage utility', () => {
 
     it('should return false when no session exists', () => {
       reconnectionStorage.setReconnectionEnabled(true);
-      
+
       expect(reconnectionStorage.hasValidSession()).toBe(false);
     });
 
@@ -363,7 +363,7 @@ describe('reconnectionStorage utility', () => {
       // Update socket ID
       const newSocketId = 'newSocket456';
       reconnectionStorage.updateSocketId(newSocketId);
-      
+
       const updatedSession = reconnectionStorage.getCharacterSession();
       expect(updatedSession?.socketId).toBe(newSocketId);
       expect(updatedSession?.character).toEqual(characterData);

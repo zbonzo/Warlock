@@ -43,7 +43,7 @@ describe('EffectManager', () => {
 
     it('should apply new effect successfully', () => {
       const result = effectManager.applyEffect('player1', validEffect);
-      
+
       expect(result.success).toBe(true);
       expect(result.effect).toBeDefined();
       expect(result.message).toBe('Poisoned applied');
@@ -75,7 +75,7 @@ describe('EffectManager', () => {
       };
 
       const result = effectManager.applyEffect('player1', minimalEffect);
-      
+
       expect(result.success).toBe(true);
       expect(result.effect?.stacks).toBe(0);
       expect(result.effect?.metadata).toEqual({});
@@ -106,7 +106,7 @@ describe('EffectManager', () => {
     it('should stack effects when allowed', () => {
       effectManager.applyEffect('player1', stackableEffect);
       const result = effectManager.applyEffect('player1', { ...stackableEffect, duration: 4 });
-      
+
       expect(result.success).toBe(true);
       expect(result.stacked).toBe(true);
       expect(result.effect?.stacks).toBe(2);
@@ -117,7 +117,7 @@ describe('EffectManager', () => {
     it('should cap stacks at maximum', () => {
       effectManager.applyEffect('player1', { ...stackableEffect, stacks: 5 });
       const result = effectManager.applyEffect('player1', { ...stackableEffect, stacks: 3 });
-      
+
       expect(result.effect?.stacks).toBe(5); // Capped at 5
     });
 
@@ -132,12 +132,12 @@ describe('EffectManager', () => {
       };
 
       effectManager.applyEffect('player1', nonStackableEffect);
-      const result = effectManager.applyEffect('player1', { 
-        ...nonStackableEffect, 
+      const result = effectManager.applyEffect('player1', {
+        ...nonStackableEffect,
         duration: 4,
         metadata: { armor: 8 }
       });
-      
+
       expect(result.success).toBe(true);
       expect(result.replaced).toBe(true);
       expect(result.effect?.duration).toBe(4);
@@ -162,7 +162,7 @@ describe('EffectManager', () => {
 
     it('should remove specific effect', () => {
       const removed = effectManager.removeEffect('player1', 'poison');
-      
+
       expect(removed).toBe(true);
       expect(effectManager.hasEffect('player1', 'poison')).toBe(false);
       expect(effectManager.hasEffect('player1', 'shield')).toBe(true);
@@ -170,19 +170,19 @@ describe('EffectManager', () => {
 
     it('should return false when removing non-existent effect', () => {
       const removed = effectManager.removeEffect('player1', 'nonexistent');
-      
+
       expect(removed).toBe(false);
     });
 
     it('should return false when removing from non-existent player', () => {
       const removed = effectManager.removeEffect('nonexistent', 'poison');
-      
+
       expect(removed).toBe(false);
     });
 
     it('should clear all player effects', () => {
       effectManager.clearPlayerEffects('player1');
-      
+
       expect(effectManager.getPlayerEffects('player1')).toEqual([]);
       expect(effectManager.hasEffect('player1', 'poison')).toBe(false);
       expect(effectManager.hasEffect('player1', 'shield')).toBe(false);
@@ -220,19 +220,19 @@ describe('EffectManager', () => {
 
     it('should get specific effect data', () => {
       const poison = effectManager.getEffect('player1', 'poison');
-      
+
       expect(poison).toBeDefined();
       expect(poison?.name).toBe('Poisoned');
       expect(poison?.stacks).toBe(2);
       expect(poison?.metadata.damage).toBe(5);
-      
+
       const nonexistent = effectManager.getEffect('player1', 'nonexistent');
       expect(nonexistent).toBeNull();
     });
 
     it('should get all player effects', () => {
       const effects = effectManager.getPlayerEffects('player1');
-      
+
       expect(effects).toHaveLength(2);
       expect(effects.some(e => e.id === 'poison')).toBe(true);
       expect(effects.some(e => e.id === 'shield')).toBe(true);
@@ -280,21 +280,21 @@ describe('EffectManager', () => {
 
     it('should process effect durations and remove expired effects', () => {
       const expired = effectManager.processEffectDurations('player1');
-      
+
       expect(expired).toHaveLength(1);
       expect(expired[0].id).toBe('poison');
-      
+
       expect(effectManager.hasEffect('player1', 'poison')).toBe(false);
       expect(effectManager.hasEffect('player1', 'shield')).toBe(true);
       expect(effectManager.hasEffect('player1', 'permanent')).toBe(true);
-      
+
       const shield = effectManager.getEffect('player1', 'shield');
       expect(shield?.duration).toBe(2); // Decremented
     });
 
     it('should not process permanent effects', () => {
       effectManager.processEffectDurations('player1');
-      
+
       const permanent = effectManager.getEffect('player1', 'permanent');
       expect(permanent?.duration).toBe(-1); // Unchanged
     });
@@ -341,19 +341,19 @@ describe('EffectManager', () => {
 
     it('should calculate combined modifiers from all effects', () => {
       const modifiers = effectManager.calculateModifiers('player1');
-      
+
       // Damage: 1 * (1 + 0.2 * 2) = 1.4
       expect(modifiers.damage).toBeCloseTo(1.4);
-      
+
       // Healing: 1 * (1 + 0.5 * 1) = 1.5
       expect(modifiers.healing).toBeCloseTo(1.5);
-      
+
       // Armor: 0 + 1 * 2 = 2
       expect(modifiers.armor).toBe(2);
-      
+
       // Resistance: min(0 + 0.1 * 1, 0.8) = 0.1
       expect(modifiers.resistance).toBe(0.1);
-      
+
       // Vulnerability: 0 + 0.25 * 1 = 0.25
       expect(modifiers.vulnerability).toBe(0.25);
     });
@@ -374,7 +374,7 @@ describe('EffectManager', () => {
 
     it('should return empty modifiers for non-existent player', () => {
       const modifiers = effectManager.calculateModifiers('nonexistent');
-      
+
       expect(modifiers.damage).toBeUndefined();
       expect(modifiers.healing).toBeUndefined();
       expect(modifiers.armor).toBeUndefined();
@@ -386,7 +386,7 @@ describe('EffectManager', () => {
   describe('static effect factories', () => {
     it('should create poison effect', () => {
       const poison = EffectManager.createPoisonEffect(3, 5);
-      
+
       expect(poison.id).toBe('poison');
       expect(poison.name).toBe('Poisoned');
       expect(poison.type).toBe('debuff');
@@ -396,7 +396,7 @@ describe('EffectManager', () => {
 
     it('should create blessed effect', () => {
       const blessed = EffectManager.createBlessedEffect(4);
-      
+
       expect(blessed.id).toBe('blessed');
       expect(blessed.name).toBe('Blessed');
       expect(blessed.type).toBe('buff');
@@ -407,7 +407,7 @@ describe('EffectManager', () => {
 
     it('should create shielded effect', () => {
       const shielded = EffectManager.createShieldedEffect(2, 8);
-      
+
       expect(shielded.id).toBe('shielded');
       expect(shielded.name).toBe('Shielded');
       expect(shielded.type).toBe('buff');
@@ -417,7 +417,7 @@ describe('EffectManager', () => {
 
     it('should create vulnerable effect', () => {
       const vulnerable = EffectManager.createVulnerableEffect(1, 0.3);
-      
+
       expect(vulnerable.id).toBe('vulnerable');
       expect(vulnerable.name).toBe('Vulnerable');
       expect(vulnerable.type).toBe('debuff');
@@ -454,7 +454,7 @@ describe('EffectManager', () => {
 
     it('should serialize to JSON correctly', () => {
       const json = effectManager.toJSON();
-      
+
       expect(json.activeEffects).toBeDefined();
       expect(json.activeEffects.player1).toHaveLength(2);
       expect(json.activeEffects.player2).toHaveLength(1);
@@ -463,11 +463,11 @@ describe('EffectManager', () => {
     it('should create EffectManager from JSON', () => {
       const json = effectManager.toJSON();
       const newManager = EffectManager.fromJSON(json);
-      
+
       expect(newManager.hasEffect('player1', 'poison')).toBe(true);
       expect(newManager.hasEffect('player1', 'shield')).toBe(true);
       expect(newManager.hasEffect('player2', 'poison')).toBe(true);
-      
+
       const poison = newManager.getEffect('player1', 'poison');
       expect(poison?.stacks).toBe(2);
       expect(poison?.metadata.damage).toBe(5);
@@ -475,7 +475,7 @@ describe('EffectManager', () => {
 
     it('should handle empty JSON data', () => {
       const newManager = EffectManager.fromJSON({});
-      
+
       expect(newManager.getPlayerEffects('player1')).toEqual([]);
     });
 

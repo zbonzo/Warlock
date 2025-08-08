@@ -1,15 +1,15 @@
 /**
  * @fileoverview Attack-related ability handlers (Refactored)
- * 
+ *
  * This file has been refactored to use modular ability handlers.
  * Individual handlers have been moved to:
- * 
+ *
  * - abilities/attack/basic-attack.ts: Standard single-target attacks
  * - abilities/attack/poison-attacks.ts: Poison-based attacks
  * - abilities/attack/aoe-attacks.ts: Area of effect attacks
  * - abilities/attack/multi-hit-attacks.ts: Multi-hit attacks
  * - abilities/attack/special-attacks.ts: Special attack mechanics
- * 
+ *
  * This provides better organization and easier maintenance.
  */
 
@@ -23,19 +23,19 @@ import {
 import {
   // Basic attacks
   handleAttack,
-  
+
   // Poison attacks
   handlePoisonStrike,
   handleDeathMark,
   handlePoisonTrap,
-  
+
   // AOE attacks
   handleAoeDamage,
   handleInfernoBlast,
-  
+
   // Multi-hit attacks
   handleMultiHitAttack,
-  
+
   // Special attacks
   handleVulnerabilityStrike,
   handleRecklessStrike,

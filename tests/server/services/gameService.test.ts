@@ -48,7 +48,7 @@ describe('gameService', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    
+
     // Clear the games map
     gameService.games.clear();
     gameService.gameTimers.clear();
@@ -126,7 +126,7 @@ describe('gameService', () => {
   describe('createGame', () => {
     it('should create a new game successfully', () => {
       const game = gameService.createGame('GAME123');
-      
+
       expect(game).toBeDefined();
       expect(MockGameRoom).toHaveBeenCalledWith('GAME123');
       expect(gameService.games.has('GAME123')).toBe(true);
@@ -161,7 +161,7 @@ describe('gameService', () => {
     it('should generate unique 4-digit codes', () => {
       const code1 = gameService.generateGameCode();
       const code2 = gameService.generateGameCode();
-      
+
       expect(code1).toMatch(/^\d{4}$/);
       expect(code2).toMatch(/^\d{4}$/);
       expect(code1).not.toBe(code2);
@@ -169,7 +169,7 @@ describe('gameService', () => {
 
     it('should avoid existing game codes', () => {
       gameService.games.set('1234', mockGameRoom);
-      
+
       const newCode = gameService.generateGameCode();
       expect(newCode).not.toBe('1234');
     });
@@ -211,16 +211,16 @@ describe('gameService', () => {
 
     it('should create a timeout for game cleanup', () => {
       gameService.createGameTimeout(mockIO, 'GAME123');
-      
+
       expect(gameService.gameTimers.has('GAME123')).toBe(true);
     });
 
     it('should clean up game when timeout expires', () => {
       gameService.createGameTimeout(mockIO, 'GAME123');
-      
+
       // Fast-forward time
       jest.advanceTimersByTime(mockConfig.gameTimeout + 1000);
-      
+
       expect(gameService.games.has('GAME123')).toBe(false);
       expect(gameService.gameTimers.has('GAME123')).toBe(false);
       expect(mockIO.to).toHaveBeenCalledWith('GAME123');
@@ -229,16 +229,16 @@ describe('gameService', () => {
     it('should refresh existing timeout', () => {
       gameService.createGameTimeout(mockIO, 'GAME123');
       const firstTimer = gameService.gameTimers.get('GAME123');
-      
+
       gameService.refreshGameTimeout(mockIO, 'GAME123');
       const secondTimer = gameService.gameTimers.get('GAME123');
-      
+
       expect(firstTimer).not.toBe(secondTimer);
     });
 
     it('should not refresh timeout for non-existent game', () => {
       gameService.refreshGameTimeout(mockIO, 'NONEXISTENT');
-      
+
       expect(gameService.gameTimers.has('NONEXISTENT')).toBe(false);
     });
   });
@@ -255,7 +255,7 @@ describe('gameService', () => {
       ]);
 
       gameService.broadcastPlayerList(mockIO, 'GAME123');
-      
+
       expect(mockIO.to).toHaveBeenCalledWith('GAME123');
       expect(mockIO.to('GAME123').emit).toHaveBeenCalledWith('playerList', {
         players: [
@@ -268,7 +268,7 @@ describe('gameService', () => {
 
     it('should handle non-existent game gracefully', () => {
       gameService.broadcastPlayerList(mockIO, 'NONEXISTENT');
-      
+
       expect(mockIO.to).not.toHaveBeenCalled();
     });
   });
@@ -280,7 +280,7 @@ describe('gameService', () => {
 
     it('should process round successfully', async () => {
       const result = await gameService.processGameRound(mockIO, 'GAME123');
-      
+
       expect(mockGameRoom.commandProcessor.processCommands).toHaveBeenCalled();
       expect(mockGameRoom.gamePhase.phase).toBe('results');
       expect(mockGameRoom.processRound).toHaveBeenCalled();
@@ -294,9 +294,9 @@ describe('gameService', () => {
 
     it('should broadcast round results', async () => {
       await gameService.processGameRound(mockIO, 'GAME123');
-      
+
       expect(mockIO.to).toHaveBeenCalledWith('GAME123');
-      expect(mockIO.to('GAME123').emit).toHaveBeenCalledWith('roundResult', 
+      expect(mockIO.to('GAME123').emit).toHaveBeenCalledWith('roundResult',
         expect.objectContaining({
           eventsLog: ['Test event'],
           phase: 'results'
@@ -315,8 +315,8 @@ describe('gameService', () => {
       });
 
       await gameService.processGameRound(mockIO, 'GAME123');
-      
-      expect(mockIO.to('GAME123').emit).toHaveBeenCalledWith('levelUp', 
+
+      expect(mockIO.to('GAME123').emit).toHaveBeenCalledWith('levelUp',
         expect.objectContaining({
           level: 2,
           oldLevel: 1
@@ -335,7 +335,7 @@ describe('gameService', () => {
       gameService.gameTimers.set('GAME123', setTimeout(() => {}, 1000) as any);
 
       await gameService.processGameRound(mockIO, 'GAME123');
-      
+
       expect(gameService.games.has('GAME123')).toBe(false);
       expect(gameService.gameTimers.has('GAME123')).toBe(false);
       expect(mockLogger.info).toHaveBeenCalledWith('GameEnded', { gameCode: 'GAME123', winner: 'Good' });
@@ -345,7 +345,7 @@ describe('gameService', () => {
       mockGameRoom.commandProcessor.processCommands.mockRejectedValue(new Error('Command error'));
 
       const result = await gameService.processGameRound(mockIO, 'GAME123');
-      
+
       expect(mockLogger.error).toHaveBeenCalledWith('Error processing commands:', {
         gameCode: 'GAME123',
         error: 'Command error'
@@ -362,7 +362,7 @@ describe('gameService', () => {
       mockGameRoom.commandProcessor = undefined;
 
       const result = await gameService.processGameRound(mockIO, 'GAME123');
-      
+
       expect(result).toBeDefined();
       expect(mockGameRoom.processRound).toHaveBeenCalled();
     });
@@ -377,7 +377,7 @@ describe('gameService', () => {
       mockGameRoom.systems.gameStateUtils.countPendingResurrections.mockReturnValue(2);
 
       const gameEnded = gameService.checkGameWinConditions(mockIO, 'GAME123', 'Alice');
-      
+
       expect(gameEnded).toBe(false);
       expect(mockLogger.debug).toHaveBeenCalledWith(
         expect.stringContaining('2 pending resurrections')
@@ -388,9 +388,9 @@ describe('gameService', () => {
       mockGameRoom.systems.warlockSystem.getWarlockCount.mockReturnValue(0);
 
       const gameEnded = gameService.checkGameWinConditions(mockIO, 'GAME123', 'Alice');
-      
+
       expect(gameEnded).toBe(true);
-      expect(mockIO.to('GAME123').emit).toHaveBeenCalledWith('roundResult', 
+      expect(mockIO.to('GAME123').emit).toHaveBeenCalledWith('roundResult',
         expect.objectContaining({
           winner: 'Good'
         })
@@ -405,9 +405,9 @@ describe('gameService', () => {
       ]);
 
       const gameEnded = gameService.checkGameWinConditions(mockIO, 'GAME123', 'Alice');
-      
+
       expect(gameEnded).toBe(true);
-      expect(mockIO.to('GAME123').emit).toHaveBeenCalledWith('roundResult', 
+      expect(mockIO.to('GAME123').emit).toHaveBeenCalledWith('roundResult',
         expect.objectContaining({
           winner: 'Evil'
         })
@@ -423,7 +423,7 @@ describe('gameService', () => {
       ]);
 
       const gameEnded = gameService.checkGameWinConditions(mockIO, 'GAME123', 'Alice');
-      
+
       expect(gameEnded).toBe(false);
     });
 
@@ -441,7 +441,7 @@ describe('gameService', () => {
     describe('isWaitingForActions', () => {
       it('should return false for unstarted game', () => {
         mockGameRoom.gameState.started = false;
-        
+
         const waiting = gameService.isWaitingForActions(mockGameRoom);
         expect(waiting).toBe(false);
       });
@@ -486,7 +486,7 @@ describe('gameService', () => {
     describe('isInRoundResults', () => {
       it('should return false for unstarted game', () => {
         mockGameRoom.gameState.started = false;
-        
+
         const inResults = gameService.isInRoundResults(mockGameRoom);
         expect(inResults).toBe(false);
       });
@@ -509,7 +509,7 @@ describe('gameService', () => {
         gameService.gameTimers.set('GAME123', setTimeout(() => {}, 1000) as any);
 
         const stats = gameService.getGameStats();
-        
+
         expect(stats).toEqual({
           totalGames: 2,
           activeTimers: 1,
@@ -523,7 +523,7 @@ describe('gameService', () => {
         gameService.gameTimers.set('GAME123', setTimeout(() => {}, 1000) as any);
 
         const cleaned = gameService.forceCleanupGame('GAME123');
-        
+
         expect(cleaned).toBe(true);
         expect(gameService.games.has('GAME123')).toBe(false);
         expect(gameService.gameTimers.has('GAME123')).toBe(false);
@@ -541,7 +541,7 @@ describe('gameService', () => {
     describe('createGameWithCode', () => {
       it('should create game with specific code', () => {
         const game = gameService.createGameWithCode('CUSTOM');
-        
+
         expect(game).toBeDefined();
         expect(gameService.games.has('CUSTOM')).toBe(true);
         expect(mockLogger.info).toHaveBeenCalledWith('Created replay game with code CUSTOM');
@@ -549,7 +549,7 @@ describe('gameService', () => {
 
       it('should return null for existing code', () => {
         gameService.games.set('EXISTING', mockGameRoom);
-        
+
         const game = gameService.createGameWithCode('EXISTING');
         expect(game).toBeNull();
       });
@@ -563,7 +563,7 @@ describe('gameService', () => {
         });
 
         gameService.cleanupExpiredDisconnectedPlayers(mockIO);
-        
+
         expect(mockGameRoom.cleanupDisconnectedPlayers).toHaveBeenCalled();
         expect(mockLogger.info).toHaveBeenCalledWith('DisconnectedPlayersCleanupComplete', {
           totalCleaned: 2, // cleanedPlayer + expiredPlayer
@@ -575,7 +575,7 @@ describe('gameService', () => {
         mockGameRoom.cleanupDisconnectedPlayers.mockReturnValue([]);
 
         gameService.cleanupExpiredDisconnectedPlayers();
-        
+
         expect(mockLogger.info).not.toHaveBeenCalledWith(
           expect.stringContaining('DisconnectedPlayersCleanupComplete')
         );
@@ -597,7 +597,7 @@ describe('gameService', () => {
       });
 
       await gameService.processGameRound(mockIO, 'GAME123');
-      
+
       expect(mockIO.to('GAME123').emit).not.toHaveBeenCalledWith('trophyAwarded', expect.anything());
       expect(mockLogger.warn).toHaveBeenCalledWith(
         expect.stringContaining('No trophy to award')
@@ -616,7 +616,7 @@ describe('gameService', () => {
       });
 
       await gameService.processGameRound(mockIO, 'GAME123');
-      
+
       expect(mockIO.to('GAME123').emit).toHaveBeenCalledWith('trophyAwarded', {
         playerName: 'Alice',
         trophyName: 'Test Trophy',
@@ -650,7 +650,7 @@ describe('gameService', () => {
       });
 
       await gameService.processGameRound(mockIO, 'GAME123');
-      
+
       expect(mockLogger.error).toHaveBeenCalledWith('Error awarding trophy:', expect.any(Object));
     });
   });
@@ -658,7 +658,7 @@ describe('gameService', () => {
   describe('type safety and interfaces', () => {
     it('should enforce GameResult interface', async () => {
       const result = await gameService.processGameRound(mockIO, 'GAME123');
-      
+
       expect(typeof result?.eventsLog).toBe('object');
       expect(Array.isArray(result?.eventsLog)).toBe(true);
       expect(typeof result?.players).toBe('object');
@@ -668,7 +668,7 @@ describe('gameService', () => {
 
     it('should enforce GameStats interface', () => {
       const stats = gameService.getGameStats();
-      
+
       expect(typeof stats.totalGames).toBe('number');
       expect(typeof stats.activeTimers).toBe('number');
       expect(Array.isArray(stats.gameList)).toBe(true);
@@ -686,11 +686,11 @@ describe('gameService', () => {
       });
 
       await gameService.processGameRound(mockIO, 'GAME123');
-      
+
       const trophyCall = mockIO.to('GAME123').emit.mock.calls.find(
         call => call[0] === 'trophyAwarded'
       );
-      
+
       if (trophyCall) {
         const trophyData = trophyCall[1];
         expect(typeof trophyData.playerName).toBe('string');

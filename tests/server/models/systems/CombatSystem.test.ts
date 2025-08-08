@@ -3,12 +3,12 @@
  * Testing the migrated TypeScript CombatSystem class with full type safety and complex combat logic
  */
 
-import { 
-  CombatSystem, 
-  CombatRoundResult, 
-  CombatLogEntry, 
-  RoundSummary, 
-  CombatSystemDependencies 
+import {
+  CombatSystem,
+  CombatRoundResult,
+  CombatLogEntry,
+  RoundSummary,
+  CombatSystemDependencies
 } from '@models/systems/CombatSystem';
 import { Player } from '@models/Player';
 import { TurnResolver } from '@models/systems/TurnResolver';
@@ -16,8 +16,8 @@ import { EffectManager } from '@models/systems/EffectManager';
 import { DamageCalculator } from '@models/systems/DamageCalculator';
 import { GameEventBus } from '@models/events/GameEventBus';
 import { EventTypes } from '@models/events/EventTypes';
-import type { 
-  Monster, 
+import type {
+  Monster,
   ValidationResult,
   GameEvent,
   GameRoom,
@@ -223,7 +223,7 @@ describe('CombatSystem (TypeScript)', () => {
 
       mockPlayer1 = createMockPlayer('player1', 'Alice');
       mockPlayer2 = createMockPlayer('player2', 'Bob');
-      
+
       mockPlayers.set('player1', mockPlayer1);
       mockPlayers.set('player2', mockPlayer2);
     });
@@ -316,7 +316,7 @@ describe('CombatSystem (TypeScript)', () => {
           })
         ])
       );
-      
+
       // Verify coordination bonus was calculated (0.1 + (2-1) * 0.05 = 0.15)
       expect(mockTurnResolver.processPlayerAction).toHaveBeenCalledWith(
         mockPlayer1,
@@ -328,9 +328,9 @@ describe('CombatSystem (TypeScript)', () => {
     it('should handle validation failures gracefully', async () => {
       mockPlayer1.isAlive = true;
       (mockPlayer1 as any).hasSubmittedAction = true;
-      mockPlayer1.validateSubmittedAction.mockReturnValue({ 
-        valid: false, 
-        errors: ['Invalid target'] 
+      mockPlayer1.validateSubmittedAction.mockReturnValue({
+        valid: false,
+        errors: ['Invalid target']
       });
 
       const result: CombatRoundResult = await combatSystem.processRound(mockGameRoom);
@@ -434,13 +434,13 @@ describe('CombatSystem (TypeScript)', () => {
       await combatSystem.processRound(mockGameRoom);
 
       expect(mockGameRoom.level).toBe(2);
-      
+
       const player = mockPlayers.get('player1')!;
       expect(player.damageMod).toBe(1.1); // +0.1 per level
       expect(player.maxHp).toBe(110); // +10 per level
       expect(player.hp).toBe(90); // +10 healing from level up
       expect(player.updateRelentlessFuryLevel).toHaveBeenCalledWith(2);
-      
+
       expect(mockEventBus.emit).toHaveBeenCalledWith(
         EventTypes.GAME.LEVEL_UP,
         expect.objectContaining({
@@ -479,7 +479,7 @@ describe('CombatSystem (TypeScript)', () => {
       const deadPlayer = createMockPlayer('dead', 'Dead');
       alivePlayer.isAlive = true;
       deadPlayer.isAlive = false;
-      
+
       mockPlayers.set('alive', alivePlayer);
       mockPlayers.set('dead', deadPlayer);
     });
@@ -504,11 +504,11 @@ describe('CombatSystem (TypeScript)', () => {
 
     it('should check if combat is active', () => {
       expect(combatSystem.isCombatActive()).toBe(true);
-      
+
       // Test with dead monster
       mockMonsterController.monster.isAlive = false;
       expect(combatSystem.isCombatActive()).toBe(false);
-      
+
       // Test with no alive players
       mockMonsterController.monster.isAlive = true;
       mockPlayers.get('alive')!.isAlive = false;
@@ -517,7 +517,7 @@ describe('CombatSystem (TypeScript)', () => {
 
     it('should get combat statistics', () => {
       const stats = combatSystem.getCombatStats();
-      
+
       expect(stats).toEqual({
         alivePlayerCount: 1,
         totalPlayerCount: 2,
@@ -570,7 +570,7 @@ describe('CombatSystem (TypeScript)', () => {
       mockPlayers.set('player1', mockPlayer);
 
       const validationResult = combatSystem.validate(mockGameEvent);
-      
+
       expect(validationResult.valid).toBe(true);
       expect(validationResult.errors).toHaveLength(0);
       expect(validationResult.score).toBe(100);
@@ -580,7 +580,7 @@ describe('CombatSystem (TypeScript)', () => {
       mockMonsterController.monster.isAlive = false;
 
       const validationResult = combatSystem.validate(mockGameEvent);
-      
+
       expect(validationResult.valid).toBe(false);
       expect(validationResult.errors).toContain('Combat is not active');
       expect(validationResult.score).toBe(0);
@@ -593,7 +593,7 @@ describe('CombatSystem (TypeScript)', () => {
       };
 
       const validationResult = combatSystem.validate(invalidEvent);
-      
+
       expect(validationResult.valid).toBe(false);
       expect(validationResult.errors).toContain('Player not found');
     });
@@ -609,14 +609,14 @@ describe('CombatSystem (TypeScript)', () => {
       };
 
       const validationResult = combatSystem.validate(invalidEvent);
-      
+
       expect(validationResult.valid).toBe(false);
       expect(validationResult.errors).toContain('Player is not alive');
     });
 
     it('should check if it can handle combat events', () => {
       expect(combatSystem.canHandle(mockGameEvent)).toBe(true);
-      
+
       const nonCombatEvent: GameEvent = {
         type: 'GAME.CREATED' as any,
         payload: {}
@@ -626,7 +626,7 @@ describe('CombatSystem (TypeScript)', () => {
 
     it('should return subscribed event types', () => {
       const subscribedTypes = combatSystem.subscribedEvents();
-      
+
       expect(subscribedTypes).toContain(EventTypes.ACTION.SUBMITTED);
       expect(subscribedTypes).toContain(EventTypes.DAMAGE.CALCULATED);
       expect(subscribedTypes).toContain(EventTypes.HEAL.APPLIED);
@@ -661,7 +661,7 @@ describe('CombatSystem (TypeScript)', () => {
     it('should calculate damage between entities', () => {
       const mockAttacker = createMockPlayer('attacker', 'Attacker');
       const mockDefender = createMockPlayer('defender', 'Defender');
-      
+
       mockDamageCalculator.calculateDamage.mockReturnValue({
         finalDamage: 25,
         baseDamage: 20,
@@ -694,9 +694,9 @@ describe('CombatSystem (TypeScript)', () => {
 
     it('should apply damage to entities', () => {
       const mockTarget = createMockPlayer('target', 'Target');
-      
+
       const result = combatSystem.applyDamage(mockTarget, 30);
-      
+
       expect(result).toBe(mockTarget);
       expect(mockTarget.takeDamage).toHaveBeenCalledWith(30);
     });
@@ -704,11 +704,11 @@ describe('CombatSystem (TypeScript)', () => {
     it('should calculate healing with modifiers', () => {
       const mockHealer = createMockPlayer('healer', 'Healer');
       const mockTarget = createMockPlayer('target', 'Target');
-      
+
       mockEffectManager.getHealingModifier.mockReturnValue(0.2); // 20% bonus
-      
+
       const healing = combatSystem.calculateHealing(mockHealer, mockTarget, 50);
-      
+
       expect(healing).toBe(60); // 50 * 1.2 = 60
       expect(mockEffectManager.getHealingModifier).toHaveBeenCalledWith(mockHealer);
     });
@@ -716,17 +716,17 @@ describe('CombatSystem (TypeScript)', () => {
     it('should check if entities can attack', () => {
       const mockAttacker = createMockPlayer('attacker', 'Attacker');
       const mockTarget = createMockPlayer('target', 'Target');
-      
+
       mockAttacker.isAlive = true;
       mockTarget.isAlive = true;
       mockAttacker.statusEffects = [];
 
       expect(combatSystem.canAttack(mockAttacker, mockTarget)).toBe(true);
-      
+
       // Test with dead attacker
       mockAttacker.isAlive = false;
       expect(combatSystem.canAttack(mockAttacker, mockTarget)).toBe(false);
-      
+
       // Test with stunned attacker
       mockAttacker.isAlive = true;
       mockAttacker.statusEffects = [{ type: 'debuff', name: 'Stunned' }];
@@ -749,7 +749,7 @@ describe('CombatSystem (TypeScript)', () => {
           coordinatedActions: 0
         }
       };
-      
+
       expect(typeof result.success).toBe('boolean');
       expect(Array.isArray(result.log)).toBe(true);
       expect(result.playerActions).toBeInstanceOf(Map);
@@ -765,7 +765,7 @@ describe('CombatSystem (TypeScript)', () => {
         damage: 25,
         public: true
       };
-      
+
       expect(typeof logEntry.type).toBe('string');
       expect(typeof logEntry.message).toBe('string');
       expect(typeof logEntry.damage).toBe('number');

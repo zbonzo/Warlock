@@ -19,7 +19,7 @@ import { GameRoom } from '../models/GameRoom.js';
 import { createDebugLogger } from '../config/debug.config.js';
 import type { Player } from '../models/Player.js';
 import { BaseController } from './PlayerController.js';
-import { 
+import {
   GameState,
   GameCode,
   GameRules,
@@ -68,11 +68,11 @@ export interface GameControllerResult {
  * Helper function to emit events through EventBus or fallback to direct socket emission
  */
 function emitThroughEventBusOrSocket(
-  socket: Socket, 
-  gameCode: string, 
-  eventType: EventType, 
-  eventData: any, 
-  fallbackEvent: string, 
+  socket: Socket,
+  gameCode: string,
+  eventType: EventType,
+  eventData: any,
+  fallbackEvent: string,
   fallbackData: any
 ): void {
   const game = gameService.games.get(gameCode);
@@ -97,8 +97,8 @@ export class GameController extends BaseController<GameRoom, CreateGameRequest, 
    * Handle game creation request
    */
   async handleGameCreate(
-    io: SocketIOServer, 
-    socket: Socket, 
+    io: SocketIOServer,
+    socket: Socket,
     request: CreateGameRequest
   ): Promise<GameControllerResult> {
     try {
@@ -119,7 +119,7 @@ export class GameController extends BaseController<GameRoom, CreateGameRequest, 
 
       // Generate unique game code
       const gameCode = gameService.generateGameCode();
-      
+
       // Create game room with options
       const gameOptions = {
         maxPlayers: maxPlayers || (config as any).game?.defaultMaxPlayers || 8,
@@ -128,10 +128,10 @@ export class GameController extends BaseController<GameRoom, CreateGameRequest, 
       };
 
       const game = new GameRoom(gameCode, gameOptions);
-      
+
       // Set socket server for real-time communication
       (game as any).setSocketServer(io);
-      
+
       // Add creating player as host
       const joinResult = (game as any).addPlayer(socket.id, playerName);
       if (!joinResult.success) {
@@ -207,14 +207,14 @@ export class GameController extends BaseController<GameRoom, CreateGameRequest, 
         cause: error instanceof Error ? (error as any).cause : undefined,
         fullError: error
       };
-      
+
       logger.error('DETAILED Error in handleGameCreate:', errorDetails);
       console.error('=== HANDLEGA ME CREATE ERROR ===');
       console.error('Message:', errorDetails.message);
       console.error('Stack:', errorDetails.stack);
       console.error('Full Error Object:', error);
       console.error('================================');
-      
+
       return {
         success: false,
         error: errorDetails.message
@@ -234,7 +234,7 @@ export class GameController extends BaseController<GameRoom, CreateGameRequest, 
       this.debug.info('=================== GAME START DEBUG ===================');
       this.debug.info('1. Request received:', JSON.stringify(request, null, 2));
       this.debug.info('Socket ID:', socket.id);
-      
+
       const { gameCode } = request;
       this.debug.verbose('2. Extracted gameCode:', gameCode);
 
@@ -242,7 +242,7 @@ export class GameController extends BaseController<GameRoom, CreateGameRequest, 
       this.debug.verbose('3. Validating game action...');
       const game = validateGameAction(socket, gameCode, false, false, false);
       this.debug.verbose('4. Game validation result:', !!game);
-      
+
       if (!game) {
         this.debug.warn('5. GAME NOT FOUND - returning error');
         return {
@@ -250,13 +250,13 @@ export class GameController extends BaseController<GameRoom, CreateGameRequest, 
           error: 'Game not found or access denied'
         };
       }
-      
+
       this.debug.verbose('5. Game found. Current state:');
       this.debug.verbose('   - Host ID:', (game as any).hostId);
       this.debug.verbose('   - Current socket ID:', socket.id);
       this.debug.verbose('   - Players count:', (game as any).getPlayers ? (game as any).getPlayers().length : 'NO GETPLAYERS METHOD');
       this.debug.verbose('   - Game started?:', (game as any).gameState?.started || (game as any).started || 'UNKNOWN');
-      
+
 
       // Check if player is host
       this.debug.verbose('6. Checking if player is host...');
@@ -273,16 +273,16 @@ export class GameController extends BaseController<GameRoom, CreateGameRequest, 
       this.debug.info('8. Calling game.startGame()...');
       const startResult = await (game as any).startGame();
       this.debug.verbose('9. Start result:', JSON.stringify(startResult, null, 2));
-      
+
       if (startResult.success) {
         this.debug.info('10. GAME START SUCCESSFUL - processing success flow...');
-        
+
         const players = (game as any).getPlayers();
         this.debug.verbose('11. Players data:', players.map((p: any) => ({ id: p.id, name: p.name, isAlive: p.isAlive })));
-        
+
         // Calculate warlock count for log message
         const warlockCount = players.filter((p: any) => p.isWarlock).length;
-        
+
         logger.info('GameStarted', {
           gameCode,
           hostId: socket.id,
@@ -293,11 +293,11 @@ export class GameController extends BaseController<GameRoom, CreateGameRequest, 
         this.debug.verbose('12. About to get host player for message formatting...');
         const hostPlayer = (game as any).getPlayer(socket.id);
         this.debug.verbose('13. Host player found:', hostPlayer ? { id: hostPlayer.id, name: hostPlayer.name } : 'NOT FOUND');
-        
+
         this.debug.verbose('14. About to get game event template...');
         const gameStartedEvent = (config as any).getEvent('gameStarted');
         this.debug.verbose('15. Game started event template:', gameStartedEvent);
-        
+
         this.debug.verbose('16. About to format message with hostName:', hostPlayer?.name || 'Host');
         let formattedMessage;
         try {
@@ -310,21 +310,21 @@ export class GameController extends BaseController<GameRoom, CreateGameRequest, 
           this.debug.error('17. ERROR formatting message:', formatError);
           formattedMessage = `Game started by ${hostPlayer?.name || 'Host'}`;
         }
-        
+
         this.debug.verbose('18. About to get client data from game...');
-        
+
         // Send personalized data to each player (so they get their abilities)
         for (const [playerId, player] of (game as any).players) {
           const personalizedGameData = (game as any).toClientData(playerId);
           this.debug.verbose(`19. Sending personalized data to ${(player as any).name}:`, JSON.stringify(personalizedGameData.players.find((p: any) => p.id === playerId), null, 2));
-          
+
           io.to(playerId).emit('gameStarted', {
             ...personalizedGameData,
             success: true,
             message: formattedMessage
           });
         }
-        
+
         this.debug.info('20. Successfully emitted personalized gameStarted events');
         this.debug.info('21. Successfully emitted gameStarted event');
 
@@ -346,30 +346,30 @@ export class GameController extends BaseController<GameRoom, CreateGameRequest, 
         } catch (eventBusError) {
           this.debug.error('23. ERROR emitting through event bus:', eventBusError);
         }
-        
+
         this.debug.info('24. SUCCESS FLOW COMPLETE - returning success result');
       } else {
         this.debug.error('10. GAME START FAILED - processing failure flow...');
         this.debug.error('   - Failure reason:', startResult.reason);
-        
+
         socket.emit('game:start_failed', {
           success: false,
           error: startResult.reason
         });
         this.debug.info('11. Emitted start_failed event to socket');
       }
-      
+
       this.debug.verbose('25. About to return result:', startResult);
       return startResult;
 
     } catch (error) {
-      logger.error('Error in handleGameStart:', { 
+      logger.error('Error in handleGameStart:', {
         error: error instanceof Error ? error.message : String(error),
         stack: error instanceof Error ? error.stack : undefined,
         gameCode: request.gameCode,
         socketId: socket.id
       });
-      
+
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Unknown error'
@@ -384,9 +384,9 @@ export class GameController extends BaseController<GameRoom, CreateGameRequest, 
     try {
       const game = gameService.getGame(gameCode);
       if (!game) {
-        return { 
-          success: false, 
-          error: 'Game not found' 
+        return {
+          success: false,
+          error: 'Game not found'
         };
       }
 
@@ -407,10 +407,10 @@ export class GameController extends BaseController<GameRoom, CreateGameRequest, 
 
       // Add player to game
       const joinResult = (game as any).addPlayer(playerData.id || '', playerData.name);
-      
+
       if (joinResult.success) {
         const player = joinResult.player!;
-        
+
         // Apply any additional player data
         if (playerData.class) player.class = playerData.class;
         if (playerData.race) player.race = playerData.race;
@@ -463,9 +463,9 @@ export class GameController extends BaseController<GameRoom, CreateGameRequest, 
         data: {
           game: gameData,
           stats,
-          player: player ? (player as any).toClientData({ 
-            includePrivate: true, 
-            requestingPlayerId: player?.id 
+          player: player ? (player as any).toClientData({
+            includePrivate: true,
+            requestingPlayerId: player?.id
           }) : undefined
         }
       };
@@ -572,7 +572,7 @@ export class GameController extends BaseController<GameRoom, CreateGameRequest, 
       }
 
       const result = await (game as any).processRound();
-      
+
       logger.info('RoundProcessed', {
         gameCode,
         round: (game as any).round,
@@ -689,13 +689,13 @@ export class GameController extends BaseController<GameRoom, CreateGameRequest, 
         });
       }
     } catch (error) {
-      logger.error('Error in handleGameCheckName:', { 
+      logger.error('Error in handleGameCheckName:', {
         error: error instanceof Error ? error.message : String(error),
         gameCode,
         playerName,
         socketId: socket.id
       });
-      
+
       socket.emit('nameCheckResponse', {
         available: false,
         error: 'Error checking name availability'
@@ -738,7 +738,7 @@ export class GameController extends BaseController<GameRoom, CreateGameRequest, 
       if (result.success) {
         socket.emit('actionSubmitted', { success: true });
         logger.info(`[GameController] Player ${player.name} submitted action: ${actionType} -> ${targetId}`);
-        
+
         // Send updated game state to all players so they can see submission status
         for (const [playerId, gamePlayer] of (game as any).players) {
           const personalizedGameData = (game as any).toClientData(playerId);
@@ -749,8 +749,8 @@ export class GameController extends BaseController<GameRoom, CreateGameRequest, 
       }
     } catch (error) {
       logger.error('[GameController] Error in handleGameAction:', error as any);
-      socket.emit('errorMessage', { 
-        message: error instanceof Error ? error.message : 'Failed to submit action' 
+      socket.emit('errorMessage', {
+        message: error instanceof Error ? error.message : 'Failed to submit action'
       });
     }
   }

@@ -4,14 +4,14 @@
  */
 
 export { handleAttack } from './basic-attack.js';
-export { 
-  handlePoisonStrike, 
-  handleDeathMark, 
-  handlePoisonTrap 
+export {
+  handlePoisonStrike,
+  handleDeathMark,
+  handlePoisonTrap
 } from './poison-attacks.js';
-export { 
-  handleAoeDamage, 
-  handleInfernoBlast 
+export {
+  handleAoeDamage,
+  handleInfernoBlast
 } from './aoe-attacks.js';
 export { handleMultiHitAttack } from './multi-hit-attacks.js';
 export {

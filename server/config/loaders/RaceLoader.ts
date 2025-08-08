@@ -1,13 +1,13 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { fileURLToPath } from 'url';
-import { 
-  RacesConfig, 
+import {
+  RacesConfig,
   RaceAttributes,
   RacialAbility,
   UsageLimit,
   validateRacesConfig,
-  safeValidateRacesConfig 
+  safeValidateRacesConfig
 } from '../schemas/race.schema.js';
 
 // ES module __dirname equivalent
@@ -213,7 +213,7 @@ export class RaceLoader {
    */
   public getRacesByUsageLimit(usageLimit: UsageLimit): string[] {
     this.reloadIfChanged();
-    
+
     return this.racesConfig.availableRaces.filter(raceName => {
       const ability = this.racesConfig.racialAbilities[raceName];
       return ability && ability.usageLimit === usageLimit;
@@ -247,12 +247,12 @@ export class RaceLoader {
     };
   } {
     this.reloadIfChanged();
-    
+
     const races = this.racesConfig.availableRaces;
     let totalHp = 0;
     let totalArmor = 0;
     let totalDamage = 0;
-    
+
     let highestHp = { race: '', value: 0 };
     let lowestHp = { race: '', value: Infinity };
     let highestDamage = { race: '', value: 0 };
@@ -264,7 +264,7 @@ export class RaceLoader {
     races.forEach(raceName => {
       const attributes = this.racesConfig.raceAttributes[raceName];
       const ability = this.racesConfig.racialAbilities[raceName];
-      
+
       if (attributes) {
         totalHp += attributes.hpModifier;
         totalArmor += attributes.armorModifier;

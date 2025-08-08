@@ -54,7 +54,7 @@ describe('AbilityManager', () => {
   describe('initializeAbilities', () => {
     it('should initialize abilities for Warrior class', () => {
       abilityManager.initializeAbilities('Warrior' as PlayerClass);
-      
+
       const ability = abilityManager.getAbility('slash');
       expect(ability).toBeDefined();
       expect(ability?.name).toBe('Slash');
@@ -64,7 +64,7 @@ describe('AbilityManager', () => {
 
     it('should initialize abilities for Mage class', () => {
       abilityManager.initializeAbilities('Mage' as PlayerClass);
-      
+
       const ability = abilityManager.getAbility('fireball');
       expect(ability).toBeDefined();
       expect(ability?.name).toBe('Fireball');
@@ -73,7 +73,7 @@ describe('AbilityManager', () => {
 
     it('should handle invalid class gracefully', () => {
       abilityManager.initializeAbilities('InvalidClass' as PlayerClass);
-      
+
       expect(abilityManager.getAbility('slash')).toBeNull();
       expect(abilityManager.getAvailableAbilities()).toEqual([]);
     });
@@ -88,7 +88,7 @@ describe('AbilityManager', () => {
       const slash = abilityManager.getAbility('slash');
       expect(slash).toBeDefined();
       expect(slash?.type).toBe('slash');
-      
+
       const invalid = abilityManager.getAbility('invalid');
       expect(invalid).toBeNull();
     });
@@ -103,7 +103,7 @@ describe('AbilityManager', () => {
       const available = abilityManager.getAvailableAbilities();
       expect(available).toHaveLength(1);
       expect(available[0].type).toBe('slash');
-      
+
       // Put slash on cooldown
       abilityManager.applyCooldown('slash', 2);
       const availableAfterCooldown = abilityManager.getAvailableAbilities();
@@ -118,7 +118,7 @@ describe('AbilityManager', () => {
 
     it('should apply cooldown to ability', () => {
       abilityManager.applyCooldown('slash', 3);
-      
+
       expect(abilityManager.isAbilityOnCooldown('slash')).toBe(true);
       expect(abilityManager.getAbilityCooldown('slash')).toBe(3);
     });
@@ -126,7 +126,7 @@ describe('AbilityManager', () => {
     it('should not apply zero or negative cooldown', () => {
       abilityManager.applyCooldown('slash', 0);
       expect(abilityManager.isAbilityOnCooldown('slash')).toBe(false);
-      
+
       abilityManager.applyCooldown('slash', -1);
       expect(abilityManager.isAbilityOnCooldown('slash')).toBe(false);
     });
@@ -134,15 +134,15 @@ describe('AbilityManager', () => {
     it('should reduce cooldowns by one round', () => {
       abilityManager.applyCooldown('slash', 3);
       abilityManager.applyCooldown('charge', 2);
-      
+
       abilityManager.reduceCooldowns();
-      
+
       expect(abilityManager.getAbilityCooldown('slash')).toBe(2);
       expect(abilityManager.getAbilityCooldown('charge')).toBe(1);
-      
+
       abilityManager.reduceCooldowns();
       abilityManager.reduceCooldowns();
-      
+
       expect(abilityManager.getAbilityCooldown('slash')).toBe(0);
       expect(abilityManager.getAbilityCooldown('charge')).toBe(0);
       expect(abilityManager.isAbilityOnCooldown('slash')).toBe(false);
@@ -151,9 +151,9 @@ describe('AbilityManager', () => {
     it('should reset all cooldowns', () => {
       abilityManager.applyCooldown('slash', 3);
       abilityManager.applyCooldown('charge', 2);
-      
+
       abilityManager.resetCooldowns();
-      
+
       expect(abilityManager.getAbilityCooldown('slash')).toBe(0);
       expect(abilityManager.getAbilityCooldown('charge')).toBe(0);
       expect(abilityManager.isAbilityOnCooldown('slash')).toBe(false);
@@ -168,11 +168,11 @@ describe('AbilityManager', () => {
 
     it('should unlock abilities for level', () => {
       const newlyUnlocked = abilityManager.unlockAbilitiesForLevel(3);
-      
+
       expect(newlyUnlocked).toHaveLength(2); // block (level 2) and charge (level 3)
       expect(newlyUnlocked.some(a => a.type === 'block')).toBe(true);
       expect(newlyUnlocked.some(a => a.type === 'charge')).toBe(true);
-      
+
       expect(abilityManager.isAbilityUnlocked('block')).toBe(true);
       expect(abilityManager.isAbilityUnlocked('charge')).toBe(true);
     });
@@ -180,7 +180,7 @@ describe('AbilityManager', () => {
     it('should not unlock already unlocked abilities', () => {
       abilityManager.unlockAbilitiesForLevel(2);
       const secondUnlock = abilityManager.unlockAbilitiesForLevel(2);
-      
+
       expect(secondUnlock).toHaveLength(0); // Nothing new
     });
 
@@ -219,7 +219,7 @@ describe('AbilityManager', () => {
     it('should reset racial ability usage', () => {
       abilityManager.markRacialAbilityUsed();
       expect(abilityManager.canUseRacialAbility()).toBe(false);
-      
+
       abilityManager.resetRacialAbility();
       expect(abilityManager.canUseRacialAbility()).toBe(true);
     });
@@ -245,19 +245,19 @@ describe('AbilityManager', () => {
 
     it('should return comprehensive ability summary', () => {
       const summary = abilityManager.getAbilitySummary();
-      
+
       expect(summary.abilities).toHaveLength(3);
-      
+
       const slashSummary = summary.abilities.find(a => a.type === 'slash');
       expect(slashSummary).toBeDefined();
       expect(slashSummary?.unlocked).toBe(true);
       expect(slashSummary?.cooldown).toBe(2);
-      
+
       const chargeSummary = summary.abilities.find(a => a.type === 'charge');
       expect(chargeSummary).toBeDefined();
       expect(chargeSummary?.unlocked).toBe(false);
       expect(chargeSummary?.cooldown).toBe(0);
-      
+
       expect(summary.racialAbility).toBeDefined();
       expect(summary.racialAbility?.name).toBe('Stone Skin');
       expect(summary.racialAbility?.used).toBe(false);
@@ -267,7 +267,7 @@ describe('AbilityManager', () => {
     it('should return null racial ability when none set', () => {
       const newManager = new AbilityManager(player);
       newManager.initializeAbilities('Warrior' as PlayerClass);
-      
+
       const summary = newManager.getAbilitySummary();
       expect(summary.racialAbility).toBeNull();
     });
@@ -290,7 +290,7 @@ describe('AbilityManager', () => {
 
     it('should serialize state correctly', () => {
       const serialized = abilityManager.serialize();
-      
+
       expect(serialized.abilities).toHaveLength(3);
       expect(serialized.unlockedAbilities).toHaveLength(2); // slash and block
       expect(serialized.cooldowns).toEqual({ slash: 2 });
@@ -300,10 +300,10 @@ describe('AbilityManager', () => {
 
     it('should deserialize state correctly', () => {
       const serialized = abilityManager.serialize();
-      
+
       const newManager = new AbilityManager(player);
       newManager.deserialize(serialized);
-      
+
       expect(newManager.getAbility('slash')).toBeDefined();
       expect(newManager.isAbilityUnlocked('slash')).toBe(true);
       expect(newManager.isAbilityUnlocked('block')).toBe(true);
@@ -316,9 +316,9 @@ describe('AbilityManager', () => {
         cooldowns: { slash: 5 },
         racialAbilityUsed: true
       };
-      
+
       abilityManager.deserialize(partialData);
-      
+
       expect(abilityManager.getAbilityCooldown('slash')).toBe(5);
       expect(abilityManager.canUseRacialAbility()).toBe(false);
     });

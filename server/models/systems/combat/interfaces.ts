@@ -3,8 +3,8 @@
  * Shared interfaces for the modular combat system
  */
 
-import type { 
-  Monster, 
+import type {
+  Monster,
   Player,
   GameRoom,
   PlayerAction

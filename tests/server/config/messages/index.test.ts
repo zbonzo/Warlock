@@ -94,7 +94,7 @@ describe('Messages Index Configuration', () => {
       expect(messagesModule).toHaveProperty('warlock');
       expect(messagesModule).toHaveProperty('monster');
       expect(messagesModule).toHaveProperty('player');
-      expect(messagesModule).toHaveProperty('ui'); 
+      expect(messagesModule).toHaveProperty('ui');
       expect(messagesModule).toHaveProperty('serverLogMessages');
       expect(messagesModule).toHaveProperty('winConditions');
     });
@@ -106,7 +106,7 @@ describe('Messages Index Configuration', () => {
       expect(messagesModule).toHaveProperty('getSuccess');
       expect(messagesModule).toHaveProperty('getEvent');
       expect(messagesModule).toHaveProperty('getAbilityMessage');
-      
+
       expect(typeof messagesModule.formatMessage).toBe('function');
       expect(typeof messagesModule.getMessage).toBe('function');
       expect(typeof messagesModule.getError).toBe('function');
@@ -217,7 +217,7 @@ describe('Messages Index Configuration', () => {
       const template = 'Hello {name}!';
       const params = { name: 'World' };
       const result = formatMessage(template, params);
-      
+
       expect(result).toBe('Hello World!');
     });
 
@@ -225,7 +225,7 @@ describe('Messages Index Configuration', () => {
       const template = '{attacker} deals {damage} damage to {target}';
       const params = { attacker: 'Player1', damage: '25', target: 'Monster' };
       const result = formatMessage(template, params);
-      
+
       expect(result).toBe('Player1 deals 25 damage to Monster');
     });
 
@@ -233,14 +233,14 @@ describe('Messages Index Configuration', () => {
       const template = 'Hello {name}!';
       const params = {};
       const result = formatMessage(template, params);
-      
+
       expect(result).toBe('Hello {name}!');
     });
 
     it('should handle empty parameters object', () => {
       const template = 'No parameters here';
       const result = formatMessage(template);
-      
+
       expect(result).toBe('No parameters here');
     });
 
@@ -248,7 +248,7 @@ describe('Messages Index Configuration', () => {
       const template = '{name} says hello to {name}';
       const params = { name: 'Bob' };
       const result = formatMessage(template, params);
-      
+
       expect(result).toBe('Bob says hello to Bob');
     });
 
@@ -256,7 +256,7 @@ describe('Messages Index Configuration', () => {
       const template = 'Score: {points}';
       const params = { points: 100 };
       const result = formatMessage(template, params);
-      
+
       expect(result).toBe('Score: 100');
     });
   });
@@ -377,7 +377,7 @@ describe('Messages Index Configuration', () => {
       const checkStringValues = (obj: any, path = ''): void => {
         Object.entries(obj).forEach(([key, value]) => {
           const currentPath = path ? `${path}.${key}` : key;
-          
+
           if (typeof value === 'string') {
             expect(value.length).toBeGreaterThan(0);
           } else if (typeof value === 'object' && value !== null) {
@@ -410,7 +410,7 @@ describe('Messages Index Configuration', () => {
     it('should be case sensitive', () => {
       const message1 = getMessage('success.gameCreated');
       const message2 = getMessage('success.gamecreated');
-      
+
       expect(message1).toBe('Game created successfully');
       expect(message2).toBeNull();
     });
@@ -425,7 +425,7 @@ describe('Messages Index Configuration', () => {
         target: 'Monster',
         damage: 42
       };
-      
+
       const result = formatMessage(template, params);
       expect(result).toBe('Player Alice used Fireball on Monster for 42 damage!');
     });
@@ -433,7 +433,7 @@ describe('Messages Index Configuration', () => {
     it('should preserve unmatched placeholders', () => {
       const template = 'Hello {name}, your score is {score} and {unmatchedPlaceholder}';
       const params = { name: 'Player', score: 100 };
-      
+
       const result = formatMessage(template, params);
       expect(result).toBe('Hello Player, your score is 100 and {unmatchedPlaceholder}');
     });

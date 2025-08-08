@@ -5,10 +5,10 @@
 
 import config from '../../config/index.js';
 import logger from '../../utils/logger.js';
-import type { 
-  Ability, 
+import type {
+  Ability,
   Player as PlayerType,
-  PlayerClass 
+  PlayerClass
 } from '../../types/generated.js';
 
 interface Player {
@@ -97,7 +97,7 @@ class AbilityManager {
    * Check if an ability is on cooldown
    */
   isAbilityOnCooldown(abilityType: string): boolean {
-    return this.abilityCooldowns.has(abilityType) && 
+    return this.abilityCooldowns.has(abilityType) &&
            (this.abilityCooldowns.get(abilityType) || 0) > 0;
   }
 
@@ -143,7 +143,7 @@ class AbilityManager {
    * Get list of available abilities (unlocked and not on cooldown)
    */
   getAvailableAbilities(): Ability[] {
-    return this.unlockedAbilities.filter(ability => 
+    return this.unlockedAbilities.filter(ability =>
       !this.isAbilityOnCooldown(ability.type)
     );
   }
@@ -153,18 +153,18 @@ class AbilityManager {
    */
   unlockAbilitiesForLevel(level: number): Ability[] {
     const newlyUnlocked: Ability[] = [];
-    
+
     for (const ability of this.abilities) {
       const alreadyUnlocked = this.unlockedAbilities.some(
         a => a.type === ability.type
       );
-      
+
       if ((ability['unlockAt'] as number ?? 1) <= level && !alreadyUnlocked) {
         this.unlockedAbilities.push(ability);
         newlyUnlocked.push(ability);
       }
     }
-    
+
     return newlyUnlocked;
   }
 
@@ -172,8 +172,8 @@ class AbilityManager {
    * Check if player can use racial ability
    */
   canUseRacialAbility(): boolean {
-    return this.racialAbility !== null && 
-           !this.racialAbilityUsed && 
+    return this.racialAbility !== null &&
+           !this.racialAbilityUsed &&
            this.player.isAlive;
   }
 

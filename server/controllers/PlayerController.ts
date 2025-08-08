@@ -10,14 +10,15 @@ import { validatePlayerNameSocket } from '../middleware/validation.js';
 import { validateGameAction } from '../shared/gameChecks.js';
 import logger from '../utils/logger.js';
 import errorHandler from '../utils/errorHandler.js';
+import { getCurrentTimestamp } from '../utils/timestamp.js';
 import config from '../config/index.js';
 // Messages are now accessed through the config system
 import { GameRoom } from '../models/GameRoom.js';
 import { Player } from '../models/Player.js';
-import { 
-  PlayerClass, 
-  PlayerRace, 
-  ActionResult, 
+import {
+  PlayerClass,
+  PlayerRace,
+  ActionResult,
   JoinGameData,
   PlayerAction
 } from '../types/generated.js';
@@ -55,7 +56,7 @@ export interface PlayerControllerResult {
  */
 export abstract class BaseController<TModel, TCreateInput, TUpdateInput> {
   protected abstract model: TModel;
-  
+
   abstract create(input: TCreateInput): Promise<TModel>;
   abstract update(id: string, input: TUpdateInput): Promise<TModel>;
   abstract findById(id: string): Promise<TModel | null>;
@@ -72,13 +73,13 @@ export class PlayerController extends BaseController<Player, JoinGameRequest, Pa
    * Handle player joining a game
    */
   async handlePlayerJoin(
-    io: SocketIOServer, 
-    socket: Socket, 
+    io: SocketIOServer,
+    socket: Socket,
     request: JoinGameRequest
   ): Promise<PlayerControllerResult> {
     try {
       const { gameCode, playerName, playerClass, playerRace } = request;
-      
+
       // Validate game exists and is joinable
       const game = validateGameAction(socket, gameCode, false, false, false);
       if (!game) {
@@ -107,7 +108,7 @@ export class PlayerController extends BaseController<Player, JoinGameRequest, Pa
       // Add player and update game state
       const sanitizedName = playerName || config.player?.['defaultPlayerName'] || 'Player';
       const joinResult = game.addPlayer(socket.id, sanitizedName);
-      
+
       if (!joinResult.success) {
         errorHandler.throwGameStateError(config.getError('couldNotJoinGame'));
         return {
@@ -128,14 +129,14 @@ export class PlayerController extends BaseController<Player, JoinGameRequest, Pa
 
       // Join socket to game room and update clients
       socket.join(gameCode);
-      
+
       // Register with SocketEventRouter if available
       const socketRouter = game.socketEventRouter;
       if (socketRouter) {
         socketRouter.registerSocket(socket);
         socketRouter.mapPlayerSocket(socket.id, socket.id);
       }
-      
+
       logger.info('PlayerJoinedGame', {
         playerName: sanitizedName,
         gameCode,
@@ -305,7 +306,7 @@ export class PlayerController extends BaseController<Player, JoinGameRequest, Pa
           success: true,
           actionType,
           targetId,
-          submissionTime: Date.now()
+          submissionTime: getCurrentTimestamp()
         });
 
         // Notify other players if appropriate
@@ -375,7 +376,7 @@ export class PlayerController extends BaseController<Player, JoinGameRequest, Pa
         // Handle disconnection during game
         // TODO: implement handlePlayerDisconnection method
         // gameService.handlePlayerDisconnection(game, socket.id);
-        
+
         logger.info('PlayerDisconnected', {
           playerName,
           gameCode,
@@ -394,10 +395,10 @@ export class PlayerController extends BaseController<Player, JoinGameRequest, Pa
       } else {
         // Handle normal leave
         const success = game.removePlayer(socket.id);
-        
+
         if (success) {
           socket.leave(gameCode);
-          
+
           logger.info('PlayerLeftGame', {
             playerName,
             gameCode,
@@ -451,19 +452,19 @@ export class PlayerController extends BaseController<Player, JoinGameRequest, Pa
       // TODO: implement handlePlayerReconnection method
       // const reconnectResult = gameService.handlePlayerReconnection(game, socket, playerName);
       // const reconnectResult = { success: true, player: null }; // temporary
-      
+
       // Temporary implementation - find player by name
       const player = Array.from(game.getPlayers()).find(p => (p as any).name === playerName);
       const reconnectResult = { success: !!player, player };
-      
+
       if (reconnectResult.success && player) {
-        
+
         // Update socket mapping
         player.addSocketId(socket.id);
-        
+
         // Join socket to game room
         socket.join(gameCode);
-        
+
         // Register with socket router
         const socketRouter = game.socketEventRouter;
         if (socketRouter) {
@@ -559,23 +560,23 @@ export class PlayerController extends BaseController<Player, JoinGameRequest, Pa
       // Apply race and class bonuses
       const raceAttributes = (config as any).getRaceAttributes(race);
       const classAttributes = (config as any).getClassAttributes(className);
-      
+
       if (raceAttributes && classAttributes) {
         // Apply HP modifiers - baseHp is in player settings
         const baseHp = (config as any).player?.baseHp || 250;
         const hpMultiplier = (raceAttributes.hpModifier || 1.0) * (classAttributes.hpModifier || 1.0);
         player.maxHp = Math.floor(baseHp * hpMultiplier);
         player.hp = player.maxHp;
-        
+
         // Apply armor modifiers - baseArmor is in player settings
         const baseArmor = (config as any).player?.baseArmor || 2.0;
         const armorMultiplier = (raceAttributes.armorModifier || 1.0) * (classAttributes.armorModifier || 1.0);
         player.armor = Math.floor(baseArmor * armorMultiplier);
-        
+
         // Apply damage modifiers
         const damageMultiplier = (raceAttributes.damageModifier || 1.0) * (classAttributes.damageModifier || 1.0);
         player.damageMod = damageMultiplier;
-        
+
         logger.info(`Applied bonuses for ${player.name}: HP ${player.hp}/${player.maxHp}, Armor ${player.armor}, Damage ${player.damageMod}x`);
       }
 
@@ -583,13 +584,13 @@ export class PlayerController extends BaseController<Player, JoinGameRequest, Pa
       const classAbilities = (config as any).getClassAbilities(className);
       if (classAbilities && classAbilities.length > 0) {
         (player as any).playerAbilities.setAbilities(classAbilities);
-        
+
         // Unlock abilities available at level 1
         const level1Abilities = classAbilities.filter(
           (ability: any) => (ability.unlockAt || 1) <= 1
         );
         (player as any).playerAbilities.setUnlockedAbilities(level1Abilities);
-        
+
         logger.info(`Initialized ${level1Abilities.length} abilities for ${player.name} (${className})`);
       }
 
@@ -614,8 +615,8 @@ export class PlayerController extends BaseController<Player, JoinGameRequest, Pa
       });
     } catch (error) {
       logger.error('Error in handlePlayerSelectCharacter:', { error: error instanceof Error ? error.message : String(error) });
-      socket.emit('errorMessage', { 
-        message: error instanceof Error ? error.message : 'Failed to select character' 
+      socket.emit('errorMessage', {
+        message: error instanceof Error ? error.message : 'Failed to select character'
       });
     }
   }

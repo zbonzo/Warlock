@@ -103,7 +103,7 @@ describe('AdaptabilityModal Constants', () => {
 
     it('should have valid hex color codes for all categories', () => {
       const hexColorRegex = /^#[0-9A-Fa-f]{6}$/;
-      
+
       Object.values(ABILITY_CATEGORIES).forEach(category => {
         expect(category.color).toMatch(hexColorRegex);
       });
@@ -155,7 +155,7 @@ describe('AdaptabilityModal Constants', () => {
     it('should be different from all standard categories', () => {
       const standardColors = Object.values(ABILITY_CATEGORIES).map(cat => cat.color);
       const standardIcons = Object.values(ABILITY_CATEGORIES).map(cat => cat.icon);
-      
+
       expect(standardColors).not.toContain(DEFAULT_CATEGORY.color);
       expect(standardIcons).not.toContain(DEFAULT_CATEGORY.icon);
     });
@@ -190,7 +190,7 @@ describe('AdaptabilityModal Constants', () => {
   describe('Color Consistency', () => {
     it('should use consistent color format across all categories', () => {
       const allCategories = [...Object.values(ABILITY_CATEGORIES), DEFAULT_CATEGORY];
-      
+
       allCategories.forEach(category => {
         // Should be hex format
         expect(category.color).toMatch(/^#[0-9A-Fa-f]{6}$/);
@@ -202,7 +202,7 @@ describe('AdaptabilityModal Constants', () => {
     it('should use visually distinct colors', () => {
       // Test that colors are reasonably different (basic check)
       const colors = Object.values(ABILITY_CATEGORIES).map(cat => cat.color);
-      
+
       // Should have different hues (basic red, blue, green, purple)
       expect(colors).toContain('#e74c3c'); // Red-ish for Attack
       expect(colors).toContain('#3498db'); // Blue-ish for Defense
@@ -222,7 +222,7 @@ describe('AdaptabilityModal Constants', () => {
 
     it('should use emoji icons consistently', () => {
       const allCategories = [...Object.values(ABILITY_CATEGORIES), DEFAULT_CATEGORY];
-      
+
       allCategories.forEach(category => {
         // Icons should be single characters (emojis)
         expect(category.icon.length).toBeGreaterThan(0);

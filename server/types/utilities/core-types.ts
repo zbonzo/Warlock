@@ -62,7 +62,7 @@ export type BooleanKeys<T> = {
  * Extract only function keys from a type
  */
 export type FunctionKeys<T> = {
-  [K in keyof T]: T[K] extends (...args: any[]) => any ? K : never;
+  [K in keyof T]: T[K] extends (..._args: any[]) => any ? K : never;
 }[keyof T];
 
 /**
@@ -100,9 +100,9 @@ export type UnwrapArray<T> = T extends (infer U)[] ? U : T;
  */
 export type AsyncFunction<T = void> = () => Promise<T>;
 export type SyncFunction<T = void> = () => T;
-export type Predicate<T> = (value: T) => boolean;
-export type Mapper<T, U> = (value: T) => U;
-export type Reducer<T, U> = (accumulator: U, value: T) => U;
+export type Predicate<T> = (_value: T) => boolean;
+export type Mapper<T, U> = (_value: T) => U;
+export type Reducer<T, U> = (_accumulator: U, _value: T) => U;
 
 /**
  * Non-nullable field utilities
@@ -135,7 +135,7 @@ export type TypeGuard<T> = (value: unknown) => value is T;
 /**
  * Constructor type
  */
-export type Constructor<T = {}> = new (...args: any[]) => T;
+export type Constructor<T = {}> = new (..._args: any[]) => T;
 
 /**
  * Extract entries from an object type
@@ -157,32 +157,32 @@ export type Exhaustive<T> = T extends never ? true : false;
 /**
  * Discriminate union types
  */
-export type DiscriminateUnion<T, K extends keyof T, V extends T[K]> = 
+export type DiscriminateUnion<T, K extends keyof T, V extends T[K]> =
   T extends Record<K, V> ? T : never;
 
 /**
  * Constructor parameter extraction
  */
-export type ConstructorParameters<T extends new (...args: any) => any> = 
-  T extends new (...args: infer P) => any ? P : never;
+export type ConstructorParameters<T extends new (..._args: any) => any> =
+  T extends new (..._args: infer P) => any ? P : never;
 
 /**
  * Instance type extraction
  */
-export type InstanceType<T extends new (...args: any) => any> = 
-  T extends new (...args: any) => infer R ? R : any;
+export type InstanceType<T extends new (..._args: any) => any> =
+  T extends new (..._args: any) => infer R ? R : any;
 
 /**
  * Parameters and return type utilities
  */
-export type Parameters<T extends (...args: any) => any> = 
-  T extends (...args: infer P) => any ? P : never;
+export type Parameters<T extends (..._args: any) => any> =
+  T extends (..._args: infer P) => any ? P : never;
 
-export type ReturnType<T extends (...args: any) => any> = 
-  T extends (...args: any) => infer R ? R : any;
+export type ReturnType<T extends (..._args: any) => any> =
+  T extends (..._args: any) => infer R ? R : any;
 
-export type AsyncReturnType<T extends (...args: any) => Promise<any>> =
-  T extends (...args: any) => Promise<infer R> ? R : any;
+export type AsyncReturnType<T extends (..._args: any) => Promise<any>> =
+  T extends (..._args: any) => Promise<infer R> ? R : any;
 
 /**
  * Utility for creating partial types with defaults
@@ -213,9 +213,9 @@ export type KeysOfType<T, U> = {
  * Make methods optional/required
  */
 export type OptionalMethods<T> = {
-  [K in keyof T]: T[K] extends (...args: any[]) => any ? T[K] | undefined : T[K];
+  [K in keyof T]: T[K] extends (..._args: any[]) => any ? T[K] | undefined : T[K];
 };
 
 export type RequiredMethods<T> = {
-  [K in keyof T]: T[K] extends (...args: any[]) => any ? NonNullable<T[K]> : T[K];
+  [K in keyof T]: T[K] extends (..._args: any[]) => any ? NonNullable<T[K]> : T[K];
 };

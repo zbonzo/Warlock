@@ -25,10 +25,10 @@ jest.mock('../../../../server/config/index.js', () => ({
     },
     abilityRegistry: {
       hasAbility: jest.fn().mockReturnValue(true),
-      executeAbility: jest.fn().mockReturnValue({ 
-        success: true, 
-        damage: 25, 
-        log: ['Attack successful'] 
+      executeAbility: jest.fn().mockReturnValue({
+        success: true,
+        damage: 25,
+        log: ['Attack successful']
       })
     }
   }
@@ -340,7 +340,7 @@ describe('ActionProcessor (TypeScript)', () => {
       ];
 
       const coordinationData = { bonus: 0 };
-      
+
       expect(() => {
         actionProcessor.processActions(pendingActions, coordinationData);
       }).not.toThrow();
@@ -358,7 +358,7 @@ describe('ActionProcessor (TypeScript)', () => {
       ];
 
       const coordinationData = { bonus: 0 };
-      
+
       expect(() => {
         actionProcessor.processActions(pendingActions, coordinationData);
       }).not.toThrow();
@@ -367,7 +367,7 @@ describe('ActionProcessor (TypeScript)', () => {
     it('should handle empty action lists', () => {
       const pendingActions: PendingAction[] = [];
       const coordinationData = { bonus: 0 };
-      
+
       const result = actionProcessor.processActions(pendingActions, coordinationData);
 
       expect(result.results).toBeDefined();

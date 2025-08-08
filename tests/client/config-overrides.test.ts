@@ -19,15 +19,15 @@ const mockPath = path as jest.Mocked<typeof path>;
 describe('config-overrides', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    
+
     // Mock path.resolve to return predictable paths
     mockPath.resolve.mockImplementation((base, ...segments) => {
       return `${base}/${segments.join('/')}`;
     });
-    
+
     // Mock override to return the passed function for testing
     mockOverride.mockImplementation((fn) => fn);
-    
+
     // Clear modules to ensure fresh import
     jest.resetModules();
   });
@@ -78,7 +78,7 @@ describe('config-overrides', () => {
 
   it('should export the override configuration as module.exports', () => {
     const configOverrides = require('../../client/config-overrides');
-    
+
     // Since we mocked override to return the passed function,
     // the module.exports should be that function
     expect(typeof configOverrides).toBe('function');
@@ -88,7 +88,7 @@ describe('config-overrides', () => {
     require('../../client/config-overrides');
 
     const aliasConfig = mockAddWebpackAlias.mock.calls[0][0];
-    
+
     // Verify all required aliases are present
     expect(aliasConfig).toHaveProperty('@components');
     expect(aliasConfig).toHaveProperty('@pages');
@@ -98,7 +98,7 @@ describe('config-overrides', () => {
     expect(aliasConfig).toHaveProperty('@services');
     expect(aliasConfig).toHaveProperty('@config');
     expect(aliasConfig).toHaveProperty('@styles');
-    
+
     // Verify the count of aliases
     expect(Object.keys(aliasConfig)).toHaveLength(8);
   });

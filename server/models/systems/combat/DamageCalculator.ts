@@ -125,10 +125,10 @@ class DamageCalculator {
    * Calculate damage with all modifiers applied
    */
   calculateDamage(
-    attacker: Entity | null, 
-    target: Entity | null, 
-    baseDamage: number, 
-    damageType: DamageType = 'physical', 
+    attacker: Entity | null,
+    target: Entity | null,
+    baseDamage: number,
+    damageType: DamageType = 'physical',
     options: DamageCalculationOptions = {}
   ): DamageResult {
     let finalDamage = baseDamage;
@@ -168,13 +168,13 @@ class DamageCalculator {
     }
 
     // Apply armor reduction (only for physical damage types)
-    let armorResult: ArmorReductionResult = { 
-      originalDamage: finalDamage, 
-      armorReduction: 0, 
-      finalDamage: finalDamage, 
-      armorUsed: 0 
+    let armorResult: ArmorReductionResult = {
+      originalDamage: finalDamage,
+      armorReduction: 0,
+      finalDamage: finalDamage,
+      armorUsed: 0
     };
-    
+
     if (this.shouldApplyArmor(damageType) && target && !options.bypassArmor) {
       const totalArmor = this.calculateTotalArmor(target);
       armorResult = this.calculateArmorReduction(finalDamage, totalArmor);
@@ -233,9 +233,9 @@ class DamageCalculator {
    * Calculate healing amount with modifiers
    */
   calculateHealing(
-    healer: Entity | null, 
-    target: Entity | null, 
-    baseAmount: number, 
+    healer: Entity | null,
+    target: Entity | null,
+    baseAmount: number,
     options: HealingCalculationOptions = {}
   ): HealingResult {
     let finalAmount = baseAmount;
@@ -289,9 +289,9 @@ class DamageCalculator {
    * Calculate critical hit damage
    */
   calculateCriticalHit(
-    attacker: Entity | null, 
-    target: Entity | null, 
-    baseDamage: number, 
+    attacker: Entity | null,
+    target: Entity | null,
+    baseDamage: number,
     critMultiplier: number = 2.0
   ): DamageResult {
     const critDamage = Math.floor(baseDamage * critMultiplier);

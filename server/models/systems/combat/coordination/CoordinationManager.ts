@@ -34,7 +34,7 @@ export class CoordinationManager {
     try {
       // Get all valid actions
       const validActions = validationResults.filter(result => result.isValid);
-      
+
       if (validActions.length < this.coordinationThreshold) {
         return coordinationMap;
       }
@@ -46,7 +46,7 @@ export class CoordinationManager {
       for (const [actionType, actions] of actionGroups.entries()) {
         if (actions.length >= this.coordinationThreshold) {
           const coordinationInfo = this.calculateCoordinationInfo(actionType, actions);
-          
+
           // Apply coordination info to all participants
           for (const action of actions) {
             coordinationMap.set(action.playerId, coordinationInfo);
@@ -128,7 +128,7 @@ export class CoordinationManager {
     // Base formula: each additional player beyond threshold adds baseCoordinationBonus
     const extraPlayers = playerCount - this.coordinationThreshold;
     const bonus = this.baseCoordinationBonus + (extraPlayers * this.baseCoordinationBonus * 0.5);
-    
+
     // Cap at maximum bonus
     return Math.min(bonus, this.maxCoordinationBonus);
   }
@@ -140,7 +140,7 @@ export class CoordinationManager {
     // Both must be ability actions
     const abilityId1 = action1.actionData?.['abilityId'];
     const abilityId2 = action2.actionData?.['abilityId'];
-    
+
     if (!abilityId1 || !abilityId2) {
       return false;
     }
@@ -194,8 +194,8 @@ export class CoordinationManager {
    * Check if ability is an attack type
    */
   private isAttackAbility(ability: any): boolean {
-    return ability.category === 'Attack' || 
-           ability.damage > 0 || 
+    return ability.category === 'Attack' ||
+           ability.damage > 0 ||
            ['physical', 'magical', 'ranged'].includes(ability.damageType);
   }
 
@@ -203,8 +203,8 @@ export class CoordinationManager {
    * Check if ability is a heal type
    */
   private isHealAbility(ability: any): boolean {
-    return ability.category === 'Heal' || 
-           ability.healing > 0 || 
+    return ability.category === 'Heal' ||
+           ability.healing > 0 ||
            ability.effect === 'heal';
   }
 
@@ -212,8 +212,8 @@ export class CoordinationManager {
    * Check if ability is a buff type
    */
   private isBuffAbility(ability: any): boolean {
-    return ability.category === 'Buff' || 
-           ability.effect === 'buff' || 
+    return ability.category === 'Buff' ||
+           ability.effect === 'buff' ||
            ability.statusEffect === 'positive';
   }
 

@@ -7,7 +7,7 @@ import { Task } from '../../../tools';
 // Since we have multiple ability message files, we'll use Task to read them all
 const ABILITY_MESSAGE_FILES = [
   'server/config/messages/abilities/attacks.ts',
-  'server/config/messages/abilities/defense.ts', 
+  'server/config/messages/abilities/defense.ts',
   'server/config/messages/abilities/healing.ts',
   'server/config/messages/abilities/racial.ts',
   'server/config/messages/abilities/special.ts'
@@ -33,7 +33,7 @@ describe('Ability Messages Configuration', () => {
       Focus on the structure and content that would be useful for testing.`,
       subagent_type: 'general-purpose'
     });
-    
+
     const result = await examinePromise;
     // This is a placeholder - in actual implementation we'd parse the result
     abilityMessages = result || {};
@@ -53,10 +53,10 @@ describe('Ability Messages Configuration', () => {
     it('should test attack message structure when file is available', () => {
       try {
         const attackMessages = require('../../../server/config/messages/abilities/attacks');
-        
+
         if (attackMessages.default) {
           expect(typeof attackMessages.default).toBe('object');
-          
+
           // Common attack message patterns we'd expect
           const checkMessageStructure = (messages: any) => {
             Object.values(messages).forEach((message: any) => {
@@ -72,7 +72,7 @@ describe('Ability Messages Configuration', () => {
               }
             });
           };
-          
+
           checkMessageStructure(attackMessages.default);
         }
       } catch (error) {
@@ -86,10 +86,10 @@ describe('Ability Messages Configuration', () => {
     it('should test defense message structure when file is available', () => {
       try {
         const defenseMessages = require('../../../server/config/messages/abilities/defense');
-        
+
         if (defenseMessages.default) {
           expect(typeof defenseMessages.default).toBe('object');
-          
+
           // Defense messages should include armor, shields, protection
           const messageObj = defenseMessages.default;
           expect(messageObj).toBeDefined();
@@ -104,10 +104,10 @@ describe('Ability Messages Configuration', () => {
     it('should test healing message structure when file is available', () => {
       try {
         const healingMessages = require('../../../server/config/messages/abilities/healing');
-        
+
         if (healingMessages.default) {
           expect(typeof healingMessages.default).toBe('object');
-          
+
           // Healing messages should include heal amounts, targets
           const messageObj = healingMessages.default;
           expect(messageObj).toBeDefined();
@@ -122,10 +122,10 @@ describe('Ability Messages Configuration', () => {
     it('should test racial message structure when file is available', () => {
       try {
         const racialMessages = require('../../../server/config/messages/abilities/racial');
-        
+
         if (racialMessages.default) {
           expect(typeof racialMessages.default).toBe('object');
-          
+
           // Racial messages should be organized by race
           const messageObj = racialMessages.default;
           expect(messageObj).toBeDefined();
@@ -140,10 +140,10 @@ describe('Ability Messages Configuration', () => {
     it('should test special message structure when file is available', () => {
       try {
         const specialMessages = require('../../../server/config/messages/abilities/special');
-        
+
         if (specialMessages.default) {
           expect(typeof specialMessages.default).toBe('object');
-          
+
           // Special messages for unique abilities
           const messageObj = specialMessages.default;
           expect(messageObj).toBeDefined();
@@ -159,11 +159,11 @@ describe('Ability Messages Configuration', () => {
       const messageFiles = [
         'attacks', 'defense', 'healing', 'racial', 'special'
       ];
-      
+
       messageFiles.forEach(fileType => {
         try {
           const messages = require(`../../../server/config/messages/abilities/${fileType}`);
-          
+
           if (messages.default) {
             const checkPlaceholderConsistency = (obj: any) => {
               Object.values(obj).forEach((value: any) => {
@@ -178,7 +178,7 @@ describe('Ability Messages Configuration', () => {
                 }
               });
             };
-            
+
             checkPlaceholderConsistency(messages.default);
           }
         } catch (error) {
@@ -191,11 +191,11 @@ describe('Ability Messages Configuration', () => {
       const messageFiles = [
         'attacks', 'defense', 'healing', 'racial', 'special'
       ];
-      
+
       messageFiles.forEach(fileType => {
         try {
           const messages = require(`../../../server/config/messages/abilities/${fileType}`);
-          
+
           if (messages.default) {
             const checkEmptyMessages = (obj: any) => {
               Object.values(obj).forEach((value: any) => {
@@ -206,7 +206,7 @@ describe('Ability Messages Configuration', () => {
                 }
               });
             };
-            
+
             checkEmptyMessages(messages.default);
           }
         } catch (error) {
@@ -220,12 +220,12 @@ describe('Ability Messages Configuration', () => {
     it('should use standard player name placeholders', () => {
       const commonPlaceholders = [
         'playerName',
-        'targetName', 
+        'targetName',
         'attackerName',
         'healerName',
         'casterName'
       ];
-      
+
       // This test ensures that when player names are referenced,
       // they use consistent placeholder names
       expect(commonPlaceholders.length).toBeGreaterThan(0);
@@ -238,7 +238,7 @@ describe('Ability Messages Configuration', () => {
         'amount',
         'value'
       ];
-      
+
       expect(commonAmountPlaceholders.length).toBeGreaterThan(0);
     });
   });

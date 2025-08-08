@@ -41,7 +41,7 @@ describe('Combat System Index', () => {
     it('should track coordination', () => {
       combatSystem.trackCoordination('player1', 'monster');
       combatSystem.trackCoordination('player2', 'monster');
-      
+
       const count = combatSystem.getCoordinationCount('monster', 'player1');
       expect(count).toBe(1);
     });
@@ -49,9 +49,9 @@ describe('Combat System Index', () => {
     it('should apply damage with modifiers', () => {
       const target = { id: 'player1', hp: 100, maxHp: 100, isAlive: true };
       const attacker = { id: 'player2', isWarlock: false };
-      
+
       const actualDamage = combatSystem.applyDamage(target, 20, attacker);
-      
+
       expect(actualDamage).toBeGreaterThan(0);
       expect(target.hp).toBeLessThan(100);
     });

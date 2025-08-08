@@ -9,23 +9,18 @@ import type {
   Ability,
   GameRoom,
   StatusEffect,
-  GameEvent,
-  GamePhase
+  GameEvent
 } from '../generated.js';
 
 import type { ValidationResult } from './validation-types.js';
 
 // Type guard utility type
 export type TypeGuard<T> = (value: unknown) => value is T;
-import type { 
-  PlayerId, 
-  GameCode, 
-  AbilityId, 
-  MonsterId,
+import type {
   isPlayerId,
   isGameCode,
   isAbilityId,
-  isMonsterId 
+  isMonsterId
 } from './brand-types.js';
 
 // Re-export brand type guards
@@ -156,7 +151,7 @@ export function isValidDate(value: unknown): value is Date {
  */
 export function isPlayer(value: unknown): value is Player {
   if (!isObject(value)) return false;
-  
+
   const player = value as Record<string, unknown>;
   return (
     isString(player['id']) &&
@@ -196,7 +191,7 @@ export function isPlayerWithRace(race: string) {
 
 export function isAbility(value: unknown): value is Ability {
   if (!isObject(value)) return false;
-  
+
   const ability = value as Record<string, unknown>;
   return (
     isString(ability['id']) &&
@@ -222,15 +217,15 @@ export function isTargetedAbility(value: unknown): value is TargetedAbility {
 }
 
 export function isAbilityWithCooldown(value: unknown): value is CooldownAbility {
-  return isAbility(value) && 
-         isObject(value) && 
-         'currentCooldown' in value && 
+  return isAbility(value) &&
+         isObject(value) &&
+         'currentCooldown' in value &&
          isNumber((value as any)['currentCooldown']);
 }
 
 export function isMonster(value: unknown): value is Monster {
   if (!isObject(value)) return false;
-  
+
   const monster = value as Record<string, unknown>;
   return (
     isString(monster['id']) &&
@@ -248,7 +243,7 @@ export function isAliveMonster(value: unknown): value is Monster & { isAlive: tr
 
 export function isGameRoom(value: unknown): value is GameRoom {
   if (!isObject(value)) return false;
-  
+
   const room = value as Record<string, unknown>;
   return (
     isString(room['id']) &&
@@ -266,7 +261,7 @@ export function isGameInPhase(phase: GamePhase) {
 
 export function isStatusEffect(value: unknown): value is StatusEffect {
   if (!isObject(value)) return false;
-  
+
   const effect = value as Record<string, unknown>;
   return (
     isString(effect['id']) &&
@@ -289,15 +284,15 @@ export function isPermanentStatusEffect(value: unknown): value is PermanentStatu
 }
 
 export function isStackableStatusEffect(value: unknown): value is StackableStatusEffect {
-  return isStatusEffect(value) && 
-         (value as any)['stackable'] === true && 
-         'stacks' in value && 
+  return isStatusEffect(value) &&
+         (value as any)['stackable'] === true &&
+         'stacks' in value &&
          isNumber((value as any)['stacks']);
 }
 
 export function isGameEvent(value: unknown): value is GameEvent {
   if (!isObject(value)) return false;
-  
+
   const event = value as Record<string, unknown>;
   return (
     isString(event['type']) &&
@@ -332,9 +327,9 @@ export function createObjectValidator<T extends Record<string, any>>(
 ) {
   return (value: unknown): value is T => {
     if (!isObject(value)) return false;
-    
+
     return Object.entries(schema).every(([key, guard]) => {
-      return key in value && guard((value as any)[key]);
+      return key in value && guard((value as Record<string, unknown>)[key]);
     });
   };
 }

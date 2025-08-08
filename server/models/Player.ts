@@ -10,10 +10,10 @@ import logger from '../utils/logger.js';
 import { PlayerStats } from './player/PlayerStats.js';
 import { PlayerAbilities } from './player/PlayerAbilities.js';
 import { PlayerEffects } from './player/PlayerEffects.js';
-import { 
-  Player as PlayerType, 
-  PlayerClass, 
-  PlayerRace, 
+import {
+  Player as PlayerType,
+  PlayerClass,
+  PlayerRace,
   PlayerRole,
   PlayerStatus,
   HealthPoints,
@@ -67,7 +67,7 @@ export class Player {
   public readonly id: string;
   public name: string;
   public socketIds: string[];
-  
+
   // Basic game state
   public race: PlayerRace | null = null;
   public class: PlayerClass | null = null;
@@ -103,7 +103,7 @@ export class Player {
     }
 
     this.socketIds = [this.id];
-    
+
     // Set default HP if not provided
     if (!this.hp) {
       this.hp = (config.gameBalance as any)?.['baseHp'] || 100;
@@ -371,7 +371,7 @@ export class Player {
       effects: (abilityData as any).effects,
     };
     this.playerAbilities.setRacialAbility(racialAbility);
-    
+
     // Handle special racial effects setup
     if (abilityData.id === 'undying') {
       this.playerEffects.initializeUndying((abilityData as any)['params']?.resurrectedHp || 1);
@@ -462,7 +462,7 @@ export class Player {
   getSweepingStrikeParams(): { damage: number; targets: Player[] } | null {
     const params = this.playerEffects.getSweepingStrikeParams(this.class || 'Paladin');
     if (!params) return null;
-    
+
     // Convert SweepingStrikeParams to expected return type
     // Note: damage and targets would need to be computed elsewhere
     // This is a type mismatch that needs architectural fix
@@ -478,7 +478,7 @@ export class Player {
   }
 
   // ==================== CORE METHODS ====================
-  
+
   /**
    * Calculate damage reduction from armor
    */
@@ -521,7 +521,7 @@ export class Player {
    */
   takeDamage(amount: number): number {
     // Apply damage resistance from effects
-    let modifiedDamage = this.playerEffects.applyDamageResistance(amount, this.class || 'Paladin');
+    const modifiedDamage = this.playerEffects.applyDamageResistance(amount, this.class || 'Paladin');
 
     // Apply armor reduction using the calculation
     const finalDamage = this.calculateDamageReduction(modifiedDamage);
@@ -618,7 +618,7 @@ export class Player {
       logger.debug(`Added socket ID ${socketId} for player ${this.name}. Total socket IDs: ${this.socketIds.length}`);
     }
     // Note: We don't change this.id for TypeScript readonly property
-    
+
     // Update references in domain models
     (this.playerAbilities as any).playerId = socketId;
     (this.playerEffects as any).playerId = socketId;
@@ -646,7 +646,7 @@ export class Player {
    */
   toClientData(options: ClientDataOptions = {}): Partial<Player> {
     const { includePrivate = false, requestingPlayerId = null } = options;
-    
+
     const data = {
       id: this.id,
       name: this.name,
@@ -746,11 +746,11 @@ export class Player {
     // Restore additional state
     player.isAlive = data.status === 'alive';
     player.isReady = data.isReady;
-    
+
     if (data.metadata?.socketIds) {
       player.socketIds = data.metadata.socketIds as string[];
     }
-    
+
     if (data.metadata?.damageMod) {
       player.damageMod = data.metadata.damageMod as number;
     }
@@ -759,7 +759,7 @@ export class Player {
     if (data.abilities) {
       (player as any).abilities = data.abilities;
     }
-    
+
     if (data.statusEffects) {
       (player as any).statusEffects = data.statusEffects;
     }

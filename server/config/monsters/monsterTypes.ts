@@ -20,7 +20,7 @@ const monsterTypes: MonsterTypes = {
       healers: 1.2  // Slightly prefers healers
     }
   },
-  
+
   2: {
     type: 'direBear',
     name: 'Dire Bear',
@@ -39,7 +39,7 @@ const monsterTypes: MonsterTypes = {
       duration: 2
     }
   },
-  
+
   3: {
     type: 'ancientDrake',
     name: 'Ancient Drake',
@@ -58,7 +58,7 @@ const monsterTypes: MonsterTypes = {
       targets: 3
     }
   },
-  
+
   4: {
     type: 'stoneTitan',
     name: 'Stone Titan',
@@ -77,7 +77,7 @@ const monsterTypes: MonsterTypes = {
       duration: 1
     }
   },
-  
+
   5: {
     type: 'demonLord',
     name: 'Demon Lord',
@@ -101,7 +101,7 @@ const monsterTypes: MonsterTypes = {
       amount: 0.1
     }
   },
-  
+
   6: {
     type: 'voidLeviathan',
     name: 'Void Leviathan',
@@ -125,7 +125,7 @@ const monsterTypes: MonsterTypes = {
       chance: 0.15  // 15% chance to phase through attacks
     }
   },
-  
+
   7: {
     type: 'eldritchHorror',
     name: 'The Unnamed One',

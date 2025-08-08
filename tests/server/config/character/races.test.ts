@@ -66,11 +66,11 @@ describe('Character Races Configuration', () => {
         expect(typeof attributes.hpModifier).toBe('number');
         expect(typeof attributes.armorModifier).toBe('number');
         expect(typeof attributes.damageModifier).toBe('number');
-        
+
         expect(attributes.hpModifier).toBeGreaterThan(0);
         expect(attributes.armorModifier).toBeGreaterThan(0);
         expect(attributes.damageModifier).toBeGreaterThan(0);
-        
+
         // Reasonable ranges
         expect(attributes.hpModifier).toBeLessThanOrEqual(2.0);
         expect(attributes.armorModifier).toBeLessThanOrEqual(2.0);
@@ -82,7 +82,7 @@ describe('Character Races Configuration', () => {
       Object.values(raceAttributes).forEach(attributes => {
         expect(Array.isArray(attributes.compatibleClasses)).toBe(true);
         expect(attributes.compatibleClasses.length).toBeGreaterThan(0);
-        
+
         attributes.compatibleClasses.forEach(className => {
           expect(typeof className).toBe('string');
           expect(className.length).toBeGreaterThan(0);
@@ -132,7 +132,7 @@ describe('Character Races Configuration', () => {
         expect(typeof ability.usageLimit).toBe('string');
         expect(typeof ability.params).toBe('object');
         expect(typeof ability.buttonText).toBe('object');
-        
+
         expect(ability.name.length).toBeGreaterThan(0);
         expect(ability.description.length).toBeGreaterThan(0);
         expect(ability.flavorText.length).toBeGreaterThan(0);
@@ -196,7 +196,7 @@ describe('Character Races Configuration', () => {
       Object.entries(classRaceCompatibility).forEach(([className, compatibleRaces]) => {
         expect(Array.isArray(compatibleRaces)).toBe(true);
         expect(compatibleRaces.length).toBeGreaterThan(0);
-        
+
         compatibleRaces.forEach(raceName => {
           expect(availableRaces).toContain(raceName);
         });
@@ -209,7 +209,7 @@ describe('Character Races Configuration', () => {
       expect(availableRaces).toContain('Artisan');
       expect(raceAttributes.Artisan).toBeDefined();
       expect(racialAbilities.Artisan).toBeDefined();
-      
+
       // Artisan should be versatile
       expect(raceAttributes.Artisan.compatibleClasses.length).toBeGreaterThanOrEqual(5);
     });
@@ -218,7 +218,7 @@ describe('Character Races Configuration', () => {
       expect(availableRaces).toContain('Rockhewn');
       expect(raceAttributes.Rockhewn).toBeDefined();
       expect(racialAbilities.Rockhewn).toBeDefined();
-      
+
       // Rockhewn should be tanky
       expect(raceAttributes.Rockhewn.armorModifier).toBeGreaterThanOrEqual(1.3);
     });
@@ -250,10 +250,10 @@ describe('Character Races Configuration', () => {
 
     it('should have reasonable class compatibility distribution', () => {
       const compatibilityCounts = Object.values(raceAttributes).map(a => a.compatibleClasses.length);
-      
+
       // Should have variety in compatibility
       expect(Math.max(...compatibilityCounts)).toBeGreaterThan(Math.min(...compatibilityCounts));
-      
+
       // Each race should have reasonable number of compatible classes
       compatibilityCounts.forEach(count => {
         expect(count).toBeGreaterThanOrEqual(3);
@@ -264,7 +264,7 @@ describe('Character Races Configuration', () => {
     it('should have diverse racial ability usage patterns', () => {
       const usageLimits = Object.values(racialAbilities).map(a => a.usageLimit);
       const uniqueUsageLimits = new Set(usageLimits);
-      
+
       expect(uniqueUsageLimits.size).toBeGreaterThan(1);
     });
   });
@@ -337,18 +337,18 @@ describe('Character Races Configuration', () => {
       Object.values(racialAbilities).forEach(ability => {
         expect(ability.params).toBeDefined();
         expect(typeof ability.params).toBe('object');
-        
+
         // Check common parameter types
         if (ability.params.damage) {
           expect(typeof ability.params.damage).toBe('number');
           expect(ability.params.damage).toBeGreaterThan(0);
         }
-        
+
         if (ability.params.heal) {
           expect(typeof ability.params.heal).toBe('number');
           expect(ability.params.heal).toBeGreaterThan(0);
         }
-        
+
         if (ability.params.shield) {
           expect(typeof ability.params.shield).toBe('number');
           expect(ability.params.shield).toBeGreaterThan(0);

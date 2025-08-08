@@ -1,0 +1,197 @@
+module.exports = {
+  root: true,
+  env: {
+    node: true,
+    browser: true,
+    es6: true,
+  },
+  extends: [
+    'eslint:recommended',
+  ],
+  parserOptions: {
+    ecmaVersion: 2022,
+    sourceType: 'module',
+  },
+  plugins: [
+    'security',
+  ],
+  rules: {
+    // Security rules
+    'security/detect-unsafe-regex': 'error',
+    'security/detect-buffer-noassert': 'error',
+    'security/detect-child-process': 'warn',
+    'security/detect-disable-mustache-escape': 'error',
+    'security/detect-eval-with-expression': 'error',
+    'security/detect-new-buffer': 'error',
+    'security/detect-no-csrf-before-method-override': 'error',
+    'security/detect-non-literal-fs-filename': 'warn',
+    'security/detect-non-literal-regexp': 'warn',
+    'security/detect-non-literal-require': 'warn',
+    'security/detect-object-injection': 'warn',
+    'security/detect-possible-timing-attacks': 'warn',
+    'security/detect-pseudoRandomBytes': 'error',
+    
+    // Custom security patterns
+    'no-restricted-globals': [
+      'error',
+      {
+        name: 'Math.random',
+        message: 'Use secure random from crypto module instead of Math.random() for security-sensitive operations. Import secureRandom utilities from utils/secureRandom.',
+      },
+    ],
+    'no-restricted-syntax': [
+      'error',
+      {
+        selector: 'CallExpression[callee.object.name="Math"][callee.property.name="random"]',
+        message: 'Math.random() is cryptographically weak. Use secure random functions from crypto module or utils/secureRandom.',
+      },
+      {
+        selector: 'CallExpression[callee.object.name="Date"][callee.property.name="now"]',
+        message: 'Date.now() for randomness is predictable. Use crypto.randomBytes() for secure randomness.',
+      },
+    ],
+    
+    // File length limits
+    'max-lines': ['warn', { max: 500, skipBlankLines: true, skipComments: true }],
+    'max-lines-per-function': ['warn', { max: 50, skipBlankLines: true, skipComments: true }],
+    
+    // Code quality rules
+    'no-mixed-operators': 'error',
+    'prefer-const': 'error',
+    'no-var': 'error',
+    'no-console': ['warn', { allow: ['warn', 'error'] }],
+    'no-debugger': 'error',
+    'no-alert': 'error',
+    'no-eval': 'error',
+    'no-implied-eval': 'error',
+    'no-new-func': 'error',
+    'no-script-url': 'error',
+    'no-inline-comments': 'warn',
+    'spaced-comment': ['error', 'always'],
+    
+    // TypeScript specific
+    '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
+    '@typescript-eslint/no-explicit-any': 'warn',
+    '@typescript-eslint/explicit-function-return-type': 'off',
+    '@typescript-eslint/explicit-module-boundary-types': 'warn',
+    '@typescript-eslint/no-non-null-assertion': 'warn',
+    '@typescript-eslint/prefer-nullish-coalescing': 'error',
+    '@typescript-eslint/prefer-optional-chain': 'error',
+    // Note: Some strict type-checking rules disabled for compatibility
+    
+    // Import rules
+    'import/order': [
+      'error',
+      {
+        groups: [
+          'builtin',
+          'external',
+          'internal',
+          'parent',
+          'sibling',
+          'index',
+        ],
+        'newlines-between': 'never',
+        alphabetize: {
+          order: 'asc',
+          caseInsensitive: true,
+        },
+      },
+    ],
+    'import/no-unresolved': 'error',
+    'import/no-cycle': 'error',
+    'import/no-self-import': 'error',
+    'import/no-deprecated': 'warn',
+    
+    // Unicorn rules for better code
+    'unicorn/better-regex': 'error',
+    'unicorn/catch-error-name': 'error',
+    'unicorn/consistent-destructuring': 'error',
+    'unicorn/explicit-length-check': 'error',
+    'unicorn/filename-case': [
+      'error',
+      {
+        cases: {
+          camelCase: true,
+          pascalCase: true,
+        },
+      },
+    ],
+    'unicorn/no-array-instanceof': 'error',
+    'unicorn/no-console-spaces': 'error',
+    'unicorn/no-for-loop': 'error',
+    'unicorn/no-hex-escape': 'error',
+    'unicorn/no-new-buffer': 'error',
+    'unicorn/no-unsafe-regex': 'error',
+    'unicorn/prefer-includes': 'error',
+    'unicorn/prefer-string-starts-ends-with': 'error',
+    'unicorn/prefer-type-error': 'error',
+    
+    // Line ending enforcement
+    'linebreak-style': ['error', 'unix'],
+    'eol-last': ['error', 'always'],
+    'no-trailing-spaces': 'error',
+  },
+  overrides: [
+    {
+      files: ['*.tsx', '*.jsx'],
+      extends: [
+        'plugin:react/recommended',
+        'plugin:react-hooks/recommended',
+        'plugin:jsx-a11y/recommended',
+      ],
+      plugins: ['react', 'react-hooks', 'jsx-a11y'],
+      rules: {
+        'react/react-in-jsx-scope': 'off', // React 17+
+        'react/prop-types': 'off', // Using TypeScript
+        'react-hooks/rules-of-hooks': 'error',
+        'react-hooks/exhaustive-deps': 'warn',
+        'jsx-a11y/anchor-is-valid': 'warn',
+      },
+      settings: {
+        react: {
+          version: 'detect',
+        },
+      },
+    },
+    {
+      files: ['server/**/*.ts'],
+      rules: {
+        'no-console': 'off', // Allow console in server
+        'security/detect-non-literal-fs-filename': 'off', // Common in server
+      },
+    },
+    {
+      files: ['**/*.test.ts', '**/*.test.tsx', '**/*.spec.ts', '**/*.spec.tsx'],
+      rules: {
+        '@typescript-eslint/no-explicit-any': 'off',
+        '@typescript-eslint/no-non-null-assertion': 'off',
+        'max-lines': 'off',
+        'max-lines-per-function': 'off',
+      },
+    },
+    {
+      files: ['**/*.js'],
+      rules: {
+        '@typescript-eslint/no-var-requires': 'off',
+        '@typescript-eslint/explicit-module-boundary-types': 'off',
+      },
+    },
+  ],
+  settings: {
+    'import/resolver': {
+      typescript: {
+        alwaysTryTypes: true,
+        project: ['./tsconfig.json', './client/tsconfig.json', './server/tsconfig.json'],
+      },
+    },
+  },
+  ignorePatterns: [
+    'node_modules/',
+    'build/',
+    'dist/',
+    'archive/',
+    '*.min.js',
+    'coverage/',
+  ],
+};

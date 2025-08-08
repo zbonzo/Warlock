@@ -42,7 +42,7 @@ export const validateString = (str: unknown, maxLength: number = 30): boolean =>
  */
 export const validateGameCode = (code: unknown): boolean => {
   if (!code) return false;
-  
+
   // Handle both string and number game codes
   const codeStr = String(code);
   return /^\d{4}$/.test(codeStr);
@@ -84,7 +84,7 @@ export const validatePlayer = (socket: Socket, gameCode: string): boolean => {
  * Inclusive player name validation with international character support
  */
 export function validatePlayerName(
-  playerName: unknown, 
+  playerName: unknown,
   existingPlayers: Player[] = []
 ): PlayerNameValidationResult {
   // Basic validation
@@ -483,8 +483,10 @@ export function suggestValidName(originalName: string): string {
     // Try to preserve some of the original if possible
     const letters = originalName.match(/\p{L}/gu);
     if (letters && letters.length > 0) {
+      // Import secure random utilities
+      const { secureRandomInt } = require('../utils/secureRandom.js');
       suggestion =
-        letters.slice(0, 8).join('') + Math.floor(Math.random() * 99);
+        letters.slice(0, 8).join('') + secureRandomInt(10, 99);
     } else {
       // Fallback to random names
       const randomNames = [
@@ -499,9 +501,11 @@ export function suggestValidName(originalName: string): string {
         'Fighter',
         'Knight',
       ];
+      // Import secure random utilities
+      const { secureRandomChoice, secureRandomInt } = require('../utils/secureRandom.js');
       suggestion =
-        (randomNames[Math.floor(Math.random() * randomNames.length)] || 'Player') +
-        Math.floor(Math.random() * 999);
+        (secureRandomChoice(randomNames) || 'Player') +
+        secureRandomInt(100, 999);
     }
   }
 
@@ -512,15 +516,15 @@ export function suggestValidName(originalName: string): string {
  * Validate game state
  */
 export const validateGameState = (
-  socket: Socket, 
-  gameCode: string, 
+  socket: Socket,
+  gameCode: string,
   shouldBeStarted: boolean
 ): boolean => {
   const game = gameService.games.get(gameCode);
   if (!game) {
     throwNotFoundError(config.getError('gameNotFound'));
   }
-  
+
   if (shouldBeStarted && !(game.gameState as any).started) {
     throwGameStateError(config.getError('gameNotStarted'));
   }
@@ -538,7 +542,7 @@ export const validateHost = (socket: Socket, gameCode: string): boolean => {
   if (!game) {
     throwNotFoundError(config.getError('gameNotFound'));
   }
-  
+
   if (socket.id !== game.gameState.getHostId()) {
     logger.warn('NonHostActionAttempt', {
       socketId: socket.id,
@@ -584,16 +588,16 @@ export function isAOEAbility(ability: Ability | null | undefined): boolean {
  * FIXED: Validate action type and target - now handles AOE abilities with "multi" target
  */
 export const validateAction = (
-  socket: Socket, 
-  gameCode: string, 
-  actionType: string, 
+  socket: Socket,
+  gameCode: string,
+  actionType: string,
   targetId: string
 ): boolean => {
   const game = gameService.games.get(gameCode);
   if (!game) {
     throwNotFoundError(config.getError('gameNotFound'));
   }
-  
+
   const player = (game.gameState as any).players.get(socket.id);
   if (!player) {
     throwPermissionError(config.getError('playerNotInGame'));
@@ -644,16 +648,16 @@ export const validateAction = (
  * FIXED: Validate action with cooldown checks - now handles AOE abilities
  */
 export const validateActionWithCooldown = (
-  socket: Socket, 
-  gameCode: string, 
-  actionType: string, 
+  socket: Socket,
+  gameCode: string,
+  actionType: string,
   targetId: string
 ): boolean => {
   const game = gameService.games.get(gameCode);
   if (!game) {
     throwNotFoundError(config.getError('gameNotFound'));
   }
-  
+
   const player = (game.gameState as any).players.get(socket.id);
   if (!player) {
     throwPermissionError(config.getError('playerNotInGame'));
@@ -717,8 +721,8 @@ export const validateActionWithCooldown = (
  * FIXED: Validate player name for socket events
  */
 export const validatePlayerNameSocket = (
-  socket: Socket, 
-  playerName: string, 
+  socket: Socket,
+  playerName: string,
   gameCode: string | null = null
 ): boolean => {
   // Get existing players if game code provided
@@ -728,7 +732,7 @@ export const validatePlayerNameSocket = (
     const allPlayers = Array.from(game.getPlayers());
     // Filter out the current socket's player to avoid false duplicates
     existingPlayers = allPlayers.filter(player => player.id !== socket.id);
-    
+
     // DEBUG: Log name checking details for socket validation
     logger.info('Socket name validation check:', {
       attemptedName: playerName,
@@ -744,7 +748,7 @@ export const validatePlayerNameSocket = (
 
   // Use the inclusive validation function
   const validation = validatePlayerName(playerName, existingPlayers);
-  
+
   logger.info('Socket name validation result:', {
     attemptedName: playerName,
     gameCode: gameCode,

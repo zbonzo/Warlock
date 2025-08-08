@@ -1,11 +1,11 @@
 /**
  * @fileoverview Tests for PlayerActionCommand base class
  */
-import { 
-  PlayerActionCommand, 
-  CommandOptions, 
-  GameContext, 
-  CommandResult, 
+import {
+  PlayerActionCommand,
+  CommandOptions,
+  GameContext,
+  CommandResult,
   CommandStatus,
   CommandSummary,
   ValidationResult
@@ -301,7 +301,7 @@ describe('PlayerActionCommand', () => {
     it('should reset validation state on re-validation', async () => {
       testCommand.shouldFailValidation = true;
       await testCommand.validate(mockGameContext);
-      
+
       expect(testCommand.validationErrors.length).toBeGreaterThan(0);
 
       testCommand.shouldFailValidation = false;
@@ -416,7 +416,7 @@ describe('PlayerActionCommand', () => {
 
     it('should update status during execution', async () => {
       const executionPromise = testCommand.execute(mockGameContext);
-      
+
       // Status should be executing during execution
       expect(testCommand.status).toBe('executing');
 

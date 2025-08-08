@@ -110,7 +110,7 @@ describe('TargetSelector', () => {
   describe('Basic Rendering', () => {
     it('should render title and target options', () => {
       render(<TargetSelector {...defaultProps} />);
-      
+
       expect(screen.getByText('Choose Target')).toBeInTheDocument();
       expect(screen.getByText('Test Player 1')).toBeInTheDocument();
       expect(screen.getByText('Test Player 2')).toBeInTheDocument();
@@ -119,7 +119,7 @@ describe('TargetSelector', () => {
 
     it('should show health values for all targets', () => {
       render(<TargetSelector {...defaultProps} />);
-      
+
       expect(screen.getByText('80/100')).toBeInTheDocument(); // Player 1
       expect(screen.getByText('90/100')).toBeInTheDocument(); // Player 2
       expect(screen.getByText('150/200')).toBeInTheDocument(); // Monster
@@ -129,13 +129,13 @@ describe('TargetSelector', () => {
       const { container } = render(
         <TargetSelector {...defaultProps} selectedTarget="player1" />
       );
-      
+
       expect(container.querySelector('.selected')).toBeInTheDocument();
     });
 
     it('should show "You" indicator for current player', () => {
       render(<TargetSelector {...defaultProps} />);
-      
+
       expect(screen.getByText('Test Player 1 (You)')).toBeInTheDocument();
     });
   });
@@ -143,7 +143,7 @@ describe('TargetSelector', () => {
   describe('Monster Avatar', () => {
     it('should render monster avatar canvas', () => {
       const { container } = render(<TargetSelector {...defaultProps} />);
-      
+
       const canvas = container.querySelector('canvas.monster-avatar');
       expect(canvas).toBeInTheDocument();
       expect(canvas).toHaveAttribute('width', '40');
@@ -152,7 +152,7 @@ describe('TargetSelector', () => {
 
     it('should not render monster when disabled', () => {
       render(<TargetSelector {...defaultProps} disableMonster={true} />);
-      
+
       expect(screen.queryByText('Monster')).not.toBeInTheDocument();
     });
   });
@@ -160,7 +160,7 @@ describe('TargetSelector', () => {
   describe('Custom Player Avatars', () => {
     it('should render custom avatar canvas for players with race and class', () => {
       const { container } = render(<TargetSelector {...defaultProps} />);
-      
+
       const canvases = container.querySelectorAll('canvas.custom-avatar');
       expect(canvases).toHaveLength(2); // Two players with race/class
     });
@@ -170,14 +170,14 @@ describe('TargetSelector', () => {
         { ...mockPlayer1, race: null, class: null },
         { ...mockPlayer2, race: null, class: null }
       ];
-      
+
       render(
-        <TargetSelector 
-          {...defaultProps} 
-          alivePlayers={playersWithoutRaceClass} 
+        <TargetSelector
+          {...defaultProps}
+          alivePlayers={playersWithoutRaceClass}
         />
       );
-      
+
       expect(screen.getByText('You')).toBeInTheDocument();
       expect(screen.getByText('T')).toBeInTheDocument(); // First letter of player 2 name
     });
@@ -186,7 +186,7 @@ describe('TargetSelector', () => {
   describe('Health Bar Display', () => {
     it('should show correct health percentages', () => {
       const { container } = render(<TargetSelector {...defaultProps} />);
-      
+
       const healthFills = container.querySelectorAll('.health-fill');
       expect(healthFills[0]).toHaveStyle({ width: '75%' }); // Monster: 150/200
       expect(healthFills[1]).toHaveStyle({ width: '80%' }); // Player 1: 80/100
@@ -196,14 +196,14 @@ describe('TargetSelector', () => {
     it('should apply correct health classes', () => {
       const lowHealthPlayer = { ...mockPlayer1, hp: 20, maxHp: 100 };
       const mediumHealthPlayer = { ...mockPlayer2, hp: 50, maxHp: 100 };
-      
+
       const { container } = render(
-        <TargetSelector 
-          {...defaultProps} 
-          alivePlayers={[lowHealthPlayer, mediumHealthPlayer]} 
+        <TargetSelector
+          {...defaultProps}
+          alivePlayers={[lowHealthPlayer, mediumHealthPlayer]}
         />
       );
-      
+
       const healthFills = container.querySelectorAll('.health-fill');
       expect(healthFills[1]).toHaveClass('health-low'); // 20% health
       expect(healthFills[2]).toHaveClass('health-medium'); // 50% health
@@ -214,7 +214,7 @@ describe('TargetSelector', () => {
     it('should call onSelectTarget when monster is clicked', () => {
       const onSelectTarget = jest.fn();
       render(<TargetSelector {...defaultProps} onSelectTarget={onSelectTarget} />);
-      
+
       fireEvent.click(screen.getByText('Monster'));
       expect(onSelectTarget).toHaveBeenCalledWith('__monster__');
     });
@@ -222,7 +222,7 @@ describe('TargetSelector', () => {
     it('should call onSelectTarget when player is clicked', () => {
       const onSelectTarget = jest.fn();
       render(<TargetSelector {...defaultProps} onSelectTarget={onSelectTarget} />);
-      
+
       fireEvent.click(screen.getByText('Test Player 2'));
       expect(onSelectTarget).toHaveBeenCalledWith('player2');
     });
@@ -230,13 +230,13 @@ describe('TargetSelector', () => {
     it('should not call onSelectTarget for invalid targets', () => {
       const onSelectTarget = jest.fn();
       render(
-        <TargetSelector 
-          {...defaultProps} 
+        <TargetSelector
+          {...defaultProps}
           onSelectTarget={onSelectTarget}
           selectedAbility={mockSelfAbility}
         />
       );
-      
+
       // Should not be able to click player 2 with self-targeting ability
       const player2Element = screen.getByText('Test Player 2').closest('.player-target-card');
       fireEvent.click(player2Element!);
@@ -247,12 +247,12 @@ describe('TargetSelector', () => {
   describe('Ability-based Target Validation', () => {
     it('should only allow self-targeting for Self abilities', () => {
       const { container } = render(
-        <TargetSelector 
-          {...defaultProps} 
+        <TargetSelector
+          {...defaultProps}
           selectedAbility={mockSelfAbility}
         />
       );
-      
+
       // Only current player should be valid
       const playerCards = container.querySelectorAll('.player-target-card:not(.monster-target)');
       expect(playerCards[0]).not.toHaveClass('invalid-target'); // Current player
@@ -261,12 +261,12 @@ describe('TargetSelector', () => {
 
     it('should only allow players for Heal abilities', () => {
       render(
-        <TargetSelector 
-          {...defaultProps} 
+        <TargetSelector
+          {...defaultProps}
           selectedAbility={mockHealAbility}
         />
       );
-      
+
       // Monster should not be visible for heal abilities
       expect(screen.queryByText('Monster')).not.toBeInTheDocument();
       expect(screen.getByText('Test Player 1')).toBeInTheDocument();
@@ -275,15 +275,15 @@ describe('TargetSelector', () => {
 
     it('should exclude self for Attack abilities', () => {
       const { container } = render(
-        <TargetSelector 
-          {...defaultProps} 
+        <TargetSelector
+          {...defaultProps}
           selectedAbility={mockAttackAbility}
         />
       );
-      
+
       // Monster should be available
       expect(screen.getByText('Monster')).toBeInTheDocument();
-      
+
       // Current player should be invalid target for attacks
       const playerCards = container.querySelectorAll('.player-target-card:not(.monster-target)');
       expect(playerCards[0]).toHaveClass('invalid-target'); // Current player
@@ -292,7 +292,7 @@ describe('TargetSelector', () => {
 
     it('should allow all targets when no ability is selected', () => {
       const { container } = render(<TargetSelector {...defaultProps} />);
-      
+
       expect(screen.getByText('Monster')).toBeInTheDocument();
       const invalidTargets = container.querySelectorAll('.invalid-target');
       expect(invalidTargets).toHaveLength(0);
@@ -302,24 +302,24 @@ describe('TargetSelector', () => {
   describe('Monster Restriction Message', () => {
     it('should show restriction message when monster is disabled but selected', () => {
       render(
-        <TargetSelector 
-          {...defaultProps} 
+        <TargetSelector
+          {...defaultProps}
           disableMonster={true}
           selectedTarget="__monster__"
         />
       );
-      
+
       expect(screen.getByText('Keen Senses can only target players. Please select a player target.')).toBeInTheDocument();
     });
 
     it('should not show restriction message when monster is enabled', () => {
       render(
-        <TargetSelector 
-          {...defaultProps} 
+        <TargetSelector
+          {...defaultProps}
           selectedTarget="__monster__"
         />
       );
-      
+
       expect(screen.queryByText('Keen Senses can only target players. Please select a player target.')).not.toBeInTheDocument();
     });
   });
@@ -330,21 +330,21 @@ describe('TargetSelector', () => {
         { ...mockPlayer1, hasSubmittedAction: true },
         mockPlayer2
       ] as any[];
-      
+
       const { container } = render(
-        <TargetSelector 
-          {...defaultProps} 
+        <TargetSelector
+          {...defaultProps}
           alivePlayers={playersWithSubmission}
         />
       );
-      
+
       const readyPlayer = container.querySelector('.ready');
       expect(readyPlayer).toBeInTheDocument();
     });
 
     it('should apply self class to current player', () => {
       const { container } = render(<TargetSelector {...defaultProps} />);
-      
+
       const selfPlayer = container.querySelector('.self');
       expect(selfPlayer).toBeInTheDocument();
     });
@@ -353,22 +353,22 @@ describe('TargetSelector', () => {
   describe('Health Class Calculation', () => {
     it('should return correct health classes for different percentages', () => {
       render(<TargetSelector {...defaultProps} />);
-      
+
       // Test health class calculation indirectly through rendered elements
       const highHealthPlayer = { ...mockPlayer1, hp: 80, maxHp: 100 }; // 80%
       const mediumHealthPlayer = { ...mockPlayer1, hp: 50, maxHp: 100 }; // 50%
       const lowHealthPlayer = { ...mockPlayer1, hp: 20, maxHp: 100 }; // 20%
-      
+
       const { container: highContainer } = render(
         <TargetSelector {...defaultProps} alivePlayers={[highHealthPlayer]} />
       );
       expect(highContainer.querySelector('.health-high')).toBeInTheDocument();
-      
+
       const { container: mediumContainer } = render(
         <TargetSelector {...defaultProps} alivePlayers={[mediumHealthPlayer]} />
       );
       expect(mediumContainer.querySelector('.health-medium')).toBeInTheDocument();
-      
+
       const { container: lowContainer } = render(
         <TargetSelector {...defaultProps} alivePlayers={[lowHealthPlayer]} />
       );
@@ -388,11 +388,11 @@ describe('TargetSelector', () => {
       // Mock getContext to return null
       const originalGetContext = HTMLCanvasElement.prototype.getContext;
       HTMLCanvasElement.prototype.getContext = jest.fn(() => null);
-      
+
       expect(() => {
         render(<TargetSelector {...defaultProps} />);
       }).not.toThrow();
-      
+
       // Restore original method
       HTMLCanvasElement.prototype.getContext = originalGetContext;
     });
@@ -401,7 +401,7 @@ describe('TargetSelector', () => {
   describe('Edge Cases', () => {
     it('should handle empty player list', () => {
       render(<TargetSelector {...defaultProps} alivePlayers={[]} />);
-      
+
       expect(screen.getByText('Choose Target')).toBeInTheDocument();
       expect(screen.getByText('Monster')).toBeInTheDocument();
     });
@@ -421,11 +421,11 @@ describe('TargetSelector', () => {
         baseArmor: 0,
         statusEffects: null
       } as any;
-      
+
       expect(() => {
         render(
-          <TargetSelector 
-            {...defaultProps} 
+          <TargetSelector
+            {...defaultProps}
             alivePlayers={[incompletePlayer]}
           />
         );
@@ -434,11 +434,11 @@ describe('TargetSelector', () => {
 
     it('should handle monster with zero health', () => {
       const deadMonster = { ...mockMonster, hp: 0 };
-      
+
       const { container } = render(
         <TargetSelector {...defaultProps} monster={deadMonster} />
       );
-      
+
       expect(screen.getByText('0/200')).toBeInTheDocument();
       const healthFill = container.querySelector('.health-fill');
       expect(healthFill).toHaveStyle({ width: '0%' });
@@ -449,14 +449,14 @@ describe('TargetSelector', () => {
         ...mockPlayer1,
         name: 'This is a very long player name that might cause display issues'
       };
-      
+
       render(
-        <TargetSelector 
-          {...defaultProps} 
+        <TargetSelector
+          {...defaultProps}
           alivePlayers={[longNamePlayer]}
         />
       );
-      
+
       expect(screen.getByText('This is a very long player name that might cause display issues (You)')).toBeInTheDocument();
     });
   });
@@ -464,7 +464,7 @@ describe('TargetSelector', () => {
   describe('Accessibility', () => {
     it('should be keyboard accessible', () => {
       render(<TargetSelector {...defaultProps} />);
-      
+
       const targetCards = screen.getAllByText(/Test Player|Monster/);
       targetCards.forEach(card => {
         expect(card.closest('.player-target-card')).toBeInTheDocument();
@@ -473,7 +473,7 @@ describe('TargetSelector', () => {
 
     it('should have appropriate ARIA attributes', () => {
       render(<TargetSelector {...defaultProps} />);
-      
+
       // Test that clickable elements are present and accessible
       const clickableElements = screen.getAllByText(/Test Player|Monster/);
       expect(clickableElements.length).toBeGreaterThan(0);

@@ -166,7 +166,7 @@ describe('App', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    
+
     mockUseConfig.mockReturnValue({
       loading: false,
       error: null
@@ -183,7 +183,7 @@ describe('App', () => {
       value: { search: '' },
       writable: true
     });
-    
+
     global.scrollTo = jest.fn();
     global.alert = jest.fn();
     Object.defineProperty(window, 'localStorage', {
@@ -199,7 +199,7 @@ describe('App', () => {
   describe('App Structure', () => {
     it('should render with all providers', () => {
       render(<App />);
-      
+
       expect(screen.getByTestId('error-boundary')).toBeInTheDocument();
       expect(screen.getByTestId('config-provider')).toBeInTheDocument();
       expect(screen.getByTestId('app-provider')).toBeInTheDocument();
@@ -213,7 +213,7 @@ describe('App', () => {
       });
 
       render(<App />);
-      
+
       expect(screen.getByTestId('loading-screen')).toBeInTheDocument();
       expect(screen.getByText('Loading game configuration...')).toBeInTheDocument();
     });
@@ -225,7 +225,7 @@ describe('App', () => {
       });
 
       render(<App />);
-      
+
       expect(screen.getByText('Configuration Error')).toBeInTheDocument();
       expect(screen.getByText('Failed to load configuration')).toBeInTheDocument();
       expect(screen.getByText('Retry')).toBeInTheDocument();
@@ -244,7 +244,7 @@ describe('App', () => {
       });
 
       render(<App />);
-      
+
       fireEvent.click(screen.getByText('Retry'));
       expect(mockReload).toHaveBeenCalled();
     });
@@ -258,7 +258,7 @@ describe('App', () => {
       });
 
       render(<App />);
-      
+
       expect(screen.getByTestId('rune-button-test')).toBeInTheDocument();
     });
   });
@@ -266,7 +266,7 @@ describe('App', () => {
   describe('Screen Rendering', () => {
     it('should render join game page by default', () => {
       render(<App />);
-      
+
       expect(screen.getByTestId('join-game-page')).toBeInTheDocument();
     });
 
@@ -277,7 +277,7 @@ describe('App', () => {
       });
 
       render(<App />);
-      
+
       expect(screen.getByTestId('character-select-page')).toBeInTheDocument();
     });
 
@@ -288,7 +288,7 @@ describe('App', () => {
       });
 
       render(<App />);
-      
+
       expect(screen.getByTestId('lobby-page')).toBeInTheDocument();
     });
 
@@ -299,7 +299,7 @@ describe('App', () => {
       });
 
       render(<App />);
-      
+
       expect(screen.getByTestId('game-page')).toBeInTheDocument();
     });
 
@@ -310,7 +310,7 @@ describe('App', () => {
       });
 
       render(<App />);
-      
+
       expect(screen.getByTestId('end-page')).toBeInTheDocument();
     });
 
@@ -321,7 +321,7 @@ describe('App', () => {
       });
 
       const { container } = render(<App />);
-      
+
       expect(container.querySelector('[data-testid]')).toBeNull();
     });
   });
@@ -378,7 +378,7 @@ describe('App', () => {
 
       // Get the gameCreated handler
       const gameCreatedHandler = onMock.mock.calls.find(call => call[0] === 'gameCreated')[1];
-      
+
       act(() => {
         gameCreatedHandler({ gameCode: 'XYZ789' });
       });
@@ -400,7 +400,7 @@ describe('App', () => {
       render(<App />);
 
       const playerListHandler = onMock.mock.calls.find(call => call[0] === 'playerList')[1];
-      
+
       act(() => {
         playerListHandler({ players: mockPlayers });
       });
@@ -431,7 +431,7 @@ describe('App', () => {
         players: [{ id: 'player1', name: 'Test' }],
         monster: { hp: 100, maxHp: 100, nextDamage: 15 }
       };
-      
+
       act(() => {
         gameStartedHandler(mockPayload);
       });
@@ -473,7 +473,7 @@ describe('App', () => {
         winner: 'Good',
         turn: 5
       };
-      
+
       act(() => {
         roundResultHandler(mockPayload);
       });
@@ -494,7 +494,7 @@ describe('App', () => {
       render(<App />);
 
       const errorHandler = onMock.mock.calls.find(call => call[0] === 'errorMessage')[1];
-      
+
       act(() => {
         errorHandler({ message: 'Test error message' });
       });
@@ -513,7 +513,7 @@ describe('App', () => {
       render(<App />);
 
       const privateEventHandler = onMock.mock.calls.find(call => call[0] === 'privateEvent')[1];
-      
+
       act(() => {
         privateEventHandler({ events: ['Private event 1', 'Private event 2'] });
       });
@@ -533,7 +533,7 @@ describe('App', () => {
 
       const trophyAwardedHandler = onMock.mock.calls.find(call => call[0] === 'trophyAwarded')[1];
       const mockTrophy = { playerId: 'player1', type: 'achievement', description: 'Test trophy' };
-      
+
       act(() => {
         trophyAwardedHandler(mockTrophy);
       });
@@ -558,7 +558,7 @@ describe('App', () => {
       });
 
       render(<App />);
-      
+
       fireEvent.click(screen.getByText('Create Game'));
 
       expect(setPlayerName).toHaveBeenCalledWith('TestPlayer');
@@ -584,7 +584,7 @@ describe('App', () => {
       });
 
       render(<App />);
-      
+
       fireEvent.click(screen.getByText('Join Game'));
 
       expect(setPlayerName).toHaveBeenCalledWith('TestPlayer');
@@ -610,7 +610,7 @@ describe('App', () => {
       });
 
       render(<App />);
-      
+
       fireEvent.click(screen.getByText('Reconnect'));
 
       expect(emit).toHaveBeenCalledWith('reconnectToGame', { gameCode: 'ABC123', playerName: 'TestPlayer' });
@@ -630,7 +630,7 @@ describe('App', () => {
       });
 
       render(<App />);
-      
+
       fireEvent.click(screen.getByText('Select Human'));
       fireEvent.click(screen.getByText('Select Wizard'));
 
@@ -659,7 +659,7 @@ describe('App', () => {
       });
 
       render(<App />);
-      
+
       fireEvent.click(screen.getByText('Confirm'));
 
       expect(setSelectedRace).toHaveBeenCalledWith('Human');
@@ -688,7 +688,7 @@ describe('App', () => {
       });
 
       render(<App />);
-      
+
       fireEvent.click(screen.getByText('Start Game'));
 
       expect(emit).toHaveBeenCalledWith('startGame', { gameCode: 'TEST123' });
@@ -710,7 +710,7 @@ describe('App', () => {
       });
 
       render(<App />);
-      
+
       fireEvent.click(screen.getByText('Submit Action'));
 
       expect(emit).toHaveBeenCalledWith('performAction', {
@@ -736,7 +736,7 @@ describe('App', () => {
       });
 
       render(<App />);
-      
+
       fireEvent.click(screen.getByText('Play Again'));
 
       expect(resetGame).toHaveBeenCalled();

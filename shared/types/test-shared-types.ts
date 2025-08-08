@@ -4,24 +4,15 @@
  */
 
 import {
-  // Re-exported server types
-  Player,
-  GameState,
-  PlayerClass,
-  PlayerRace,
-  
   // Client-specific types
   UIState,
-  ModalState,
-  NotificationState,
   ClientToServerEvents,
   ServerToClientEvents,
   GameContextState,
   ClientPlayer,
   GamePhaseInfo,
   ChatMessageData,
-  GameStatistics,
-  PlayerStatistics
+  GameStatistics
 } from './index';
 
 // Test 1: UI State
@@ -184,8 +175,10 @@ const playerSettings: PlayerSettingsForm = {
   colorScheme: '#FF5733'
 };
 
+/* eslint-disable no-console */
 console.log('\n✅ All shared type tests compiled successfully!');
 console.log('Client-server type compatibility verified.');
+/* eslint-enable no-console */
 
 // Export for verification
 export {

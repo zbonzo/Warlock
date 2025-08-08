@@ -44,22 +44,26 @@ export const useMobileState = (me?: Player): UseMobileStateReturn => {
     if (isMobile && activeTab === 'action' && !showMobileActionWizard) {
       // Don't open wizard if player is stunned or dead
       if (!me?.['isAlive'] || me?.['statusEffects']?.['stunned']) {
+        /* eslint-disable-next-line no-console */
         console.log('Cannot open wizard - player is stunned or dead');
         setActiveTab('players'); // Redirect to players tab instead
         return;
       }
       
+      /* eslint-disable-next-line no-console */
       console.log('Initial mobile action tab detected, opening wizard');
       setShowMobileActionWizard(true);
       setMobileActionStep(1);
     }
     // Reset wizard if switching to desktop
     else if (!isMobile && showMobileActionWizard) {
+      /* eslint-disable-next-line no-console */
       console.log('Switching to desktop, closing wizard');
       setShowMobileActionWizard(false);
     }
     // Close wizard if player becomes stunned or dies
     else if (showMobileActionWizard && (!me?.['isAlive'] || me?.['statusEffects']?.['stunned'])) {
+      /* eslint-disable-next-line no-console */
       console.log('Closing wizard - player became stunned or dead');
       setShowMobileActionWizard(false);
       setActiveTab('players'); // Switch to players tab
@@ -71,16 +75,19 @@ export const useMobileState = (me?: Player): UseMobileStateReturn => {
    * @param {string} tab - Tab name to switch to
    */
   const handleTabChange = useCallback((tab: string) => {
+    /* eslint-disable-next-line no-console */
     console.log('Tab change requested:', tab);
     
     if (tab === 'action') {
       // Check if player can take action
       if (!me?.['isAlive']) {
+        /* eslint-disable-next-line no-console */
         console.log('Cannot switch to action tab - player is dead');
         return;
       }
       
       if (me?.['statusEffects']?.['stunned']) {
+        /* eslint-disable-next-line no-console */
         console.log('Cannot switch to action tab - player is stunned');
         return;
       }
@@ -106,6 +113,7 @@ export const useMobileState = (me?: Player): UseMobileStateReturn => {
    * Close mobile action wizard
    */
   const handleCloseWizard = useCallback(() => {
+    /* eslint-disable-next-line no-console */
     console.log('Closing mobile action wizard');
     setShowMobileActionWizard(false);
     

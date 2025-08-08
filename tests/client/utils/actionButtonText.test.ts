@@ -240,12 +240,12 @@ describe('actionButtonText utility functions', () => {
   describe('integration tests', () => {
     it('should have consistent behavior between functions', () => {
       const abilities = ['attack', 'heal', 'fireball', 'shieldWall', 'unknownAbility'];
-      
+
       abilities.forEach(ability => {
         // Both functions should handle the same ability types
         const text = getActionButtonText(ability, false);
         const variant = getActionButtonVariant(ability, false);
-        
+
         expect(text).toBeDefined();
         expect(['primary', 'secondary', 'danger']).toContain(variant);
       });
@@ -253,15 +253,15 @@ describe('actionButtonText utility functions', () => {
 
     it('should handle full ability workflow', () => {
       const ability = 'attack';
-      
+
       // Ready state
       expect(getActionButtonText(ability, false)).toBe('Draw Blade');
       expect(getActionButtonVariant(ability, false)).toBe('primary');
-      
+
       // Submitting state
       expect(getActionButtonText(ability, false, true)).toBe('Casting...');
       expect(getActionButtonVariant(ability, false)).toBe('primary');
-      
+
       // Submitted state
       expect(getActionButtonText(ability, true)).toBe('Strike Ready');
       expect(getActionButtonVariant(ability, true)).toBe('secondary');

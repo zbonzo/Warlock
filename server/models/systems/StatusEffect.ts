@@ -7,6 +7,7 @@ import { v4 as uuidv4 } from 'uuid';
 import config from '../../config/index.js';
 // Messages are now accessed through the config system
 import logger from '../../utils/logger.js';
+import { secureRandomFloat } from '../../utils/secureRandom.js';
 
 interface Entity {
   id: string;
@@ -98,10 +99,10 @@ class StatusEffect {
    * Create a new status effect instance
    */
   constructor(
-    type: string, 
-    params: StatusEffectParams = {}, 
-    sourceId: string | null = null, 
-    sourceName: string | null = null, 
+    type: string,
+    params: StatusEffectParams = {},
+    sourceId: string | null = null,
+    sourceName: string | null = null,
     targetId: string | null = null
   ) {
     this.id = uuidv4(); // Unique identifier for this effect instance
@@ -109,22 +110,22 @@ class StatusEffect {
     this.sourceId = sourceId; // Who applied this effect
     this.sourceName = sourceName || 'Unknown';
     this.targetId = targetId; // Who this effect is on
-    
+
     // Get defaults from config and merge with provided params
     const defaults = config.getEffectDefaults(type) || {};
     this.params = { ...defaults, ...params };
-    
+
     // Effect state
     this.turnsRemaining = this.params.turns || this.params.duration || 1;
     this.strength = this.params.strength || 1; // For stacking calculations
     this.appliedAt = Date.now();
     this.isActive = true;
-    
+
     // Metadata
     this.isPassive = this.params.isPassive || false; // For racial abilities
     this.isPermanent = this.params.isPermanent || false; // Never expires
     this.priority = this.params.priority || 0; // Processing order
-    
+
     logger.debug(`StatusEffect created: ${type} (${this.id}) on ${targetId} by ${sourceName}`);
   }
 
@@ -293,7 +294,7 @@ class StatusEffect {
     const effects: SideEffect[] = [];
     if (target.isWarlock && actualHeal > 0 && this.sourceId) {
       const detectionChance = config.gameBalance?.player?.healing?.antiDetection?.detectionChance || 0.05;
-      if (Math.random() < detectionChance) {
+      if (secureRandomFloat() < detectionChance) {
         effects.push({
           type: 'warlock_detection',
           targetId: target.id,
@@ -311,14 +312,14 @@ class StatusEffect {
    */
   private onExpired(target: Entity, log: any[]): void {
     this.isActive = false;
-    
+
     // Handle special expiration effects
     if (this.type === 'stunned') {
       // Clear action submission when stun expires
       if (target.hasSubmittedAction && target.clearActionSubmission) {
         target.clearActionSubmission();
       }
-      
+
       const stunExpiredMessage = `${target.name || 'Monster'} is no longer stunned and can act again.`;
       log.push({
         type: 'stun_expired',
@@ -346,7 +347,7 @@ class StatusEffect {
         ...this.params
       }
     );
-    
+
     if (expirationMessage) {
       log.push({
         type: 'status_effect_expired',
@@ -378,7 +379,7 @@ class StatusEffect {
 
     // Update other parameters
     this.params = { ...this.params, ...newParams };
-    
+
     logger.debug(`StatusEffect refreshed: ${this.type} (${this.id}), turns: ${this.turnsRemaining}, strength: ${this.strength}`);
   }
 

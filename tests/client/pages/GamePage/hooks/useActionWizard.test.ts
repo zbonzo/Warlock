@@ -65,9 +65,9 @@ describe('useActionWizard', () => {
     });
 
     it('should initialize with wizard closed for stunned player', () => {
-      const stunnedPlayer = { 
-        ...mockPlayer, 
-        statusEffects: { stunned: { turns: 1 } } 
+      const stunnedPlayer = {
+        ...mockPlayer,
+        statusEffects: { stunned: { turns: 1 } }
       };
       const { result } = renderHook(() => useActionWizard(stunnedPlayer));
 
@@ -108,11 +108,11 @@ describe('useActionWizard', () => {
       expect(result.current.isWizardOpen).toBe(true);
 
       // Player becomes stunned
-      rerender({ 
-        player: { 
-          ...mockPlayer, 
-          statusEffects: { stunned: { turns: 1 } } 
-        } 
+      rerender({
+        player: {
+          ...mockPlayer,
+          statusEffects: { stunned: { turns: 1 } }
+        }
       });
 
       expect(result.current.isWizardOpen).toBe(false);
@@ -191,9 +191,9 @@ describe('useActionWizard', () => {
     });
 
     it('should prevent switching to action tab for stunned player', () => {
-      const stunnedPlayer = { 
-        ...mockPlayer, 
-        statusEffects: { stunned: { turns: 1 } } 
+      const stunnedPlayer = {
+        ...mockPlayer,
+        statusEffects: { stunned: { turns: 1 } }
       };
       const { result } = renderHook(() => useActionWizard(stunnedPlayer));
 

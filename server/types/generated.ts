@@ -58,7 +58,7 @@ export type PlayerEffects = StatusEffect[];
 export type GameRoomType = z.infer<typeof Schemas.GameRoomSchema>;
 
 // Union types for discriminated unions
-export type GameEvent = 
+export type GameEvent =
   | { type: 'damage.applied'; payload: DamageAppliedEvent }
   | { type: 'player.healed'; payload: PlayerHealedEvent }
   | { type: 'ability.used'; payload: AbilityUsedEvent }

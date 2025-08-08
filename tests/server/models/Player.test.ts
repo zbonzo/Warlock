@@ -47,7 +47,7 @@ const mockLogger = {
 
 // Mock domain model classes
 const MockPlayerStats = jest.fn();
-const MockPlayerAbilities = jest.fn();  
+const MockPlayerAbilities = jest.fn();
 const MockPlayerEffects = jest.fn();
 
 jest.doMock('../../../server/config/index.js', () => ({ default: mockConfig }));
@@ -320,7 +320,7 @@ describe('Player (TypeScript)', () => {
     it('should prevent dead players from submitting actions', () => {
       player.isAlive = false;
       const result = player.submitAction('attack', 'target1');
-      
+
       expect(result.success).toBe(false);
       expect(result.reason).toBe('Player is dead and cannot act');
       expect(mockPlayerAbilities.submitAction).not.toHaveBeenCalled();
@@ -329,7 +329,7 @@ describe('Player (TypeScript)', () => {
     it('should delegate validateSubmittedAction to PlayerAbilities', () => {
       const alivePlayers = [player];
       const monster = { id: 'monster', hp: 100 };
-      
+
       player.validateSubmittedAction(alivePlayers, monster);
       expect(mockPlayerAbilities.validateSubmittedAction).toHaveBeenCalledWith(alivePlayers, monster);
     });
@@ -342,7 +342,7 @@ describe('Player (TypeScript)', () => {
     it('should delegate clearActionSubmission and set isReady to false', () => {
       player.isReady = true;
       player.clearActionSubmission();
-      
+
       expect(mockPlayerAbilities.clearActionSubmission).toHaveBeenCalled();
       expect(player.isReady).toBe(false);
     });
@@ -468,7 +468,7 @@ describe('Player (TypeScript)', () => {
       mockPlayerEffects.processThirstyBladeLifeSteal.mockReturnValue({ healed: 10, newHp: 90 });
 
       const healed = player.processThirstyBladeLifeSteal(25);
-      
+
       expect(mockPlayerEffects.processThirstyBladeLifeSteal).toHaveBeenCalledWith(25, 'Warrior', 80, 100);
       expect(healed).toBe(10);
       expect(player.hp).toBe(90);
@@ -476,7 +476,7 @@ describe('Player (TypeScript)', () => {
 
     it('should delegate additional class effect methods', () => {
       player.class = 'Warrior';
-      
+
       player.refreshThirstyBladeOnKill();
       expect(mockPlayerEffects.refreshThirstyBladeOnKill).toHaveBeenCalledWith('Warrior');
 
@@ -499,7 +499,7 @@ describe('Player (TypeScript)', () => {
 
     it('should calculate damage reduction with positive armor', () => {
       const damage = player.calculateDamageReduction(100);
-      
+
       // 5 armor * 0.1 reduction rate = 50% reduction
       // 100 * (1 - 0.5) = 50, but at least 1 damage
       expect(damage).toBe(50);
@@ -507,9 +507,9 @@ describe('Player (TypeScript)', () => {
 
     it('should calculate damage reduction with negative armor', () => {
       mockPlayerEffects.getEffectiveArmor.mockReturnValue(-2);
-      
+
       const damage = player.calculateDamageReduction(100);
-      
+
       // -2 armor * 0.1 = -0.2 (20% increase)
       // 100 * (1 - (-0.2)) = 120
       expect(damage).toBe(120);
@@ -517,7 +517,7 @@ describe('Player (TypeScript)', () => {
 
     it('should ensure minimum 1 damage', () => {
       mockPlayerEffects.getEffectiveArmor.mockReturnValue(100); // Very high armor
-      
+
       const damage = player.calculateDamageReduction(10);
       expect(damage).toBe(1); // Should be at least 1
     });
@@ -531,7 +531,7 @@ describe('Player (TypeScript)', () => {
       mockPlayerEffects.applyDamageModifiers.mockReturnValue(45);
 
       const modifiedDamage = player.modifyDamage(20);
-      
+
       // First: 20 * 1.5 = 30 (floored)
       // Then effects modify to 45
       expect(mockPlayerEffects.applyDamageModifiers).toHaveBeenCalledWith(30, 'Warrior', 3, 80, 100);
@@ -541,12 +541,12 @@ describe('Player (TypeScript)', () => {
     it('should take damage with armor reduction and mark as dead', () => {
       player.hp = 50;
       mockPlayerEffects.applyDamageResistance.mockReturnValue(30);
-      
+
       // Mock calculateDamageReduction to return 25 final damage
       jest.spyOn(player, 'calculateDamageReduction').mockReturnValue(25);
-      
+
       const finalDamage = player.takeDamage(40, 'monster');
-      
+
       expect(mockPlayerEffects.applyDamageResistance).toHaveBeenCalledWith(40, player.class);
       expect(player.calculateDamageReduction).toHaveBeenCalledWith(30);
       expect(finalDamage).toBe(25);
@@ -564,7 +564,7 @@ describe('Player (TypeScript)', () => {
       player.maxHp = 100;
 
       const actualHealing = player.heal(40);
-      
+
       expect(actualHealing).toBe(30); // Only healed 30 to reach max
       expect(player.hp).toBe(100);
 
@@ -580,7 +580,7 @@ describe('Player (TypeScript)', () => {
       mockConfig.classAttributes['Warrior'].damageModifier = 1.2;
 
       const healingMod = player.getHealingModifier();
-      
+
       // levelMultiplier = 1.5 / 1.2 = 1.25
       expect(healingMod).toBe(1.25);
     });
@@ -595,7 +595,7 @@ describe('Player (TypeScript)', () => {
 
     it('should add new socket IDs', () => {
       player.addSocketId('socket123');
-      
+
       expect(player.socketIds).toContain('socket123');
       expect(player.socketIds).toContain('player1'); // Original ID
       expect(mockPlayerAbilities.playerId).toBe('socket123');
@@ -605,13 +605,13 @@ describe('Player (TypeScript)', () => {
     it('should not add duplicate socket IDs', () => {
       player.addSocketId('socket123');
       player.addSocketId('socket123');
-      
+
       expect(player.socketIds.filter(id => id === 'socket123')).toHaveLength(1);
     });
 
     it('should check if socket ID was used', () => {
       player.addSocketId('socket456');
-      
+
       expect(player.hasUsedSocketId('socket456')).toBe(true);
       expect(player.hasUsedSocketId('player1')).toBe(true);
       expect(player.hasUsedSocketId('unknown')).toBe(false);

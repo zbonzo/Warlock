@@ -1,14 +1,14 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { fileURLToPath } from 'url';
-import { 
-  GameBalanceConfig, 
+import {
+  GameBalanceConfig,
   MonsterConfig,
   PlayerConfig,
   WarlockConfig,
   CombatConfig,
   validateGameBalanceConfig,
-  safeValidateGameBalanceConfig 
+  safeValidateGameBalanceConfig
 } from '../schemas/gameBalance.schema.js';
 
 // ES module __dirname equivalent
@@ -128,7 +128,7 @@ export class GameBalanceLoader {
   public calculateMonsterHp(level: number): number {
     this.reloadIfChanged();
     const monster = this.balanceConfig.monster;
-    
+
     if (monster.useExponentialScaling) {
       // Exponential formula: baseHp * (level^1.3) + (level-1) * hpPerLevel
       return Math.floor(
@@ -145,7 +145,7 @@ export class GameBalanceLoader {
   public calculateMonsterDamage(age: number): number {
     this.reloadIfChanged();
     const monster = this.balanceConfig.monster;
-    
+
     return monster.baseDamage * (age + monster.damageScaling.ageMultiplier);
   }
 
@@ -155,7 +155,7 @@ export class GameBalanceLoader {
   public calculateDamageReduction(armor: number): number {
     this.reloadIfChanged();
     const armorConfig = this.balanceConfig.player.armor;
-    
+
     if (armor <= 0) {
       // Negative armor increases damage taken
       return Math.max(-2.0, armor * armorConfig.reductionRate); // Cap at -200% (3x damage)
@@ -436,7 +436,7 @@ export class GameBalanceLoader {
     errors: string[];
   } {
     this.reloadIfChanged();
-    
+
     const warnings: string[] = [];
     const errors: string[] = [];
 

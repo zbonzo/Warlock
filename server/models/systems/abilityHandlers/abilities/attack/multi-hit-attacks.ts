@@ -3,6 +3,8 @@
  * Handles abilities that strike the same target multiple times
  */
 
+import { createActionLog, createDamageLog } from '../../../../../utils/logEntry.js';
+import { secureId } from '../../../../../utils/secureRandom.js';
 import type { Player, Monster, Ability } from '../../../../../types/generated.js';
 import type {
   AbilityHandler,
@@ -32,28 +34,22 @@ export const handleMultiHitAttack: AbilityHandler = (
 
   // If target is invisible, attack fails
   if ((target as any).statusEffects && (target as any).statusEffects.invisible) {
-    log.push({
-      id: `multi-hit-invisible-${Date.now()}`,
-      timestamp: Date.now(),
-      type: 'action',
-      source: actor.id,
-      target: target.id,
-      message: `${actor.name} attacks ${(target as Player).name} but misses due to invisibility!`,
-      details: { reason: 'target_invisible' },
-      public: true,
-      isPublic: true,
-      priority: 'medium'
-    });
+    log.push(createActionLog(
+      actor.id,
+      target.id,
+      `${actor.name} attacks ${(target as Player).name} but misses due to invisibility!`,
+      { details: { reason: 'target_invisible' }, priority: 'medium', public: true }
+    ));
     return false;
   }
 
   // Get hit parameters
   const abilityParams = (ability as any).params || {};
   const hitCount = Number(abilityParams.hitCount) || 2;
-  
+
   // Use damage parameter for single-target, damagePerHit for multi-target
   const damagePerHit = Number(abilityParams.damagePerHit) || Number(ability['damage']) || 10;
-  
+
   if (hitCount <= 0) {
     return false;
   }
@@ -64,7 +60,7 @@ export const handleMultiHitAttack: AbilityHandler = (
   // Apply coordination bonus
   let coordinationBonus = 0;
   let coordinationBonusPerHit = 0;
-  
+
   if (coordinationInfo && coordinationInfo.isActive) {
     coordinationBonus = Math.floor(Number(damagePerHit) * Number(hitCount) * Number(coordinationInfo.bonusMultiplier));
     coordinationBonusPerHit = Math.floor(Number(coordinationBonus) / Number(hitCount));
@@ -80,22 +76,20 @@ export const handleMultiHitAttack: AbilityHandler = (
 
   // Announce the multi-hit attack
   const targetName = (target as Player).name || (target as Monster).name;
-  log.push({
-    id: `multi-hit-start-${Date.now()}`,
-    timestamp: Date.now(),
-    type: 'action',
-    source: actor.id,
-    target: target.id,
-    message: `${actor.name} begins a ${hitCount}-hit attack against ${targetName} with ${ability['name']}!`,
-    details: {
-      hitCount,
-      damagePerHit,
-      coordinationBonus
-    },
-    public: true,
-    isPublic: true,
-    priority: 'high'
-  });
+  log.push(createActionLog(
+    actor.id,
+    target.id,
+    `${actor.name} begins a ${hitCount}-hit attack against ${targetName} with ${ability['name']}!`,
+    {
+      details: {
+        hitCount,
+        damagePerHit,
+        coordinationBonus
+      },
+      priority: 'high',
+      public: true
+    }
+  ));
 
   let totalDamage = 0;
   let successfulHits = 0;
@@ -105,32 +99,30 @@ export const handleMultiHitAttack: AbilityHandler = (
   for (let i = 0; i < hitCount; i++) {
     // Check if target is still alive
     if ((target as any).hp <= 0) {
-      log.push({
-        id: `multi-hit-target-dead-${Date.now()}`,
-        timestamp: Date.now(),
-        type: 'action',
-        source: actor.id,
-        target: target.id,
-        message: `${targetName} dies after hit ${i + 1}, stopping multi-hit attack with ${hitCount - i - 1} hits remaining!`,
-        details: {
-          hitNumber: i + 1,
-          remainingHits: hitCount - i - 1
-        },
-        public: true,
-        isPublic: true,
-        priority: 'medium'
-      });
+      log.push(createActionLog(
+        actor.id,
+        target.id,
+        `${targetName} dies after hit ${i + 1}, stopping multi-hit attack with ${hitCount - i - 1} hits remaining!`,
+        {
+          details: {
+            hitNumber: i + 1,
+            remainingHits: hitCount - i - 1
+          },
+          priority: 'medium',
+          public: true
+        }
+      ));
       break;
     }
 
     // Calculate damage for this hit
     let hitDamage = Number(damagePerHit) + Number(coordinationBonusPerHit);
-    
+
     // Add comeback bonus (distributed across hits)
     if (comebackBonus > 0) {
       hitDamage += Math.floor(Number(comebackBonus) / Number(hitCount));
     }
-    
+
     // Apply damage modifiers
     hitDamage = Math.floor(Number(hitDamage) * Number(damageModifiers));
 
@@ -145,65 +137,60 @@ export const handleMultiHitAttack: AbilityHandler = (
     if (damageResult.success) {
       totalDamage += Number(damageResult.finalDamage);
       successfulHits++;
-      
+
       hitResults.push({
         hitNumber: i + 1,
         damage: damageResult.finalDamage,
         wasCritical: damageResult.wasCritical || false
       });
 
-      log.push({
-        id: `multi-hit-${i + 1}-${Date.now()}`,
-        timestamp: Date.now(),
-        type: 'damage',
-        source: actor.id,
-        target: target.id,
-        message: `Hit ${i + 1}: ${actor.name} hits ${targetName} for ${damageResult.finalDamage} damage!`,
-        details: {
-          hitNumber: i + 1,
-          damage: damageResult.finalDamage,
-          wasCritical: damageResult.wasCritical || false
-        },
-        public: true,
-        isPublic: true,
-        priority: 'medium'
-      });
+      log.push(createDamageLog(
+        actor.id,
+        target.id,
+        damageResult.finalDamage,
+        `Hit ${i + 1}: ${actor.name} hits ${targetName} for ${damageResult.finalDamage} damage!`,
+        {
+          details: {
+            hitNumber: i + 1,
+            damage: damageResult.finalDamage,
+            wasCritical: damageResult.wasCritical || false
+          },
+          priority: 'medium',
+          public: true
+        }
+      ));
     } else {
-      log.push({
-        id: `multi-hit-miss-${i + 1}-${Date.now()}`,
-        timestamp: Date.now(),
-        type: 'action',
-        source: actor.id,
-        target: target.id,
-        message: `Hit ${i + 1}: ${actor.name} misses ${targetName}!`,
-        details: { hitNumber: i + 1 },
-        public: true,
-        isPublic: true,
-        priority: 'medium'
-      });
+      log.push(createActionLog(
+        actor.id,
+        target.id,
+        `Hit ${i + 1}: ${actor.name} misses ${targetName}!`,
+        {
+          details: { hitNumber: i + 1 },
+          priority: 'medium',
+          public: true
+        }
+      ));
     }
   }
 
   if (successfulHits > 0) {
     // Log the total damage summary
-    log.push({
-      id: `multi-hit-summary-${Date.now()}`,
-      timestamp: Date.now(),
-      type: 'action',
-      source: actor.id,
-      target: target.id,
-      message: `${actor.name} completes ${ability['name']}: ${successfulHits}/${hitCount} hits for ${totalDamage} total damage!`,
-      details: {
-        totalHits: successfulHits,
-        totalPossibleHits: hitCount,
-        totalDamage,
-        hitResults,
-        coordinationBonus
-      },
-      public: true,
-      isPublic: true,
-      priority: 'high'
-    });
+    log.push(createActionLog(
+      actor.id,
+      target.id,
+      `${actor.name} completes ${ability['name']}: ${successfulHits}/${hitCount} hits for ${totalDamage} total damage!`,
+      {
+        details: {
+          totalHits: successfulHits,
+          totalPossibleHits: hitCount,
+          totalDamage,
+          hitResults,
+          coordinationBonus
+        },
+        priority: 'high',
+        public: true
+      }
+    ));
 
     // Apply threat based on total damage dealt
     applyThreatForAbility(actor, target, ability, Number(totalDamage), 0, systems);
@@ -211,7 +198,7 @@ export const handleMultiHitAttack: AbilityHandler = (
     // Check for warlock conversion on player targets
     if ((target as any).hasOwnProperty('isAlive') && Number(totalDamage) >= 20) {
       // Multi-hit attacks with high total damage can trigger warlock conversion
-      systems.warlockSystem?.checkWarlockConversion?.(actor, target as Player, { 
+      systems.warlockSystem?.checkWarlockConversion?.(actor, target as Player, {
         trigger: 'high_damage_multi_hit',
         totalDamage: Number(totalDamage)
       });

@@ -25,7 +25,7 @@ describe('reportWebVitals', () => {
 
   it('should call all web vitals functions when onPerfEntry is provided', async () => {
     const mockCallback = jest.fn();
-    
+
     reportWebVitals(mockCallback);
 
     // Wait for the dynamic import to resolve
@@ -79,7 +79,7 @@ describe('reportWebVitals', () => {
 
   it('should handle dynamic import correctly', async () => {
     const mockCallback = jest.fn();
-    
+
     reportWebVitals(mockCallback);
 
     // Verify that the function doesn't throw during dynamic import

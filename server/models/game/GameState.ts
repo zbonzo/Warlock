@@ -123,7 +123,7 @@ export class GameState {
    */
   constructor(code: GameCode) {
     this.code = code;
-    
+
     // Initialize monster state with valid default values
     this.monster = MonsterStateSchema.parse({
       hp: 1,      // Changed from 0 to 1 (valid HP)
@@ -251,12 +251,12 @@ export class GameState {
   startGame(): void {
     this.started = true;
     this.startTime = Date.now();
-    
+
     // Calculate warlock count for log message template
     const warlockCount = Array.from(this.players.values()).filter((p: any) => p.isWarlock).length;
-    
-    logger.info('GameStarted', { 
-      gameCode: this.code, 
+
+    logger.info('GameStarted', {
+      gameCode: this.code,
       playerCount: this.players.size,
       warlockCount: warlockCount
     });
@@ -293,10 +293,10 @@ export class GameState {
   levelUp(newLevel: number): void {
     const oldLevel = this.level;
     this.level = newLevel;
-    logger.info('GameLevelUp', { 
-      gameCode: this.code, 
-      oldLevel, 
-      newLevel: this.level 
+    logger.info('GameLevelUp', {
+      gameCode: this.code,
+      oldLevel,
+      newLevel: this.level
     });
   }
 
@@ -363,7 +363,7 @@ export class GameState {
       name: player['name'],
       disconnectedAt: Date.now(),
     });
-    
+
     this.disconnectedPlayers.push(disconnectedPlayer);
   }
 
@@ -375,7 +375,7 @@ export class GameState {
   cleanupDisconnectedPlayers(timeoutMs: number = 10 * 60 * 1000): string[] {
     const now = Date.now();
     const cleanedUp: string[] = [];
-    
+
     this.disconnectedPlayers = this.disconnectedPlayers.filter(player => {
       if (now - player.disconnectedAt > timeoutMs) {
         cleanedUp.push(player.name);
@@ -383,7 +383,7 @@ export class GameState {
       }
       return true;
     });
-    
+
     return cleanedUp;
   }
 
@@ -659,25 +659,25 @@ export class GameState {
    */
   static fromJSON(data: any): GameState {
     const gameState = new GameState(data.code);
-    
+
     // Restore players
     if (data.players) {
       for (const [playerId, player] of data.players) {
         gameState.players.set(playerId, player);
       }
     }
-    
+
     gameState.hostId = data.hostId;
     gameState.started = data.started || false;
     gameState.round = data.round || 0;
     gameState.level = data.level || 1;
     gameState.aliveCount = data.aliveCount || 0;
     gameState.disconnectedPlayers = data.disconnectedPlayers || [];
-    
+
     if (data.monster) {
       gameState.monster = MonsterStateSchema.parse(data.monster);
     }
-    
+
     return gameState;
   }
 }

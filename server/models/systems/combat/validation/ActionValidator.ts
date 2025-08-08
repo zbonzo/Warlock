@@ -51,7 +51,7 @@ export class ActionValidator {
    * Validate a single player action
    */
   private async validateSingleAction(
-    player: Player, 
+    player: Player,
     action: PlayerAction
   ): Promise<ActionValidationResult> {
     const errors: string[] = [];
@@ -152,7 +152,7 @@ export class ActionValidator {
     try {
       // Check if player has the ability
       const playerAbilities = (player as any).abilities || [];
-      const hasAbility = playerAbilities.some((ability: any) => 
+      const hasAbility = playerAbilities.some((ability: any) =>
         ability.id === abilityId || ability.name === abilityId
       );
 
@@ -162,7 +162,7 @@ export class ActionValidator {
       }
 
       // Check cooldown
-      const ability = playerAbilities.find((a: any) => 
+      const ability = playerAbilities.find((a: any) =>
         a.id === abilityId || a.name === abilityId
       );
 

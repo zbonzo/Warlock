@@ -1,13 +1,13 @@
 /**
  * @fileoverview Special ability handlers (Refactored)
- * 
+ *
  * This file has been refactored to use modular ability handlers.
  * Individual handlers have been moved to:
- * 
+ *
  * - abilities/special/detection-abilities.ts: Detection and revelation abilities
  * - abilities/special/control-abilities.ts: Control and buff abilities
  * - abilities/special/barbarian-abilities.ts: Barbarian-specific abilities
- * 
+ *
  * This provides better organization and easier maintenance.
  */
 
@@ -23,12 +23,12 @@ import {
   handleEyeOfFate,
   handlePrimalRoar,
   handleSanctuaryOfTruth,
-  
+
   // Control abilities
   handleControlMonster,
   handleSpiritGuard,
   handleStunAbility,
-  
+
   // Barbarian abilities
   handleBloodFrenzy,
   handleUnstoppableRage,
