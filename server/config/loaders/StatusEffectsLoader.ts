@@ -7,7 +7,6 @@ import {
   ProcessingOrder,
   GlobalSettings,
   EffectDefaults,
-  validateStatusEffectsConfig,
   safeValidateStatusEffectsConfig
 } from '../schemas/statusEffects.schema.js';
 
@@ -102,7 +101,8 @@ export class StatusEffectsLoader {
    */
   public getEffectDefaults(effectName: string): EffectDefaults | null {
     this.reloadIfChanged();
-    return this.effectsConfig.effects[effectName]?.default || null;
+    const effect = this.effectsConfig.effects[effectName];
+    return effect?.default || null;
   }
 
   /**
@@ -110,7 +110,8 @@ export class StatusEffectsLoader {
    */
   public getEffect(effectName: string): StatusEffect | null {
     this.reloadIfChanged();
-    return this.effectsConfig.effects[effectName] || null;
+    const effect = this.effectsConfig.effects[effectName];
+    return effect || null;
   }
 
   /**
@@ -118,7 +119,8 @@ export class StatusEffectsLoader {
    */
   public isEffectStackable(effectName: string): boolean {
     this.reloadIfChanged();
-    return this.effectsConfig.effects[effectName]?.stackable || false;
+    const effect = this.effectsConfig.effects[effectName];
+    return effect?.stackable || false;
   }
 
   /**
@@ -126,7 +128,8 @@ export class StatusEffectsLoader {
    */
   public isEffectRefreshable(effectName: string): boolean {
     this.reloadIfChanged();
-    return this.effectsConfig.effects[effectName]?.refreshable || false;
+    const effect = this.effectsConfig.effects[effectName];
+    return effect?.refreshable || false;
   }
 
   /**
@@ -142,7 +145,8 @@ export class StatusEffectsLoader {
    */
   public getEffectProcessingOrder(effectName: string): number {
     this.reloadIfChanged();
-    return this.effectsConfig.processingOrder[effectName] || 999; // Default to very late
+    const order = this.effectsConfig.processingOrder[effectName];
+    return order !== undefined ? order : 999; // Default to very late
   }
 
   /**
@@ -160,7 +164,7 @@ export class StatusEffectsLoader {
     this.reloadIfChanged();
 
     const effect = this.effectsConfig.effects[effectName];
-    const template = effect?.messages[messageType];
+    const template = effect?.messages?.[messageType];
 
     if (!template) {
       // Fallback messages
@@ -184,7 +188,8 @@ export class StatusEffectsLoader {
     if (!template) return '';
 
     return template.replace(/{(\w+)}/g, (match, key) => {
-      return String(context[key] || match);
+      const value = context[key];
+      return value !== undefined ? String(value) : match;
     });
   }
 
@@ -195,7 +200,10 @@ export class StatusEffectsLoader {
     this.reloadIfChanged();
 
     return Object.entries(this.effectsConfig.effects)
-      .filter(([_, effect]) => (effect as any)[property] === value)
+      .filter(([_, effect]) => {
+        const effectValue = (effect as any)[property];
+        return effectValue === value;
+      })
       .map(([effectName]) => effectName);
   }
 
@@ -268,7 +276,7 @@ export class StatusEffectsLoader {
 
     // Check for effects with missing processing order
     const effectsWithoutOrder = Object.keys(this.effectsConfig.effects).filter(
-      effectName => !this.effectsConfig.processingOrder[effectName]
+      effectName => !(effectName in this.effectsConfig.processingOrder)
     );
 
     if (effectsWithoutOrder.length > 0) {
@@ -292,7 +300,7 @@ export class StatusEffectsLoader {
       // Check for missing required message types
       const requiredMessages = ['applied', 'expired'];
       const missingMessages = requiredMessages.filter(
-        msgType => !effect.messages[msgType]
+        msgType => !effect.messages?.[msgType]
       );
 
       if (missingMessages.length > 0) {

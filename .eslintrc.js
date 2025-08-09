@@ -117,6 +117,14 @@ module.exports = {
       },
     },
 
+    // Configuration loaders only - these just load static config files
+    {
+      files: ['server/config/**/*.ts', 'server/config/loaders/**/*.ts'],
+      rules: {
+        'security/detect-object-injection': 'off', // False positives in config loaders
+      },
+    },
+
     // Test files
     {
       files: ['**/*.test.*', '**/*.spec.*', '**/test/**/*', '**/tests/**/*'],

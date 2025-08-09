@@ -3,7 +3,6 @@
  * No header included - just the ability selection interface
  */
 import React, { useState, useEffect } from 'react';
-import { useConfig } from '../../../../contexts/ConfigContext';
 import RacialAbilityCard from '../../../../components/game/RacialAbilityCard/RacialAbilityCard';
 import RuneButton from '../../../../components/ui/RuneButton';
 import { Player, Ability, GameEvent } from '@/types/game';
@@ -61,83 +60,8 @@ const UnifiedAbilityCard: React.FC<UnifiedAbilityCardProps> = ({
     }
   };
   
-  const getAbilityIcon = (ability: Ability): string => {
-    // Map ability types to their PNG file names
-    const abilityImageMap: Record<string, string> = {
-      // Attack abilities
-      'lightningBolt': 'lightningbolt.png',
-      'magicMissile': 'magicmissile.png',
-      'meteorShower': 'meteorshower.png',
-      'backstab': 'backstab.png',
-      'poisonStrike': 'poisonstrike.png',
-      'barbedArrow': 'barbedarrow.png',
-      'preciseArrow': 'precisearrow.png',
-      'clawSwipe': 'clawswipe.png',
-      'psychicBolt': 'psychicbolt.png',
-      'slash': 'slash.png',
-      'fireball': 'fireball.png',
-      'holyBolt': 'holybolt.png',
-      'infernoBlast': 'infernoblast.png',
-      'pistolShot': 'pistolshot.png',
-      'pyroblast': 'pyroblast.png',
-      'recklessStrike': 'recklessstrike.png',
-      'ricochetRound': 'ricochetround.png',
-      'shiv': 'shiv.png',
-      'twinStrike': 'twinstrike.png',
-      'aimedShot': 'aimedshot.png',
-      'arcaneBarrage': 'arcanebarrage.png',
-      'chainLightning': 'chainlightning.png',
-      'deathMark': 'deathmark.png',
-      'sweepingStrike': 'sweepingstrike.png',
-      
-      // Defense abilities
-      'arcaneShield': 'arcaneshield.png',
-      'shadowVeil': 'shadowveil.png',
-      'smokeBomb': 'smokebomb.png',
-      'camouflage': 'camouflage.png',
-      'barkskin': 'barkskin.png',
-      'shieldWall': 'shieldwall.png',
-      'spiritGuard': 'spiritguard.png',
-      'divineShield': 'divineshield.png',
-      'totemicBarrier': 'totemicbarrier.png',
-      'smokeScreen': 'smokescreen.png',
-      
-      // Heal abilities
-      'rejuvenation': 'rejuvenation.png',
-      'swiftMend': 'swiftmend.png',
-      'cauterize': 'cauterize.png',
-      'heal': 'heal.png',
-      'bandage': 'bandage.png',
-      'ancestralHeal': 'ancestralheal.png',
-      
-      // Special abilities
-      'poisonTrap': 'poisontrap.png',
-      'entanglingRoots': 'entanglingroots.png',
-      'controlAnimal': 'controlanimal.png',
-      'controlMonster': 'controlanimal.png',
-      'preciseShot': 'precisearrow.png',
-      'totemShield': 'totemicbarrier.png',
-      'eyeOfFate': 'eyeoffate.png',
-      'battleCry': 'battlecry.png',
-      'sanctuaryOfTruth': 'sanctuaryoftruth.png',
-      'relentlessFury': 'relentlessfury.png',
-      'thirstyBlade': 'thirstyblade.png',
-      
-      // Racial abilities
-      'adaptability': 'adaptability.png',
-      'bloodRage': 'bloodrage.png',
-      'stoneArmor': 'stonearmor.png',
-      'undying': 'undying.png',
-      'lifeBond': 'lifebond.png',
-      'moonbeam': 'moonbeam.png'
-    };
-
-    return abilityImageMap[ability.type] || 'default.png';
-  };
-
   const currentCooldown = player.abilityCooldowns?.[ability.type] || 0;
   const isLocked = locked || currentCooldown > 0;
-  const isDisabled = isLocked || !isSelectable;
 
   return (
     <div
@@ -204,7 +128,6 @@ const AbilitySelectionStep: React.FC<AbilitySelectionStepProps> = ({
   onContinue,
   isMobile
 }) => {
-  const config = useConfig();
   const [showEnhancements, setShowEnhancements] = useState<boolean>(false);
 
   useEffect(() => {

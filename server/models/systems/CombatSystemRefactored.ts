@@ -7,6 +7,8 @@
 import config from '../../config/index.js';
 import logger from '../../utils/logger.js';
 import { DamageCalculator } from './DamageCalculator.js';
+import { createSystemLog, createErrorLog } from '../../utils/logEntry.js';
+import { getCurrentTimestamp } from '../../utils/timestamp.js';
 import { EffectManager } from './EffectManager.js';
 import { TurnResolver } from './TurnResolver.js';
 import { EventTypes } from '../events/EventTypes.js';
@@ -32,8 +34,7 @@ import {
   CombatSystemInterface,
   DamageCalculation,
   SystemConfig,
-  AbstractGameSystem,
-  DamageModifier
+  AbstractGameSystem
 } from '../../types/systems.js';
 import type { ValidationResult } from '../../types/utilities.js';
 
@@ -172,7 +173,7 @@ export class CombatSystemRefactored extends AbstractGameSystem<GameRoom, GameEve
    * This method now orchestrates the extracted modules instead of doing everything itself
    */
   async processRound(gameRoom: any): Promise<CombatRoundResult> {
-    const startTime = Date.now();
+    const startTime = getCurrentTimestamp();
     const log: CombatLogEntry[] = [];
     const summary: RoundSummary = {
       totalDamageDealt: 0,
@@ -236,7 +237,7 @@ export class CombatSystemRefactored extends AbstractGameSystem<GameRoom, GameEve
       // Phase 7: Update game state
       await this.gameStateUpdater.updateGameState(gameRoom, summary);
 
-      const duration = Date.now() - startTime;
+      const duration = getCurrentTimestamp() - startTime;
       logger.info(`Combat round completed in ${duration}ms`);
 
       return {
@@ -251,13 +252,11 @@ export class CombatSystemRefactored extends AbstractGameSystem<GameRoom, GameEve
     } catch (error) {
       logger.error('Error processing combat round:', error as any);
 
-      log.push({
-        type: 'system',
-        message: 'Combat round failed to process due to system error',
-        timestamp: Date.now(),
-        isPublic: false,
-        priority: 'critical'
-      });
+      log.push(createErrorLog(
+        'Combat round failed to process due to system error',
+        error,
+        { priority: 'high' }
+      ) as CombatLogEntry);
 
       return {
         success: false,
@@ -272,7 +271,7 @@ export class CombatSystemRefactored extends AbstractGameSystem<GameRoom, GameEve
   /**
    * Process monster action - Simplified version that delegates to monster controller
    */
-  private async processMonsterAction(log: CombatLogEntry[], summary: RoundSummary): Promise<any> {
+  private async processMonsterAction(log: CombatLogEntry[], _summary: RoundSummary): Promise<any> {
     try {
       // Get alive players for monster targeting
       const alivePlayers = Array.from(this.players.values()).filter(player => player.isAlive);
@@ -285,17 +284,15 @@ export class CombatSystemRefactored extends AbstractGameSystem<GameRoom, GameEve
       // This could be further extracted if needed
       const monsterAction = {
         type: 'monster_attack',
-        timestamp: Date.now(),
+        timestamp: getCurrentTimestamp(),
         damage: 0 // Will be calculated by monster controller
       };
 
-      log.push({
-        type: 'monster_action',
-        message: 'Monster prepares to attack...',
-        timestamp: Date.now(),
-        isPublic: true,
-        priority: 'medium'
-      });
+      log.push(createSystemLog(
+        'Monster prepares to attack...',
+        undefined,
+        { type: 'monster_action', isPublic: true, priority: 'medium' }
+      ) as CombatLogEntry);
 
       return monsterAction;
     } catch (error) {

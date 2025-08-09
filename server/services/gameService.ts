@@ -7,6 +7,7 @@
 import { Server as SocketIOServer } from 'socket.io';
 import { GameRoom } from '../models/GameRoom.js';
 import config from '../config/index.js';
+import { secureGameCode, secureRandomChoice } from '../utils/secureRandom.js';
 // Messages are now accessed through the config system
 import {
   throwGameStateError,
@@ -118,8 +119,6 @@ export function createGame(gameCode: string): GameRoom | null {
  * Generate a unique game code
  */
 export function generateGameCode(): string {
-  // Import secure random utilities
-  const { secureGameCode } = require('../utils/secureRandom.js');
 
   let code: string;
   do {
@@ -470,7 +469,6 @@ function awardRandomTrophy(game: GameRoom, gameResult: GameResult): TrophyAward 
       logger.info(`${earnedTrophiesFromResult.length} trophies earned: ${earnedTrophiesFromResult.map(t => `${t.trophy.name} (${t.winner.name})`).join(', ')}`);
 
       // Randomly select one trophy from the earned trophies using secure random
-      const { secureRandomChoice } = require('../utils/secureRandom.js');
       const selectedTrophy = secureRandomChoice(earnedTrophiesFromResult);
 
       if (!selectedTrophy) {

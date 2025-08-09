@@ -46,12 +46,12 @@ export interface ValidationError {
 /**
  * Socket event handler function type
  */
-export type SocketEventHandler = (eventData: any, callback?: Function) => any;
+export type SocketEventHandler = (_eventData: any, _callback?: Function) => any;
 
 /**
  * Socket middleware function type
  */
-export type SocketMiddleware = (socket: Socket, next: Function) => SocketEventHandler;
+export type SocketMiddleware = (_socket: Socket, _next: Function) => SocketEventHandler;
 
 /**
  * Socket validation middleware
@@ -80,7 +80,7 @@ export class SocketValidationMiddleware {
       customErrorMessage = 'Invalid data received'
     } = options;
 
-    return (socket: Socket, next: Function): SocketEventHandler => {
+    return (_socket: Socket, _next: Function): SocketEventHandler => {
       return (eventData: any, callback?: Function): any => {
         try {
           // Use partial validation if requested
@@ -192,9 +192,9 @@ export class SocketValidationMiddleware {
    */
   wrapHandler(
     schema: z.ZodSchema<any>,
-    handler: (socket: Socket) => SocketEventHandler,
+    handler: (_socket: Socket) => SocketEventHandler,
     options: ValidationOptions = {}
-  ): (socket: Socket) => SocketEventHandler {
+  ): (_socket: Socket) => SocketEventHandler {
     const validator = this.validate(schema, options);
 
     return (socket: Socket): SocketEventHandler => {
@@ -243,22 +243,44 @@ export class SocketValidationMiddleware {
   }
 
   /**
-   * Validate multiple fields in event data
+   * Validate multiple fields in event data with field name whitelisting
    */
-  validateFields(fieldSchemas: FieldSchemas, options: ValidationOptions = {}): SocketMiddleware {
-    return (socket: Socket, next: Function): SocketEventHandler => {
+  validateFields(fieldSchemas: FieldSchemas, _options: ValidationOptions = {}): SocketMiddleware {
+    return (_socket: Socket, _next: Function): SocketEventHandler => {
       return (eventData: any, callback?: Function): any => {
         const errors: string[] = [];
         const validatedData: any = {};
 
+        // Dangerous field names that should never be accepted
+        const dangerousFields = ['__proto__', 'constructor', 'prototype'];
+
         for (const [fieldName, schema] of Object.entries(fieldSchemas)) {
-          const fieldValue = eventData[fieldName];
+          // Skip dangerous field names to prevent prototype pollution
+          if (dangerousFields.includes(fieldName)) {
+            errors.push(`${fieldName}: Field name not allowed`);
+            continue;
+          }
+
+          // Validate field name is safe (alphanumeric + underscore only)
+          if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(fieldName)) {
+            errors.push(`${fieldName}: Invalid field name format`);
+            continue;
+          }
+
+          // eslint-disable-next-line security/detect-object-injection -- fieldName validated with regex on line 265
+          const fieldValue = Object.prototype.hasOwnProperty.call(eventData, fieldName) ? eventData[fieldName] : undefined;
           const result = this.validator.validate(fieldValue, schema);
 
           if (!result.success) {
             errors.push(...result.errors.map(err => `${fieldName}: ${err}`));
           } else {
-            validatedData[fieldName] = result.data;
+            // Use defineProperty for safer assignment
+            Object.defineProperty(validatedData, fieldName, {
+              value: result.data,
+              enumerable: true,
+              writable: true,
+              configurable: true
+            });
           }
         }
 

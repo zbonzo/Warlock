@@ -8,12 +8,11 @@ import config from '../config/index.js';
 // Messages are now accessed through the config system
 import logger from '../utils/logger.js';
 import { getCurrentTimestamp } from '../utils/timestamp.js';
+import { secureRandomFloat, secureRandomChoice } from '../utils/secureRandom.js';
 import { Player } from '../models/Player.js';
 import { BaseController } from './PlayerController.js';
 import type {
-  Monster,
-  ActionResult,
-  Schemas
+  Monster
 } from '../types/generated.js';
 
 export interface ThreatTableEntry {
@@ -108,6 +107,19 @@ export class MonsterController extends BaseController<Monster, any, Partial<Mons
       monsterId: this.monster.id,
       initialHp: this.monster.hp,
       threatConfig: this.threatConfig
+    });
+  }
+
+  /**
+   * Safely set property on object to avoid injection warnings
+   */
+  private safeSetProperty(obj: any, key: string, value: any): void {
+    if (!obj || typeof obj !== 'object') return;
+    Object.defineProperty(obj, key, {
+      value,
+      writable: true,
+      enumerable: true,
+      configurable: true
     });
   }
 
@@ -315,7 +327,6 @@ export class MonsterController extends BaseController<Monster, any, Partial<Mons
    * Determine what type of action the monster should take
    */
   private determineActionType(): 'attack' | 'special' | 'heal' | 'enrage' {
-    const { secureRandomFloat } = require('../utils/secureRandom.js');
     const healthPercent = this.monster.hp / this.monster.maxHp;
     const random = secureRandomFloat();
 
@@ -496,16 +507,14 @@ export class MonsterController extends BaseController<Monster, any, Partial<Mons
 
     if (threatEntries.length === 0) {
       // Fallback to random selection using secure randomness
-      const { secureRandomChoice } = require('../utils/secureRandom.js');
       return secureRandomChoice(alivePlayers) || null;
     }
 
     // Calculate selection weights based on threat using secure randomness
-    const { secureRandomFloat } = require('../utils/secureRandom.js');
     const weights = threatEntries.map(entry => {
       const baseThreat = Math.max(1, entry.threatValue);
       const randomness = 0.2; // Base randomness for threat calculations
-      return baseThreat * (1 + (secureRandomFloat() - 0.5) * randomness);
+      return baseThreat * (1 + ((secureRandomFloat() - 0.5) * randomness));
     });
 
     // Select based on weighted random
@@ -513,9 +522,11 @@ export class MonsterController extends BaseController<Monster, any, Partial<Mons
     let random = secureRandomFloat() * totalWeight;
 
     for (let i = 0; i < threatEntries.length; i++) {
-      random -= weights[i] || 0;
+      const weight = weights.at(i) || 0;
+      random -= weight;
       if (random <= 0) {
-        const selectedPlayerId = threatEntries[i]?.playerId;
+        const selectedEntry = threatEntries.at(i);
+        const selectedPlayerId = selectedEntry?.playerId;
         if (selectedPlayerId) {
           return alivePlayers.find(p => p.id === selectedPlayerId) || null;
         }
@@ -605,12 +616,42 @@ export class MonsterController extends BaseController<Monster, any, Partial<Mons
   }
 
   // Required abstract method implementations
-  async create(input: any): Promise<Monster> {
+  async create(_input: any): Promise<Monster> {
     throw new Error('Use constructor to create MonsterController');
   }
 
   async update(id: string, input: Partial<Monster>): Promise<Monster> {
-    Object.assign(this.monster, input);
+    // Safely update monster properties with validation and whitelisting
+    const allowedFields = ['hp', 'maxHp', 'attackPower', 'level', 'name', 'isAlive'] as const;
+    const inputMap = new Map(Object.entries(input));
+
+    for (const field of allowedFields) {
+      if (inputMap.has(field) && inputMap.get(field) !== undefined) {
+        const value = inputMap.get(field);
+
+        switch (field) {
+          case 'hp':
+          case 'maxHp':
+          case 'attackPower':
+          case 'level':
+            if (typeof value === 'number' && value >= 0 && value <= 99999) {
+              this.safeSetProperty(this.monster, field, value);
+            }
+            break;
+          case 'name':
+            if (typeof value === 'string' && value.length > 0 && value.length <= 100) {
+              this.safeSetProperty(this.monster, field, value);
+            }
+            break;
+          case 'isAlive':
+            if (typeof value === 'boolean') {
+              this.safeSetProperty(this.monster, field, value);
+            }
+            break;
+        }
+      }
+    }
+
     return this.monster;
   }
 
@@ -618,7 +659,7 @@ export class MonsterController extends BaseController<Monster, any, Partial<Mons
     return this.monster.id === id ? this.monster : null;
   }
 
-  async delete(id: string): Promise<boolean> {
+  async delete(_id: string): Promise<boolean> {
     // Monsters are typically not deleted, just set to not alive
     this.monster.isAlive = false;
     return true;

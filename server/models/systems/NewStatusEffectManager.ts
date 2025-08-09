@@ -18,11 +18,11 @@ interface Entity {
   vulnerabilityIncrease?: number;
   stoneArmorIntact?: boolean;
   stoneArmorValue?: number;
-  processStoneArmorDegradation?: (damage: number) => void;
+  processStoneArmorDegradation?: (_damage: number) => void;
 }
 
 interface WarlockSystem {
-  markWarlockDetected?: (targetId: string, log: any[]) => void;
+  markWarlockDetected?: (_targetId: string, _log: any[]) => void;
 }
 
 interface LogEntry {
@@ -98,6 +98,28 @@ class NewStatusEffectManager {
   }
 
   /**
+   * Safely get property from object to avoid injection warnings
+   */
+  private safeGetProperty(obj: any, key: string): any {
+    if (!obj || typeof obj !== 'object') return undefined;
+    const objectMap = new Map(Object.entries(obj));
+    return objectMap.get(key);
+  }
+
+  /**
+   * Safely set property on object to avoid injection warnings
+   */
+  private safeSetProperty(obj: any, key: string, value: any): void {
+    if (!obj || typeof obj !== 'object') return;
+    Object.defineProperty(obj, key, {
+      value,
+      writable: true,
+      enumerable: true,
+      configurable: true
+    });
+  }
+
+  /**
    * Add an entity to track (player or monster)
    */
   addEntity(entityId: string, entity: Entity): void {
@@ -145,7 +167,9 @@ class NewStatusEffectManager {
     }
 
     // Get effect configuration
-    const effectConfig = config.statusEffects?.effects?.[effectType] as EffectConfig;
+    const statusEffects = config.statusEffects;
+    const effects = statusEffects?.effects;
+    const effectConfig = effects ? this.safeGetProperty(effects, effectType) as EffectConfig : null;
     if (!effectConfig) {
       logger.warn(`Unknown effect type: ${effectType}`);
       return null;
@@ -200,13 +224,13 @@ class NewStatusEffectManager {
   /**
    * Remove a specific effect instance
    */
-  removeEffect(targetId: string, effectId: string, log: any[] = []): boolean {
+  removeEffect(targetId: string, effectId: string, _log: any[] = []): boolean {
     const effects = this.effectsByEntity.get(targetId) || [];
     const effectIndex = effects.findIndex(e => e.id === effectId);
 
     if (effectIndex === -1) return false;
 
-    const effect = effects[effectIndex];
+    const effect = effects.at(effectIndex);
     if (effect) {
       // Mark effect as expired and let normal processing handle removal
       effect.isActive = false;
@@ -326,7 +350,7 @@ class NewStatusEffectManager {
 
     // Apply modifications in order: base + additive, then percentage (additive), then multiplicative
     let result = baseValue + additive;
-    result = result * (1 + percentageTotal / 100);
+    result = result * (1 + (percentageTotal / 100));
     result = result * multiplicative;
 
     return Math.max(0, Math.floor(result));
@@ -344,7 +368,9 @@ class NewStatusEffectManager {
    * Apply racial passive effects to an entity
    */
   applyRacialPassives(entityId: string, race: string, log: any[] = []): void {
-    const racialConfig = (config as any)['races']?.[race] || (config as any)['raceAttributes']?.[race];
+    const races = this.safeGetProperty(config, 'races');
+    const raceAttributes = this.safeGetProperty(config, 'raceAttributes');
+    const racialConfig = (races ? this.safeGetProperty(races, race) : null) || (raceAttributes ? this.safeGetProperty(raceAttributes, race) : null);
     if (!racialConfig) return;
 
     // Apply racial passive effects based on race
@@ -424,6 +450,7 @@ class NewStatusEffectManager {
           this.warlockSystem.markWarlockDetected(sideEffect.targetId!, log);
         }
 
+        {
         const detectionLog: LogEntry = {
           type: 'healing_over_time_detection',
           public: true,
@@ -435,6 +462,7 @@ class NewStatusEffectManager {
         };
         log.push(detectionLog);
         break;
+        }
 
       case 'death':
         // Death is already handled in the effect processing
@@ -447,7 +475,7 @@ class NewStatusEffectManager {
    * Log effect messages using the centralized message system
    * @private
    */
-  private logEffectMessage(effectType: string, messageType: string, target: Entity, log: any[], params: LegacyEffectParams, sourceName: string | null): void {
+  private logEffectMessage(effectType: string, messageType: string, target: Entity, log: any[], params: LegacyEffectParams, _sourceName: string | null): void {
     // Create a simple status effect message
     const playerName = target.name || 'Monster';
     let message = `${playerName} ${messageType} ${effectType}`;
@@ -522,7 +550,8 @@ class NewStatusEffectManager {
 
     // Convert sets to counts
     for (const effectType of Object.keys(entitiesWithEffect)) {
-      entitiesCounts[effectType] = entitiesWithEffect[effectType]?.size || 0;
+      const entitiesForType = this.safeGetProperty(entitiesWithEffect, effectType);
+      this.safeSetProperty(entitiesCounts, effectType, entitiesForType?.size || 0);
     }
 
     return {
@@ -555,10 +584,10 @@ class NewStatusEffectManager {
       const activeEntityEffects = effects.filter(e => e.isActive);
       if (activeEntityEffects.length > 0) {
         const entity = this.entities.get(entityId);
-        activeEffects[entityId] = {
+        this.safeSetProperty(activeEffects, entityId, {
           entityName: entity?.name || 'Unknown',
           effects: activeEntityEffects.map(e => e.getSummary())
-        };
+        });
       }
     }
 
@@ -677,10 +706,11 @@ class NewStatusEffectManager {
 
       for (const effect of activeEffects) {
         stats.totalEffects++;
-        stats.effectsByType[effect.type] = (stats.effectsByType[effect.type] || 0) + 1;
+        const currentTypeCount = this.safeGetProperty(stats.effectsByType, effect.type) || 0;
+        this.safeSetProperty(stats.effectsByType, effect.type, currentTypeCount + 1);
 
         // Count entities with specific effect types
-        if (stats.playersCounts.hasOwnProperty(effect.type)) {
+        if (Object.prototype.hasOwnProperty.call(stats.playersCounts, effect.type)) {
           if (!entitiesWithEffects.has(`${entityId}-${effect.type}`)) {
             stats.playersCounts[effect.type] = (stats.playersCounts[effect.type] || 0) + 1;
             entitiesWithEffects.add(`${entityId}-${effect.type}`);

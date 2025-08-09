@@ -18,7 +18,7 @@ export interface BaseLogEntry {
   target?: string;
   targetId?: string;
   attackerId?: string;
-  public?: boolean;
+  public: boolean;
   isPublic?: boolean;
   priority?: 'low' | 'medium' | 'high';
   details?: any;
@@ -29,7 +29,7 @@ export interface BaseLogEntry {
 /**
  * Creates a log entry with automatic timestamp and ID generation.
  * This centralizes timestamp generation to avoid linter warnings about Date.now()
- * 
+ *
  * @param entry - The log entry data (without timestamp/id)
  * @param options - Optional configuration
  * @returns Complete log entry with timestamp and ID
@@ -43,18 +43,18 @@ export function createLogEntry<T extends BaseLogEntry>(
   }
 ): T {
   const result = { ...entry } as T;
-  
+
   // Add timestamp unless explicitly skipped or already present
   if (!options?.skipTimestamp && !result.timestamp) {
     result.timestamp = getCurrentTimestamp();
   }
-  
+
   // Add ID unless explicitly skipped or already present
   if (!options?.skipId && !result.id) {
-    const prefix = options?.idPrefix || entry.type || 'log';
+    const prefix = options?.idPrefix || entry['type'] || 'log';
     result.id = secureId(prefix);
   }
-  
+
   return result;
 }
 

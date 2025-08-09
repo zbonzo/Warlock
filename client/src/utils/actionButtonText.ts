@@ -264,7 +264,9 @@ export const getActionButtonVariant = (abilityType: string, isSubmitted: boolean
   return 'primary'; // Default to primary
 };
 
-export default {
+const actionButtonUtils = {
   getActionButtonText,
   getActionButtonVariant
 };
+
+export default actionButtonUtils;

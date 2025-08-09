@@ -92,11 +92,13 @@ const currentLevel = process.env['LOG_LEVEL']
  */
 function getFormattedMessage(level: string, eventKey: string, context: LogContext = {}): string {
   // Dynamic message template access needed for flexible logging system
+  // eslint-disable-next-line security/detect-object-injection -- level is internal log level, not user input
   let messageTemplate = (serverLogMessages as any)[level]?.[eventKey] || eventKey;
 
   for (const key in context) {
     if (Object.prototype.hasOwnProperty.call(context, key)) {
       const placeholder = `{${key}}`;
+      // eslint-disable-next-line security/detect-object-injection -- key from internal context object
       let value = context[key];
       if (typeof value === 'object' && value !== null) {
         if (Array.isArray(value)) {
@@ -185,6 +187,7 @@ function processLog(level: string, eventKey: string, context: LogContext = {}, g
   Object.keys(context).forEach(key => {
     if (key !== 'message') {
       // Dynamic property assignment needed for flexible logging context
+      // eslint-disable-next-line security/detect-object-injection -- key from internal context object
       (fileLogEntry as any)[key] = context[key];
     }
   });
@@ -202,6 +205,7 @@ function processLog(level: string, eventKey: string, context: LogContext = {}, g
 
   // 3. Log to console
   // Dynamic console method access needed for flexible log levels
+  // eslint-disable-next-line security/detect-object-injection -- level is internal log level
   const consoleMethod = (console as any)[level] || console.log;
   consoleMethod(consoleMessage);
 

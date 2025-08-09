@@ -169,7 +169,7 @@ export function throttle<T extends (..._args: any[]) => any>(
 }
 
 /**
- * Deep clone an object
+ * Deep clone an object with prototype pollution protection
  */
 export function deepClone<T>(obj: T): T {
   if (obj === null || typeof obj !== 'object') return obj;
@@ -177,7 +177,16 @@ export function deepClone<T>(obj: T): T {
   if (obj instanceof Array) return obj.map(item => deepClone(item)) as any;
 
   const cloned = {} as T;
+
+  // Blacklist dangerous keys that could lead to prototype pollution
+  const dangerousKeys = ['__proto__', 'constructor', 'prototype'];
+
   for (const key in obj) {
+    // Skip dangerous keys to prevent prototype pollution
+    if (dangerousKeys.includes(key)) {
+      continue;
+    }
+
     // Object property access needed for generic deep cloning utility
     if (Object.prototype.hasOwnProperty.call(obj, key)) {
       (cloned as any)[key] = deepClone((obj as any)[key]);
@@ -203,12 +212,20 @@ export function deepFreeze<T>(obj: T): Readonly<T> {
 }
 
 /**
- * Deep merge two objects
+ * Deep merge two objects with prototype pollution protection
  */
 export function deepMerge<T extends Record<string, any>>(target: T, source: Partial<T>): T {
   const result = { ...target };
 
+  // Blacklist dangerous keys that could lead to prototype pollution
+  const dangerousKeys = ['__proto__', 'constructor', 'prototype'];
+
   for (const key in source) {
+    // Skip dangerous keys to prevent prototype pollution
+    if (dangerousKeys.includes(key)) {
+      continue;
+    }
+
     // Object property access needed for generic deep merge utility
     if (Object.prototype.hasOwnProperty.call(source, key)) {
       const sourceValue = (source as any)[key];
@@ -218,9 +235,11 @@ export function deepMerge<T extends Record<string, any>>(target: T, source: Part
         sourceValue &&
         typeof sourceValue === 'object' &&
         !Array.isArray(sourceValue) &&
+        sourceValue.constructor === Object && // Ensure it's a plain object
         targetValue &&
         typeof targetValue === 'object' &&
-        !Array.isArray(targetValue)
+        !Array.isArray(targetValue) &&
+        targetValue.constructor === Object // Ensure it's a plain object
       ) {
         // Generic object assignment needed for deep merge utility
         (result as any)[key] = deepMerge(targetValue, sourceValue);

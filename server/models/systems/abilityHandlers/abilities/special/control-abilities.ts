@@ -3,6 +3,7 @@
  * Handles abilities that control monsters, apply buffs, or manipulate game state
  */
 
+import { createActionLog } from '../../../../../utils/logEntry.js';
 import { secureId } from '../../../../../utils/secureRandom.js';
 import type { Player as BasePlayer, Monster, Ability as BaseAbility } from '../../../../../types/generated.js';
 import type {
@@ -36,7 +37,7 @@ export const handleControlMonster: AbilityHandler = (
   ability: Ability,
   log: LogEntry[],
   systems: GameSystems,
-  coordinationInfo?: CoordinationInfo
+  _coordinationInfo?: CoordinationInfo
 ): boolean => {
   if (!actor || !ability) {
     return false;
@@ -44,16 +45,15 @@ export const handleControlMonster: AbilityHandler = (
 
   const game = systems.game;
   if (!game || !game.monster) {
-    log.push({
-      id: secureId('control-monster-no-target'),
-      timestamp: Date.now(),
-      type: 'action',
-      source: actor['id'],
-      message: `${actor['name']} cannot control monster - no monster available`,
-      details: { reason: 'no_monster_available' },
-      public: true,
-      priority: 'medium'
-    });
+    log.push(createActionLog(
+      actor['id'],
+      '',
+      `${actor['name']} cannot control monster - no monster available`,
+      {
+        details: { reason: 'no_monster_available' },
+        priority: 'medium'
+      }
+    ));
     return false;
   }
 
@@ -61,34 +61,32 @@ export const handleControlMonster: AbilityHandler = (
 
   // Check if monster is already controlled
   if ((monster as any).controllerId) {
-    log.push({
-      id: secureId('control-monster-already-controlled'),
-      timestamp: Date.now(),
-      type: 'action',
-      source: actor['id'],
-      message: `${actor['name']} cannot control monster - already controlled by ${(monster as any).controllerName}`,
-      details: {
-        reason: 'already_controlled',
-        currentController: (monster as any).controllerId
-      },
-      public: true,
-      priority: 'medium'
-    });
+    log.push(createActionLog(
+      actor['id'],
+      '',
+      `${actor['name']} cannot control monster - already controlled by ${(monster as any).controllerName}`,
+      {
+        details: {
+          reason: 'already_controlled',
+          currentController: (monster as any).controllerId
+        },
+        priority: 'medium'
+      }
+    ));
     return false;
   }
 
   // Check if monster is alive
   if (!(monster as any).isAlive || (monster as any).hp <= 0) {
-    log.push({
-      id: secureId('control-monster-dead'),
-      timestamp: Date.now(),
-      type: 'action',
-      source: actor['id'],
-      message: `${actor['name']} cannot control monster - monster is dead`,
-      details: { reason: 'monster_dead' },
-      public: true,
-      priority: 'medium'
-    });
+    log.push(createActionLog(
+      actor['id'],
+      '',
+      `${actor['name']} cannot control monster - monster is dead`,
+      {
+        details: { reason: 'monster_dead' },
+        priority: 'medium'
+      }
+    ));
     return false;
   }
 
@@ -100,40 +98,39 @@ export const handleControlMonster: AbilityHandler = (
   (monster as any).controllerId = actor['id'];
   (monster as any).controllerName = actor['name'];
   (monster as any).controlDuration = controlDuration;
+  // eslint-disable-next-line no-restricted-syntax
   (monster as any).controlStartTime = Date.now();
 
-  log.push({
-    id: secureId('control-monster-success'),
-    timestamp: Date.now(),
-    type: 'action',
-    source: actor['id'],
-    target: monster['id'],
-    message: `${actor['name']} takes control of ${monster['name']} for ${controlDuration} turns`,
-    details: {
-      controllerId: actor['id'],
-      controlDuration,
-      monsterLevel: monster['level']
-    },
-    isPublic: true,
-    public: true,
-    priority: 'high'
-  });
+  log.push(createActionLog(
+    actor['id'],
+    monster['id'],
+    `${actor['name']} takes control of ${monster['name']} for ${controlDuration} turns`,
+    {
+      details: {
+        controllerId: actor['id'],
+        controlDuration,
+        monsterLevel: monster['level']
+      },
+      priority: 'high'
+    }
+  ));
 
   // Private instructions to the controller
-  log.push({
-    id: secureId('control-monster-instructions'),
-    timestamp: Date.now(),
-    type: 'action',
-    source: actor['id'],
-    message: `You now control ${monster['name']} for ${controlDuration} turns. Use it wisely!`,
-    details: {
-      isPrivate: true,
-      recipientId: actor['id'],
-      controlDuration
-    },
-    public: false,
-    priority: 'high'
-  });
+  log.push(createActionLog(
+    actor['id'],
+    '',
+    `You now control ${monster['name']} for ${controlDuration} turns. Use it wisely!`,
+    {
+      details: {
+        isPrivate: true,
+        recipientId: actor['id'],
+        controlDuration
+      },
+      public: false,
+      isPublic: false,
+      priority: 'high'
+    }
+  ));
 
   return true;
 };
@@ -147,14 +144,14 @@ export const handleSpiritGuard: AbilityHandler = (
   ability: Ability,
   log: LogEntry[],
   systems: GameSystems,
-  coordinationInfo?: CoordinationInfo
+  _coordinationInfo?: CoordinationInfo
 ): boolean => {
   if (!actor || !target || !ability) {
     return false;
   }
 
   // Can only target players
-  if (!(target as any).hasOwnProperty('isAlive')) {
+  if (!Object.prototype.hasOwnProperty.call(target, 'isAlive')) {
     return false;
   }
 
@@ -183,20 +180,18 @@ export const handleSpiritGuard: AbilityHandler = (
   });
 
   if (statusResult.success) {
-    log.push({
-      id: secureId('spirit-guard-success'),
-      timestamp: Date.now(),
-      type: 'action',
-      source: actor['id'],
-      target: target['id'],
-      message: `${actor['name']} casts spirit guard on ${targetPlayer['name']}, providing ${protectionAmount} protection for ${duration} turns`,
-      details: {
-        protectionAmount,
-        duration
-      },
-      public: true,
-      priority: 'high'
-    });
+    log.push(createActionLog(
+      actor['id'],
+      target['id'],
+      `${actor['name']} casts spirit guard on ${targetPlayer['name']}, providing ${protectionAmount} protection for ${duration} turns`,
+      {
+        details: {
+          protectionAmount,
+          duration
+        },
+        priority: 'high'
+      }
+    ));
 
     return true;
   }
@@ -213,7 +208,7 @@ export const handleStunAbility: AbilityHandler = (
   ability: Ability,
   log: LogEntry[],
   systems: GameSystems,
-  coordinationInfo?: CoordinationInfo
+  _coordinationInfo?: CoordinationInfo
 ): boolean => {
   if (!actor || !target || !ability) {
     return false;
@@ -242,20 +237,19 @@ export const handleStunAbility: AbilityHandler = (
   if (statusResult.success) {
     const targetName = (target as Player)['name'] || (target as Monster)['name'];
 
-    log.push({
-      id: secureId('stun-success'),
-      timestamp: Date.now(),
-      type: 'status',
-      source: actor['id'],
-      target: target['id'],
-      message: `${actor['name']} stuns ${targetName} with ${ability['name']} for ${stunDuration} turns`,
-      details: {
-        stunDuration,
-        effectName: 'stunned'
-      },
-      public: true,
-      priority: 'high'
-    });
+    log.push(createActionLog(
+      actor['id'],
+      target['id'],
+      `${actor['name']} stuns ${targetName} with ${ability['name']} for ${stunDuration} turns`,
+      {
+        type: 'status',
+        details: {
+          stunDuration,
+          effectName: 'stunned'
+        },
+        priority: 'high'
+      }
+    ));
 
     return true;
   }

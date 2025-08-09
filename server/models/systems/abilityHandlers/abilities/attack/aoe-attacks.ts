@@ -14,9 +14,6 @@ import type {
 import type { GameSystems } from '../../../SystemsFactory.js';
 import { applyThreatForAbility } from '../../abilityRegistryUtils.js';
 
-import config from '../../../../../config/index.js';
-import messages from '../../../../../config/messages/index.js';
-import GameStateUtils from '../../../GameStateUtils.js';
 
 /**
  * Handle AOE damage abilities - hits multiple targets

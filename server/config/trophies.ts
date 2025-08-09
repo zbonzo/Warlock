@@ -3,6 +3,8 @@
  * Defines all possible trophies that can be awarded to players
  */
 
+import { secureRandomChoice } from '../utils/secureRandom.js';
+
 // Trophy related interfaces
 interface PlayerStats {
   totalDamageDealt: number;
@@ -28,7 +30,7 @@ interface GameResult {
 interface Trophy {
   name: string;
   description: string;
-  getWinner: (players: Player[], gameResult?: GameResult) => Player | null;
+  getWinner: (_players: Player[], _gameResult?: GameResult) => Player | null;
 }
 
 /**
@@ -42,7 +44,6 @@ const trophies = [
     getWinner: (players: Player[]): Player | null => {
       // Always award to a random player as a fallback
       if (players.length === 0) return null;
-      const { secureRandomChoice } = require('../utils/secureRandom.js');
       return secureRandomChoice(players) || null;
     }
   },
@@ -96,7 +97,6 @@ const trophies = [
       if (pacifists.length === 0) return null;
 
       // Return a random pacifist if multiple exist
-      const { secureRandomChoice } = require('../utils/secureRandom.js');
       return secureRandomChoice(pacifists) || null;
     }
   },
@@ -127,7 +127,6 @@ const trophies = [
       });
 
       if (winners.length === 0) return null;
-      const { secureRandomChoice } = require('../utils/secureRandom.js');
       return secureRandomChoice(winners) || null;
     }
   },
@@ -172,7 +171,6 @@ const trophies = [
       );
 
       if (unrevealedWarlocks.length === 0) return null;
-      const { secureRandomChoice } = require('../utils/secureRandom.js');
       return secureRandomChoice(unrevealedWarlocks) || null;
     }
   },

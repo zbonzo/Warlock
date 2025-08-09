@@ -54,7 +54,7 @@ export const handleVulnerabilityStrike: AbilityHandler = (
   }
 
   // If attack successful and target is a player, apply vulnerability
-  if ((target as any).hasOwnProperty('isAlive') && (target as any).hp > 0) {
+  if (Object.prototype.hasOwnProperty.call(target, 'isAlive') && (target as any).hp > 0) {
     const vulnParams = (ability as any).params || {};
     const vulnerabilityMultiplier = Number(vulnParams.vulnerabilityMultiplier) || 1.5;
     const duration = Number(vulnParams.duration) || 2;
@@ -125,7 +125,7 @@ export const handleRecklessStrike: AbilityHandler = (
   }
 
   // If target is a player (not monster) and is invisible, attack should fail
-  if (target.hasOwnProperty('isAlive') && (target as any)['statusEffects']) {
+  if (Object.prototype.hasOwnProperty.call(target, 'isAlive') && (target as any)['statusEffects']) {
     const targetPlayer = target as Player;
     if (targetPlayer.statusEffects && (targetPlayer.statusEffects as any)['invisible']) {
       log.push(createActionLog(

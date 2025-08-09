@@ -2,13 +2,11 @@
  * @fileoverview Test page to showcase the rune button styling
  */
 import React from 'react';
-import { useTheme } from '../contexts/ThemeContext';
 import RuneButton from '../components/ui/RuneButton';
 import ThemeToggle from '../components/common/ThemeToggle';
 import './RuneButtonTest.css';
 
 const RuneButtonTest: React.FC = () => {
-  const theme = useTheme();
 
   const handleClick = (buttonName: string): void => {
     console.log(`${buttonName} clicked!`);

@@ -3,9 +3,6 @@
  * Handles armor reduction, damage modifiers, and various damage types
  */
 
-import config from '../../../config/index.js';
-import logger from '../../../utils/logger.js';
-import messages from '../../../config/messages/index.js';
 
 type DamageType = 'physical' | 'magical' | 'poison' | 'fire' | 'holy' | 'dark' | 'recoil';
 
@@ -301,7 +298,7 @@ class DamageCalculator {
   /**
    * Get damage type effectiveness
    */
-  getDamageTypeEffectiveness(damageType: DamageType, target: Entity): number {
+  getDamageTypeEffectiveness(_damageType: DamageType, _target: Entity): number {
     // Could be expanded for elemental resistances/weaknesses
     return 1.0;
   }

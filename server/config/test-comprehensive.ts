@@ -39,9 +39,6 @@ function logWarning(message: string): void {
   testResults.warnings++;
 }
 
-function logInfo(message: string): void {
-  console.log(`ℹ️  ${message}`);
-}
 
 // =============================================================================
 // 1. JSON DATA FILE INTEGRITY TESTS
@@ -318,7 +315,7 @@ try {
     `Total: ${Math.round(Object.values(fileSizes).reduce((a, b) => a + b, 0) / 1024)}KB`);
 
   // Test JSON parsing performance (rough estimate)
-  const startTime = Date.now();
+  const startTime = performance.now();
   for (let i = 0; i < 100; i++) {
     for (const fileName of dataFiles) {
       const filePath = path.join(__dirname, 'data', fileName);
@@ -327,7 +324,7 @@ try {
       }
     }
   }
-  const endTime = Date.now();
+  const endTime = performance.now();
   const avgParseTime = (endTime - startTime) / 100;
 
   logTest('JSON parsing performance', avgParseTime < 100, `${avgParseTime.toFixed(2)}ms average`);

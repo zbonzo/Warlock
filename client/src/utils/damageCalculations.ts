@@ -5,11 +5,6 @@
 import { Ability, Player } from '@/types/game';
 import { DamageInfo, HealingInfo } from './abilityUtils';
 
-interface StatusEffect {
-  type: string;
-  [key: string]: any;
-}
-
 /**
  * Calculate damage information with modifiers using server's damage modifier system
  */

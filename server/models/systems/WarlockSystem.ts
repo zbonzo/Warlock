@@ -7,11 +7,12 @@ import config from '../../config/index.js';
 import { calculateWarlockCount } from '../../config/gameBalance.js';
 // Messages are now accessed through the config system
 import logger from '../../utils/logger.js';
+import { secureRandomInt, secureRandomFloat } from '../../utils/secureRandom.js';
 import type { Player } from '../../types/generated.js';
 
 interface GameStateUtils {
   getAlivePlayers(): Player[];
-  getAlivePlayersExcept(excludeIds: string[]): Player[];
+  getAlivePlayersExcept(_excludeIds: string[]): Player[];
   // Add other methods as needed
 }
 
@@ -183,7 +184,6 @@ class WarlockSystem {
     }
 
     // Fill remaining slots randomly using secure randomness
-    const { secureRandomInt } = require('../../utils/secureRandom.js');
     while (assignedWarlocks.length < targetWarlocks && availablePlayers.length > 0) {
       const randomIndex = secureRandomInt(0, availablePlayers.length);
       const selectedPlayer = availablePlayers[randomIndex];
@@ -280,7 +280,6 @@ class WarlockSystem {
     const finalChance = baseChance * (1 - Math.min(totalResistance, 0.9)); // Cap at 90% resistance
 
     // Roll for corruption using secure randomness
-    const { secureRandomFloat } = require('../../utils/secureRandom.js');
     const roll = secureRandomFloat();
     const success = roll < finalChance;
 

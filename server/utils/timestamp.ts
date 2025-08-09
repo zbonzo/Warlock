@@ -9,7 +9,8 @@
  * @returns Current Unix timestamp in milliseconds
  */
 export const getCurrentTimestamp = (): number => {
-  return Date.now();
+  // eslint-disable-next-line no-restricted-syntax
+  return Date.now(); // Legitimate timestamp usage, not for randomness
 };
 
 /**

@@ -6,8 +6,8 @@
 
 import type { Player } from '../../../../types/generated.js';
 import type { CombatLogEntry, RoundSummary } from '../interfaces.js';
-import config from '../../../../config/index.js';
 import logger from '../../../../utils/logger.js';
+import { createLogEntry, createDamageLog, createHealLog } from '../../../../utils/logEntry.js';
 
 export interface EndOfRoundProcessorDependencies {
   players: Map<string, Player>;
@@ -38,7 +38,7 @@ export class EndOfRoundProcessor {
   /**
    * Process all end-of-round effects
    */
-  async processEndOfRoundEffects(log: CombatLogEntry[], summary: RoundSummary): Promise<void> {
+  async processEndOfRoundEffects(_log: CombatLogEntry[], _summary: RoundSummary): Promise<void> {
     // Process status effects (DoT, HoT, buffs, debuffs)
     await this.processStatusEffects(log, summary);
 
@@ -77,19 +77,19 @@ export class EndOfRoundProcessor {
   /**
    * Process status effects (DoT, HoT, etc.)
    */
-  private async processStatusEffects(log: CombatLogEntry[], summary: RoundSummary): Promise<void> {
-    for (const [playerId, player] of this.players.entries()) {
+  private async processStatusEffects(_log: CombatLogEntry[], _summary: RoundSummary): Promise<void> {
+    for (const [_playerId, player] of this.players.entries()) {
       if (!player.isAlive) continue;
 
       // Process damage over time effects
-      const dotEffects = await this.statusEffectManager.getEffectsByType(playerId, 'damage_over_time');
+      const dotEffects = await this.statusEffectManager.getEffectsByType(_playerId, 'damage_over_time');
       for (const effect of dotEffects) {
         const damage = this.calculateDotDamage(effect);
         await this.applyDotDamage(player, damage, effect, log, summary);
       }
 
       // Process healing over time effects
-      const hotEffects = await this.statusEffectManager.getEffectsByType(playerId, 'heal_over_time');
+      const hotEffects = await this.statusEffectManager.getEffectsByType(_playerId, 'heal_over_time');
       for (const effect of hotEffects) {
         const healing = this.calculateHotHealing(effect);
         await this.applyHotHealing(player, healing, effect, log, summary);
@@ -103,8 +103,8 @@ export class EndOfRoundProcessor {
   /**
    * Process racial ability end-of-round effects
    */
-  private async processRacialEndOfRoundEffects(log: CombatLogEntry[], summary: RoundSummary): Promise<void> {
-    for (const [playerId, player] of this.players.entries()) {
+  private async processRacialEndOfRoundEffects(_log: CombatLogEntry[], _summary: RoundSummary): Promise<void> {
+    for (const [_playerId, player] of this.players.entries()) {
       if (!player.isAlive) continue;
 
       // Get player race
@@ -130,7 +130,7 @@ export class EndOfRoundProcessor {
   /**
    * Process warlock corruption effects
    */
-  private async processWarlockEffects(log: CombatLogEntry[], summary: RoundSummary): Promise<void> {
+  private async processWarlockEffects(_log: CombatLogEntry[], _summary: RoundSummary): Promise<void> {
     if (!this.warlockSystem) return;
 
     // Get current warlock count
@@ -140,8 +140,8 @@ export class EndOfRoundProcessor {
     // Apply corruption effects based on warlock count
     const corruptionLevel = this.calculateCorruptionLevel(warlockCount);
 
-    for (const [playerId, player] of this.players.entries()) {
-      if (!player.isAlive || await this.warlockSystem.isWarlock(playerId)) continue;
+    for (const [_playerId, player] of this.players.entries()) {
+      if (!player.isAlive || await this.warlockSystem.isWarlock(_playerId)) continue;
 
       // Apply corruption damage or effects
       if (corruptionLevel > 0) {
@@ -163,7 +163,7 @@ export class EndOfRoundProcessor {
     }
 
     // Apply level bonuses to all alive players
-    for (const [playerId, player] of this.players.entries()) {
+    for (const [_playerId, player] of this.players.entries()) {
       if (player.isAlive) {
         await this.applyLevelBonuses(player, newLevel);
       }
@@ -175,7 +175,7 @@ export class EndOfRoundProcessor {
   /**
    * Apply level bonuses to a player
    */
-  private async applyLevelBonuses(player: Player, level: number): Promise<void> {
+  private async applyLevelBonuses(_player: Player, level: number): Promise<void> {
     const bonuses = this.calculateLevelBonuses(level);
 
     // Apply HP bonus
@@ -231,23 +231,25 @@ export class EndOfRoundProcessor {
    * Apply DoT damage to player
    */
   private async applyDotDamage(
-    player: Player,
+    _player: Player,
     damage: number,
     effect: any,
-    log: CombatLogEntry[],
-    summary: RoundSummary
+    _log: CombatLogEntry[],
+    _summary: RoundSummary
   ): Promise<void> {
     player.hp = Math.max(0, player.hp - damage);
 
-    log.push({
+    log.push(createLogEntry({
       type: 'damage_over_time',
       message: `${player.name} takes ${damage} damage from ${effect.name || effect.type}`,
-      playerId: player.id,
-      damage,
+      source: effect.name || effect.type,
+      target: player.id,
+      targetId: player.id,
+      details: { damage, _playerId: player.id },
+      public: true,
       isPublic: true,
-      timestamp: Date.now(),
       priority: 'medium' as const
-    });
+    }) as CombatLogEntry);
 
     summary.totalDamageToPlayers += damage;
 
@@ -256,14 +258,17 @@ export class EndOfRoundProcessor {
       player.isAlive = false;
       summary.playersKilled.push(player.id);
 
-      log.push({
+      log.push(createLogEntry({
         type: 'player_death',
         message: `${player.name} dies from ${effect.name || effect.type}!`,
-        playerId: player.id,
+        source: effect.name || effect.type,
+        target: player.id,
+        targetId: player.id,
+        details: { _playerId: player.id },
+        public: true,
         isPublic: true,
-        timestamp: Date.now(),
         priority: 'critical' as const
-      });
+      }) as CombatLogEntry);
     }
   }
 
@@ -271,25 +276,25 @@ export class EndOfRoundProcessor {
    * Apply HoT healing to player
    */
   private async applyHotHealing(
-    player: Player,
+    _player: Player,
     healing: number,
     effect: any,
-    log: CombatLogEntry[],
-    summary: RoundSummary
+    _log: CombatLogEntry[],
+    _summary: RoundSummary
   ): Promise<void> {
     const actualHealing = Math.min(healing, player.maxHp - player.hp);
     player.hp += actualHealing;
 
     if (actualHealing > 0) {
-      log.push({
-        type: 'heal_over_time',
-        message: `${player.name} heals ${actualHealing} HP from ${effect.name || effect.type}`,
-        playerId: player.id,
-        healing: actualHealing,
-        isPublic: true,
-        timestamp: Date.now(),
-        priority: 'low' as const
-      });
+      log.push(createHealLog(
+        effect.name || effect.type,
+        player.id,
+        actualHealing,
+        `${player.name} heals ${actualHealing} HP from ${effect.name || effect.type}`,
+        {
+          priority: 'low' as const
+        }
+      ) as CombatLogEntry);
 
       summary.totalHealing += actualHealing;
     }
@@ -298,7 +303,7 @@ export class EndOfRoundProcessor {
   /**
    * Process timed effects (buffs, debuffs)
    */
-  private async processTimedEffects(player: Player, log: CombatLogEntry[]): Promise<void> {
+  private async processTimedEffects(_player: Player, _log: CombatLogEntry[]): Promise<void> {
     // Get all active effects
     const activeEffects = await this.statusEffectManager.getActiveEffects(player.id);
 
@@ -322,18 +327,18 @@ export class EndOfRoundProcessor {
   /**
    * Clean up expired effects
    */
-  private async cleanupExpiredEffects(log: CombatLogEntry[]): Promise<void> {
-    for (const [playerId, player] of this.players.entries()) {
-      await this.statusEffectManager.removeExpiredEffects(playerId);
+  private async cleanupExpiredEffects(_log: CombatLogEntry[]): Promise<void> {
+    for (const [_playerId, player] of this.players.entries()) {
+      await this.statusEffectManager.removeExpiredEffects(_playerId);
     }
   }
 
   /**
    * Update effect durations
    */
-  private async updateEffectDurations(log: CombatLogEntry[]): Promise<void> {
-    for (const [playerId, player] of this.players.entries()) {
-      await this.statusEffectManager.decrementEffectDurations(playerId);
+  private async updateEffectDurations(_log: CombatLogEntry[]): Promise<void> {
+    for (const [_playerId, player] of this.players.entries()) {
+      await this.statusEffectManager.decrementEffectDurations(_playerId);
     }
   }
 
@@ -341,9 +346,9 @@ export class EndOfRoundProcessor {
    * Process Lich-specific end-of-round effects
    */
   private async processLichEndOfRoundEffects(
-    player: Player,
-    log: CombatLogEntry[],
-    summary: RoundSummary
+    _player: Player,
+    _log: CombatLogEntry[],
+    _summary: RoundSummary
   ): Promise<void> {
     // Lich slowly regenerates HP
     const regenAmount = Math.floor(player.maxHp * 0.05); // 5% of max HP
@@ -351,15 +356,16 @@ export class EndOfRoundProcessor {
 
     if (actualHealing > 0) {
       player.hp += actualHealing;
-      log.push({
-        type: 'racial_regeneration',
-        message: `${player.name} regenerates ${actualHealing} HP (Lich passive)`,
-        playerId: player.id,
-        healing: actualHealing,
-        isPublic: true,
-        timestamp: Date.now(),
-        priority: 'low' as const
-      });
+      log.push(createHealLog(
+        player.id,
+        player.id,
+        actualHealing,
+        `${player.name} regenerates ${actualHealing} HP (Lich passive)`,
+        {
+          type: 'racial_regeneration',
+          priority: 'low' as const
+        }
+      ) as CombatLogEntry);
       summary.totalHealing += actualHealing;
     }
   }
@@ -368,9 +374,9 @@ export class EndOfRoundProcessor {
    * Process Orc-specific end-of-round effects
    */
   private async processOrcEndOfRoundEffects(
-    player: Player,
-    log: CombatLogEntry[],
-    summary: RoundSummary
+    _player: Player,
+    _log: CombatLogEntry[],
+    _summary: RoundSummary
   ): Promise<void> {
     // Orcs get rage stacks based on damage taken
     const damageTaken = this.getDamageTakenThisRound(player);
@@ -383,14 +389,17 @@ export class EndOfRoundProcessor {
       });
 
       if (rageStacks > 0) {
-        log.push({
+        log.push(createLogEntry({
           type: 'racial_effect',
           message: `${player.name} gains ${rageStacks} rage stacks from taking damage (Orc passive)`,
-          playerId: player.id,
+          source: player.id,
+          target: player.id,
+          targetId: player.id,
+          details: { _playerId: player.id, rageStacks },
+          public: true,
           isPublic: true,
-          timestamp: Date.now(),
           priority: 'low' as const
-        });
+        }) as CombatLogEntry);
       }
     }
   }
@@ -399,9 +408,9 @@ export class EndOfRoundProcessor {
    * Process Kinfolk-specific end-of-round effects
    */
   private async processKinfolkEndOfRoundEffects(
-    player: Player,
-    log: CombatLogEntry[],
-    summary: RoundSummary
+    _player: Player,
+    _log: CombatLogEntry[],
+    _summary: RoundSummary
   ): Promise<void> {
     // Kinfolk get pack bonuses based on nearby allies
     const nearbyAllies = this.getNearbyAllies(player);
@@ -413,14 +422,17 @@ export class EndOfRoundProcessor {
         defenseBonus: packBonus
       });
 
-      log.push({
+      log.push(createLogEntry({
         type: 'racial_effect',
         message: `${player.name} gains pack bond with ${nearbyAllies.length} allies (Kinfolk passive)`,
-        playerId: player.id,
+        source: player.id,
+        target: player.id,
+        targetId: player.id,
+        details: { _playerId: player.id, allyCount: nearbyAllies.length },
+        public: true,
         isPublic: true,
-        timestamp: Date.now(),
         priority: 'low' as const
-      });
+      }) as CombatLogEntry);
     }
   }
 
@@ -456,22 +468,23 @@ export class EndOfRoundProcessor {
    * Apply corruption damage
    */
   private async applyCorruptionDamage(
-    player: Player,
+    _player: Player,
     damage: number,
-    log: CombatLogEntry[],
-    summary: RoundSummary
+    _log: CombatLogEntry[],
+    _summary: RoundSummary
   ): Promise<void> {
     player.hp = Math.max(0, player.hp - damage);
 
-    log.push({
-      type: 'corruption',
-      message: `${player.name} takes ${damage} corruption damage`,
-      playerId: player.id,
+    log.push(createDamageLog(
+      'corruption',
+      player.id,
       damage,
-      isPublic: true,
-      timestamp: Date.now(),
-      priority: 'high' as const
-    });
+      `${player.name} takes ${damage} corruption damage`,
+      {
+        type: 'corruption',
+        priority: 'high' as const
+      }
+    ) as CombatLogEntry);
 
     summary.totalDamageToPlayers += damage;
 
@@ -484,7 +497,7 @@ export class EndOfRoundProcessor {
   /**
    * Get damage taken by player this round
    */
-  private getDamageTakenThisRound(player: Player): number {
+  private getDamageTakenThisRound(_player: Player): number {
     // This would track damage taken this round
     return (player as any).damageTakenThisRound || 0;
   }
@@ -492,7 +505,7 @@ export class EndOfRoundProcessor {
   /**
    * Get nearby allies for pack bonuses
    */
-  private getNearbyAllies(player: Player): Player[] {
+  private getNearbyAllies(_player: Player): Player[] {
     // For simplicity, consider all alive players as "nearby"
     return Array.from(this.players.values()).filter(p =>
       p.id !== player.id && p.isAlive

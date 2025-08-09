@@ -8,7 +8,7 @@ import { z } from 'zod';
 import logger from '../../utils/logger.js';
 import messages from '../../config/messages/index.js';
 import config from '../../config/index.js';
-import type { StatusEffect, PlayerClass } from '../../types/generated.js';
+import type { PlayerClass } from '../../types/generated.js';
 
 // Status effect schemas
 const VulnerabilityEffectSchema = z.object({
@@ -160,6 +160,7 @@ export class PlayerEffects {
    * @returns Whether the player has the effect
    */
   hasStatusEffect(effectName: string): boolean {
+    // eslint-disable-next-line security/detect-object-injection -- effectName is from game config StatusEffectType enum
     return this.statusEffects && this.statusEffects[effectName] !== undefined;
   }
 
@@ -169,6 +170,7 @@ export class PlayerEffects {
    * @param data - Effect data
    */
   applyStatusEffect(effectName: string, data: any): void {
+    // eslint-disable-next-line security/detect-object-injection -- effectName is from game config StatusEffectType enum
     this.statusEffects[effectName] = data;
   }
 
@@ -178,6 +180,7 @@ export class PlayerEffects {
    */
   removeStatusEffect(effectName: string): void {
     if (this.hasStatusEffect(effectName)) {
+      // eslint-disable-next-line security/detect-object-injection -- effectName is from game config StatusEffectType enum
       delete this.statusEffects[effectName];
     }
   }
@@ -470,12 +473,12 @@ export class PlayerEffects {
    * @param playerClass - Player's class
    * @returns Modified damage after resistance
    */
-  applyDamageResistance(incomingDamage: number, playerClass: PlayerClass): number {
+  applyDamageResistance(incomingDamage: number, _playerClass: PlayerClass): number {
     let modifiedDamage = incomingDamage;
 
     // Apply vulnerability if present - BEFORE armor calculation
     if (this._isVulnerable && this._vulnerabilityIncrease > 0) {
-      const vulnerabilityMultiplier = 1 + this._vulnerabilityIncrease / 100;
+      const vulnerabilityMultiplier = 1 + (this._vulnerabilityIncrease / 100);
       modifiedDamage = Math.floor(modifiedDamage * vulnerabilityMultiplier);
     }
 
@@ -648,7 +651,7 @@ export class PlayerEffects {
       const damageIncrease = vulnEffect.damageIncrease;
 
       // Apply vulnerability multiplier
-      modifiedDamage = Math.floor(baseDamage * (1 + damageIncrease / 100));
+      modifiedDamage = Math.floor(baseDamage * (1 + (damageIncrease / 100)));
     }
 
     return modifiedDamage;

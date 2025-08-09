@@ -3,8 +3,7 @@
  * Handles standard single-target damage abilities
  */
 
-import { secureId } from '../../../../../utils/secureRandom.js';
-import { getCurrentTimestamp } from '../../../../../utils/timestamp.js';
+import { createErrorLog, createActionLog, createDamageLog } from '../../../../../utils/logEntry.js';
 import type { Player, Monster, Ability } from '../../../../../types/generated.js';
 import type {
   AbilityHandler,
@@ -14,9 +13,6 @@ import type {
 import type { GameSystems } from '../../../SystemsFactory.js';
 import { applyThreatForAbility } from '../../abilityRegistryUtils.js';
 
-import config from '../../../../../config/index.js';
-import messages from '../../../../../config/messages/index.js';
-import GameStateUtils from '../../../GameStateUtils.js';
 
 /**
  * Handle basic attack abilities - single target damage
@@ -37,17 +33,10 @@ export const handleAttack: AbilityHandler = (
   coordinationInfo?: CoordinationInfo
 ): boolean => {
   if (!actor || !target || !ability) {
-    log.push({
-      id: secureId('attack-error'),
-      timestamp: getCurrentTimestamp(),
-      type: 'system',
-      source: 'system',
-      message: 'Invalid attack parameters',
-      details: { actor: actor?.id, target: target?.id, ability: ability?.id },
-      public: false,
-      isPublic: false,
-      priority: 'high'
-    });
+    log.push(createErrorLog(
+      'Invalid attack parameters',
+      { actor: actor?.id, target: target?.id, ability: ability?.id }
+    ));
     return false;
   }
 
@@ -57,21 +46,15 @@ export const handleAttack: AbilityHandler = (
   }
 
   // If target is a player (not monster) and is invisible, attack should fail
-  if (target.hasOwnProperty('isAlive') && (target as any)['statusEffects']) {
+  if (Object.prototype.hasOwnProperty.call(target, 'isAlive') && (target as any)['statusEffects']) {
     const targetPlayer = target as Player;
     if (targetPlayer.statusEffects && (targetPlayer.statusEffects as any)['invisible']) {
-      log.push({
-        id: secureId('attack-invisible'),
-        timestamp: getCurrentTimestamp(),
-        type: 'action',
-        source: actor.id,
-        target: target.id,
-        message: `${actor.name} attacks ${(target as Player).name} but misses due to invisibility!`,
-        details: { reason: 'target_invisible' },
-        public: true,
-        isPublic: true,
-        priority: 'medium'
-      });
+      log.push(createActionLog(
+        actor.id,
+        target.id,
+        `${actor.name} attacks ${(target as Player).name} but misses due to invisibility!`,
+        { details: { reason: 'target_invisible' }, priority: 'medium' }
+      ));
       return false;
     }
   }
@@ -90,21 +73,19 @@ export const handleAttack: AbilityHandler = (
     coordinationBonus = Math.floor(Number(baseDamage) * Number(coordinationInfo.bonusMultiplier || 1));
     finalDamage += Number(coordinationBonus);
 
-    log.push({
-      id: secureId('coordination-bonus'),
-      timestamp: getCurrentTimestamp(),
-      type: 'action',
-      source: actor.id,
-      message: `${actor.name} receives coordination bonus: +${coordinationBonus} damage`,
-      details: {
-        coordinationBonus,
-        baseBonus: coordinationInfo.bonusMultiplier,
-        participants: coordinationInfo.participantNames
-      },
-      public: true,
-      isPublic: true,
-      priority: 'medium'
-    });
+    log.push(createActionLog(
+      actor.id,
+      actor.id,
+      `${actor.name} receives coordination bonus: +${coordinationBonus} damage`,
+      {
+        details: {
+          coordinationBonus,
+          baseBonus: coordinationInfo.bonusMultiplier,
+          participants: coordinationInfo.participantNames
+        },
+        priority: 'medium'
+      }
+    ));
   }
 
   // Apply comeback mechanics if active
@@ -114,17 +95,12 @@ export const handleAttack: AbilityHandler = (
     if (comebackBonus > 0) {
       finalDamage += Number(comebackBonus);
 
-      log.push({
-        id: secureId('comeback-bonus'),
-        timestamp: getCurrentTimestamp(),
-        type: 'action',
-        source: actor.id,
-        message: `${actor.name} gets comeback bonus: +${comebackBonus} damage`,
-        details: { comebackBonus },
-        public: true,
-        isPublic: true,
-        priority: 'medium'
-      });
+      log.push(createActionLog(
+        actor.id,
+        actor.id,
+        `${actor.name} gets comeback bonus: +${comebackBonus} damage`,
+        { details: { comebackBonus }, priority: 'medium' }
+      ));
     }
   }
 
@@ -140,40 +116,31 @@ export const handleAttack: AbilityHandler = (
   }) || { success: true, finalDamage, error: null };
 
   if (!damageResult.success) {
-    log.push({
-      id: secureId('attack-failed'),
-      timestamp: getCurrentTimestamp(),
-      type: 'system',
-      source: actor.id,
-      target: target.id,
-      message: 'Attack failed to apply damage',
-      details: { error: damageResult.error },
-      public: false,
-      isPublic: false,
-      priority: 'high'
-    });
+    log.push(createErrorLog(
+      'Attack failed to apply damage',
+      damageResult.error,
+      { source: actor.id, target: target.id }
+    ));
     return false;
   }
 
   // Log the successful attack
   const targetName = (target as Player).name || (target as Monster).name;
-  log.push({
-    id: secureId('attack-success'),
-    timestamp: getCurrentTimestamp(),
-    type: 'damage',
-    source: actor.id,
-    target: target.id,
-    message: `${actor.name} attacks ${targetName} with ${ability['name']} for ${damageResult.finalDamage} damage!`,
-    details: {
-      baseDamage,
-      finalDamage: damageResult.finalDamage,
-      coordinationBonus,
-      modifiers: damageModifiers
-    },
-    public: true,
-    isPublic: true,
-    priority: 'high'
-  });
+  log.push(createDamageLog(
+    actor.id,
+    target.id,
+    damageResult.finalDamage,
+    `${actor.name} attacks ${targetName} with ${ability['name']} for ${damageResult.finalDamage} damage!`,
+    {
+      details: {
+        baseDamage,
+        finalDamage: damageResult.finalDamage,
+        coordinationBonus,
+        modifiers: damageModifiers
+      },
+      priority: 'high'
+    }
+  ));
 
   // Apply threat for this action
   applyThreatForAbility(actor, target, ability, Number(finalDamage), 0, systems);

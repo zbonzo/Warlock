@@ -5,7 +5,6 @@
 
 import config from '../../../config/index.js';
 import logger from '../../../utils/logger.js';
-import messages from '../../../config/messages/index.js';
 
 interface CoordinationBonus {
   bonus: number;
@@ -107,7 +106,7 @@ class CoordinationTracker {
     };
 
     let totalAttackers = 0;
-    for (const [targetId, attackers] of this.coordinationMap) {
+    for (const [, attackers] of this.coordinationMap) {
       if (attackers.length > 1) {
         stats.coordinatedTargets++;
       }

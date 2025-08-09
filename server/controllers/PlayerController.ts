@@ -13,14 +13,10 @@ import errorHandler from '../utils/errorHandler.js';
 import { getCurrentTimestamp } from '../utils/timestamp.js';
 import config from '../config/index.js';
 // Messages are now accessed through the config system
-import { GameRoom } from '../models/GameRoom.js';
 import { Player } from '../models/Player.js';
 import {
   PlayerClass,
-  PlayerRace,
-  ActionResult,
-  JoinGameData,
-  PlayerAction
+  PlayerRace
 } from '../types/generated.js';
 import { Socket, Server as SocketIOServer } from 'socket.io';
 
@@ -57,10 +53,10 @@ export interface PlayerControllerResult {
 export abstract class BaseController<TModel, TCreateInput, TUpdateInput> {
   protected abstract model: TModel;
 
-  abstract create(input: TCreateInput): Promise<TModel>;
-  abstract update(id: string, input: TUpdateInput): Promise<TModel>;
-  abstract findById(id: string): Promise<TModel | null>;
-  abstract delete(id: string): Promise<boolean>;
+  abstract create(_input: TCreateInput): Promise<TModel>;
+  abstract update(_id: string, _input: TUpdateInput): Promise<TModel>;
+  abstract findById(_id: string): Promise<TModel | null>;
+  abstract delete(_id: string): Promise<boolean>;
 }
 
 /**
@@ -509,15 +505,15 @@ export class PlayerController extends BaseController<Player, JoinGameRequest, Pa
   }
 
   // Required abstract method implementations (minimal for now)
-  async create(input: JoinGameRequest): Promise<Player> {
+  async create(_input: JoinGameRequest): Promise<Player> {
     throw new Error('Use handlePlayerJoin instead');
   }
 
-  async update(id: string, input: Partial<Player>): Promise<Player> {
+  async update(_id: string, _input: Partial<Player>): Promise<Player> {
     throw new Error('Use specific update methods instead');
   }
 
-  async findById(id: string): Promise<Player | null> {
+  async findById(_id: string): Promise<Player | null> {
     // This would typically find a player across all games
     // Implementation depends on game service architecture
     // TODO: implement findPlayerById method
@@ -525,7 +521,7 @@ export class PlayerController extends BaseController<Player, JoinGameRequest, Pa
     return null; // temporary
   }
 
-  async delete(id: string): Promise<boolean> {
+  async delete(_id: string): Promise<boolean> {
     throw new Error('Use handlePlayerLeave instead');
   }
 

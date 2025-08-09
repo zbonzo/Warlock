@@ -3,7 +3,6 @@
  * Displays players, their readiness status, and allows the host to start the game
  */
 import React, { useState, useRef } from 'react';
-import { useTheme } from '@contexts/ThemeContext';
 import useMediaQuery from '../../hooks/useMediaQuery';
 import { getPlayerCardSize } from '../../utils/playerCardUtils';
 import type { Player } from '../../types/shared';
@@ -29,9 +28,7 @@ const LobbyPage: React.FC<LobbyPageProps> = ({
   currentPlayerId, 
   onStartGame 
 }) => {
-  const theme = useTheme();
   const isMobile = useMediaQuery('(max-width: 768px)');
-  const [showPlayerDetails, setShowPlayerDetails] = useState<boolean>(false);
   const [copiedCode, setCopiedCode] = useState<boolean>(false);
   const codeInputRef = useRef<HTMLInputElement>(null);
 

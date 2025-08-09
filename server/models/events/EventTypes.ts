@@ -328,7 +328,7 @@ export type GameEvent =
  * Type-safe event handler interface
  */
 export interface EventHandler<T extends GameEvent> {
-  handle(event: T): Promise<void> | void;
+  handle(_event: T): Promise<void> | void;
 }
 
 /**
@@ -447,7 +447,7 @@ export function validateEventData(eventType: EventType, eventData: unknown): { v
  * @returns Array of event types
  */
 export function getEventsByCategory(category: keyof typeof EventCategories): readonly string[] {
-  return EventCategories[category] || [];
+  return Object.prototype.hasOwnProperty.call(EventCategories, category) ? EventCategories[category] : [];
 }
 
 /**

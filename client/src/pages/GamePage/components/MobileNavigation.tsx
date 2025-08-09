@@ -3,7 +3,6 @@
  * Allows switching between player info, actions, and history views
  */
 import React from 'react';
-import { useTheme } from '@contexts/ThemeContext';
 import './MobileNavigation.css';
 
 type TabType = 'action' | 'players' | 'history';
@@ -24,8 +23,6 @@ const MobileNavigation: React.FC<MobileNavigationProps> = ({
   isAlive = true,
   isStunned = false
 }) => {
-  const theme = useTheme();
-  
   return (
     <div className="tab-navigation">
       <button

@@ -50,40 +50,40 @@ export interface LogEntry {
  * Ability handler function signature
  */
 export type AbilityHandler = (
-  actor: Player,
-  target: Player | Monster | string,
-  ability: Ability,
-  log: LogEntry[],
-  systems: GameSystems,
-  coordinationInfo?: CoordinationInfo
+  _actor: Player,
+  _target: Player | Monster | string,
+  _ability: Ability,
+  _log: LogEntry[],
+  _systems: GameSystems,
+  _coordinationInfo?: CoordinationInfo
 ) => boolean;
 
 /**
  * Ability registry interface
  */
 export interface AbilityRegistry {
-  registerClassAbility(abilityType: string, handler: AbilityHandler): void;
-  registerClassAbilities(abilityTypes: string[], handler: AbilityHandler): void;
-  hasClassAbility(abilityType: string): boolean;
+  registerClassAbility(_abilityType: string, _handler: AbilityHandler): void;
+  registerClassAbilities(_abilityTypes: string[], _handler: AbilityHandler): void;
+  hasClassAbility(_abilityType: string): boolean;
   executeClassAbility(
-    abilityType: string,
-    actor: Player,
-    target: Player | Monster | string,
-    ability: Ability,
-    log: LogEntry[],
-    systems: GameSystems,
-    coordinationInfo?: CoordinationInfo
+    _abilityType: string,
+    _actor: Player,
+    _target: Player | Monster | string,
+    _ability: Ability,
+    _log: LogEntry[],
+    _systems: GameSystems,
+    _coordinationInfo?: CoordinationInfo
   ): boolean;
-  registerRacialAbility(abilityType: string, handler: AbilityHandler): void;
-  hasRacialAbility(abilityType: string): boolean;
+  registerRacialAbility(_abilityType: string, _handler: AbilityHandler): void;
+  hasRacialAbility(_abilityType: string): boolean;
   executeRacialAbility(
-    abilityType: string,
-    actor: Player,
-    target: Player | Monster | string,
-    ability: Ability,
-    log: LogEntry[],
-    systems: GameSystems,
-    coordinationInfo?: CoordinationInfo
+    _abilityType: string,
+    _actor: Player,
+    _target: Player | Monster | string,
+    _ability: Ability,
+    _log: LogEntry[],
+    _systems: GameSystems,
+    _coordinationInfo?: CoordinationInfo
   ): boolean;
   getDebugInfo(): Record<string, unknown>;
 }

@@ -8,7 +8,8 @@ import { z } from 'zod';
 import logger from '../../utils/logger.js';
 import messages from '../../config/messages/index.js';
 import config from '../../config/index.js';
-import type { Ability, PlayerAction } from '../../types/generated.js';
+import { getCurrentTimestamp } from '../../utils/timestamp.js';
+import type { Ability } from '../../types/generated.js';
 
 // Ability-related schemas
 const ActionSubmissionSchema = z.object({
@@ -189,12 +190,12 @@ export class PlayerAbilities {
       targetId,
       ...additionalData,
       isValid: true,
-      submissionTime: Date.now(),
+      submissionTime: getCurrentTimestamp(),
     });
 
     this.submittedAction = action;
     this.hasSubmittedAction = true;
-    this.actionSubmissionTime = Date.now();
+    this.actionSubmissionTime = getCurrentTimestamp();
     this.lastValidAction = { ...action };
     this.actionValidationState = 'valid';
 
@@ -290,7 +291,7 @@ export class PlayerAbilities {
     if (this.submittedAction) {
       this.submittedAction.isValid = false;
       this.submittedAction.invalidationReason = reason;
-      this.submittedAction.invalidationTime = Date.now();
+      this.submittedAction.invalidationTime = getCurrentTimestamp();
     }
 
     this.hasSubmittedAction = false;
@@ -321,7 +322,10 @@ export class PlayerAbilities {
    */
   isAbilityOnCooldown(abilityType: string): boolean {
     return (
+      Object.prototype.hasOwnProperty.call(this.abilityCooldowns, abilityType) &&
+      // eslint-disable-next-line security/detect-object-injection -- abilityType is from game config, not user input
       this.abilityCooldowns[abilityType] !== undefined &&
+      // eslint-disable-next-line security/detect-object-injection -- abilityType is from game config, not user input
       this.abilityCooldowns[abilityType] > 0
     );
   }
@@ -332,7 +336,8 @@ export class PlayerAbilities {
    * @returns Turns remaining on cooldown (0 if not on cooldown)
    */
   getAbilityCooldown(abilityType: string): number {
-    return this.abilityCooldowns[abilityType] || 0;
+    // eslint-disable-next-line security/detect-object-injection -- abilityType is from game config, not user input
+    return Object.prototype.hasOwnProperty.call(this.abilityCooldowns, abilityType) ? (this.abilityCooldowns[abilityType] || 0) : 0;
   }
 
   /**
@@ -343,6 +348,7 @@ export class PlayerAbilities {
   putAbilityOnCooldown(abilityType: string, cooldownTurns: number): void {
     if (cooldownTurns > 0) {
       // Add 1 to the cooldown to account for the immediate countdown at end of turn
+      // eslint-disable-next-line security/detect-object-injection -- abilityType is from game config, not user input
       this.abilityCooldowns[abilityType] = cooldownTurns + 1;
 
       logger.debug(
@@ -351,6 +357,7 @@ export class PlayerAbilities {
           {
             playerName: this.playerName,
             abilityType,
+            // eslint-disable-next-line security/detect-object-injection -- abilityType is from game config, not user input
             turnsRemaining: this.abilityCooldowns[abilityType],
           }
         )
@@ -382,12 +389,17 @@ export class PlayerAbilities {
     const expiredCooldowns: string[] = [];
 
     for (const abilityType in this.abilityCooldowns) {
-      if (this.abilityCooldowns[abilityType] != null && this.abilityCooldowns[abilityType] > 0) {
+      if (Object.prototype.hasOwnProperty.call(this.abilityCooldowns, abilityType) &&
+          // eslint-disable-next-line security/detect-object-injection -- abilityType from internal iteration
+          this.abilityCooldowns[abilityType] != null && this.abilityCooldowns[abilityType] > 0) {
+        // eslint-disable-next-line security/detect-object-injection -- abilityType from internal iteration
         this.abilityCooldowns[abilityType]!--;
 
         // Remove cooldown if it reaches 0
+        // eslint-disable-next-line security/detect-object-injection -- abilityType from internal iteration
         if (this.abilityCooldowns[abilityType]! <= 0) {
           expiredCooldowns.push(abilityType);
+          // eslint-disable-next-line security/detect-object-injection -- abilityType from internal iteration
           delete this.abilityCooldowns[abilityType];
         }
       }

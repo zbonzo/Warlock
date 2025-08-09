@@ -22,10 +22,8 @@ import SocketEventRouter from './events/SocketEventRouter.js';
 import {
   GameState as GameStateType,
   GameCode,
-  PlayerAction,
   GamePhase as GamePhaseEnum,
   Monster,
-  GameRules as GameRulesType,
   ActionResult,
   ValidationResult,
   Schemas
@@ -111,7 +109,7 @@ export class GameRoom {
   private phaseDebug = createDebugLogger('phaseTransitions', 'GameRoom:Phase');
 
 
-  constructor(code: GameCode, options: GameRoomOptions = {}) {
+  constructor(code: GameCode, _options: GameRoomOptions = {}) {
     this.code = code;
 
     // Initialize domain models
@@ -662,6 +660,9 @@ export class GameRoom {
     const playersRecord: Record<string, any> = {};
 
     for (const [id, player] of (this.gameState as any).players) {
+      if (Object.prototype.hasOwnProperty.call(playersRecord, id)) {
+        continue; // Skip if already exists to avoid injection
+      }
       playersRecord[id] = (player as any).toJSON();
     }
 

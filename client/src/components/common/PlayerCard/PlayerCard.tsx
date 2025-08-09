@@ -3,7 +3,7 @@
  * Used across all player displays with consistent styling and avatar backgrounds
  */
 import React from 'react';
-import type { Player, StatusEffect } from '../../../types/shared';
+import type { Player } from '../../../types/shared';
 import './PlayerCard.css';
 
 export interface PlayerCardProps {

@@ -173,7 +173,7 @@ export const useGameEvents = (
         // Will be handled by action state hook
       }
     }
-  }, [(me as any)?.submissionStatus, resetActionState, setPhase]);
+  }, [me, resetActionState, setPhase]);
 
   // Handle round results
   useEffect(() => {
@@ -391,7 +391,7 @@ export const useGameEvents = (
       socket.off('phase:changed', handlePhaseChanged);
       socket.off('round:results', handleRoundResults);
     };
-  }, [socket, setPhase, resetActionState, setReadyClicked, isMobile, showMobileActionWizard, resetMobileWizard, showBattleResultsModal, me]);
+  }, [socket, setPhase, resetActionState, setReadyClicked, isMobile, showMobileActionWizard, resetMobileWizard, showBattleResultsModal, me, addEventLog]);
 
   // Handle adaptability modal events
   useEffect(() => {

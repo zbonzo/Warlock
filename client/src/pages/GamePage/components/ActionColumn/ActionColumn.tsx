@@ -3,11 +3,9 @@
  * Refactored and split into smaller components for better maintainability
  */
 import React, { useState, useEffect } from 'react';
-import { useTheme } from '@contexts/ThemeContext';
 import RacialAbilityCard from '@components/game/RacialAbilityCard';
 import TargetSelector from '@components/game/TargetSelector';
 import EventsLog from '@components/game/EventsLog';
-import { ICONS } from '../../../../config/constants';
 import { getActionButtonText, getActionButtonVariant } from '../../../../utils/actionButtonText';
 import RuneButton from '../../../../components/ui/RuneButton';
 import { Player, Monster, Ability, GameEvent } from '@/types/game';
@@ -70,8 +68,6 @@ const ActionColumn: React.FC<ActionColumnProps> = ({
   onSubmitAction,
   onReadyClick,
 }) => {
-  const theme = useTheme();
-  
   // Track submission state
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   
@@ -158,7 +154,7 @@ const ActionColumn: React.FC<ActionColumnProps> = ({
             <RuneButton
               variant={getActionButtonVariant(actionType || '', submitted)}
               onClick={submitted ? onReadyClick : handleSubmitAction}
-              disabled={(!actionType || !selectedTarget) && !submitted || isSubmitting}
+              disabled={((!actionType || !selectedTarget) && !submitted) || isSubmitting}
             >
               {isSubmitting ? (
                 'Submitting...'

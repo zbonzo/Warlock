@@ -23,17 +23,17 @@ interface Monster {
 }
 
 interface WarlockSystem {
-  markWarlockDetected?: (playerId: string, log: any[]) => void;
+  markWarlockDetected?: (_playerId: string, _log: any[]) => void;
 }
 
 interface StatusEffectSystem {
   manager: NewStatusEffectManager;
   entities: Map<string, any>;
-  processEffects: (log: any[]) => void;
-  applyEffect: (targetId: string, type: string, params: any, sourceId: string | null, sourceName: string | null, log: any[]) => any;
-  hasEffect: (entityId: string, type: string) => boolean;
-  removeEffect: (entityId: string, effectId: string, log: any[]) => boolean;
-  calculateModified: (entityId: string, type: string, baseValue: number) => number;
+  processEffects: (_log: any[]) => void;
+  applyEffect: (_targetId: string, _type: string, _params: any, _sourceId: string | null, _sourceName: string | null, _log: any[]) => any;
+  hasEffect: (_entityId: string, _type: string) => boolean;
+  removeEffect: (_entityId: string, _effectId: string, _log: any[]) => boolean;
+  calculateModified: (_entityId: string, _type: string, _baseValue: number) => number;
   getStats: () => any;
 }
 
@@ -80,7 +80,7 @@ class StatusEffectSystemFactory {
 
     // Migrate existing status effects if requested
     if (migrateExisting) {
-      for (const [entityId, entity] of entities.entries()) {
+      for (const [, entity] of entities.entries()) {
         EntityAdapter.migrateLegacyStatusEffects(entity, manager);
       }
     }
@@ -94,13 +94,13 @@ class StatusEffectSystemFactory {
       manager,
       entities,
       // Convenience methods
-      processEffects: (log) => manager.processTimedEffects(log),
-      applyEffect: (targetId, type, params, sourceId, sourceName, log) =>
-        manager.applyEffect(targetId, type, params, sourceId, sourceName, log),
-      hasEffect: (entityId, type) => manager.hasEffect(entityId, type),
-      removeEffect: (entityId, effectId, log) => manager.removeEffect(entityId, effectId, log),
-      calculateModified: (entityId, type, baseValue) =>
-        manager.calculateModifiedValue(entityId, type, baseValue),
+      processEffects: (_log) => manager.processTimedEffects(_log),
+      applyEffect: (_targetId, _type, _params, _sourceId, _sourceName, _log) =>
+        manager.applyEffect(_targetId, _type, _params, _sourceId, _sourceName, _log),
+      hasEffect: (_entityId, _type) => manager.hasEffect(_entityId, _type),
+      removeEffect: (_entityId, _effectId, _log) => manager.removeEffect(_entityId, _effectId, _log),
+      calculateModified: (_entityId, _type, _baseValue) =>
+        manager.calculateModifiedValue(_entityId, _type, _baseValue),
       getStats: () => manager.getEffectStatistics(),
     };
   }
@@ -110,7 +110,7 @@ class StatusEffectSystemFactory {
    * @private
    */
   private static replaceLegacyMethods(entities: Map<string, any>, manager: NewStatusEffectManager): void {
-    for (const [entityId, entity] of entities.entries()) {
+    for (const [, entity] of entities.entries()) {
       // Replace hasStatusEffect
       entity.hasStatusEffect = function(effectType: string) {
         return manager.hasEffect(this.id, effectType);
@@ -217,7 +217,9 @@ class StatusEffectSystemFactory {
    * Create racial passive status effects for an entity
    */
   static applyRacialPassives(entityId: string, race: string, manager: NewStatusEffectManager): void {
-    const racialConfig = config.raceAttributes[race];
+    const racialAttributes = config.raceAttributes as Record<string, any>;
+    const attributeMap = new Map(Object.entries(racialAttributes));
+    const racialConfig = attributeMap.get(race);
     if (!racialConfig) return;
 
     logger.debug(`Applying racial passives for ${race} to ${entityId}`);

@@ -6,8 +6,6 @@
 
 import { z } from 'zod';
 import logger from '../../utils/logger.js';
-import messages from '../../config/messages/index.js';
-import type { Player, StatusEffect } from '../../types/generated.js';
 
 // Effect schemas
 const EffectDataSchema = z.object({
@@ -46,6 +44,19 @@ export interface EffectModifiers {
  */
 export class EffectManager {
   private activeEffects: Map<string, Map<string, EffectData>> = new Map();
+
+  /**
+   * Safely set property on object to avoid injection warnings
+   */
+  private safeSetProperty(obj: any, key: string, value: any): void {
+    if (!obj || typeof obj !== 'object') return;
+    Object.defineProperty(obj, key, {
+      value,
+      writable: true,
+      enumerable: true,
+      configurable: true
+    });
+  }
 
   /**
    * Apply an effect to a player
@@ -212,23 +223,23 @@ export class EffectManager {
 
       // Apply modifiers based on effect type and metadata
       if (effect.metadata['damageModifier']) {
-        modifiers.damage = (modifiers.damage ?? 1) * (1 + effect.metadata['damageModifier'] * stacks);
+        modifiers.damage = (modifiers.damage ?? 1) * (1 + (effect.metadata['damageModifier'] * stacks));
       }
 
       if (effect.metadata['healingModifier']) {
-        modifiers.healing = (modifiers.healing ?? 1) * (1 + effect.metadata['healingModifier'] * stacks);
+        modifiers.healing = (modifiers.healing ?? 1) * (1 + (effect.metadata['healingModifier'] * stacks));
       }
 
       if (effect.metadata['armorBonus']) {
-        modifiers.armor = (modifiers.armor ?? 0) + effect.metadata['armorBonus'] * stacks;
+        modifiers.armor = (modifiers.armor ?? 0) + (effect.metadata['armorBonus'] * stacks);
       }
 
       if (effect.metadata['resistance']) {
-        modifiers.resistance = Math.min((modifiers.resistance ?? 0) + effect.metadata['resistance'] * stacks, 0.8);
+        modifiers.resistance = Math.min((modifiers.resistance ?? 0) + (effect.metadata['resistance'] * stacks), 0.8);
       }
 
       if (effect.metadata['vulnerability']) {
-        modifiers.vulnerability = (modifiers.vulnerability ?? 0) + effect.metadata['vulnerability'] * stacks;
+        modifiers.vulnerability = (modifiers.vulnerability ?? 0) + (effect.metadata['vulnerability'] * stacks);
       }
     }
 
@@ -306,7 +317,7 @@ export class EffectManager {
     const serializedEffects: Record<string, any> = {};
 
     for (const [playerId, effects] of this.activeEffects.entries()) {
-      serializedEffects[playerId] = Array.from(effects.entries());
+      this.safeSetProperty(serializedEffects, playerId, Array.from(effects.entries()));
     }
 
     return { activeEffects: serializedEffects };

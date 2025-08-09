@@ -39,8 +39,6 @@ interface JoinGamePageProps {
  * Enhanced JoinGamePage with real-time duplicate name checking
  */
 const JoinGamePage: React.FC<JoinGamePageProps> = ({ onCreateGame, onJoinGame, onReconnect }) => {
-  const theme = useTheme();
-
   // Socket connection for checking duplicates
   const { socket, connected } = useSocket(SOCKET_URL);
 
@@ -120,18 +118,19 @@ const JoinGamePage: React.FC<JoinGamePageProps> = ({ onCreateGame, onJoinGame, o
   /**
    * Debounced duplicate name checking
    */
-  const checkDuplicateName = useCallback(
-    debounce((nameToCheck: string, gameCodeToCheck: string) => {
+  const checkDuplicateName = useCallback((nameToCheck: string, gameCodeToCheck: string) => {
+    const debouncedCheck = debounce((name: string, code: string) => {
       if (!socket || !connected) return;
 
       setIsCheckingDuplicate(true);
       (socket as any).emit('checkNameAvailability', {
-        playerName: nameToCheck,
-        gameCode: gameCodeToCheck,
+        playerName: name,
+        gameCode: code,
       });
-    }, 500),
-    [socket, connected]
-  );
+    }, 500);
+    
+    debouncedCheck(nameToCheck, gameCodeToCheck);
+  }, [socket, connected]);
 
   /**
    * Client-side name validation
@@ -156,7 +155,7 @@ const JoinGamePage: React.FC<JoinGamePageProps> = ({ onCreateGame, onJoinGame, o
     }
 
     // Check for dangerous characters
-    const dangerousChars = /[<>{}()&;|`$\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/;
+    const dangerousChars = /[<>{}()&;|`$\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/;
     if (dangerousChars.test(trimmedName)) {
       return {
         isValid: false,
@@ -236,7 +235,7 @@ const JoinGamePage: React.FC<JoinGamePageProps> = ({ onCreateGame, onJoinGame, o
 
     // Filter dangerous characters in real-time
     newValue = newValue
-      .replace(/[<>{}()&;|`$\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '')
+      .replace(/[<>{}()&;|`$\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, '')
       .substring(0, 20);
 
     // Prevent multiple consecutive spaces
@@ -318,7 +317,7 @@ const JoinGamePage: React.FC<JoinGamePageProps> = ({ onCreateGame, onJoinGame, o
       'text'
     );
     const filteredText = pastedText
-      .replace(/[<>{}()&;|`$\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '')
+      .replace(/[<>{}()&;|`$\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, '')
       .replace(/\s{2,}/g, ' ')
       .substring(0, 20);
 

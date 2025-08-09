@@ -3,7 +3,6 @@
  */
 import React, { useState, useEffect, useMemo } from 'react';
 import { useTheme } from '@contexts/ThemeContext';
-import { useAppContext } from '@contexts/AppContext';
 import PlayerColumn from './components/PlayerColumn';
 import HistoryColumn from './components/HistoryColumn';
 import MobileNavigation from './components/MobileNavigation';
@@ -11,7 +10,6 @@ import { ActionWizard } from './components/ActionWizard';
 import { GameStateDrawer } from './components/GameStateDrawer';
 import AdaptabilityModal from '@components/modals/AdaptabilityModal';
 import ReconnectionToggle from '../../components/ui/ReconnectionToggle';
-import reconnectionStorage from '../../utils/reconnectionStorage';
 import BattleResultsModal from '@components/modals/BattleResultsModal';
 import DamageEffects from '@components/game/DamageEffects/DamageEffects';
 import GameHeader from '@components/game/GameHeader';
@@ -55,7 +53,6 @@ const GamePage: React.FC<GamePageProps> = ({
   onSubmitAction,
 }) => {
   const theme = useTheme();
-  const { addEventLog } = useAppContext();
 
   // Game state
   const [phase, setPhase] = useState<'action' | 'results'>('action');
@@ -166,22 +163,6 @@ const GamePage: React.FC<GamePageProps> = ({
    */
   const handleReadyClick = (): void => {
     setReadyClicked(true);
-  };
-
-  /**
-   * Handle ability replacement from Adaptability modal
-   */
-  const handleReplaceAbility = (oldAbilityType: string, newAbilityType: string, level: string): void => {
-    console.log('Replacing ability:', { oldAbilityType, newAbilityType, level });
-    
-    socket?.emit('replaceAbility', {
-      gameCode,
-      oldAbilityType,
-      newAbilityType,
-      level: parseInt(level),
-    });
-
-    modalState.closeAdaptabilityModal();
   };
 
   // Early return if essential data is missing

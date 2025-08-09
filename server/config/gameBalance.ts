@@ -472,11 +472,11 @@ export function calculateMonsterHp(level: number): number {
   if (monster.useExponentialScaling) {
     // Exponential formula: baseHp * (level^1.3) + (level-1) * hpPerLevel
     return Math.floor(
-      monster.baseHp * Math.pow(level, 1.3) + (level - 1) * monster.hpPerLevel
+      (monster.baseHp * Math.pow(level, 1.3)) + ((level - 1) * monster.hpPerLevel)
     );
   }
   // Fallback to linear scaling
-  return monster.baseHp + (level - 1) * monster.hpPerLevel;
+  return monster.baseHp + ((level - 1) * monster.hpPerLevel);
 }
 
 /**
@@ -524,7 +524,7 @@ export function calculateConversionChance(
 
   const rawChance = Math.min(
     maxChance,
-    baseChance + (warlockCount / totalPlayers) * scalingFactor
+    baseChance + ((warlockCount / totalPlayers) * scalingFactor)
   );
   return rawChance * modifier;
 }
@@ -576,7 +576,7 @@ export function calculateCoordinationBonus(
   }
 
   const totalBonus = maxCoordinators * bonusPercent;
-  return Math.floor(baseAmount * (1 + totalBonus / 100));
+  return Math.floor(baseAmount * (1 + (totalBonus / 100)));
 }
 
 /**
@@ -619,11 +619,11 @@ export function applyComebackBonus(
   switch (type) {
     case 'damage':
       return Math.floor(
-        baseAmount * (1 + comebackMechanics.damageIncrease / 100)
+        baseAmount * (1 + (comebackMechanics.damageIncrease / 100))
       );
     case 'healing':
       return Math.floor(
-        baseAmount * (1 + comebackMechanics.healingIncrease / 100)
+        baseAmount * (1 + (comebackMechanics.healingIncrease / 100))
       );
     case 'armor':
       return baseAmount + comebackMechanics.armorIncrease;
@@ -651,11 +651,13 @@ export function calculateStats(race: string, className: string): PlayerStats | n
   // Get base stats from config
   const baseHp = characterConfig.player?.baseHp || 100;
   const baseArmor = characterConfig.player?.baseArmor || 0;
-  const baseDamageMod = characterConfig.player?.baseDamageMod || 1.0;
+  // const baseDamageMod = characterConfig.player?.baseDamageMod || 1.0; // Unused variable
 
   // Get race and class modifiers
-  const raceAttributes = characterConfig.raceAttributes[race] || {};
-  const classAttributes = characterConfig.classAttributes[className] || {};
+  const raceAttributeMap = new Map(Object.entries(characterConfig.raceAttributes || {}));
+  const classAttributeMap = new Map(Object.entries(characterConfig.classAttributes || {}));
+  const raceAttributes = raceAttributeMap.get(race) || {};
+  const classAttributes = classAttributeMap.get(className) || {};
 
   // Calculate final stats
   const hpModifier =

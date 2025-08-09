@@ -6,13 +6,11 @@
 
 import config from '../../config/index.js';
 import logger from '../../utils/logger.js';
-import { secureId } from '../../utils/secureRandom.js';
+import { createSystemLog, createLogEntry } from '../../utils/logEntry.js';
 // Messages are now accessed through the config system
 import type { GameRoom } from '../GameRoom.js';
-import type { Player } from '../Player.js';
 import type { Ability } from '../../types/generated.js';
 import type { LogEntry } from '../../types/utilities.js';
-import type { ActionProcessor } from './ActionProcessor.js';
 
 /**
  * Passive ability activation record
@@ -23,13 +21,6 @@ interface PassiveActivation {
   log: LogEntry[];
 }
 
-/**
- * Action results from processing
- */
-interface ActionResults {
-  results: any[];
-  coordination: any;
-}
 
 /**
  * GameStateManager handles game progression and state management
@@ -153,16 +144,15 @@ export class GameStateManager {
    * Handle level up events
    */
   private handleLevelUp(oldLevel: number, log: LogEntry[]): void {
-    const levelUpEntry: LogEntry = {
-      id: secureId('level-up'),
-      timestamp: Date.now(),
-      type: 'system',
-      source: 'game',
-      isPublic: true,
-      priority: 'high' as const,
-      message: `🎉 Level Up! The party has reached level ${(this.gameRoom.gamePhase as any)['level'] || 1}!`,
-      details: { eventType: 'level_up' }
-    };
+    const levelUpEntry: LogEntry = createSystemLog(
+      `🎉 Level Up! The party has reached level ${(this.gameRoom.gamePhase as any)['level'] || 1}!`,
+      { eventType: 'level_up' },
+      {
+        source: 'game',
+        isPublic: true,
+        priority: 'high' as const
+      }
+    ) as LogEntry;
     log.push(levelUpEntry);
 
     // Unlock new abilities for all players
@@ -221,17 +211,16 @@ export class GameStateManager {
 
       if (newlyUnlocked.length > 0) {
         const abilityNames = newlyUnlocked.map(a => a.name).join(', ');
-        const unlockedEntry: LogEntry = {
-          id: secureId('ability-unlock'),
-          timestamp: Date.now(),
-          type: 'system',
-          source: 'game',
-          isPublic: true,
-          priority: 'high' as const,
-          details: { eventType: 'ability_unlock' },
-          target: (player as any)['id'],
-          message: `⚡ ${(player as any)['name']} unlocked: ${abilityNames}`
-        };
+        const unlockedEntry: LogEntry = createSystemLog(
+          `⚡ ${(player as any)['name']} unlocked: ${abilityNames}`,
+          { eventType: 'ability_unlock' },
+          {
+            source: 'game',
+            target: (player as any)['id'],
+            isPublic: true,
+            priority: 'high' as const
+          }
+        ) as LogEntry;
         log.push(unlockedEntry);
       }
 
@@ -353,7 +342,7 @@ export class GameStateManager {
     if (!monster) return baseLevel;
 
     // Adjust based on monster health
-    const monsterHealthFactor = Math.floor((1 - monsterHp / (monster?.maxHp || 100)) * 2);
+    const monsterHealthFactor = Math.floor((1 - (monsterHp / (monster?.maxHp || 100))) * 2);
 
     return Math.min(baseLevel + monsterHealthFactor, (config as any)['maxLevel'] || 10);
   }
@@ -367,17 +356,16 @@ export class GameStateManager {
     (player as any)['maxHp'] = ((player as any)['maxHp'] || 100) + healthBonus;
     (player as any)['hp'] = Math.min(((player as any)['hp'] || 100) + healthBonus, (player as any)['maxHp']);
 
-    const levelUpBonusEntry: LogEntry = {
-      id: secureId('level-up-bonus'),
-      timestamp: Date.now(),
-      type: 'system',
-      source: 'game',
-      isPublic: true,
-      priority: 'medium' as const,
-      details: { eventType: 'level_up_bonus' },
-      target: (player as any)['id'],
-      message: `❤️ ${(player as any)['name']} gains ${healthBonus} max HP from leveling up!`
-    };
+    const levelUpBonusEntry: LogEntry = createSystemLog(
+      `❤️ ${(player as any)['name']} gains ${healthBonus} max HP from leveling up!`,
+      { eventType: 'level_up_bonus' },
+      {
+        source: 'game',
+        target: (player as any)['id'],
+        isPublic: true,
+        priority: 'medium' as const
+      }
+    ) as LogEntry;
     log.push(levelUpBonusEntry);
   }
 
@@ -393,16 +381,15 @@ export class GameStateManager {
     monster.maxHp = (monster.maxHp || 100) + healthBonus;
     monster.hp = (monster.hp || 100) + healthBonus;
 
-    const monsterEnhanceEntry: LogEntry = {
-      id: secureId('monster-enhancement'),
-      timestamp: Date.now(),
-      type: 'system',
-      source: 'monster',
-      isPublic: true,
-      priority: 'high' as const,
-      details: { eventType: 'monster_enhancement' },
-      message: `👹 The monster grows stronger with the party's experience!`
-    };
+    const monsterEnhanceEntry: LogEntry = createSystemLog(
+      `👹 The monster grows stronger with the party's experience!`,
+      { eventType: 'monster_enhancement' },
+      {
+        source: 'monster',
+        isPublic: true,
+        priority: 'high' as const
+      }
+    ) as LogEntry;
     log.push(monsterEnhanceEntry);
   }
 
@@ -428,17 +415,16 @@ export class GameStateManager {
     (player as any)['isAlive'] = false;
     (this.gameRoom.gameState as any)['aliveCount'] = ((this.gameRoom.gameState as any)['aliveCount'] || 0) - 1;
 
-    const deathEntry: LogEntry = {
-      id: secureId('player-death'),
-      timestamp: Date.now(),
+    const deathEntry: LogEntry = createLogEntry({
       type: 'status',
       source: 'game',
-      isPublic: true,
-      priority: 'critical' as const,
-      details: { eventType: 'player_death' },
       target: (player as any)['id'],
-      message: `💀 ${(player as any)['name']} has fallen!`
-    };
+      message: `💀 ${(player as any)['name']} has fallen!`,
+      details: { eventType: 'player_death' },
+      public: true,
+      isPublic: true,
+      priority: 'critical' as const
+    }) as LogEntry;
     log.push(deathEntry);
 
     // Process death-related effects
@@ -454,17 +440,16 @@ export class GameStateManager {
       // Pack hunting effects
       const packBonus = this.calculatePackHuntingBonus(player);
       if (packBonus > 0) {
-        const kinfolkEntry: LogEntry = {
-          id: secureId('kinfolk-pack-hunting'),
-          timestamp: Date.now(),
+        const kinfolkEntry: LogEntry = createLogEntry({
           type: 'action',
           source: player.id,
-          isPublic: true,
-          priority: 'high' as const,
-          details: { eventType: 'kinfolk_pack_hunting' },
           target: (player as any)['id'],
-          message: `🐺 ${(player as any)['name']} benefits from pack hunting instincts!`
-        };
+          message: `🐺 ${(player as any)['name']} benefits from pack hunting instincts!`,
+          details: { eventType: 'kinfolk_pack_hunting' },
+          public: true,
+          isPublic: true,
+          priority: 'high' as const
+        }) as LogEntry;
         log.push(kinfolkEntry);
       }
     }
@@ -499,17 +484,16 @@ export class GameStateManager {
       // Process class effects
       const bonus = this.calculateClassBonus(player);
       if (bonus > 0) {
-        const classEntry: LogEntry = {
-          id: secureId('class-effect'),
-          timestamp: Date.now(),
-          type: 'system',
-          source: 'game',
-          isPublic: true,
-          priority: 'medium' as const,
-          details: { eventType: 'class_effect' },
-          target: (player as any)['id'],
-          message: `⚡ ${(player as any)['name']}'s class abilities intensify!`
-        };
+        const classEntry: LogEntry = createSystemLog(
+          `⚡ ${(player as any)['name']}'s class abilities intensify!`,
+          { eventType: 'class_effect' },
+          {
+            source: 'game',
+            target: (player as any)['id'],
+            isPublic: true,
+            priority: 'medium' as const
+          }
+        ) as LogEntry;
         log.push(classEntry);
       }
     }
@@ -525,17 +509,16 @@ export class GameStateManager {
       (player as any)['classEffects']['relentlessFury']['damage'] =
         ((player as any)['classEffects']['relentlessFury']['damage'] || 0) + furyBonus;
 
-      const furyEntry: LogEntry = {
-        id: secureId('class-level-up'),
-        timestamp: Date.now(),
-        type: 'system',
-        source: 'game',
-        isPublic: true,
-        priority: 'high' as const,
-        details: { eventType: 'class_level_up' },
-        target: (player as any)['id'],
-        message: `🔥 ${(player as any)['name']}'s abilities grow stronger! (+${furyBonus} bonus damage)`
-      };
+      const furyEntry: LogEntry = createSystemLog(
+        `🔥 ${(player as any)['name']}'s abilities grow stronger! (+${furyBonus} bonus damage)`,
+        { eventType: 'class_level_up' },
+        {
+          source: 'game',
+          target: (player as any)['id'],
+          isPublic: true,
+          priority: 'high' as const
+        }
+      ) as LogEntry;
       log.push(furyEntry);
     }
   }
@@ -561,16 +544,15 @@ export class GameStateManager {
 
     // Check win conditions
     if (monster && monster.hp <= 0) {
-      const victoryEntry: LogEntry = {
-        id: secureId('game-victory'),
-        timestamp: Date.now(),
+      const victoryEntry: LogEntry = createLogEntry({
         type: 'phase',
         source: 'game',
-        isPublic: true,
-        priority: 'critical' as const,
+        message: '🎉 Victory! The monster has been defeated!',
         details: { eventType: 'game_victory' },
-        message: '🎉 Victory! The monster has been defeated!'
-      };
+        public: true,
+        isPublic: true,
+        priority: 'critical' as const
+      }) as LogEntry;
       log.push(victoryEntry);
       (this.gameRoom.gamePhase as any)['phase'] = 'ended';
       (this.gameRoom as any)['victory'] = true;
@@ -579,16 +561,15 @@ export class GameStateManager {
 
     // Check loss conditions
     if (alivePlayers.length === 0) {
-      const defeatEntry: LogEntry = {
-        id: secureId('game-defeat'),
-        timestamp: Date.now(),
+      const defeatEntry: LogEntry = createLogEntry({
         type: 'phase',
         source: 'game',
-        isPublic: true,
-        priority: 'critical' as const,
+        message: '💀 Defeat! All heroes have fallen...',
         details: { eventType: 'game_defeat' },
-        message: '💀 Defeat! All heroes have fallen...'
-      };
+        public: true,
+        isPublic: true,
+        priority: 'critical' as const
+      }) as LogEntry;
       log.push(defeatEntry);
       (this.gameRoom.gamePhase as any)['phase'] = 'ended';
       (this.gameRoom as any)['victory'] = false;
@@ -621,7 +602,7 @@ export class GameStateManager {
 
   private calculateClassBonus(player: any): number {
     // Implement class bonus calculation
-    const missingHpRatio = 1 - ((player as any)['hp'] || 100) / ((player as any)['maxHp'] || 100);
+    const missingHpRatio = 1 - (((player as any)['hp'] || 100) / ((player as any)['maxHp'] || 100));
     return missingHpRatio * 0.2; // 20% bonus when at low health
   }
 

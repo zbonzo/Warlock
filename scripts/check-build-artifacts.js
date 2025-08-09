@@ -9,7 +9,7 @@ const path = require('path');
 
 const BUILD_ARTIFACT_PATTERNS = [
   '**/*.js',     // JavaScript files
-  '**/*.d.ts',   // TypeScript declaration files  
+  '**/*.d.ts',   // TypeScript declaration files
   '**/*.js.map', // Source map files
   '**/*.d.ts.map' // Declaration map files
 ];
@@ -38,7 +38,7 @@ function isAllowedPath(filePath) {
       return true;
     }
   }
-  
+
   // Allow specific root-level files
   const fileName = path.basename(filePath);
   const rootLevelAllowed = [
@@ -52,26 +52,26 @@ function isAllowedPath(filePath) {
     'jest.config.js',
     'craco.config.js'
   ];
-  
+
   if (rootLevelAllowed.includes(fileName) && !filePath.includes('/')) {
     return true;
   }
-  
+
   return false;
 }
 
 function findFilesRecursively(dir, extensions) {
   let results = [];
-  
+
   if (!fs.existsSync(dir)) {
     return results;
   }
-  
+
   const items = fs.readdirSync(dir, { withFileTypes: true });
-  
+
   for (const item of items) {
     const fullPath = path.join(dir, item.name);
-    
+
     if (item.isDirectory()) {
       // Skip node_modules and other build directories
       if (!ALLOWED_DIRECTORIES.includes(item.name)) {
@@ -84,22 +84,22 @@ function findFilesRecursively(dir, extensions) {
       }
     }
   }
-  
+
   return results;
 }
 
 function checkBuildArtifacts() {
-  let foundArtifacts = [];
-  
+  const foundArtifacts = [];
+
   const targetExtensions = ['.js', '.d.ts', '.js.map', '.d.ts.map'];
-  
+
   for (const sourceDir of SOURCE_DIRECTORIES) {
     if (!fs.existsSync(sourceDir)) {
       continue;
     }
-    
+
     const files = findFilesRecursively(sourceDir, targetExtensions);
-    
+
     for (const file of files) {
       if (!isAllowedPath(file)) {
         foundArtifacts.push({
@@ -110,40 +110,40 @@ function checkBuildArtifacts() {
       }
     }
   }
-  
+
   return foundArtifacts;
 }
 
 function main() {
   console.log('🔍 Checking for build artifacts in source directories...');
-  
+
   const artifacts = checkBuildArtifacts();
-  
+
   if (artifacts.length === 0) {
     console.log('✅ No build artifacts found in source directories');
     process.exit(0);
   }
-  
+
   console.log(`⚠️  Found ${artifacts.length} build artifacts in source directories:`);
   console.log('');
-  
+
   // Group by type for better reporting
   const byType = artifacts.reduce((acc, artifact) => {
     if (!acc[artifact.type]) acc[artifact.type] = [];
     acc[artifact.type].push(artifact.file);
     return acc;
   }, {});
-  
+
   for (const [type, files] of Object.entries(byType)) {
     console.log(`${type} files (${files.length}):`);
     files.forEach(file => console.log(`  - ${file}`));
     console.log('');
   }
-  
+
   console.log('💡 These files should be in dist/ directories instead of source directories');
   console.log('💡 Run "npm run typecheck:clean" to clean build outputs');
   console.log('💡 Check your TypeScript configuration (tsconfig.json) outDir settings');
-  
+
   // Exit with warning code but don't fail the build
   process.exit(1);
 }

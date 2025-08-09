@@ -4,7 +4,6 @@ import { fileURLToPath } from 'url';
 import {
   AbilitiesMap,
   Ability,
-  validateAbilitiesMap,
   safeValidateAbilitiesMap
 } from '../schemas/ability.schema.js';
 
@@ -166,7 +165,7 @@ export class AbilityLoader {
 
     // Apply level scaling for certain abilities
     if (context.level && ability.tags.includes('scaling')) {
-      const levelMultiplier = 1 + (context.level - 1) * 0.1; // 10% per level
+      const levelMultiplier = 1 + ((context.level - 1) * 0.1); // 10% per level
       damage = Math.floor(damage * levelMultiplier);
     }
 

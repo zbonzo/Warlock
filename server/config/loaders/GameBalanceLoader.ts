@@ -7,7 +7,6 @@ import {
   PlayerConfig,
   WarlockConfig,
   CombatConfig,
-  validateGameBalanceConfig,
   safeValidateGameBalanceConfig
 } from '../schemas/gameBalance.schema.js';
 
@@ -132,11 +131,11 @@ export class GameBalanceLoader {
     if (monster.useExponentialScaling) {
       // Exponential formula: baseHp * (level^1.3) + (level-1) * hpPerLevel
       return Math.floor(
-        monster.baseHp * Math.pow(level, 1.3) + (level - 1) * monster.hpPerLevel
+        (monster.baseHp * Math.pow(level, 1.3)) + ((level - 1) * monster.hpPerLevel)
       );
     }
     // Fallback to linear scaling
-    return monster.baseHp + (level - 1) * monster.hpPerLevel;
+    return monster.baseHp + ((level - 1) * monster.hpPerLevel);
   }
 
   /**
@@ -205,7 +204,7 @@ export class GameBalanceLoader {
 
     const rawChance = Math.min(
       maxChance,
-      baseChance + (warlockCount / totalPlayers) * scalingFactor
+      baseChance + ((warlockCount / totalPlayers) * scalingFactor)
     );
     return rawChance * modifier;
   }
@@ -306,7 +305,7 @@ export class GameBalanceLoader {
     }
 
     const totalBonus = maxCoordinators * bonusPercent;
-    return Math.floor(baseAmount * (1 + totalBonus / 100));
+    return Math.floor(baseAmount * (1 + (totalBonus / 100)));
   }
 
   /**
@@ -347,11 +346,11 @@ export class GameBalanceLoader {
     switch (type) {
       case 'damage':
         return Math.floor(
-          baseAmount * (1 + comebackMechanics.damageIncrease / 100)
+          baseAmount * (1 + (comebackMechanics.damageIncrease / 100))
         );
       case 'healing':
         return Math.floor(
-          baseAmount * (1 + comebackMechanics.healingIncrease / 100)
+          baseAmount * (1 + (comebackMechanics.healingIncrease / 100))
         );
       case 'armor':
         return baseAmount + comebackMechanics.armorIncrease;
@@ -412,7 +411,9 @@ export class GameBalanceLoader {
    */
   public getDefaultActionOrder(type: 'attack' | 'defense' | 'heal' | 'special'): number {
     this.reloadIfChanged();
-    return this.balanceConfig.combat.defaultOrders[type];
+    const orders = this.balanceConfig.combat.defaultOrders;
+    const ordersMap = new Map(Object.entries(orders));
+    return ordersMap.get(type) || 0;
   }
 
   /**

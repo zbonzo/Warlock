@@ -215,7 +215,7 @@ export class CoordinationSystem {
   /**
    * Execute a coordinated action with bonus effects
    */
-  private async executeCoordinatedAction(player: Player, enhancedAction: any, log: CombatLogEntry[]): Promise<any> {
+  private async executeCoordinatedAction(player: Player, enhancedAction: any, _log: CombatLogEntry[]): Promise<any> {
     // This would delegate to the appropriate action handler
     // For now, return a basic structure with coordination bonus applied
     return {
@@ -260,13 +260,13 @@ export class CoordinationSystem {
     // Different bonuses for different action types
     switch (actionType.toLowerCase()) {
       case 'attack':
-        return 1 + (count - 1) * 0.2; // 20% per additional attacker
+        return 1 + ((count - 1) * 0.2); // 20% per additional attacker
       case 'heal':
-        return 1 + (count - 1) * 0.15; // 15% per additional healer
+        return 1 + ((count - 1) * 0.15); // 15% per additional healer
       case 'defense':
-        return 1 + (count - 1) * 0.25; // 25% per additional defender
+        return 1 + ((count - 1) * 0.25); // 25% per additional defender
       default:
-        return 1 + (count - 1) * 0.1; // 10% generic bonus
+        return 1 + ((count - 1) * 0.1); // 10% generic bonus
     }
   }
 }

@@ -13,8 +13,6 @@ import type {
 } from '../../abilityRegistryUtils.js';
 import type { GameSystems } from '../../../SystemsFactory.js';
 
-import config from '../../../../../config/index.js';
-import messages from '../../../../../config/messages/index.js';
 
 /**
  * Handle invisibility abilities (Shadow Veil, etc.)
@@ -25,14 +23,14 @@ export const handleInvisibility: AbilityHandler = (
   ability: Ability,
   log: LogEntry[],
   systems: GameSystems,
-  coordinationInfo?: CoordinationInfo
+  _coordinationInfo?: CoordinationInfo
 ): boolean => {
   if (!actor || !target || !ability) {
     return false;
   }
 
   // Can only target players
-  if (!(target as any).hasOwnProperty('isAlive')) {
+  if (!Object.prototype.hasOwnProperty.call(target, 'isAlive')) {
     return false;
   }
 
@@ -90,7 +88,7 @@ export const handleShadowstep: AbilityHandler = (
   ability: Ability,
   log: LogEntry[],
   systems: GameSystems,
-  coordinationInfo?: CoordinationInfo
+  _coordinationInfo?: CoordinationInfo
 ): boolean => {
   if (!actor || !ability) {
     return false;

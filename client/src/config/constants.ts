@@ -150,7 +150,7 @@ export type StatusEffect = typeof STATUS_EFFECTS[keyof typeof STATUS_EFFECTS];
 export type StorageKey = typeof STORAGE_KEYS[keyof typeof STORAGE_KEYS];
 
 // Export all constants
-export default {
+const constants = {
   SOCKET_URL,
   API_URL,
   GAME_PHASES,
@@ -160,3 +160,5 @@ export default {
   ICONS,
   STORAGE_KEYS,
 };
+
+export default constants;

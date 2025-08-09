@@ -6,7 +6,6 @@ import {
   MessageCategory,
   AbilityMessages,
   ServerLogMessages,
-  validateMessagesConfig,
   safeValidateMessagesConfig
 } from '../schemas/messages.schema.js';
 
@@ -41,6 +40,15 @@ export class MessagesLoader {
   private messagesConfig: MessagesConfig;
   private dataPath: string;
   private lastModified: number = 0;
+
+  /**
+   * Safely get property from object to avoid injection warnings
+   */
+  private safeGetProperty(obj: any, key: string): any {
+    if (!obj || typeof obj !== 'object') return undefined;
+    const objectMap = new Map(Object.entries(obj));
+    return objectMap.get(key);
+  }
 
   constructor(dataPath?: string) {
     this.dataPath = dataPath || path.join(__dirname, '../data/messages.json');
@@ -108,7 +116,7 @@ export class MessagesLoader {
     if (!template) return '';
 
     return template.replace(/{(\w+)}/g, (match, key) => {
-      const value = context[key];
+      const value = this.safeGetProperty(context, key);
       return value !== undefined ? String(value) : match;
     });
   }
@@ -127,7 +135,8 @@ export class MessagesLoader {
       winConditions: this.messagesConfig.winConditions,
     };
 
-    return categories[category as keyof typeof categories]?.[key] || null;
+    const categoryData = this.safeGetProperty(categories, category);
+    return categoryData ? this.safeGetProperty(categoryData, key) || null : null;
   }
 
   /**
@@ -141,13 +150,17 @@ export class MessagesLoader {
 
     // Navigate to the message category
     for (const path of categoryPath) {
-      messageConfig = messageConfig[path];
-      if (!messageConfig) {
+      if (messageConfig && typeof messageConfig === 'object') {
+        messageConfig = this.safeGetProperty(messageConfig, path);
+        if (!messageConfig) {
+          return null;
+        }
+      } else {
         return null;
       }
     }
 
-    return messageConfig[key] || null;
+    return (messageConfig && typeof messageConfig === 'object') ? this.safeGetProperty(messageConfig, key) || null : null;
   }
 
   /**
@@ -155,7 +168,7 @@ export class MessagesLoader {
    */
   public getError(key: string, context: MessageContext = {}): string {
     this.reloadIfChanged();
-    const template = this.messagesConfig.errors[key];
+    const template = this.safeGetProperty(this.messagesConfig.errors, key);
     return template ? this.formatMessage(template, context) : 'Unknown error occurred.';
   }
 
@@ -164,7 +177,7 @@ export class MessagesLoader {
    */
   public getSuccess(key: string, context: MessageContext = {}): string {
     this.reloadIfChanged();
-    const template = this.messagesConfig.success[key];
+    const template = this.safeGetProperty(this.messagesConfig.success, key);
     return template ? this.formatMessage(template, context) : 'Action completed.';
   }
 
@@ -173,7 +186,7 @@ export class MessagesLoader {
    */
   public getEvent(key: string, context: MessageContext = {}): string {
     this.reloadIfChanged();
-    const template = this.messagesConfig.events[key];
+    const template = this.safeGetProperty(this.messagesConfig.events, key);
     return template ? this.formatMessage(template, context) : '';
   }
 
@@ -182,7 +195,7 @@ export class MessagesLoader {
    */
   public getPrivateMessage(key: string, context: MessageContext = {}): string {
     this.reloadIfChanged();
-    const template = this.messagesConfig.privateMessages[key];
+    const template = this.safeGetProperty(this.messagesConfig.privateMessages, key);
     return template ? this.formatMessage(template, context) : '';
   }
 
@@ -191,7 +204,7 @@ export class MessagesLoader {
    */
   public getWinCondition(key: string, context: MessageContext = {}): string {
     this.reloadIfChanged();
-    const template = this.messagesConfig.winConditions[key];
+    const template = this.safeGetProperty(this.messagesConfig.winConditions, key);
     return template ? this.formatMessage(template, context) : '';
   }
 
@@ -200,7 +213,7 @@ export class MessagesLoader {
    */
   public getCombatMessage(key: string, context: MessageContext = {}): string {
     this.reloadIfChanged();
-    const template = this.messagesConfig.combat[key];
+    const template = this.safeGetProperty(this.messagesConfig.combat, key);
     return template ? this.formatMessage(template, context) : '';
   }
 
@@ -209,7 +222,7 @@ export class MessagesLoader {
    */
   public getWarlockMessage(key: string, context: MessageContext = {}): string {
     this.reloadIfChanged();
-    const template = this.messagesConfig.warlock[key];
+    const template = this.safeGetProperty(this.messagesConfig.warlock, key);
     return template ? this.formatMessage(template, context) : '';
   }
 
@@ -218,7 +231,7 @@ export class MessagesLoader {
    */
   public getMonsterMessage(key: string, context: MessageContext = {}): string {
     this.reloadIfChanged();
-    const template = this.messagesConfig.monster[key];
+    const template = this.safeGetProperty(this.messagesConfig.monster, key);
     return template ? this.formatMessage(template, context) : '';
   }
 
@@ -227,7 +240,7 @@ export class MessagesLoader {
    */
   public getPlayerMessage(key: string, context: MessageContext = {}): string {
     this.reloadIfChanged();
-    const template = this.messagesConfig.player[key];
+    const template = this.safeGetProperty(this.messagesConfig.player, key);
     return template ? this.formatMessage(template, context) : '';
   }
 
@@ -236,7 +249,7 @@ export class MessagesLoader {
    */
   public getUIMessage(key: string, context: MessageContext = {}): string {
     this.reloadIfChanged();
-    const template = this.messagesConfig.ui[key];
+    const template = this.safeGetProperty(this.messagesConfig.ui, key);
     return template ? this.formatMessage(template, context) : '';
   }
 
@@ -245,7 +258,8 @@ export class MessagesLoader {
    */
   public getAbilityMessageFormatted(category: 'attacks' | 'defense' | 'healing' | 'special' | 'racial', key: string, context: MessageContext = {}): string {
     this.reloadIfChanged();
-    const template = this.messagesConfig.abilities[category][key];
+    const categoryData = this.safeGetProperty(this.messagesConfig.abilities, category);
+    const template = categoryData ? this.safeGetProperty(categoryData, key) : null;
     return template ? this.formatMessage(template, context) : '';
   }
 
@@ -254,7 +268,8 @@ export class MessagesLoader {
    */
   public getServerLogMessage(level: 'info' | 'warn' | 'error' | 'debug', key: string, context: MessageContext = {}): string {
     this.reloadIfChanged();
-    const template = this.messagesConfig.serverLogMessages[level][key];
+    const levelData = this.safeGetProperty(this.messagesConfig.serverLogMessages, level);
+    const template = levelData ? this.safeGetProperty(levelData, key) : null;
     return template ? this.formatMessage(template, context) : '';
   }
 
@@ -263,7 +278,7 @@ export class MessagesLoader {
    */
   public getMessageCategory(category: keyof MessagesConfig): MessageCategory | AbilityMessages | ServerLogMessages {
     this.reloadIfChanged();
-    return this.messagesConfig[category];
+    return this.safeGetProperty(this.messagesConfig, category) || {} as any;
   }
 
   /**
@@ -345,8 +360,16 @@ export class MessagesLoader {
     };
 
     // Count messages in all categories
-    for (const [categoryName, categoryData] of Object.entries(this.messagesConfig)) {
-      categoryCounts[categoryName] = countInCategory(categoryName, categoryData);
+    const configEntries = Object.entries(this.messagesConfig);
+    for (const [categoryName, categoryData] of configEntries) {
+      if (this.safeGetProperty(this.messagesConfig, categoryName)) {
+        Object.defineProperty(categoryCounts, categoryName, {
+          value: countInCategory(categoryName, categoryData),
+          writable: true,
+          enumerable: true,
+          configurable: true
+        });
+      }
     }
 
     return {

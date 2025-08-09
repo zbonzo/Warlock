@@ -6,7 +6,7 @@
 
 import { z } from 'zod';
 import logger from '../../utils/logger.js';
-import type { Player, Monster, GameCode } from '../../types/generated.js';
+import type { Player, GameCode } from '../../types/generated.js';
 
 // Monster schema for type safety
 const MonsterStateSchema = z.object({
@@ -114,7 +114,7 @@ export class GameState {
   private monster: MonsterState;
   private ended: boolean = false;
   private winner: string | null = null;
-  private created: number = Date.now();
+  private created: number = performance.now();
   private startTime: number | null = null;
 
   /**
@@ -250,7 +250,7 @@ export class GameState {
    */
   startGame(): void {
     this.started = true;
-    this.startTime = Date.now();
+    this.startTime = performance.now();
 
     // Calculate warlock count for log message template
     const warlockCount = Array.from(this.players.values()).filter((p: any) => p.isWarlock).length;
@@ -361,7 +361,7 @@ export class GameState {
     const disconnectedPlayer = DisconnectedPlayerSchema.parse({
       id: player['id'],
       name: player['name'],
-      disconnectedAt: Date.now(),
+      disconnectedAt: performance.now(),
     });
 
     this.disconnectedPlayers.push(disconnectedPlayer);
@@ -373,7 +373,7 @@ export class GameState {
    * @returns Array of cleaned up player names
    */
   cleanupDisconnectedPlayers(timeoutMs: number = 10 * 60 * 1000): string[] {
-    const now = Date.now();
+    const now = performance.now();
     const cleanedUp: string[] = [];
 
     this.disconnectedPlayers = this.disconnectedPlayers.filter(player => {

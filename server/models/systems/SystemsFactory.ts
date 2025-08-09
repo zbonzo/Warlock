@@ -5,35 +5,32 @@
  */
 
 import type { Player, Monster } from '../../types/generated.js';
-import type { MonsterState } from '../game/GameState.js';
 import type { AbilityRegistry as AbilityRegistryInterface } from './abilityHandlers/abilityRegistryUtils.js';
 import { registerAbilityHandlers } from './abilityHandlers/index.js';
 
 import GameStateUtils from './GameStateUtils.js';
-import StatusEffectManager from './StatusEffectManager.js'; // Legacy - will be replaced
-import NewStatusEffectManager from './NewStatusEffectManager.js';
 import StatusEffectSystemFactory from './StatusEffectSystemFactory.js';
 import RacialAbilitySystemClass from './RacialAbilitySystem.js';
 import WarlockSystem from './WarlockSystem.js';
 import MonsterController from '../../controllers/MonsterController.js';
 import CombatSystem from './CombatSystem.js';
 import AbilityRegistryClass from '../AbilityRegistry.js';
-import messages from '../../config/messages/index.js';
 import { GameEventBus } from '../events/GameEventBus.js';
+import { getCurrentTimestamp } from '../../utils/timestamp.js';
 
 /**
  * Status effect system interface
  */
 interface StatusEffectSystem {
   manager: any;
-  hasEffect: (targetId: string, effectType: string) => boolean;
+  hasEffect: (_targetId: string, _effectType: string) => boolean;
   applyEffect(
-    targetId: string,
-    type: string,
-    params: any,
-    sourceId: string | null,
-    sourceName: string | null,
-    log: any[]
+    _targetId: string,
+    _type: string,
+    _params: any,
+    _sourceId: string | null,
+    _sourceName: string | null,
+    _log: any[]
   ): any;
 }
 
@@ -54,9 +51,9 @@ export interface GameSystems {
     hp: number;
   };
   game?: any; // Game state or context
-  calculateDamageModifiers?: (actor: Player, target: Player | Monster, ability: any) => number;
+  calculateDamageModifiers?: (_actor: Player, _target: Player | Monster, _ability: any) => number;
   comebackMechanics?: {
-    getBonus: (playerId: string) => number;
+    getBonus: (_playerId: string) => number;
   };
 }
 
@@ -207,7 +204,7 @@ export class SystemsFactory {
       abilityHandlersRegistered: systems.abilityRegistry?.getDebugInfo?.() || null,
       statusEffectSystemActive: !!systems.statusEffectSystem,
       eventBusConnected: !!systems.combatSystem?.eventBus,
-      timestamp: Date.now()
+      timestamp: getCurrentTimestamp()
     };
   }
 

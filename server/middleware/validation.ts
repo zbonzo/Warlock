@@ -13,9 +13,9 @@ import {
   throwGameStateError,
 } from '../utils/errorHandler.js';
 import logger from '../utils/logger.js';
+import { secureRandomInt, secureRandomChoice } from '../utils/secureRandom.js';
 import config from '../config/index.js';
 // Messages are now accessed through the config system
-import type { GameRoom } from '../models/GameRoom.js';
 import type { Player } from '../models/Player.js';
 import type { Ability } from '../types/generated.js';
 
@@ -143,6 +143,7 @@ export function validatePlayerName(
     /[<>{}()]/, // HTML/template injection
     /[&;|`$]/, // Command injection
     /javascript:|data:|vbscript:/i, // URL schemes
+    // eslint-disable-next-line no-control-regex
     /[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/, // Control characters (but allow \t\n)
   ];
 
@@ -151,6 +152,7 @@ export function validatePlayerName(
       isValid: false,
       error: config.getError('playerNameUnsafeChars'),
       sanitizedName: trimmedName.replace(
+        // eslint-disable-next-line no-control-regex
         /[<>{}()&;|`$\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g,
         ''
       ),
@@ -393,12 +395,12 @@ export function validatePlayerName(
   const problematicPatterns = [
     /^monster/i, // Names starting with "monster"
     /monster$/i, // Names ending with "monster"
-    /^the[\s\-]/i, // Names starting with "the "
-    /^you[\s\-]/i, // Names starting with "you "
+    /^the[\s-]/i, // Names starting with "the "
+    /^you[\s-]/i, // Names starting with "you "
     /^admin/i, // Names starting with "admin"
     /^warlock/i, // Names starting with "warlock"
-    /^mod[\s\-]/i, // Names starting with "mod "
-    /^bot[\s\-]/i, // Names starting with "bot "
+    /^mod[\s-]/i, // Names starting with "mod "
+    /^bot[\s-]/i, // Names starting with "bot "
   ];
 
   if (problematicPatterns.some((pattern) => pattern.test(normalizedName))) {
@@ -484,7 +486,6 @@ export function suggestValidName(originalName: string): string {
     const letters = originalName.match(/\p{L}/gu);
     if (letters && letters.length > 0) {
       // Import secure random utilities
-      const { secureRandomInt } = require('../utils/secureRandom.js');
       suggestion =
         letters.slice(0, 8).join('') + secureRandomInt(10, 99);
     } else {
@@ -502,7 +503,6 @@ export function suggestValidName(originalName: string): string {
         'Knight',
       ];
       // Import secure random utilities
-      const { secureRandomChoice, secureRandomInt } = require('../utils/secureRandom.js');
       suggestion =
         (secureRandomChoice(randomNames) || 'Player') +
         secureRandomInt(100, 999);

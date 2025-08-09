@@ -3,8 +3,7 @@
  * and status effects in a compact, visual format.
  */
 import React from 'react';
-import { useTheme } from '@contexts/ThemeContext';
-import { Player, StatusEffects } from '@/types/game';
+import { Player } from '@/types/game';
 import './PlayerCard.css';
 
 interface PlayerCardProps {
@@ -26,7 +25,6 @@ const PlayerCard: React.FC<PlayerCardProps> = ({
   isCurrentPlayer, 
   canSeeWarlock = false 
 }) => {
-  const theme = useTheme();
   const healthPercent = (player['hp'] / player['maxHp']) * 100;
 
   // Determine health bar color based on percentage

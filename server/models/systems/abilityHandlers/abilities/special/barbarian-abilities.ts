@@ -3,6 +3,7 @@
  * Handles barbarian-specific abilities like rage, fury, and bloodlust
  */
 
+import { createActionLog, createDamageLog } from '../../../../../utils/logEntry.js';
 import { secureId } from '../../../../../utils/secureRandom.js';
 import type { Player as BasePlayer, Monster, Ability as BaseAbility } from '../../../../../types/generated.js';
 import type {
@@ -14,7 +15,6 @@ import type { GameSystems } from '../../../SystemsFactory.js';
 
 // Note: config can be used for future enhancements
 // import config from '../../../../../config/index.js';
-import messages from '../../../../../config/messages/index.js';
 
 interface Player extends BasePlayer {
   isWarlock?: boolean;
@@ -36,7 +36,7 @@ export const handleBloodFrenzy: AbilityHandler = (
   ability: Ability,
   log: LogEntry[],
   systems: GameSystems,
-  coordinationInfo?: CoordinationInfo
+  _coordinationInfo?: CoordinationInfo
 ): boolean => {
   if (!actor || !ability) {
     return false;
@@ -53,19 +53,18 @@ export const handleBloodFrenzy: AbilityHandler = (
   const duration = params['duration'] || 5;
 
   if (healthRatio > healthThreshold) {
-    log.push({
-      id: secureId('blood-frenzy-not-low-health'),
-      timestamp: Date.now(),
-      type: 'action',
-      source: actor['id'],
-      message: `${actor['name']} cannot enter blood frenzy (health too high: ${Math.round(healthRatio * 100)}%, required: ${Math.round(healthThreshold * 100)}%)`,
-      details: {
-        currentHealthRatio: healthRatio,
-        requiredThreshold: healthThreshold
-      },
-      public: true,
-      priority: 'medium'
-    });
+    log.push(createActionLog(
+      actor['id'],
+      '',
+      `${actor['name']} cannot enter blood frenzy (health too high: ${Math.round(healthRatio * 100)}%, required: ${Math.round(healthThreshold * 100)}%)`,
+      {
+        details: {
+          currentHealthRatio: healthRatio,
+          requiredThreshold: healthThreshold
+        },
+        priority: 'medium'
+      }
+    ));
     return false;
   }
 
@@ -83,20 +82,19 @@ export const handleBloodFrenzy: AbilityHandler = (
   });
 
   if (statusResult.success) {
-    log.push({
-      id: secureId('blood-frenzy-success'),
-      timestamp: Date.now(),
-      type: 'action',
-      source: actor['id'],
-      message: `${actor['name']} enters blood frenzy, gaining +${Math.round((damageBonus - 1) * 100)}% damage for ${duration} turns`,
-      details: {
-        damageBonus,
-        duration,
-        healthWhenActivated: healthRatio
-      },
-      public: true,
-      priority: 'high'
-    });
+    log.push(createActionLog(
+      actor['id'],
+      '',
+      `${actor['name']} enters blood frenzy, gaining +${Math.round((damageBonus - 1) * 100)}% damage for ${duration} turns`,
+      {
+        details: {
+          damageBonus,
+          duration,
+          healthWhenActivated: healthRatio
+        },
+        priority: 'high'
+      }
+    ));
 
     return true;
   }
@@ -113,7 +111,7 @@ export const handleUnstoppableRage: AbilityHandler = (
   ability: Ability,
   log: LogEntry[],
   systems: GameSystems,
-  coordinationInfo?: CoordinationInfo
+  _coordinationInfo?: CoordinationInfo
 ): boolean => {
   if (!actor || !ability) {
     return false;
@@ -141,20 +139,19 @@ export const handleUnstoppableRage: AbilityHandler = (
   });
 
   if (statusResult.success) {
-    log.push({
-      id: secureId('unstoppable-rage-success'),
-      timestamp: Date.now(),
-      type: 'action',
-      source: actor['id'],
-      message: `${actor['name']} enters unstoppable rage for ${duration} turns, clearing ${clearedEffects.length} debuffs`,
-      details: {
-        duration,
-        damageReduction,
-        clearedEffects
-      },
-      public: true,
-      priority: 'high'
-    });
+    log.push(createActionLog(
+      actor['id'],
+      '',
+      `${actor['name']} enters unstoppable rage for ${duration} turns, clearing ${clearedEffects.length} debuffs`,
+      {
+        details: {
+          duration,
+          damageReduction,
+          clearedEffects
+        },
+        priority: 'high'
+      }
+    ));
 
     return true;
   }
@@ -171,7 +168,7 @@ export const handleRelentlessFury: AbilityHandler = (
   ability: Ability,
   log: LogEntry[],
   systems: GameSystems,
-  coordinationInfo?: CoordinationInfo
+  _coordinationInfo?: CoordinationInfo
 ): boolean => {
   if (!actor || !ability) {
     return false;
@@ -197,19 +194,18 @@ export const handleRelentlessFury: AbilityHandler = (
   });
 
   if (statusResult.success) {
-    log.push({
-      id: secureId('relentless-fury-success'),
-      timestamp: Date.now(),
-      type: 'action',
-      source: actor['id'],
-      message: `${actor['name']} activates relentless fury for ${duration} turns (${Math.round(damagePercentage * 100)}% damage conversion)`,
-      details: {
-        duration,
-        damagePercentage
-      },
-      public: true,
-      priority: 'high'
-    });
+    log.push(createActionLog(
+      actor['id'],
+      '',
+      `${actor['name']} activates relentless fury for ${duration} turns (${Math.round(damagePercentage * 100)}% damage conversion)`,
+      {
+        details: {
+          duration,
+          damagePercentage
+        },
+        priority: 'high'
+      }
+    ));
 
     return true;
   }
@@ -226,7 +222,7 @@ export const handleThirstyBlade: AbilityHandler = (
   ability: Ability,
   log: LogEntry[],
   systems: GameSystems,
-  coordinationInfo?: CoordinationInfo
+  _coordinationInfo?: CoordinationInfo
 ): boolean => {
   if (!actor || !ability) {
     return false;
@@ -249,19 +245,18 @@ export const handleThirstyBlade: AbilityHandler = (
   });
 
   if (statusResult.success) {
-    log.push({
-      id: secureId('thirsty-blade-success'),
-      timestamp: Date.now(),
-      type: 'action',
-      source: actor['id'],
-      message: `${actor['name']} activates thirsty blade for ${duration} turns (${Math.round(healPercentage * 100)}% lifesteal)`,
-      details: {
-        duration,
-        healPercentage
-      },
-      public: true,
-      priority: 'high'
-    });
+    log.push(createActionLog(
+      actor['id'],
+      '',
+      `${actor['name']} activates thirsty blade for ${duration} turns (${Math.round(healPercentage * 100)}% lifesteal)`,
+      {
+        details: {
+          duration,
+          healPercentage
+        },
+        priority: 'high'
+      }
+    ));
 
     return true;
   }
@@ -278,7 +273,7 @@ export const handleSweepingStrike: AbilityHandler = (
   ability: Ability,
   log: LogEntry[],
   systems: GameSystems,
-  coordinationInfo?: CoordinationInfo
+  _coordinationInfo?: CoordinationInfo
 ): boolean => {
   if (!actor || !ability) {
     return false;
@@ -341,37 +336,32 @@ export const handleSweepingStrike: AbilityHandler = (
 
       const targetName = (sweepTarget as Player)['name'] || (sweepTarget as Monster)['name'];
 
-      log.push({
-        id: secureId(`sweeping-strike-hit-${sweepTarget['id']}`),
-        timestamp: Date.now(),
-        type: 'damage',
-        source: actor['id'],
-        target: sweepTarget['id'],
-        message: `${actor['name']} hits ${targetName} with sweeping strike for ${damageResult.finalDamage} damage`,
-        details: {
-          damage: damageResult.finalDamage
-        },
-        public: true,
-        priority: 'high'
-      });
+      log.push(createDamageLog(
+        actor['id'],
+        sweepTarget['id'],
+        damageResult.finalDamage,
+        `${actor['name']} hits ${targetName} with sweeping strike for ${damageResult.finalDamage} damage`,
+        {
+          priority: 'high'
+        }
+      ));
     }
   }
 
   if (hitTargets > 0) {
-    log.push({
-      id: secureId('sweeping-strike-summary'),
-      timestamp: Date.now(),
-      type: 'action',
-      source: actor['id'],
-      message: `${actor['name']} sweeping strike hits ${hitTargets} targets for ${totalDamage} total damage`,
-      details: {
-        hitTargets,
-        totalDamage,
-        coordinationBonus
-      },
-      public: true,
-      priority: 'high'
-    });
+    log.push(createActionLog(
+      actor['id'],
+      '',
+      `${actor['name']} sweeping strike hits ${hitTargets} targets for ${totalDamage} total damage`,
+      {
+        details: {
+          hitTargets,
+          totalDamage,
+          coordinationBonus
+        },
+        priority: 'high'
+      }
+    ));
 
     return true;
   }

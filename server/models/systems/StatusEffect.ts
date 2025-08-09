@@ -20,7 +20,7 @@ interface Entity {
   stoneArmorIntact?: boolean;
   hasSubmittedAction?: boolean;
   clearActionSubmission?: () => void;
-  processStoneArmorDegradation?: (damage: number) => void;
+  processStoneArmorDegradation?: (_damage: number) => void;
   pendingDeath?: boolean;
 }
 
@@ -118,6 +118,7 @@ class StatusEffect {
     // Effect state
     this.turnsRemaining = this.params.turns || this.params.duration || 1;
     this.strength = this.params.strength || 1; // For stacking calculations
+    // eslint-disable-next-line no-restricted-syntax
     this.appliedAt = Date.now();
     this.isActive = true;
 

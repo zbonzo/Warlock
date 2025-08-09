@@ -7,7 +7,6 @@ import { GameEvent, EventType, EventHandler, EventPayload } from './EventTypes.j
 import { secureId } from '../../utils/secureRandom.js';
 
 import logger from '../../utils/logger.js';
-import messages from '../../config/messages/index.js';
 
 /**
  * Type-safe event listener configuration
@@ -51,7 +50,7 @@ interface EventBusStats {
 export class GameEventBus {
   private gameCode: string;
   private listeners: Map<EventType, Set<WrappedListener>> = new Map();
-  private middleware: Array<(event: GameEvent, next: (modifiedEvent?: GameEvent | false) => void) => void> = [];
+  private middleware: Array<(_event: GameEvent, _next: (_modifiedEvent?: GameEvent | false) => void) => void> = [];
   private eventHistory: GameEvent[] = [];
   private isEnabled: boolean = true;
   private readonly maxHistorySize: number = 1000;
@@ -76,7 +75,7 @@ export class GameEventBus {
    * Add middleware to process events
    * @param middleware - Middleware function (event, next) => void
    */
-  addMiddleware(middleware: (event: GameEvent, next: (modifiedEvent?: GameEvent | false) => void) => void): void {
+  addMiddleware(middleware: (_event: GameEvent, _next: (_modifiedEvent?: GameEvent | false) => void) => void): void {
     if (typeof middleware !== 'function') {
       throw new Error('Middleware must be a function');
     }
@@ -92,7 +91,7 @@ export class GameEventBus {
    */
   on<T extends EventType>(
     eventType: T,
-    listener: (event: Extract<GameEvent, { type: T }>) => Promise<void> | void,
+    listener: (_event: Extract<GameEvent, { type: T }>) => Promise<void> | void,
     options: ListenerOptions = {}
   ): () => boolean {
     if (typeof listener !== 'function') {
@@ -126,7 +125,7 @@ export class GameEventBus {
    */
   once<T extends EventType>(
     eventType: T,
-    listener: (event: Extract<GameEvent, { type: T }>) => Promise<void> | void,
+    listener: (_event: Extract<GameEvent, { type: T }>) => Promise<void> | void,
     options: ListenerOptions = {}
   ): () => boolean {
     return this.on(eventType, listener, { ...options, once: true });
@@ -179,7 +178,7 @@ export class GameEventBus {
       return false;
     }
 
-    const startTime = Date.now();
+    const startTime = performance.now();
     this.stats.eventsEmitted++;
 
     // Create type-safe event object
@@ -216,7 +215,7 @@ export class GameEventBus {
 
       // Update stats
       this.stats.eventsProcessed++;
-      this._updateAverageProcessingTime(Date.now() - startTime);
+      this._updateAverageProcessingTime(performance.now() - startTime);
 
       return true;
     } catch (error) {
@@ -242,7 +241,7 @@ export class GameEventBus {
       return false;
     }
 
-    const startTime = Date.now();
+    const startTime = performance.now();
     this.stats.eventsEmitted++;
 
     // Create legacy event object
@@ -282,7 +281,7 @@ export class GameEventBus {
 
       // Update stats
       this.stats.eventsProcessed++;
-      this._updateAverageProcessingTime(Date.now() - startTime);
+      this._updateAverageProcessingTime(performance.now() - startTime);
 
       return true;
     } catch (error) {

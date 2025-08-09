@@ -116,7 +116,7 @@ const MonsterAvatar: React.FC<MonsterAvatarProps> = ({ monster }) => {
   useEffect(() => {
     if (!canvasRef.current) return;
     drawMonsterBadge(canvasRef.current, monster);
-  }, [monster['hp'], monster['maxHp']]);
+  }, [monster]);
 
   return (
     <canvas
@@ -321,7 +321,7 @@ const TargetSelectionStep: React.FC<TargetSelectionStepProps> = ({
 
         {!selectedTarget && !submitted && (
           <div className="selection-hint">
-            Please select a target for your ability.
+            <p>Please select a target for your ability.</p>
           </div>
         )}
 

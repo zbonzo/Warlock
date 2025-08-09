@@ -3,9 +3,7 @@
  * Used in game actions to choose where to apply an ability
  */
 import React, { useEffect, useRef } from 'react';
-import { useTheme } from '@contexts/ThemeContext';
 import { Player, Monster, Ability } from '@/types/game';
-import { ICONS } from '../../../config/constants';
 import './TargetSelector.css';
 // Import mobile target card styling for unified interface
 import '../../../pages/GamePage/components/MobileActionWizard/TargetSelectionStep.css';
@@ -187,7 +185,7 @@ const MonsterAvatar: React.FC<MonsterAvatarProps> = ({ monster }) => {
     if (!canvasRef.current) return;
 
     drawMonsterBadge(canvasRef.current, monster);
-  }, [monster['hp'], monster['maxHp']]); // Redraw when monster health changes
+  }, [monster]); // Redraw when monster health changes
 
   return (
     <canvas
@@ -267,7 +265,6 @@ const TargetSelector: React.FC<TargetSelectorProps> = ({
   disableMonster = false,
   selectedAbility = null,
 }) => {
-  const theme = useTheme();
 
   // Helper functions for health styling (same as mobile)
   const getHealthPercent = (hp: number, maxHp: number): number => Math.max(0, (hp / maxHp) * 100);

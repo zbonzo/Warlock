@@ -5,9 +5,7 @@
  */
 
 import { z } from 'zod';
-import config from '../../config/index.js';
-import logger from '../../utils/logger.js';
-import messages from '../../config/messages/index.js';
+import { secureRandomFloat } from '../../utils/secureRandom.js';
 import type { Player } from '../../types/generated.js';
 
 // Damage calculation schemas
@@ -107,7 +105,7 @@ export class DamageCalculator {
     if (options.coordinated) {
       const coordCount = this.getCoordinationCount();
       if (coordCount > 1) {
-        const coordBonus = 1 + (coordCount - 1) * 0.1;
+        const coordBonus = 1 + ((coordCount - 1) * 0.1);
         damage *= coordBonus;
         modifiers.push(`Coordination (+${((coordBonus - 1) * 100).toFixed(0)}%)`);
         calculationLog.push(`Coordination bonus: ${damage}`);
@@ -197,7 +195,6 @@ export class DamageCalculator {
       critChance *= 2;
     }
 
-    const { secureRandomFloat } = require('../utils/secureRandom.js');
     return secureRandomFloat() < critChance;
   }
 
@@ -233,10 +230,10 @@ export class DamageCalculator {
    */
   calculateMonsterDamage(baseDamage: number, level: number, playerCount: number): number {
     // Scale with level
-    let damage = baseDamage * (1 + (level - 1) * 0.1);
+    let damage = baseDamage * (1 + ((level - 1) * 0.1));
 
     // Scale with player count (more players = stronger monster)
-    const playerScaling = 1 + (playerCount - 3) * 0.05;
+    const playerScaling = 1 + ((playerCount - 3) * 0.05);
     damage *= playerScaling;
 
     return Math.floor(damage);

@@ -5,7 +5,6 @@
  * Enhanced with Zod validation for runtime data integrity
  */
 import { EventTypes } from '../events/EventTypes.js';
-import { z } from 'zod';
 import { secureId } from '../../utils/secureRandom.js';
 
 import { lenientValidator } from '../validation/ValidationMiddleware.js';
@@ -224,7 +223,7 @@ export class PlayerActionCommand {
     }
 
     this.status = 'executing';
-    const startTime = Date.now();
+    const startTime = performance.now();
 
     try {
       // Emit action submitted event
@@ -246,7 +245,7 @@ export class PlayerActionCommand {
       }
 
       this.status = 'completed';
-      this.executionTime = Date.now() - startTime;
+      this.executionTime = performance.now() - startTime;
 
       // Emit action executed event
       await gameContext.game.emitEvent(EventTypes.ACTION.EXECUTED, {
@@ -263,7 +262,7 @@ export class PlayerActionCommand {
     } catch (error: any) {
       this.status = 'failed';
       this.error = error.message;
-      this.executionTime = Date.now() - startTime;
+      this.executionTime = performance.now() - startTime;
 
       // Emit action failed event
       await gameContext.game.emitEvent(EventTypes.ACTION.REJECTED, {
@@ -365,7 +364,7 @@ export class PlayerActionCommand {
    * @param gameContext - Current game context
    * @protected
    */
-  protected async _validateAction(gameContext: GameContext): Promise<void> {
+  protected async _validateAction(_gameContext: GameContext): Promise<void> {
     // Override in subclasses
   }
 
@@ -375,7 +374,7 @@ export class PlayerActionCommand {
    * @returns Execution result
    * @protected
    */
-  protected async _executeAction(gameContext: GameContext): Promise<CommandResult> {
+  protected async _executeAction(_gameContext: GameContext): Promise<CommandResult> {
     throw new Error('_executeAction must be implemented by subclass');
   }
 
@@ -385,7 +384,7 @@ export class PlayerActionCommand {
    * @returns Undo data
    * @protected
    */
-  protected async _captureUndoData(gameContext: GameContext): Promise<Record<string, unknown> | null> {
+  protected async _captureUndoData(_gameContext: GameContext): Promise<Record<string, unknown> | null> {
     return null; // Override in subclasses that support undo
   }
 
@@ -394,7 +393,7 @@ export class PlayerActionCommand {
    * @param gameContext - Current game context
    * @protected
    */
-  protected async _undoAction(gameContext: GameContext): Promise<void> {
+  protected async _undoAction(_gameContext: GameContext): Promise<void> {
     throw new Error('_undoAction must be implemented by subclass if canUndo is true');
   }
 

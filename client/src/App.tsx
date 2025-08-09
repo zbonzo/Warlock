@@ -5,7 +5,6 @@
 
 import React, { useEffect, useCallback, useMemo } from 'react';
 import { ThemeProvider } from './contexts/ThemeContext';
-import ThemeToggle from './components/common/ThemeToggle';
 import { ConfigProvider, useConfig } from '@contexts/ConfigContext';
 import { AppProvider, useAppContext } from './contexts/AppContext';
 import LoadingScreen from './components/common/LoadingScreen';
@@ -32,7 +31,6 @@ import { Player, Monster, PlayerRace, PlayerClass } from './types/shared';
 
 type GameCode = string;
 type PlayerName = string;
-type SocketId = string;
 type Winner = 'Good' | 'Evil' | 'warlocks' | 'innocents' | null;
 type TrophyAward = {
   playerName: string;
@@ -148,7 +146,7 @@ function AppContent(): React.ReactElement {
   const { loading: configLoading, error: configError } = useConfig();
 
   // Connect to socket server
-  const { socket, connected, socketId, emit, on } = useSocket(SOCKET_URL);
+  const { socket, connected, emit, on } = useSocket(SOCKET_URL);
 
   // Determine if we should warn on page leave
   const isInActiveGame = screen === GAME_PHASES.GAME && !winner;
@@ -237,7 +235,6 @@ function AppContent(): React.ReactElement {
         turn,
         level,
         started,
-        host,
       } = payload;
 
       // Update game state
@@ -347,8 +344,8 @@ function AppContent(): React.ReactElement {
 
   // Current player data (derived from players list)
   const currentPlayer = useMemo((): Player | null => {
-    return players.find((p) => p['id'] === socketId) || null;
-  }, [players, socketId]);
+    return players.find((p) => p['id'] === socket?.id) || null;
+  }, [players, socket?.id]);
 
   // Handler functions using useCallback
   const handleCreateGame = useCallback(

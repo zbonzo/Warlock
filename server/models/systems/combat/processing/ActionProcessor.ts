@@ -8,6 +8,7 @@ import type { Player, Monster } from '../../../../types/generated.js';
 import type { CombatLogEntry, RoundSummary } from '../interfaces.js';
 import config from '../../../../config/index.js';
 import logger from '../../../../utils/logger.js';
+import { createSystemLog, createErrorLog } from '../../../../utils/logEntry.js';
 
 export interface ActionProcessorDependencies {
   players: Map<string, Player>;
@@ -106,13 +107,13 @@ export class ActionProcessor {
     const allValidActions = await this.collectAllValidActions(validationResults);
 
     if (allValidActions.length === 0) {
-      log.push({
-        type: 'system',
-        message: 'No valid actions this round',
-        isPublic: true,
-        timestamp: Date.now(),
-        priority: 'low' as const
-      });
+      log.push(createSystemLog(
+        'No valid actions this round',
+        undefined,
+        {
+          priority: 'low' as const
+        }
+      ) as CombatLogEntry);
       return playerActions;
     }
 
@@ -126,13 +127,13 @@ export class ActionProcessor {
         playerActions.set(actionData.playerId, result);
       } catch (error) {
         logger.error(`Error processing action for ${actionData.playerId}:`, error as any);
-        log.push({
-          type: 'error',
-          message: `Failed to process action for ${actionData.player?.name || actionData.playerId}`,
-          isPublic: false,
-          timestamp: Date.now(),
-          priority: 'medium' as const
-        });
+        log.push(createErrorLog(
+          `Failed to process action for ${actionData.player?.name || actionData.playerId}`,
+          error,
+          {
+            priority: 'medium' as const
+          }
+        ) as CombatLogEntry);
       }
     }
 
@@ -201,13 +202,14 @@ export class ActionProcessor {
       return result;
     } catch (error) {
       logger.error(`Failed to process action for ${player.name}:`, error as any);
-      log.push({
-        type: 'error',
-        message: `${player.name}'s action failed to execute`,
-        isPublic: true,
-        timestamp: Date.now(),
-        priority: 'high' as const
-      });
+      log.push(createErrorLog(
+        `${player.name}'s action failed to execute`,
+        error,
+        {
+          isPublic: true,
+          priority: 'high' as const
+        }
+      ) as CombatLogEntry);
       return { success: false, error: error instanceof Error ? error.message : String(error) };
     }
   }

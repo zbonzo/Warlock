@@ -3,7 +3,6 @@
  * current round, number of alive players, and monster health.
  */
 import React from 'react';
-import { useTheme } from '@contexts/ThemeContext';
 import { Player, Monster } from '@/types/game';
 import './GameDashboard.css';
 
@@ -17,7 +16,6 @@ interface GameDashboardProps {
  * GameDashboard component displays key game information in a horizontal layout
  */
 const GameDashboard: React.FC<GameDashboardProps> = ({ round, alivePlayers, monster }) => {
-  const theme = useTheme();
   const healthPercent = (monster['hp'] / monster['maxHp']) * 100;
   const isLowHealth = healthPercent < 30;
   

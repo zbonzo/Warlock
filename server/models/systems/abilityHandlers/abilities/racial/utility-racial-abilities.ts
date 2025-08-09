@@ -3,7 +3,7 @@
  * Handles racial abilities that provide utility and support functions
  */
 
-import { secureId } from '../../../../../utils/secureRandom.js';
+import { createActionLog } from '../../../../../utils/logEntry.js';
 import type { Player, Monster, Ability } from '../../../../../types/generated.js';
 import type {
   AbilityHandler,
@@ -12,9 +12,8 @@ import type {
 } from '../../abilityRegistryUtils.js';
 import type { GameSystems } from '../../../SystemsFactory.js';
 
-import config from '../../../../../config/index.js';
 import messages from '../../../../../config/messages/index.js';
-import { secureRandomChoice } from '../../../../../utils/secureRandom.js';
+import { secureRandomChoice, secureId } from '../../../../../utils/secureRandom.js';
 
 /**
  * Handle Kinfolk Pack Bond - Kinfolk racial ability
@@ -25,7 +24,7 @@ export const handlePackBond: AbilityHandler = (
   ability: Ability,
   log: LogEntry[],
   systems: GameSystems,
-  coordinationInfo?: CoordinationInfo
+  _coordinationInfo?: CoordinationInfo
 ): boolean => {
   if (!actor || !ability) {
     return false;
@@ -45,16 +44,15 @@ export const handlePackBond: AbilityHandler = (
   );
 
   if (kinfolkAllies.length === 0) {
-    log.push({
-      id: secureId('pack-bond-no-allies'),
-      timestamp: Date.now(),
-      type: 'action',
-      source: actor.id,
-      message: messages.getAbilityMessage('pack_bond', 'no_kinfolk_allies') || 'No Kinfolk allies available for Pack Bond',
-      details: { reason: 'no_kinfolk_allies' },
-      public: true,
-      priority: 'medium'
-    });
+    log.push(createActionLog(
+      actor.id,
+      '',
+      messages.getAbilityMessage('pack_bond', 'no_kinfolk_allies') || 'No Kinfolk allies available for Pack Bond',
+      {
+        details: { reason: 'no_kinfolk_allies' },
+        priority: 'medium'
+      }
+    ));
     return false;
   }
 
@@ -90,21 +88,20 @@ export const handlePackBond: AbilityHandler = (
   }
 
   if (successfulBonds > 0) {
-    log.push({
-      id: secureId('pack-bond-success'),
-      timestamp: Date.now(),
-      type: 'action',
-      source: actor.id,
-      message: messages.getAbilityMessage('pack_bond', 'success') || 'Pack Bond activated successfully!',
-      details: {
-        packSize: bonusTargets.length,
-        actualBonus,
-        duration,
-        successfulBonds
-      },
-      public: true,
-      priority: 'high'
-    });
+    log.push(createActionLog(
+      actor.id,
+      '',
+      messages.getAbilityMessage('pack_bond', 'success') || 'Pack Bond activated successfully!',
+      {
+        details: {
+          packSize: bonusTargets.length,
+          actualBonus,
+          duration,
+          successfulBonds
+        },
+        priority: 'high'
+      }
+    ));
 
     return true;
   }
@@ -121,7 +118,7 @@ export const handleDespairAura: AbilityHandler = (
   ability: Ability,
   log: LogEntry[],
   systems: GameSystems,
-  coordinationInfo?: CoordinationInfo
+  _coordinationInfo?: CoordinationInfo
 ): boolean => {
   if (!actor || !ability) {
     return false;
@@ -181,21 +178,20 @@ export const handleDespairAura: AbilityHandler = (
   });
 
   if (affectedTargets > 0 || selfBonusResult.success) {
-    log.push({
-      id: secureId('despair-aura-success'),
-      timestamp: Date.now(),
-      type: 'action',
-      source: actor.id,
-      message: messages.getAbilityMessage('despair_aura', 'success') || 'Despair Aura activated!',
-      details: {
-        affectedTargets,
-        damagePenalty,
-        selfBonus,
-        duration
-      },
-      public: true,
-      priority: 'high'
-    });
+    log.push(createActionLog(
+      actor.id,
+      '',
+      messages.getAbilityMessage('despair_aura', 'success') || 'Despair Aura activated!',
+      {
+        details: {
+          affectedTargets,
+          damagePenalty,
+          selfBonus,
+          duration
+        },
+        priority: 'high'
+      }
+    ));
 
     return true;
   }
@@ -212,7 +208,7 @@ export const handleArtisanCrafting: AbilityHandler = (
   ability: Ability,
   log: LogEntry[],
   systems: GameSystems,
-  coordinationInfo?: CoordinationInfo
+  _coordinationInfo?: CoordinationInfo
 ): boolean => {
   if (!actor || !ability) {
     return false;
@@ -223,7 +219,7 @@ export const handleArtisanCrafting: AbilityHandler = (
   const itemDuration = params.itemDuration || 6;
 
   let craftedItem: any = null;
-  const craftingSuccess = false;
+  // const craftingSuccess = false; // Unused for now
 
   switch (craftingType) {
     case 'healing_potion':
@@ -257,12 +253,14 @@ export const handleArtisanCrafting: AbilityHandler = (
 
     default:
       // Random crafting
+      {
       const randomItems = ['healing_potion', 'smoke_bomb', 'reinforcement_kit'];
       return handleArtisanCrafting(
         actor, target,
         { ...ability, params: { ...params, craftingType: secureRandomChoice(randomItems) } },
         log, systems, coordinationInfo
       );
+      }
   }
 
   if (craftedItem) {
@@ -271,35 +269,35 @@ export const handleArtisanCrafting: AbilityHandler = (
     playerInventory.push(craftedItem);
     (actor as any).inventory = playerInventory;
 
-    log.push({
-      id: secureId('artisan-crafting-success'),
-      timestamp: Date.now(),
-      type: 'action',
-      source: actor.id,
-      message: messages.getAbilityMessage('artisan_crafting', 'success') || 'Item crafted successfully!',
-      details: {
-        craftedItem,
-        craftingType
-      },
-      public: true,
-      priority: 'high'
-    });
+    log.push(createActionLog(
+      actor.id,
+      '',
+      messages.getAbilityMessage('artisan_crafting', 'success') || 'Item crafted successfully!',
+      {
+        details: {
+          craftedItem,
+          craftingType
+        },
+        priority: 'high'
+      }
+    ));
 
     // Private message with item details
-    log.push({
-      id: secureId('artisan-crafting-details'),
-      timestamp: Date.now(),
-      type: 'action',
-      source: actor.id,
-      message: 'Crafted item details sent privately',
-      details: {
-        isPrivate: true,
-        recipientId: actor.id,
-        craftedItem
-      },
-      public: false,
-      priority: 'medium'
-    });
+    log.push(createActionLog(
+      actor.id,
+      '',
+      'Crafted item details sent privately',
+      {
+        details: {
+          isPrivate: true,
+          recipientId: actor.id,
+          craftedItem
+        },
+        public: false,
+        isPublic: false,
+        priority: 'medium'
+      }
+    ));
 
     return true;
   }

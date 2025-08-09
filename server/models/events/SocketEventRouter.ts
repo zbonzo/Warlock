@@ -17,8 +17,8 @@ import logger from '../../utils/logger.js';
  * Socket event configuration interface
  */
 interface EventConfig {
-  validation?: (socket: Socket, next: Function) => any;
-  handler: (socket: Socket, data: any, callback?: Function) => Promise<void>;
+  validation?: (_socket: Socket, _next: Function) => any;
+  handler: (_socket: Socket, _data: any, _callback?: Function) => Promise<void>;
 }
 
 /**
@@ -332,7 +332,7 @@ export class SocketEventRouter {
    * @param socket - Socket.IO socket instance
    * @private
    */
-  private _setupSocketHandlers(socket: Socket): void {
+  private _setupSocketHandlers(_socket: Socket): void {
     // Note: socket.join is handled by the main server during connection
     // We don't need to join here to avoid conflicts
 
@@ -438,7 +438,9 @@ export class SocketEventRouter {
    */
   private _transformEventDataForClient(eventType: string, eventData: any): ClientEventData {
     // Remove internal properties that shouldn't go to client
-    const { eventBus, gameRoom, ...clientData } = eventData;
+    const clientData = { ...eventData };
+    delete clientData.eventBus;
+    delete clientData.gameRoom;
 
     // Add standard fields for client events
     if (!clientData.timestamp) {
@@ -507,9 +509,9 @@ export class SocketEventRouter {
    * @param data - Event data {actionType, targetId, gameCode}
    * @param callback - Optional callback
    */
-  private async _handleSubmitAction(socket: Socket, data: SocketEventData, callback?: Function): Promise<void> {
+  private async _handleSubmitAction(socket: Socket, data: SocketEventData, _callback?: Function): Promise<void> {
     try {
-      const { actionType, targetId, gameCode } = data;
+      const { actionType, targetId } = data;
 
       // Find the player for this socket
       const player = this.gameRoom.getPlayerBySocketId(socket.id);
@@ -571,7 +573,7 @@ export class SocketEventRouter {
    * @param data - Event data {gameCode}
    * @param callback - Optional callback
    */
-  private async _handleRacialAbility(socket: Socket, data: SocketEventData, callback?: Function): Promise<void> {
+  private async _handleRacialAbility(socket: Socket, data: SocketEventData, _callback?: Function): Promise<void> {
     try {
       const { gameCode } = data;
 
@@ -604,7 +606,7 @@ export class SocketEventRouter {
    * @param data - Event data {gameCode, abilityName}
    * @param callback - Optional callback
    */
-  private async _handleAdaptability(socket: Socket, data: SocketEventData, callback?: Function): Promise<void> {
+  private async _handleAdaptability(socket: Socket, data: SocketEventData, _callback?: Function): Promise<void> {
     try {
       const { gameCode, abilityName } = data;
 
@@ -639,7 +641,7 @@ export class SocketEventRouter {
    * @param data - Event data {gameCode, playerName}
    * @param callback - Optional callback
    */
-  private async _handleNameCheck(socket: Socket, data: SocketEventData, callback?: Function): Promise<void> {
+  private async _handleNameCheck(socket: Socket, data: SocketEventData, _callback?: Function): Promise<void> {
     try {
       const { gameCode, playerName } = data;
 
@@ -673,7 +675,7 @@ export class SocketEventRouter {
    * @param data - Event data {gameCode, className}
    * @param callback - Optional callback
    */
-  private async _handleClassAbilitiesRequest(socket: Socket, data: SocketEventData, callback?: Function): Promise<void> {
+  private async _handleClassAbilitiesRequest(socket: Socket, data: SocketEventData, _callback?: Function): Promise<void> {
     try {
       const { gameCode, className } = data;
 

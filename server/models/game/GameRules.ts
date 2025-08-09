@@ -6,7 +6,6 @@
 
 import { z } from 'zod';
 import config from '../../config/index.js';
-import logger from '../../utils/logger.js';
 import type { GameCode, Player } from '../../types/generated.js';
 
 // Validation result schema
@@ -21,7 +20,7 @@ export type ValidationResult = z.infer<typeof ValidationResultSchema>;
 
 export interface GameSystems {
   statusEffectManager: {
-    isPlayerStunned(playerId: string): boolean;
+    isPlayerStunned(_playerId: string): boolean;
   };
 }
 
@@ -117,7 +116,7 @@ export class GameRules {
     if (actions.length < 2) return 1.0;
 
     // Simple coordination bonus based on number of coordinated actions
-    return 1.0 + (actions.length - 1) * 0.1;
+    return 1.0 + ((actions.length - 1) * 0.1);
   }
 
   /**

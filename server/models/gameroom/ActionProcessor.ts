@@ -6,6 +6,7 @@
 
 import config from '../../config/index.js';
 import logger from '../../utils/logger.js';
+import { secureRandomChoice } from '../../utils/secureRandom.js';
 import type { GameRoom } from '../GameRoom.js';
 import type { Player } from '../Player.js';
 import type { Monster } from '../../types/generated.js';
@@ -387,7 +388,7 @@ export class ActionProcessor {
     return (ability as any)['category'] === 'Heal' || (ability as any)['effect'] === 'heal';
   }
 
-  private validateSingleTarget(actorId: string, targetId: string, ability: Ability): TargetValidationResult {
+  private validateSingleTarget(actorId: string, targetId: string, _ability: Ability): TargetValidationResult {
     // Handle targeting logic
     if (targetId !== config.MONSTER_ID && targetId !== actorId) {
       const targetPlayer = this.gameRoom.gameState.getPlayersMap().get(targetId);
@@ -400,7 +401,6 @@ export class ActionProcessor {
           return { success: false, targetId: '', reason: 'No valid targets available' };
         }
 
-        const { secureRandomChoice } = require('../../utils/secureRandom.js');
         const redirectTarget = secureRandomChoice(potentialTargets);
         return { success: true, targetId: (redirectTarget as any).id };
       }
@@ -412,7 +412,7 @@ export class ActionProcessor {
   private validateRacialTarget(
     actorId: string,
     targetId: string,
-    racialAbility: PendingRacialAction['racialAbility']
+    _racialAbility: PendingRacialAction['racialAbility']
   ): TargetValidationResult {
     // Validate racial ability target
     if (targetId !== config.MONSTER_ID && targetId !== actorId) {

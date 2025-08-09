@@ -5,24 +5,25 @@
 
 import logger from '../utils/logger.js';
 import config from '../config/index.js';
+import { secureRandomFloat, secureRandomChoice } from '../utils/secureRandom.js';
 // Messages are now accessed through the config system
 import type { Player, Monster, Ability } from '../types/generated.js';
 
 interface AbilityHandler {
   (
-    ability: Ability,
-    actor: Player,
-    target: Player | Monster | string,
-    game: any,
-    systems: any,
-    eventBus?: any,
-    log?: any[],
-    coordination?: {
+    _ability: Ability,
+    _actor: Player,
+    _target: Player | Monster | string,
+    _game: any,
+    _systems: any,
+    _eventBus?: any,
+    _log?: any[],
+    _coordination?: {
       bonus: number;
       players: Player[];
       isCoordinated: boolean;
     },
-    comeback?: {
+    _comeback?: {
       bonus: number;
       isActive: boolean;
     }
@@ -31,12 +32,12 @@ interface AbilityHandler {
 
 interface RacialAbilityHandler {
   (
-    actor: Player,
-    target: Player | Monster | string,
-    game: any,
-    systems: any,
-    eventBus?: any,
-    log?: any[]
+    _actor: Player,
+    _target: Player | Monster | string,
+    _game: any,
+    _systems: any,
+    _eventBus?: any,
+    _log?: any[]
   ): any;
 }
 
@@ -141,7 +142,7 @@ class AbilityRegistry {
     ability: any,
     log: any[],
     systems: any,
-    coordinationInfo?: any
+    _coordinationInfo?: any
   ): boolean {
     const handler = this.racialAbilities.get(abilityType);
     if (!handler) {
@@ -193,7 +194,6 @@ class AbilityRegistry {
     let outcome = 'normal';
 
     // Critical hit calculation (5% chance) using secure randomness
-    const { secureRandomFloat, secureRandomChoice } = require('../utils/secureRandom.js');
     if (secureRandomFloat() < config.gameBalance.abilityVariance.critChance) {
       critMultiplier = config.gameBalance.abilityVariance.critMultiplier;
       outcome = 'crit';

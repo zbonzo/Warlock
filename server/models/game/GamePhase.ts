@@ -6,7 +6,7 @@
 
 import { z } from 'zod';
 import logger from '../../utils/logger.js';
-import type { GameCode, PlayerAction } from '../../types/generated.js';
+import type { GameCode } from '../../types/generated.js';
 
 // Action schemas
 const PendingActionSchema = z.object({

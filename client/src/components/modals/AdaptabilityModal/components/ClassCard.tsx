@@ -2,7 +2,6 @@
  * @fileoverview Card component for displaying a selectable class
  */
 import React from 'react';
-import { useTheme } from '@contexts/ThemeContext';
 import type { PlayerClass } from '../../../../types/shared';
 import './ClassCard.css';
 
@@ -31,7 +30,6 @@ export interface ClassCardProps {
 }
 
 const ClassCard: React.FC<ClassCardProps> = ({ className, onSelect }) => {
-  const theme = useTheme();
   const icon = getClassIcon(className);
 
   return (

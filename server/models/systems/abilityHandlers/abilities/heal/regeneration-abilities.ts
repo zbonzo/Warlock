@@ -13,8 +13,6 @@ import type {
 } from '../../abilityRegistryUtils.js';
 import type { GameSystems } from '../../../SystemsFactory.js';
 
-import config from '../../../../../config/index.js';
-import messages from '../../../../../config/messages/index.js';
 
 /**
  * Handle healing over time abilities
@@ -25,14 +23,14 @@ export const handleHealingOverTime: AbilityHandler = (
   ability: Ability,
   log: LogEntry[],
   systems: GameSystems,
-  coordinationInfo?: CoordinationInfo
+  _coordinationInfo?: CoordinationInfo
 ): boolean => {
   if (!actor || !target || !ability) {
     return false;
   }
 
   // Can only heal players
-  if (!(target as any).hasOwnProperty('isAlive')) {
+  if (!Object.prototype.hasOwnProperty.call(target, 'isAlive')) {
     return false;
   }
 
@@ -81,22 +79,19 @@ export const handleHealingOverTime: AbilityHandler = (
   }) || { success: false };
 
   if (statusResult.success) {
-    log.push({
-      id: secureId('hot-applied'),
-      timestamp: Date.now(),
-      type: 'action',
-      source: actor.id,
-      target: target.id,
-      message: `${actor.name} applies healing over time to ${targetPlayer.name} (${healingPerTurn} HP/turn for ${duration} turns)!`,
-      details: {
-        healingPerTurn,
-        duration,
-        immediateHealing
-      },
-      public: true,
-      isPublic: true,
-      priority: 'high'
-    });
+    log.push(createActionLog(
+      actor.id,
+      target.id,
+      `${actor.name} applies healing over time to ${targetPlayer.name} (${healingPerTurn} HP/turn for ${duration} turns)!`,
+      {
+        details: {
+          healingPerTurn,
+          duration,
+          immediateHealing
+        },
+        priority: 'high'
+      }
+    ));
 
     return true;
   }
@@ -113,14 +108,14 @@ export const handleRapidRegeneration: AbilityHandler = (
   ability: Ability,
   log: LogEntry[],
   systems: GameSystems,
-  coordinationInfo?: CoordinationInfo
+  _coordinationInfo?: CoordinationInfo
 ): boolean => {
   if (!actor || !target || !ability) {
     return false;
   }
 
   // Can only heal players
-  if (!(target as any).hasOwnProperty('isAlive')) {
+  if (!Object.prototype.hasOwnProperty.call(target, 'isAlive')) {
     return false;
   }
 
@@ -151,22 +146,19 @@ export const handleRapidRegeneration: AbilityHandler = (
   }) || { success: false };
 
   if (statusResult.success) {
-    log.push({
-      id: secureId('rapid-regen-success'),
-      timestamp: Date.now(),
-      type: 'action',
-      source: actor.id,
-      target: target.id,
-      message: `${actor.name} applies rapid regeneration to ${targetPlayer.name} (${healingPerTurn} HP/turn x${healingMultiplier} multiplier for ${duration} turns)!`,
-      details: {
-        healingPerTurn,
-        duration,
-        healingMultiplier
-      },
-      public: true,
-      isPublic: true,
-      priority: 'high'
-    });
+    log.push(createActionLog(
+      actor.id,
+      target.id,
+      `${actor.name} applies rapid regeneration to ${targetPlayer.name} (${healingPerTurn} HP/turn x${healingMultiplier} multiplier for ${duration} turns)!`,
+      {
+        details: {
+          healingPerTurn,
+          duration,
+          healingMultiplier
+        },
+        priority: 'high'
+      }
+    ));
 
     return true;
   }
@@ -183,7 +175,7 @@ export const handleLifeSteal: AbilityHandler = (
   ability: Ability,
   log: LogEntry[],
   systems: GameSystems,
-  coordinationInfo?: CoordinationInfo
+  _coordinationInfo?: CoordinationInfo
 ): boolean => {
   if (!actor || !ability) {
     return false;
@@ -207,20 +199,18 @@ export const handleLifeSteal: AbilityHandler = (
   }) || { success: false };
 
   if (statusResult.success) {
-    log.push({
-      id: secureId('life-steal-success'),
-      timestamp: Date.now(),
-      type: 'action',
-      source: actor.id,
-      message: `${actor.name} gains life steal for ${duration} turns (${Math.round(lifestealPercentage * 100)}% of damage dealt)!`,
-      details: {
-        duration,
-        lifestealPercentage
-      },
-      public: true,
-      isPublic: true,
-      priority: 'high'
-    });
+    log.push(createActionLog(
+      actor.id,
+      actor.id,
+      `${actor.name} gains life steal for ${duration} turns (${Math.round(lifestealPercentage * 100)}% of damage dealt)!`,
+      {
+        details: {
+          duration,
+          lifestealPercentage
+        },
+        priority: 'high'
+      }
+    ));
 
     return true;
   }

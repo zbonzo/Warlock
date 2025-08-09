@@ -13,8 +13,6 @@ import type {
 import type { GameSystems } from '../../../SystemsFactory.js';
 import { applyThreatForAbility } from '../../abilityRegistryUtils.js';
 
-import config from '../../../../../config/index.js';
-import messages from '../../../../../config/messages/index.js';
 
 /**
  * Handle vulnerability strike - attack that applies vulnerability status
@@ -51,7 +49,7 @@ export const handleVulnerabilityStrike: AbilityHandler = (
   }
 
   // If attack successful and target is a player, apply vulnerability
-  if ((target as any).hasOwnProperty('isAlive') && (target as any).hp > 0) {
+  if (Object.prototype.hasOwnProperty.call(target, 'isAlive') && (target as any).hp > 0) {
     const vulnParams = (ability as any).params || {};
     const vulnerabilityMultiplier = Number(vulnParams.vulnerabilityMultiplier) || 1.5;
     const duration = Number(vulnParams.duration) || 2;
@@ -73,7 +71,8 @@ export const handleVulnerabilityStrike: AbilityHandler = (
 
       log.push({
         id: secureId('vulnerability-strike-success'),
-        timestamp: Date.now(),
+        timestamp: // eslint-disable-next-line no-restricted-syntax
+    Date.now(),
         type: 'damage',
         source: actor.id,
         target: target.id,
@@ -97,7 +96,8 @@ export const handleVulnerabilityStrike: AbilityHandler = (
   const targetName = (target as Player).name || (target as Monster).name;
   log.push({
     id: secureId('vulnerability-strike-partial'),
-    timestamp: Date.now(),
+    timestamp: // eslint-disable-next-line no-restricted-syntax
+    Date.now(),
     type: 'damage',
     source: actor.id,
     target: target.id,
@@ -131,7 +131,8 @@ export const handleRecklessStrike: AbilityHandler = (
   if ((target as any).statusEffects && (target as any).statusEffects.invisible) {
     log.push({
       id: secureId('reckless-strike-invisible'),
-      timestamp: Date.now(),
+      timestamp: // eslint-disable-next-line no-restricted-syntax
+    Date.now(),
       type: 'action',
       source: actor.id,
       target: target.id,
@@ -158,7 +159,8 @@ export const handleRecklessStrike: AbilityHandler = (
   if (selfDamageResult.success) {
     log.push({
       id: secureId('reckless-strike-self-damage'),
-      timestamp: Date.now(),
+      timestamp: // eslint-disable-next-line no-restricted-syntax
+    Date.now(),
       type: 'damage',
       source: actor.id,
       target: actor.id,
@@ -199,7 +201,8 @@ export const handleRecklessStrike: AbilityHandler = (
 
     log.push({
       id: secureId('reckless-strike-success'),
-      timestamp: Date.now(),
+      timestamp: // eslint-disable-next-line no-restricted-syntax
+    Date.now(),
       type: 'damage',
       source: actor.id,
       target: target.id,
@@ -277,7 +280,8 @@ export const handleBarbedArrow: AbilityHandler = (
 
       log.push({
         id: secureId('barbed-arrow-success'),
-        timestamp: Date.now(),
+        timestamp: // eslint-disable-next-line no-restricted-syntax
+    Date.now(),
         type: 'damage',
         source: actor.id,
         target: target.id,
@@ -301,7 +305,8 @@ export const handleBarbedArrow: AbilityHandler = (
   const targetName = (target as Player).name || (target as Monster).name;
   log.push({
     id: secureId('barbed-arrow-partial'),
-    timestamp: Date.now(),
+    timestamp: // eslint-disable-next-line no-restricted-syntax
+    Date.now(),
     type: 'damage',
     source: actor.id,
     target: target.id,
@@ -376,7 +381,8 @@ export const handlePyroblast: AbilityHandler = (
 
   log.push({
     id: secureId('pyroblast-success'),
-    timestamp: Date.now(),
+    timestamp: // eslint-disable-next-line no-restricted-syntax
+    Date.now(),
     type: 'damage',
     source: actor.id,
     target: target.id,

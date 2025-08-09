@@ -3,7 +3,6 @@
  * Shows current player status at the top and other players below
  */
 import React from 'react';
-import { useTheme } from '@contexts/ThemeContext';
 import { PlayerCard } from '../../../components/common/PlayerCard';
 import { Player } from '@/types/game';
 import './PlayerColumn.css';
@@ -30,8 +29,6 @@ const PlayerColumn: React.FC<PlayerColumnProps> = ({
   onTargetSelect,
   isMobile
 }) => {
-  const theme = useTheme();
-  
   // Don't render if not visible (mobile view handling)
   if (!isVisible) return null;
   
@@ -83,7 +80,7 @@ const PlayerColumn: React.FC<PlayerColumnProps> = ({
           <div className="players-list">
             {regularPlayers.map(player => (
               <PlayerCard 
-                key={player['id']} 
+                key={player['id']}
                 player={player} 
                 isCurrentPlayer={false}
                 size="medium"

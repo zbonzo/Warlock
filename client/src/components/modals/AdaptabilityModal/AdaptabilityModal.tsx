@@ -3,7 +3,6 @@
  * Allows players to replace one ability with another from a different class
  */
 import React, { useState, useEffect, useRef } from 'react';
-import { useTheme } from '@contexts/ThemeContext';
 import { STEPS, type StepType } from './constants';
 import type { Socket } from 'socket.io-client';
 import type { Ability, PlayerClass } from '../../../types/shared';
@@ -46,7 +45,6 @@ const AdaptabilityModal: React.FC<AdaptabilityModalProps> = ({
   className,
   initialAbilities,
 }) => {
-  const theme = useTheme();
 
   const [currentStep, setCurrentStep] = useState<StepType>(STEPS.SELECT_ABILITY);
   const [abilities, setAbilities] = useState<Ability[]>([]);

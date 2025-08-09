@@ -22,7 +22,6 @@ import {
   ActionResult,
   Monster,
   ValidationResult,
-  PlayerAction,
   Schemas
 } from '../types/generated.js';
 
@@ -133,19 +132,19 @@ export class Player {
     // Abilities compatibility - delegate to playerAbilities
     Object.defineProperty(this, 'abilities', {
       get: () => this.playerAbilities.getAbilities(),
-      set: (value: Ability[]) => this.playerAbilities.setAbilities(value),
+      set: (value: Ability[]) => { this.playerAbilities.setAbilities(value); },
       enumerable: true
     });
 
     Object.defineProperty(this, 'unlocked', {
       get: () => this.playerAbilities.getUnlockedAbilities(),
-      set: (value: Ability[]) => this.playerAbilities.setUnlockedAbilities(value),
+      set: (value: Ability[]) => { this.playerAbilities.setUnlockedAbilities(value); },
       enumerable: true
     });
 
     Object.defineProperty(this, 'abilityCooldowns', {
       get: () => (this.playerAbilities as any)['abilityCooldowns'],
-      set: (value: Record<string, number>) => (this.playerAbilities as any)['abilityCooldowns'] = value,
+      set: (value: Record<string, number>) => { (this.playerAbilities as any)['abilityCooldowns'] = value; },
       enumerable: true
     });
 
@@ -161,80 +160,80 @@ export class Player {
 
     Object.defineProperty(this, 'actionValidationState', {
       get: () => (this.playerAbilities as any)['actionValidationState'],
-      set: (value: any) => (this.playerAbilities as any)['actionValidationState'] = value,
+      set: (value: any) => { (this.playerAbilities as any)['actionValidationState'] = value; },
       enumerable: true
     });
 
     Object.defineProperty(this, 'actionSubmissionTime', {
       get: () => (this.playerAbilities as any)['actionSubmissionTime'],
-      set: (value: number) => (this.playerAbilities as any)['actionSubmissionTime'] = value,
+      set: (value: number) => { (this.playerAbilities as any)['actionSubmissionTime'] = value; },
       enumerable: true
     });
 
     Object.defineProperty(this, 'lastValidAction', {
       get: () => (this.playerAbilities as any)['lastValidAction'],
-      set: (value: any) => (this.playerAbilities as any)['lastValidAction'] = value,
+      set: (value: any) => { (this.playerAbilities as any)['lastValidAction'] = value; },
       enumerable: true
     });
 
     Object.defineProperty(this, 'racialAbility', {
       get: () => (this.playerAbilities as any)['racialAbility'],
-      set: (value: any) => (this.playerAbilities as any)['racialAbility'] = value,
+      set: (value: any) => { (this.playerAbilities as any)['racialAbility'] = value; },
       enumerable: true
     });
 
     Object.defineProperty(this, 'racialUsesLeft', {
       get: () => (this.playerAbilities as any)['racialUsesLeft'],
-      set: (value: number) => (this.playerAbilities as any)['racialUsesLeft'] = value,
+      set: (value: number) => { (this.playerAbilities as any)['racialUsesLeft'] = value; },
       enumerable: true
     });
 
     Object.defineProperty(this, 'racialCooldown', {
       get: () => (this.playerAbilities as any)['racialCooldown'],
-      set: (value: number) => (this.playerAbilities as any)['racialCooldown'] = value,
+      set: (value: number) => { (this.playerAbilities as any)['racialCooldown'] = value; },
       enumerable: true
     });
 
     // Effects compatibility - delegate to playerEffects
     Object.defineProperty(this, 'statusEffects', {
       get: () => this.playerEffects.getStatusEffects(),
-      set: (value: StatusEffect[]) => (this.playerEffects as any)['statusEffects'] = value,
+      set: (value: StatusEffect[]) => { (this.playerEffects as any)['statusEffects'] = value; },
       enumerable: true
     });
 
     Object.defineProperty(this, 'isVulnerable', {
       get: () => this.playerEffects.isVulnerable,
-      set: (value: boolean) => this.playerEffects.isVulnerable = value,
+      set: (value: boolean) => { this.playerEffects.isVulnerable = value; },
       enumerable: true
     });
 
     Object.defineProperty(this, 'vulnerabilityIncrease', {
       get: () => this.playerEffects.vulnerabilityIncrease,
-      set: (value: number) => this.playerEffects.vulnerabilityIncrease = value,
+      set: (value: number) => { this.playerEffects.vulnerabilityIncrease = value; },
       enumerable: true
     });
 
     Object.defineProperty(this, 'stoneArmorIntact', {
       get: () => (this.playerEffects as any)['stoneArmorIntact'],
-      set: (value: boolean) => (this.playerEffects as any)['stoneArmorIntact'] = value,
+      set: (value: boolean) => { (this.playerEffects as any)['stoneArmorIntact'] = value; },
       enumerable: true
     });
 
     Object.defineProperty(this, 'stoneArmorValue', {
       get: () => (this.playerEffects as any)['stoneArmorValue'],
-      set: (value: number) => (this.playerEffects as any)['stoneArmorValue'] = value,
+      set: (value: number) => { (this.playerEffects as any)['stoneArmorValue'] = value; },
       enumerable: true
     });
 
     Object.defineProperty(this, 'classEffects', {
       get: () => this.playerEffects.getClassEffects(),
-      set: (value: StatusEffect[]) => this.playerEffects.setClassEffects(value),
+      set: (value: StatusEffect[]) => { this.playerEffects.setClassEffects(value); },
       enumerable: true
     });
 
     Object.defineProperty(this, 'racialEffects', {
       get: () => this.playerEffects.getRacialEffects(),
-      set: (value: StatusEffect[]) => this.playerEffects.setRacialEffects(value),
+      set: (value: StatusEffect[]) => { this.playerEffects.setRacialEffects(value); },
       enumerable: true
     });
   }

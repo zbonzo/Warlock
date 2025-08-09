@@ -3,7 +3,6 @@
  * Now correctly filters events using player IDs instead of exploitable name matching
  */
 import React from 'react';
-import { useTheme } from '@contexts/ThemeContext';
 import { Player, GameEvent } from '@/types/game';
 import './HistoryColumn.css';
 
@@ -30,14 +29,8 @@ const HistoryColumn: React.FC<HistoryColumnProps> = ({
   players = [],
   showAllEvents = false,
 }) => {
-  const theme = useTheme();
-
   // Don't render if not visible
   if (!isVisible) return null;
-
-  // Get current player data
-  const currentPlayer = players.find((p) => p['id'] === currentPlayerId);
-  const isWarlock = currentPlayer?.isWarlock || false;
 
   /**
    * Process template strings with actual values

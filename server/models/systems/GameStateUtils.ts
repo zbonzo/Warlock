@@ -6,6 +6,7 @@
 import config from '../../config/index.js';
 import messages from '../../config/messages/index.js';
 import logger from '../../utils/logger.js';
+import { secureRandomChoice } from '../../utils/secureRandom.js';
 
 interface Player {
   id: string;
@@ -17,7 +18,7 @@ interface Player {
   race?: string;
   class?: string;
   pendingDeath?: boolean;
-  hasStatusEffect?: (effect: string) => boolean;
+  hasStatusEffect?: (_effect: string) => boolean;
   abilities?: Ability[];
   unlocked?: Ability[];
   racialEffects?: {
@@ -50,7 +51,7 @@ interface TargetingOptions {
 
 interface GameSystems {
   statusEffectSystem: {
-    hasEffect: (targetId: string, effectType: string) => boolean;
+    hasEffect: (_targetId: string, _effectType: string) => boolean;
   };
 }
 
@@ -148,7 +149,6 @@ class GameStateUtils {
     if (possibleTargets.length === 0) {
       return null;
     }
-    const { secureRandomChoice } = require('../utils/secureRandom.js');
     const selectedTarget = secureRandomChoice(possibleTargets);
     return selectedTarget || null;
   }
@@ -301,8 +301,8 @@ class GameStateUtils {
 
     // Sort players by the specified property
     return filteredPlayers.sort((a, b) => {
-      const aValue = (a[property] as any) || 0;
-      const bValue = (b[property] as any) || 0;
+      const aValue = a[property] != null ? Number(a[property]) : 0;
+      const bValue = b[property] != null ? Number(b[property]) : 0;
 
       return ascending ? aValue - bValue : bValue - aValue;
     });
@@ -325,14 +325,16 @@ class GameStateUtils {
     for (const player of this.players.values()) {
       if (!player.isAlive) continue;
 
-      const value = player[property] as string;
+      const propertyValue = player[property];
+      const value = propertyValue != null ? String(propertyValue) : '';
       if (value === undefined || value === null) continue;
 
-      if (!groups[value]) {
+      if (value && !Object.prototype.hasOwnProperty.call(groups, value)) {
         groups[value] = [];
       }
-
-      groups[value].push(player);
+      if (value) {
+        groups[value].push(player);
+      }
     }
 
     return groups;
@@ -418,9 +420,8 @@ class GameStateUtils {
     if (!oldAbility || oldAbility.unlockAt !== level) return false;
 
     // Find the new ability in the class abilities
-    const newAbilityTemplate = config
-      .getClassAbilities(player.class!)
-      .find((a: Ability) => a.type === newAbilityType && a.unlockAt === level);
+    const classAbilities = config.getClassAbilities(player.class!);
+    const newAbilityTemplate = classAbilities.find((a: Ability) => a.type === newAbilityType && a.unlockAt === level);
 
     if (!newAbilityTemplate) {
       return false;
@@ -430,14 +431,16 @@ class GameStateUtils {
     const newAbility = JSON.parse(JSON.stringify(newAbilityTemplate));
 
     // Replace the ability in player's abilities array
-    player.abilities[oldAbilityIndex] = newAbility;
+    if (player.abilities) {
+      player.abilities[oldAbilityIndex] = newAbility;
+    }
 
     // If the old ability was unlocked, update the unlocked abilities too
     if (player.unlocked) {
       const unlockedIndex = player.unlocked.findIndex(
         (a) => a.type === oldAbilityType
       );
-      if (unlockedIndex !== -1) {
+      if (unlockedIndex !== -1 && player.unlocked) {
         player.unlocked[unlockedIndex] = newAbility;
       }
     }

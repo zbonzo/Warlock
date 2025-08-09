@@ -6,6 +6,7 @@
  */
 import { PlayerActionCommand, CommandOptions, GameContext, CommandResult } from './PlayerActionCommand.js';
 import { EventTypes } from '../events/EventTypes.js';
+import { getCurrentTimestamp } from '../../utils/timestamp.js';
 
 import { lenientValidator } from '../validation/ValidationMiddleware.js';
 import logger from '../../utils/logger.js';
@@ -44,11 +45,11 @@ interface Player {
   abilities?: Ability[];
   unlocked?: Array<{ id: string; type: string }>;
   playerAbilities?: {
-    isAbilityOnCooldown(abilityId: string): boolean;
-    setCooldown(abilityId: string, cooldown: number): void;
+    isAbilityOnCooldown(_abilityId: string): boolean;
+    setCooldown(_abilityId: string, _cooldown: number): void;
   };
   playerEffects?: {
-    hasEffect(effectType: string): boolean;
+    hasEffect(_effectType: string): boolean;
   };
   hasSubmittedAction?: boolean;
   actionSubmissionTime?: number;
@@ -62,29 +63,29 @@ interface Player {
  * Game interface (basic typing for now)
  */
 interface Game {
-  getPlayerById(playerId: string): Player | undefined;
+  getPlayerById(_playerId: string): Player | undefined;
   monster?: {
     hp: number;
   };
   gamePhase?: {
-    addPendingAction(action: {
+    addPendingAction(_action: {
       actorId: string;
       actionType: string;
       targetId: string | null;
       options?: Record<string, unknown>;
     }): void;
   };
-  emitEvent(eventType: string, data: Record<string, unknown>): Promise<void>;
+  emitEvent(_eventType: string, _data: Record<string, unknown>): Promise<void>;
   players?: Map<string, Player>;
   systems?: {
     abilityRegistry?: {
       executePlayerAbility(
-        player: Player,
-        target: Player | Player[] | any,
-        ability: Ability,
-        log: string[],
-        systems: any,
-        coordinationInfo?: Record<string, unknown> | null
+        _player: Player,
+        _target: Player | Player[] | any,
+        _ability: Ability,
+        _log: string[],
+        _systems: any,
+        _coordinationInfo?: Record<string, unknown> | null
       ): Promise<any>;
     };
   };
@@ -214,7 +215,8 @@ export class AbilityCommand extends PlayerActionCommand {
       // Mark player as having submitted (for backward compatibility)
       if (player) {
         player.hasSubmittedAction = true;
-        player.actionSubmissionTime = Date.now();
+        // Track when player submitted their action
+        player.actionSubmissionTime = getCurrentTimestamp();
       }
 
       // Emit ability validated event (not used, just validated)
@@ -271,7 +273,7 @@ export class AbilityCommand extends PlayerActionCommand {
    * @returns True if unlocked
    * @private
    */
-  private _isAbilityUnlocked(player: Player | undefined, ability: Ability): boolean {
+  private _isAbilityUnlocked(player: Player | undefined, _ability: Ability): boolean {
     if (!player?.unlocked) return false;
     // Check by both id and type for backward compatibility
     return player.unlocked.some(unlockedAbility =>
@@ -286,7 +288,7 @@ export class AbilityCommand extends PlayerActionCommand {
    * @returns True if on cooldown
    * @private
    */
-  private _isOnCooldown(player: Player | undefined, ability: Ability): boolean {
+  private _isOnCooldown(player: Player | undefined, _ability: Ability): boolean {
     if (!player?.playerAbilities) return false;
     return player.playerAbilities.isAbilityOnCooldown(this.abilityId!);
   }

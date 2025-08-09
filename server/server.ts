@@ -172,6 +172,7 @@ const socketRateLimiter: SocketRateLimiter = {
     limit: number = config.gameBalance.rateLimiting.defaultLimit,
     timeWindow: number = config.gameBalance.rateLimiting.defaultTimeWindow
   ): boolean {
+    // eslint-disable-next-line no-restricted-syntax
     const now = Date.now();
 
     if (!this.limits.has(socketId)) {

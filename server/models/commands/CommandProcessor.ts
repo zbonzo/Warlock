@@ -111,10 +111,10 @@ export class CommandProcessor {
    */
   cancelCommand(commandId: string): boolean {
     // Find and remove from pending commands
-    for (const [playerId, queue] of this.pendingCommands.entries()) {
+    for (const queue of this.pendingCommands.values()) {
       const commandIndex = queue.findIndex(cmd => cmd.id === commandId);
       if (commandIndex !== -1) {
-        const command = queue[commandIndex];
+        const command = commandIndex >= 0 && commandIndex < queue.length ? queue[commandIndex] : null;
         if (command) {
           command.cancel();
           queue.splice(commandIndex, 1);
@@ -277,7 +277,7 @@ export class CommandProcessor {
    * @private
    */
   private async _processCommand(command: PlayerActionCommand): Promise<any> {
-    const startTime = Date.now();
+    const startTime = performance.now();
 
     try {
       // Move to executing state
@@ -338,7 +338,7 @@ export class CommandProcessor {
 
       // Update statistics
       this.stats.commandsProcessed++;
-      const executionTime = Date.now() - startTime;
+      const executionTime = performance.now() - startTime;
       this._updateAverageExecutionTime(executionTime);
 
       logger.debug('Command executed successfully:', {

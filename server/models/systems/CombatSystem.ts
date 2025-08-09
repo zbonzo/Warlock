@@ -864,7 +864,7 @@ export class CombatSystem extends AbstractGameSystem<GameRoom, GameEvent> implem
     const baseBonus = (config as any)['gameBalance']?.['coordination']?.['baseBonus'] || 0.1;
     const bonusPerPlayer = (config as any)['gameBalance']?.['coordination']?.['bonusPerPlayer'] || 0.05;
 
-    return baseBonus + (playerCount - 1) * bonusPerPlayer;
+    return baseBonus + ((playerCount - 1) * bonusPerPlayer);
   }
 
   /**
@@ -917,11 +917,12 @@ export class CombatSystem extends AbstractGameSystem<GameRoom, GameEvent> implem
     }
 
     switch ((event as any)['type']) {
-      case 'action.submitted':
+      case 'action.submitted': {
         // Process combat action
         const result = await this.processRound(state);
         // Update game state with combat results
         return this.updateGameStateWithCombatResults(state, result);
+      }
 
       case 'damage.calculated':
         // Apply damage calculation results

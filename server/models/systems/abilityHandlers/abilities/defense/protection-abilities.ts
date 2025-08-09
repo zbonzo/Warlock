@@ -12,10 +12,7 @@ import type {
   LogEntry
 } from '../../abilityRegistryUtils.js';
 import type { GameSystems } from '../../../SystemsFactory.js';
-import { applyThreatForAbility } from '../../abilityRegistryUtils.js';
 
-import config from '../../../../../config/index.js';
-import messages from '../../../../../config/messages/index.js';
 
 /**
  * Handle shield wall - provides damage reduction
@@ -26,14 +23,14 @@ export const handleShieldWall: AbilityHandler = (
   ability: Ability,
   log: LogEntry[],
   systems: GameSystems,
-  coordinationInfo?: CoordinationInfo
+  _coordinationInfo?: CoordinationInfo
 ): boolean => {
   if (!actor || !target || !ability) {
     return false;
   }
 
   // Can only target players
-  if (!(target as any).hasOwnProperty('isAlive')) {
+  if (!Object.prototype.hasOwnProperty.call(target, 'isAlive')) {
     return false;
   }
 
@@ -94,7 +91,7 @@ export const handleMultiProtection: AbilityHandler = (
   ability: Ability,
   log: LogEntry[],
   systems: GameSystems,
-  coordinationInfo?: CoordinationInfo
+  _coordinationInfo?: CoordinationInfo
 ): boolean => {
   if (!actor || !ability) {
     return false;

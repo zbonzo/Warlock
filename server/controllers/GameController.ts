@@ -6,9 +6,7 @@
 
 import gameService from '../services/gameService.js';
 import {
-  validatePlayerNameSocket,
-  validatePlayerName,
-  suggestValidName,
+  validatePlayerNameSocket
 } from '../middleware/validation.js';
 import { validateGameAction } from '../shared/gameChecks.js';
 import logger from '../utils/logger.js';
@@ -20,13 +18,7 @@ import { createDebugLogger } from '../config/debug.config.js';
 import type { Player } from '../models/Player.js';
 import { BaseController } from './PlayerController.js';
 import {
-  GameState,
-  GameCode,
-  GameRules,
-  ActionResult,
-  ValidationResult,
-  CreateGameInput,
-  PlayerAction
+  GameRules
 } from '../types/generated.js';
 import { Socket, Server as SocketIOServer } from 'socket.io';
 
@@ -102,7 +94,7 @@ export class GameController extends BaseController<GameRoom, CreateGameRequest, 
     request: CreateGameRequest
   ): Promise<GameControllerResult> {
     try {
-      const { playerName, maxPlayers, gameMode = 'standard', isPrivate = false, timeLimit } = request;
+      const { playerName, maxPlayers, timeLimit } = request;
 
       // Validate player name
       if (!validatePlayerNameSocket(socket, playerName)) {
@@ -639,8 +631,46 @@ export class GameController extends BaseController<GameRoom, CreateGameRequest, 
     }
 
     if (input.settings) {
-      // Update game rules/settings
-      Object.assign((game as any).gameRules, input.settings);
+      // Safely update game rules/settings with whitelisted properties
+      const allowedSettings = ['maxPlayers', 'timeLimit', 'allowSpectators', 'gameMode'];
+      const gameRules = (game as any).gameRules;
+
+      for (const key of allowedSettings) {
+        if (key in input.settings && input.settings[key as keyof GameRules] !== undefined) {
+          // Validate the type and range of values
+          const value = input.settings[key as keyof GameRules];
+
+          if (key === 'maxPlayers' && typeof value === 'number' && value >= 2 && value <= 20) {
+            Object.defineProperty(gameRules, key, {
+              value,
+              writable: true,
+              enumerable: true,
+              configurable: true
+            });
+          } else if (key === 'timeLimit' && typeof value === 'number' && value >= 60 && value <= 3600) {
+            Object.defineProperty(gameRules, key, {
+              value,
+              writable: true,
+              enumerable: true,
+              configurable: true
+            });
+          } else if (key === 'allowSpectators' && typeof value === 'boolean') {
+            Object.defineProperty(gameRules, key, {
+              value,
+              writable: true,
+              enumerable: true,
+              configurable: true
+            });
+          } else if (key === 'gameMode' && typeof value === 'string' && ['standard', 'blitz'].includes(value)) {
+            Object.defineProperty(gameRules, key, {
+              value,
+              writable: true,
+              enumerable: true,
+              configurable: true
+            });
+          }
+        }
+      }
     }
 
     return game;
@@ -740,7 +770,7 @@ export class GameController extends BaseController<GameRoom, CreateGameRequest, 
         logger.info(`[GameController] Player ${player.name} submitted action: ${actionType} -> ${targetId}`);
 
         // Send updated game state to all players so they can see submission status
-        for (const [playerId, gamePlayer] of (game as any).players) {
+        for (const [playerId] of (game as any).players) {
           const personalizedGameData = (game as any).toClientData(playerId);
           io.to(playerId).emit('gameStateUpdate', personalizedGameData);
         }

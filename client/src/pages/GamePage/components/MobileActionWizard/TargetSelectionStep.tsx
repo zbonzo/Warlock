@@ -160,7 +160,7 @@ const MonsterAvatar: React.FC<MonsterAvatarProps> = ({ monster }) => {
   useEffect(() => {
     if (!canvasRef.current) return;
     drawMonsterBadge(canvasRef.current, monster);
-  }, [monster['hp'], monster['maxHp']]);
+  }, [monster]);
 
   return (
     <canvas

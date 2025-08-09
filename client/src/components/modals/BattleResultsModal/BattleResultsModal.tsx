@@ -3,7 +3,6 @@
  * Shows the events log and allows players to continue to the next round
  */
 import React, { useState, useEffect } from 'react';
-import { useTheme } from '@contexts/ThemeContext';
 import EventsLog from '@components/game/EventsLog';
 import type { Player } from '../../../types/shared';
 import './BattleResultsModal.css';
@@ -48,8 +47,16 @@ const BattleResultsModal: React.FC<BattleResultsModalProps> = ({
     winner,
     trophyAward
   });
-  const theme = useTheme();
   const [exiting, setExiting] = useState(false);
+
+  const handleClose = React.useCallback(() => {
+    setExiting(true);
+
+    setTimeout(() => {
+      setExiting(false);
+      onClose();
+    }, 300);
+  }, [onClose]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -63,18 +70,9 @@ const BattleResultsModal: React.FC<BattleResultsModalProps> = ({
     }
 
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen]);
+  }, [isOpen, handleClose]);
 
   if (!isOpen) return null;
-
-  const handleClose = () => {
-    setExiting(true);
-
-    setTimeout(() => {
-      setExiting(false);
-      onClose();
-    }, 300);
-  };
 
   return (
     <div className={`battle-results-overlay ${exiting ? 'exiting' : ''}`}>

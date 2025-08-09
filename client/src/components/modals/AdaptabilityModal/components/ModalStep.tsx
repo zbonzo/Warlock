@@ -2,7 +2,6 @@
  * @fileoverview Container component for a step in the modal workflow
  */
 import React from 'react';
-import { useTheme } from '@contexts/ThemeContext';
 import './ModalStep.css';
 
 export interface ModalStepProps {
@@ -18,8 +17,6 @@ const ModalStep: React.FC<ModalStepProps> = ({
   onBack, 
   children 
 }) => {
-  const theme = useTheme();
-  
   return (
     <div className="modal-step">
       <p className="step-title">

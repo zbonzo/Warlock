@@ -1,5 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { useAppContext } from '../../../contexts/AppContext';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import './DamageEffects.css';
 
 interface DamageEffectsProps {
@@ -42,7 +41,7 @@ const DamageEffects: React.FC<DamageEffectsProps> = ({ eventsLog, playerName, pl
   const [effectQueue, setEffectQueue] = useState<EffectType[]>([]);
   const [isProcessingQueue, setIsProcessingQueue] = useState(false);
 
-  const abilityToEffect: Record<string, EffectType> = {
+  const abilityToEffect = useMemo((): Record<string, EffectType> => ({
     // Fire-based abilities
     Fireball: 'fire',
     Cauterize: 'fire',
@@ -95,9 +94,9 @@ const DamageEffects: React.FC<DamageEffectsProps> = ({ eventsLog, playerName, pl
     Entangle: 'nature',
     Rejuvenation: 'nature',
     'Ancestral Heal': 'nature',
-  };
+  }), []);
 
-  const damageEffectConfigs: Record<EffectType, EffectConfig> = {
+  const damageEffectConfigs = useMemo((): Record<EffectType, EffectConfig> => ({
     fire: { duration: 2500, className: 'fire-effect' },
     slash: { duration: 1800, className: 'slash-effect' },
     poison: { duration: 3000, className: 'poison-effect' },
@@ -109,7 +108,7 @@ const DamageEffects: React.FC<DamageEffectsProps> = ({ eventsLog, playerName, pl
     arcane: { duration: 2000, className: 'arcane-effect' },
     burst: { duration: 1500, className: 'burst-effect' },
     divine: { duration: 2200, className: 'divine-effect' },
-  };
+  }), []);
 
   const triggerDamageEffect = useCallback((effectType: EffectType) => {
     const config = damageEffectConfigs[effectType];
@@ -128,7 +127,7 @@ const DamageEffects: React.FC<DamageEffectsProps> = ({ eventsLog, playerName, pl
     setTimeout(() => {
       setActiveEffects((prev) => prev.filter((e) => e.id !== effectId));
     }, config.duration);
-  }, []);
+  }, [damageEffectConfigs]);
 
   useEffect(() => {
     if (effectQueue.length > 0 && !isProcessingQueue) {
@@ -211,7 +210,7 @@ const DamageEffects: React.FC<DamageEffectsProps> = ({ eventsLog, playerName, pl
       console.log('Queueing effects:', newEffects);
       setEffectQueue((prev) => [...prev, ...newEffects]);
     }
-  }, [eventsLog, playerId, playerName]);
+  }, [eventsLog, playerId, playerName, abilityToEffect]);
 
   if (activeEffects.length === 0) return null;
 

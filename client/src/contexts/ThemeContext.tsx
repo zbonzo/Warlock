@@ -2,7 +2,7 @@
  * @fileoverview Enhanced Theme context provider with dark mode support
  * Manages theme switching and CSS variable updates
  */
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { STORAGE_KEYS } from '../config/constants';
 
 type ThemeName = 'light' | 'dark';
@@ -179,7 +179,7 @@ export const ThemeProvider = ({ children }: ThemeProviderProps): React.ReactElem
   /**
    * Switch to a different theme
    */
-  const switchTheme = (newTheme: ThemeName): void => {
+  const switchTheme = useCallback((newTheme: ThemeName): void => {
     if (!themes[newTheme]) {
       console.warn(`Theme "${newTheme}" not found`);
       return;
@@ -192,7 +192,7 @@ export const ThemeProvider = ({ children }: ThemeProviderProps): React.ReactElem
     if (typeof window !== 'undefined') {
       localStorage.setItem(STORAGE_KEYS.THEME_PREFERENCE, newTheme);
     }
-  };
+  }, [updateCSSVariables]);
 
   /**
    * Toggle between light and dark themes
@@ -223,7 +223,7 @@ export const ThemeProvider = ({ children }: ThemeProviderProps): React.ReactElem
 
     mediaQuery.addEventListener('change', handleChange);
     return () => mediaQuery.removeEventListener('change', handleChange);
-  }, []);
+  }, [switchTheme]);
 
   const value: ThemeContextValue = {
     // Current theme data

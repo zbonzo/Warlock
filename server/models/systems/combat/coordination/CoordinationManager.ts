@@ -3,7 +3,7 @@
  * Handles coordination bonuses when players use similar abilities
  */
 
-import type { Player, PlayerAction } from '../../../../types/generated.js';
+import type { PlayerAction } from '../../../../types/generated.js';
 import type { CoordinationInfo, ActionValidationResult } from '../interfaces.js';
 
 import config from '../../../../config/index.js';

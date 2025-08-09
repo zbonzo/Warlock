@@ -120,7 +120,7 @@ const ActionWizard: React.FC<ActionWizardProps> = ({
       console.log('🔍 Server has submission, forcing step 2');
       setCurrentStep(2);
     }
-  }, [isOpen, submitted, selectedAbility, me]);
+  }, [isOpen, submitted, selectedAbility, me, currentStep]);
 
   // Reset submitting state when submitted changes and ensure we stay on step 2
   useEffect(() => {
@@ -139,7 +139,7 @@ const ActionWizard: React.FC<ActionWizardProps> = ({
         setCurrentStep(2);
       }
     }
-  }, [submitted, currentStep]);
+  }, [submitted, currentStep, isSubmitting]);
 
   // Handle step changes with validation
   const handleStepChange = useCallback((step: number): void => {

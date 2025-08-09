@@ -4,7 +4,6 @@
  */
 
 import { createActionLog, createDamageLog } from '../../../../../utils/logEntry.js';
-import { secureId } from '../../../../../utils/secureRandom.js';
 import type { Player, Monster, Ability } from '../../../../../types/generated.js';
 import type {
   AbilityHandler,
@@ -14,8 +13,6 @@ import type {
 import type { GameSystems } from '../../../SystemsFactory.js';
 import { applyThreatForAbility } from '../../abilityRegistryUtils.js';
 
-import config from '../../../../../config/index.js';
-import messages from '../../../../../config/messages/index.js';
 
 /**
  * Handle multi-hit attacks - strike the same target multiple times
@@ -70,7 +67,7 @@ export const handleMultiHitAttack: AbilityHandler = (
   let comebackBonus = 0;
   const comebackSystem = systems.comebackMechanics;
   if (comebackSystem && comebackSystem.getBonus) {
-    const totalBaseDamage = Number(damagePerHit) * Number(hitCount);
+    // const totalBaseDamage = Number(damagePerHit) * Number(hitCount); // Unused for now
     comebackBonus = Number(comebackSystem.getBonus(actor.id)) || 0;
   }
 
@@ -196,7 +193,7 @@ export const handleMultiHitAttack: AbilityHandler = (
     applyThreatForAbility(actor, target, ability, Number(totalDamage), 0, systems);
 
     // Check for warlock conversion on player targets
-    if ((target as any).hasOwnProperty('isAlive') && Number(totalDamage) >= 20) {
+    if (Object.prototype.hasOwnProperty.call(target, 'isAlive') && Number(totalDamage) >= 20) {
       // Multi-hit attacks with high total damage can trigger warlock conversion
       systems.warlockSystem?.checkWarlockConversion?.(actor, target as Player, {
         trigger: 'high_damage_multi_hit',

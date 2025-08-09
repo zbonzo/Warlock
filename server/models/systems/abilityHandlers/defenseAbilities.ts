@@ -12,7 +12,6 @@
 
 import type { AbilityRegistry } from './abilityRegistryUtils.js';
 import {
-  registerAbilitiesByCategory,
   registerAbilitiesByEffectAndTarget,
   registerAbilitiesByCriteria
 } from './abilityRegistryUtils.js';

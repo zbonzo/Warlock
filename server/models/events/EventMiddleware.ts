@@ -10,7 +10,7 @@ import logger from '../../utils/logger.js';
 /**
  * Middleware function type
  */
-type MiddlewareFunction = (event: GameEvent, next: (modifiedEvent?: GameEvent | false) => void) => void;
+type MiddlewareFunction = (_event: GameEvent, _next: (_modifiedEvent?: GameEvent | false) => void) => void;
 
 /**
  * Logging middleware options
@@ -25,7 +25,7 @@ interface LoggingOptions {
  */
 interface ValidationOptions {
   strict?: boolean;
-  onError?: (error: Error, event: GameEvent) => void;
+  onError?: (_error: Error, _event: GameEvent) => void;
 }
 
 /**
@@ -41,7 +41,7 @@ interface RateLimitingOptions {
  * Error handling middleware options
  */
 interface ErrorHandlingOptions {
-  onError?: (error: Error, event: GameEvent) => void;
+  onError?: (_error: Error, _event: GameEvent) => void;
 }
 
 /**
@@ -188,7 +188,7 @@ export class EventMiddleware {
         return next();
       }
 
-      const now = Date.now();
+      const now = performance.now();
       const gameCode = 'gameCode' in event ? (event as any).gameCode : 'unknown';
 
       if (!eventCounts.has(gameCode)) {
@@ -259,11 +259,11 @@ export class EventMiddleware {
     const { slowEventThreshold = 100 } = options;
 
     return (event: GameEvent, next) => {
-      const startTime = Date.now();
+      const startTime = performance.now();
 
       next();
 
-      const processingTime = Date.now() - startTime;
+      const processingTime = performance.now() - startTime;
 
       if (processingTime > slowEventThreshold) {
         const gameCode = 'gameCode' in event ? (event as any).gameCode : 'unknown';
@@ -282,7 +282,7 @@ export class EventMiddleware {
    * @param filterFn - Function that returns true to allow event
    * @returns Middleware function
    */
-  static filtering(filterFn: (event: GameEvent) => boolean): MiddlewareFunction {
+  static filtering(filterFn: (_event: GameEvent) => boolean): MiddlewareFunction {
     return (event: GameEvent, next) => {
       if (filterFn(event)) {
         next();
@@ -297,7 +297,7 @@ export class EventMiddleware {
    * @param transformFn - Function that transforms event data
    * @returns Middleware function
    */
-  static transformation(transformFn: (event: GameEvent) => GameEvent): MiddlewareFunction {
+  static transformation(transformFn: (_event: GameEvent) => GameEvent): MiddlewareFunction {
     return (event: GameEvent, next) => {
       try {
         const transformedEvent = transformFn(event);
@@ -319,7 +319,7 @@ export class EventMiddleware {
    * @param authFn - Function that returns true if authorized
    * @returns Middleware function
    */
-  static authorization(authFn: (event: GameEvent) => boolean): MiddlewareFunction {
+  static authorization(authFn: (_event: GameEvent) => boolean): MiddlewareFunction {
     return (event: GameEvent, next) => {
       if (authFn(event)) {
         next();

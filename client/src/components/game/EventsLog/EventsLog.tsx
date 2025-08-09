@@ -3,7 +3,6 @@
  * Shows different information based on player perspective
  */
 import React, { useRef, useEffect } from 'react';
-import { useTheme } from '@contexts/ThemeContext';
 import { GameEvent, Player } from '@/types/game';
 import './EventsLog.css';
 
@@ -21,7 +20,6 @@ const EventsLog: React.FC<EventsLogProps> = ({
   currentPlayerId, 
   players = [] 
 }) => {
-  const theme = useTheme();
   const logRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -279,12 +277,6 @@ const processTemplate = (message: string, event: GameEvent | string, playersList
   });
 
   return result;
-};
-
-const getPlayerName = (playerId: string, playersList: Player[]): string => {
-  if (!playerId || playerId === '__monster__') return 'the Monster';
-  const player = playersList.find((p) => p['id'] === playerId);
-  return player ? player['name'] : 'Unknown Player';
 };
 
 export default EventsLog;

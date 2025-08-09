@@ -6,6 +6,7 @@
 
 import type { AbilityRegistry, AllAbilitiesResponse } from './abilityRegistryUtils.js';
 import { getAllAbilities } from './abilityRegistryUtils.js';
+import { getCurrentTimestamp } from '../../../utils/timestamp.js';
 
 // Import handler modules - migrated to ES modules
 import * as attackAbilities from './attackAbilities.js';
@@ -28,7 +29,7 @@ export interface DebugInfo {
  * Ability handler module interface
  */
 export interface AbilityHandlerModule {
-  register(registry: AbilityRegistry): void;
+  register(_registry: AbilityRegistry): void;
 }
 
 /**
@@ -64,7 +65,7 @@ export function registerAbilityHandlers(registry: AbilityRegistry): DebugInfo {
     registeredHandlers: Array.isArray(debugInfo['handlers']) ? debugInfo['handlers'] : [],
     totalHandlers: typeof debugInfo['total'] === 'number' ? debugInfo['total'] : 0,
     unregisteredAbilities,
-    timestamp: Date.now()
+    timestamp: getCurrentTimestamp()
   };
 }
 

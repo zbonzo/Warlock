@@ -3,7 +3,7 @@
  * Handles racial abilities that provide adaptation and evolution mechanics
  */
 
-import { secureId } from '../../../../../utils/secureRandom.js';
+import { createActionLog } from '../../../../../utils/logEntry.js';
 import type { Player, Monster, Ability } from '../../../../../types/generated.js';
 import type {
   AbilityHandler,
@@ -11,10 +11,9 @@ import type {
   LogEntry
 } from '../../abilityRegistryUtils.js';
 import type { GameSystems } from '../../../SystemsFactory.js';
-import { applyThreatForAbility } from '../../abilityRegistryUtils.js';
 
 import config from '../../../../../config/index.js';
-import { secureRandomChoice } from '../../../../../utils/secureRandom.js';
+import { secureRandomChoice, secureId } from '../../../../../utils/secureRandom.js';
 import messages from '../../../../../config/messages/index.js';
 
 /**
@@ -26,7 +25,7 @@ export const handleAdaptability: AbilityHandler = (
   ability: Ability,
   log: LogEntry[],
   systems: GameSystems,
-  coordinationInfo?: CoordinationInfo
+  _coordinationInfo?: CoordinationInfo
 ): boolean => {
   if (!actor || !ability) {
     return false;
@@ -41,17 +40,15 @@ export const handleAdaptability: AbilityHandler = (
   const availableClasses = config.getClassesByCategory?.('adaptable') || [];
 
   if (availableClasses.length === 0) {
-    log.push({
-      id: secureId('adaptability-no-classes'),
-      timestamp: Date.now(),
-      type: 'action',
-      source: actor.id,
-      message: messages.getAbilityMessage('racial', 'adaptability_no_classes') || `${actor.name} cannot adapt - no classes available!`,
-      details: { reason: 'no_adaptable_classes' },
-      public: true,
-      isPublic: true,
-      priority: 'medium'
-    });
+    log.push(createActionLog(
+      actor.id,
+      '',
+      messages.getAbilityMessage('racial', 'adaptability_no_classes') || `${actor.name} cannot adapt - no classes available!`,
+      {
+        details: { reason: 'no_adaptable_classes' },
+        priority: 'medium'
+      }
+    ));
     return false;
   }
 
@@ -82,40 +79,38 @@ export const handleAdaptability: AbilityHandler = (
   }) || { success: false };
 
   if (statusResult.success) {
-    log.push({
-      id: secureId('adaptability-success'),
-      timestamp: Date.now(),
-      type: 'action',
-      source: actor.id,
-      message: messages.getAbilityMessage('racial', 'adaptability_success') || `${actor.name} adapts to ${selectedClass.name} for ${duration} turns with ${Math.round(adaptationBonus * 100)}% bonus!`,
-      details: {
-        adaptedClass: selectedClass.name,
-        duration,
-        adaptationBonus,
-        newAbilities: selectedClass.abilities?.length || 0
-      },
-      public: true,
-      isPublic: true,
-      priority: 'high'
-    });
+    log.push(createActionLog(
+      actor.id,
+      '',
+      messages.getAbilityMessage('racial', 'adaptability_success') || `${actor.name} adapts to ${selectedClass.name} for ${duration} turns with ${Math.round(adaptationBonus * 100)}% bonus!`,
+      {
+        details: {
+          adaptedClass: selectedClass.name,
+          duration,
+          adaptationBonus,
+          newAbilities: selectedClass.abilities?.length || 0
+        },
+        priority: 'high'
+      }
+    ));
 
     // Private message with new abilities available
     if (selectedClass.abilities && selectedClass.abilities.length > 0) {
-      log.push({
-        id: secureId('adaptability-abilities'),
-        timestamp: Date.now(),
-        type: 'action',
-        source: actor.id,
-        message: (messages as any).privateMessages?.adaptability_abilities || `You can now use: ${selectedClass.abilities.map((a: any) => a.name).join(', ')}`,
-        details: {
-          isPrivate: true,
-          recipientId: actor.id,
-          newAbilities: selectedClass.abilities
-        },
-        public: false,
-        isPublic: false,
-        priority: 'high'
-      });
+      log.push(createActionLog(
+        actor.id,
+        '',
+        (messages as any).privateMessages?.adaptability_abilities || `You can now use: ${selectedClass.abilities.map((a: any) => a.name).join(', ')}`,
+        {
+          details: {
+            isPrivate: true,
+            recipientId: actor.id,
+            newAbilities: selectedClass.abilities
+          },
+          public: false,
+          isPublic: false,
+          priority: 'high'
+        }
+      ));
     }
 
     return true;
@@ -127,7 +122,7 @@ export const handleAdaptability: AbilityHandler = (
 /**
  * Select appropriate class for adaptation based on game conditions
  */
-function selectAdaptationClass(availableClasses: any[], game: any, actor: Player): any {
+function selectAdaptationClass(availableClasses: any[], game: any, _actor: Player): any {
   if (availableClasses.length === 0) return null;
 
   // Simple selection logic - can be enhanced with more sophisticated rules

@@ -2,8 +2,6 @@
  * @fileoverview Centralized configuration loader (TypeScript)
  * Exports all game configuration with type safety and validation
  */
-import * as path from 'path';
-import * as fs from 'fs';
 
 // Import all the new loaders
 import { abilityLoader } from './loaders/AbilityLoader.js';

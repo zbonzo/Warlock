@@ -98,7 +98,7 @@ export const useActionWizard = (me: Player | null): ActionWizardState => {
         setCurrentStep(1);
       }
     }
-  }, [isMobile, activeTab, me?.['isAlive'], me?.statusEffects?.stunned, submitted]);
+  }, [isMobile, activeTab, me, submitted, currentStep]);
 
   // Reset wizard state when player dies or gets stunned
   useEffect(() => {
@@ -115,7 +115,7 @@ export const useActionWizard = (me: Player | null): ActionWizardState => {
         setActiveTab('players');
       }
     }
-  }, [me?.['isAlive'], me?.statusEffects?.stunned, isMobile, activeTab]);
+  }, [me, isMobile, activeTab]);
 
   // Don't reset wizard state when submitted - keep it open for waiting
   // The wizard will be reset when the round actually processes
@@ -145,7 +145,7 @@ export const useActionWizard = (me: Player | null): ActionWizardState => {
     } else {
       setActiveTab(tab);
     }
-  }, [me?.['isAlive'], me?.statusEffects?.stunned]);
+  }, [me]);
 
   /**
    * Handle ability selection (don't auto-advance to step 2 - use Continue button)

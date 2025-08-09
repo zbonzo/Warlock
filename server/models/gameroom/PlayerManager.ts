@@ -6,6 +6,7 @@
 
 import config from '../../config/index.js';
 import logger from '../../utils/logger.js';
+import { secureRandomInt } from '../../utils/secureRandom.js';
 import { Player } from '../Player.js';
 import type { GameRoom } from '../GameRoom.js';
 import type {
@@ -127,7 +128,8 @@ export class PlayerManager {
     player['class'] = cls;
 
     // Apply class stats
-    const stats = (config as any).classStats?.[cls];
+    const classStats = (config as any).classStats;
+    const stats = classStats && Object.prototype.hasOwnProperty.call(classStats, cls) ? classStats[cls] : null;
     if (stats) {
       player['hp'] = stats.hp;
       player['maxHp'] = stats.hp;
@@ -143,7 +145,7 @@ export class PlayerManager {
     }
 
     // Apply racial abilities
-    const racialAbility = config.racialAbilities[race];
+    const racialAbility = Object.prototype.hasOwnProperty.call(config.racialAbilities, race) ? config.racialAbilities[race] : null;
     if (racialAbility) {
       player['racialAbility'] = racialAbility;
 
@@ -193,7 +195,6 @@ export class PlayerManager {
     // Fill remaining warlock slots randomly
     const remainingPlayers = players.filter(p => !p['isWarlock']);
     while (warlocks.length < warlockCount && remainingPlayers.length > 0) {
-      const { secureRandomInt } = require('../../utils/secureRandom.js');
       const randomIndex = secureRandomInt(0, remainingPlayers.length);
       const selectedPlayer = remainingPlayers.splice(randomIndex, 1)[0];
 

@@ -6,7 +6,7 @@
 
 import { z } from 'zod';
 import logger from '../../utils/logger.js';
-import messages from '../../config/messages/index.js';
+import { getCurrentTimestamp } from '../../utils/timestamp.js';
 import type { Player, PlayerAction, GameCode } from '../../types/generated.js';
 
 // Turn resolution schemas
@@ -87,7 +87,7 @@ export class TurnResolver {
     const queueItem = ActionQueueItemSchema.parse({
       action,
       priority,
-      timestamp: Date.now(),
+      timestamp: getCurrentTimestamp(),
     });
 
     this.actionQueue.push(queueItem);
@@ -173,7 +173,7 @@ export class TurnResolver {
       playerUpdates,
       gameEvents,
       nextPhase,
-      timestamp: Date.now(),
+      timestamp: getCurrentTimestamp(),
     });
 
     // Clear the queue for next turn
@@ -318,7 +318,7 @@ export class TurnResolver {
    * @param context - Turn context
    * @returns Action result
    */
-  private resolveAbilityAction(action: PlayerAction, context: TurnContext): ActionResult {
+  private resolveAbilityAction(action: PlayerAction, _context: TurnContext): ActionResult {
     // This would delegate to ability-specific handlers
     return ActionResultSchema.parse({
       actionId: action.actionType,

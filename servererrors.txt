@@ -1,0 +1,193 @@
+/home/zac/warlock/Warlock/server/controllers/GameController.ts
+  220:24  warning  Async method 'handleGameStart' has too many statements (65). Maximum allowed is 50  max-statements
+
+/home/zac/warlock/Warlock/server/models/gameroom/GameStateManager.ts
+  27:15  error  Parsing error: An element access expression should take an argument
+
+/home/zac/warlock/Warlock/server/models/systems/CombatSystem.ts
+  926:6  error  Parsing error: Declaration or statement expected
+
+/home/zac/warlock/Warlock/server/models/systems/DamageCalculator.ts
+  76:18  warning  Method 'calculateDamage' has too many statements (55). Maximum allowed is 50  max-statements
+
+/home/zac/warlock/Warlock/server/models/systems/abilityHandlers/abilities/attack/multi-hit-attacks.ts
+    7:10  error  'secureId' is defined but never used                                       no-unused-vars
+   17:8   error  'config' is defined but never used                                         no-unused-vars
+   18:8   error  'messages' is defined but never used                                       no-unused-vars
+   73:11  error  'totalBaseDamage' is assigned a value but never used                       no-unused-vars
+  199:25  error  Do not access Object.prototype method 'hasOwnProperty' from target object  no-prototype-builtins
+
+/home/zac/warlock/Warlock/server/models/systems/abilityHandlers/abilities/attack/poison-attacks.ts
+   17:8  error  'config' is defined but never used                                                  no-unused-vars
+   18:8  error  'messages' is defined but never used                                                no-unused-vars
+  135:3  error  'coordinationInfo' is defined but never used. Allowed unused args must match /^_/u  no-unused-vars
+  194:3  error  'coordinationInfo' is defined but never used. Allowed unused args must match /^_/u  no-unused-vars
+
+/home/zac/warlock/Warlock/server/models/systems/abilityHandlers/abilities/attack/special-attacks-backup.ts
+   16:8   error  'config' is defined but never used                                                                                 no-unused-vars
+   17:8   error  'messages' is defined but never used                                                                               no-unused-vars
+   54:23  error  Do not access Object.prototype method 'hasOwnProperty' from target object                                          no-prototype-builtins
+   76:20  error  ⚠️ WARNING: Date.now() for randomness/IDs can be predictable. Consider crypto.randomBytes() for secure operations  no-restricted-syntax
+  100:16  error  ⚠️ WARNING: Date.now() for randomness/IDs can be predictable. Consider crypto.randomBytes() for secure operations  no-restricted-syntax
+  134:18  error  ⚠️ WARNING: Date.now() for randomness/IDs can be predictable. Consider crypto.randomBytes() for secure operations  no-restricted-syntax
+  161:18  error  ⚠️ WARNING: Date.now() for randomness/IDs can be predictable. Consider crypto.randomBytes() for secure operations  no-restricted-syntax
+  202:18  error  ⚠️ WARNING: Date.now() for randomness/IDs can be predictable. Consider crypto.randomBytes() for secure operations  no-restricted-syntax
+  280:20  error  ⚠️ WARNING: Date.now() for randomness/IDs can be predictable. Consider crypto.randomBytes() for secure operations  no-restricted-syntax
+  304:16  error  ⚠️ WARNING: Date.now() for randomness/IDs can be predictable. Consider crypto.randomBytes() for secure operations  no-restricted-syntax
+  379:16  error  ⚠️ WARNING: Date.now() for randomness/IDs can be predictable. Consider crypto.randomBytes() for secure operations  no-restricted-syntax
+
+/home/zac/warlock/Warlock/server/models/systems/abilityHandlers/abilities/attack/special-attacks.ts
+   57:23  error  Do not access Object.prototype method 'hasOwnProperty' from target object  no-prototype-builtins
+  128:14  error  Do not access Object.prototype method 'hasOwnProperty' from target object  no-prototype-builtins
+
+/home/zac/warlock/Warlock/server/models/systems/abilityHandlers/abilities/defense/protection-abilities.ts
+  15:10  error  'applyThreatForAbility' is defined but never used                                   no-unused-vars
+  17:8   error  'config' is defined but never used                                                  no-unused-vars
+  18:8   error  'messages' is defined but never used                                                no-unused-vars
+  29:3   error  'coordinationInfo' is defined but never used. Allowed unused args must match /^_/u  no-unused-vars
+  36:24  error  Do not access Object.prototype method 'hasOwnProperty' from target object           no-prototype-builtins
+  97:3   error  'coordinationInfo' is defined but never used. Allowed unused args must match /^_/u  no-unused-vars
+
+/home/zac/warlock/Warlock/server/models/systems/abilityHandlers/abilities/defense/stealth-abilities.ts
+  16:8   error  'config' is defined but never used                                                  no-unused-vars
+  17:8   error  'messages' is defined but never used                                                no-unused-vars
+  28:3   error  'coordinationInfo' is defined but never used. Allowed unused args must match /^_/u  no-unused-vars
+  35:24  error  Do not access Object.prototype method 'hasOwnProperty' from target object           no-prototype-builtins
+  93:3   error  'coordinationInfo' is defined but never used. Allowed unused args must match /^_/u  no-unused-vars
+
+/home/zac/warlock/Warlock/server/models/systems/abilityHandlers/abilities/heal/basic-healing.ts
+   7:10  error  'secureId' is defined but never used                                       no-unused-vars
+  17:8   error  'config' is defined but never used                                         no-unused-vars
+  18:8   error  'messages' is defined but never used                                       no-unused-vars
+  36:24  error  Do not access Object.prototype method 'hasOwnProperty' from target object  no-prototype-builtins
+
+/home/zac/warlock/Warlock/server/models/systems/abilityHandlers/abilities/heal/regeneration-abilities.ts
+    6:42  error  'createLogEntry' is defined but never used                                          no-unused-vars
+   16:8   error  'config' is defined but never used                                                  no-unused-vars
+   17:8   error  'messages' is defined but never used                                                no-unused-vars
+   28:3   error  'coordinationInfo' is defined but never used. Allowed unused args must match /^_/u  no-unused-vars
+   35:24  error  Do not access Object.prototype method 'hasOwnProperty' from target object           no-prototype-builtins
+  113:3   error  'coordinationInfo' is defined but never used. Allowed unused args must match /^_/u  no-unused-vars
+  120:24  error  Do not access Object.prototype method 'hasOwnProperty' from target object           no-prototype-builtins
+  180:3   error  'coordinationInfo' is defined but never used. Allowed unused args must match /^_/u  no-unused-vars
+
+/home/zac/warlock/Warlock/server/models/systems/abilityHandlers/abilities/racial/adaptability-abilities.ts
+   14:10  error  'applyThreatForAbility' is defined but never used                                   no-unused-vars
+   29:3   error  'coordinationInfo' is defined but never used. Allowed unused args must match /^_/u  no-unused-vars
+  126:68  error  'actor' is defined but never used. Allowed unused args must match /^_/u             no-unused-vars
+
+/home/zac/warlock/Warlock/server/models/systems/abilityHandlers/abilities/racial/combat-racial-abilities.ts
+   15:10  error  'applyThreatForAbility' is defined but never used                                   no-unused-vars
+   17:8   error  'config' is defined but never used                                                  no-unused-vars
+   29:3   error  'coordinationInfo' is defined but never used. Allowed unused args must match /^_/u  no-unused-vars
+  123:3   error  'coordinationInfo' is defined but never used. Allowed unused args must match /^_/u  no-unused-vars
+  201:3   error  'coordinationInfo' is defined but never used. Allowed unused args must match /^_/u  no-unused-vars
+
+/home/zac/warlock/Warlock/server/models/systems/abilityHandlers/abilities/racial/utility-racial-abilities.ts
+   15:8  error  'config' is defined but never used                                                  no-unused-vars
+   28:3  error  'coordinationInfo' is defined but never used. Allowed unused args must match /^_/u  no-unused-vars
+  122:3  error  'coordinationInfo' is defined but never used. Allowed unused args must match /^_/u  no-unused-vars
+  223:9  error  'craftingSuccess' is assigned a value but never used                                no-unused-vars
+  257:7  error  Unexpected lexical declaration in case block                                        no-case-declarations
+
+/home/zac/warlock/Warlock/server/models/systems/abilityHandlers/abilities/special/barbarian-abilities.ts
+   18:8  error  'messages' is defined but never used                                                no-unused-vars
+   40:3  error  'coordinationInfo' is defined but never used. Allowed unused args must match /^_/u  no-unused-vars
+  115:3  error  'coordinationInfo' is defined but never used. Allowed unused args must match /^_/u  no-unused-vars
+  172:3  error  'coordinationInfo' is defined but never used. Allowed unused args must match /^_/u  no-unused-vars
+  226:3  error  'coordinationInfo' is defined but never used. Allowed unused args must match /^_/u  no-unused-vars
+
+/home/zac/warlock/Warlock/server/models/systems/abilityHandlers/abilities/special/control-abilities.ts
+   40:3   error  'coordinationInfo' is defined but never used. Allowed unused args must match /^_/u                                 no-unused-vars
+  101:39  error  ⚠️ WARNING: Date.now() for randomness/IDs can be predictable. Consider crypto.randomBytes() for secure operations  no-restricted-syntax
+  146:3   error  'coordinationInfo' is defined but never used. Allowed unused args must match /^_/u                                 no-unused-vars
+  153:24  error  Do not access Object.prototype method 'hasOwnProperty' from target object                                          no-prototype-builtins
+  210:3   error  'coordinationInfo' is defined but never used. Allowed unused args must match /^_/u                                 no-unused-vars
+
+/home/zac/warlock/Warlock/server/models/systems/abilityHandlers/abilities/special/detection-abilities.ts
+   15:8   error  'config' is defined but never used                                                  no-unused-vars
+   37:3   error  'systems' is defined but never used. Allowed unused args must match /^_/u           no-unused-vars
+   38:3   error  'coordinationInfo' is defined but never used. Allowed unused args must match /^_/u  no-unused-vars
+   45:24  error  Do not access Object.prototype method 'hasOwnProperty' from target object           no-prototype-builtins
+  133:3   error  'coordinationInfo' is defined but never used. Allowed unused args must match /^_/u  no-unused-vars
+  223:3   error  'coordinationInfo' is defined but never used. Allowed unused args must match /^_/u  no-unused-vars
+
+/home/zac/warlock/Warlock/server/models/systems/abilityHandlers/defenseAbilities.ts
+  15:3  error  'registerAbilitiesByCategory' is defined but never used  no-unused-vars
+
+/home/zac/warlock/Warlock/server/models/systems/abilityHandlers/index.ts
+  32:12  error  'registry' is defined but never used. Allowed unused args must match /^_/u  no-unused-vars
+
+/home/zac/warlock/Warlock/server/models/systems/abilityHandlers/specialAbilities.ts
+  16:3  error  'registerAbilitiesByCategory' is defined but never used  no-unused-vars
+
+/home/zac/warlock/Warlock/server/models/systems/combat/ComebackMechanics.ts
+  8:8  error  'messages' is defined but never used  no-unused-vars
+
+/home/zac/warlock/Warlock/server/models/systems/combat/CoordinationTracker.ts
+    8:8   error  'messages' is defined but never used           no-unused-vars
+  110:17  error  'targetId' is assigned a value but never used  no-unused-vars
+
+/home/zac/warlock/Warlock/server/models/systems/combat/DamageCalculator.ts
+    6:8   error  'config' is defined but never used                                            no-unused-vars
+    7:8   error  'logger' is defined but never used                                            no-unused-vars
+    8:8   error  'messages' is defined but never used                                          no-unused-vars
+  304:30  error  'damageType' is defined but never used. Allowed unused args must match /^_/u  no-unused-vars
+  304:54  error  'target' is defined but never used. Allowed unused args must match /^_/u      no-unused-vars
+
+/home/zac/warlock/Warlock/server/models/systems/combat/coordination/CoordinationManager.ts
+  6:15  error  'Player' is defined but never used  no-unused-vars
+
+/home/zac/warlock/Warlock/server/models/systems/combat/coordination/CoordinationSystem.ts
+  218:79  error  'log' is defined but never used. Allowed unused args must match /^_/u                       no-unused-vars
+  263:18  error  Unexpected mix of '+' and '*'. Use parentheses to clarify the intended order of operations  no-mixed-operators
+  263:32  error  Unexpected mix of '+' and '*'. Use parentheses to clarify the intended order of operations  no-mixed-operators
+  265:18  error  Unexpected mix of '+' and '*'. Use parentheses to clarify the intended order of operations  no-mixed-operators
+  265:32  error  Unexpected mix of '+' and '*'. Use parentheses to clarify the intended order of operations  no-mixed-operators
+  267:18  error  Unexpected mix of '+' and '*'. Use parentheses to clarify the intended order of operations  no-mixed-operators
+  267:32  error  Unexpected mix of '+' and '*'. Use parentheses to clarify the intended order of operations  no-mixed-operators
+  269:18  error  Unexpected mix of '+' and '*'. Use parentheses to clarify the intended order of operations  no-mixed-operators
+  269:32  error  Unexpected mix of '+' and '*'. Use parentheses to clarify the intended order of operations  no-mixed-operators
+
+/home/zac/warlock/Warlock/server/models/systems/combat/effects/EndOfRoundProcessor.ts
+    9:8   error  'config' is defined but never used                                         no-unused-vars
+  108:17  error  'playerId' is assigned a value but never used                              no-unused-vars
+  167:17  error  'playerId' is assigned a value but never used                              no-unused-vars
+  307:53  error  'log' is defined but never used. Allowed unused args must match /^_/u      no-unused-vars
+  331:39  error  'log' is defined but never used. Allowed unused args must match /^_/u      no-unused-vars
+  332:27  error  'player' is assigned a value but never used                                no-unused-vars
+  340:39  error  'log' is defined but never used. Allowed unused args must match /^_/u      no-unused-vars
+  341:27  error  'player' is assigned a value but never used                                no-unused-vars
+  380:5   error  'summary' is defined but never used. Allowed unused args must match /^_/u  no-unused-vars
+  414:5   error  'summary' is defined but never used. Allowed unused args must match /^_/u  no-unused-vars
+
+/home/zac/warlock/Warlock/server/models/systems/combat/index.ts
+  161:5  error  'log' is assigned a value but never used  no-unused-vars
+
+/home/zac/warlock/Warlock/server/models/systems/combat/interfaces.ts
+  8:3  error  'Player' is defined but never used  no-unused-vars
+
+/home/zac/warlock/Warlock/server/models/systems/combat/processing/ActionProcessor.ts
+    7:23  error  'Monster' is defined but never used                                        no-unused-vars
+  288:60  error  'ability' is defined but never used. Allowed unused args must match /^_/u  no-unused-vars
+  288:74  error  'log' is defined but never used. Allowed unused args must match /^_/u      no-unused-vars
+
+/home/zac/warlock/Warlock/server/models/systems/combat/state/GameStateUpdater.ts
+    8:15  error    'CombatLogEntry' is defined but never used                                 no-unused-vars
+   99:17  error    'playerId' is assigned a value but never used                              no-unused-vars
+  118:58  error    'summary' is defined but never used. Allowed unused args must match /^_/u  no-unused-vars
+  211:17  error    'playerId' is assigned a value but never used                              no-unused-vars
+  227:17  error    'playerId' is assigned a value but never used                              no-unused-vars
+  316:9   error    Unexpected lexical declaration in case block                               no-case-declarations
+  335:9   error    Unexpected lexical declaration in case block                               no-case-declarations
+
+/home/zac/warlock/Warlock/server/models/systems/combat/validation/ActionValidator.ts
+  9:8  error  'config' is defined but never used  no-unused-vars
+
+/home/zac/warlock/Warlock/server/server.ts
+  175:17  error  ⚠️ WARNING: Date.now() for randomness/IDs can be predictable. Consider crypto.randomBytes() for secure operations  no-restricted-syntax
+
+/home/zac/warlock/Warlock/server/services/gameService.ts
+  429:11  warning  Blocks are nested too deeply (5). Maximum allowed is 4  max-depth
+  435:11  warning  Blocks are nested too deeply (5). Maximum allowed is 4  max-depth
+  450:11  warning  Blocks are nested too deeply (5). Maximum allowed is 4  max-depth

@@ -1,0 +1,28 @@
+/home/zac/warlock/Warlock/client/src/components/game/DamageEffects/DamageEffects.tsx
+  44:9  warning  The 'abilityToEffect' object makes the dependencies of useEffect Hook (at line 213) change on every render. Move it inside the useEffect callback. Alternatively, wrap the initialization of 'abilityToEffect' in its own useMemo() Hook              react-hooks/exhaustive-deps
+  99:9  warning  The 'damageEffectConfigs' object makes the dependencies of useCallback Hook (at line 130) change on every render. Move it inside the useCallback callback. Alternatively, wrap the initialization of 'damageEffectConfigs' in its own useMemo() Hook  react-hooks/exhaustive-deps
+
+/home/zac/warlock/Warlock/client/src/contexts/ThemeContext.tsx
+  195:6  warning  React Hook useCallback has an unnecessary dependency: 'themes'. Either exclude it or remove the dependency array. Outer scope values like 'themes' aren't valid dependencies because mutating them doesn't re-render the component  react-hooks/exhaustive-deps
+
+/home/zac/warlock/Warlock/client/src/hooks/useSocket.ts
+  154:29  warning  The ref value 'stableUrl.current' will likely have changed by the time this effect cleanup function runs. If this ref points to a node rendered by React, copy 'stableUrl.current' to a variable inside the effect, and use that variable in the cleanup function  react-hooks/exhaustive-deps
+
+/home/zac/warlock/Warlock/client/src/pages/GamePage/hooks/useMobileState.ts
+   71:6   warning  React Hook useEffect has a missing dependency: 'me'. Either include it or remove the dependency array                                       react-hooks/exhaustive-deps
+   71:52  warning  React Hook useEffect has a complex expression in the dependency array. Extract it to a separate variable so it can be statically checked    react-hooks/exhaustive-deps
+   71:69  warning  React Hook useEffect has a complex expression in the dependency array. Extract it to a separate variable so it can be statically checked    react-hooks/exhaustive-deps
+  110:6   warning  React Hook useCallback has a missing dependency: 'me'. Either include it or remove the dependency array                                     react-hooks/exhaustive-deps
+  110:17  warning  React Hook useCallback has a complex expression in the dependency array. Extract it to a separate variable so it can be statically checked  react-hooks/exhaustive-deps
+  110:34  warning  React Hook useCallback has a complex expression in the dependency array. Extract it to a separate variable so it can be statically checked  react-hooks/exhaustive-deps
+
+/home/zac/warlock/Warlock/client/src/pages/JoinGamePage/JoinGamePage.tsx
+   42:9   warning  'theme' is assigned a value but never used                                                                       @typescript-eslint/no-unused-vars
+  118:6   warning  React Hook useEffect has a missing dependency: 'validateName'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  123:30  warning  React Hook useCallback received a function whose dependencies are unknown. Pass an inline function instead       react-hooks/exhaustive-deps
+  159:28  warning  Unexpected control character(s) in regular expression: \x00, \x08, \x0b, \x0c, \x0e, \x1f                        no-control-regex
+  239:16  warning  Unexpected control character(s) in regular expression: \x00, \x08, \x0b, \x0c, \x0e, \x1f                        no-control-regex
+  321:16  warning  Unexpected control character(s) in regular expression: \x00, \x08, \x0b, \x0c, \x0e, \x1f                        no-control-regex
+
+/home/zac/warlock/Warlock/client/src/pages/LobbyPage/LobbyPage.tsx
+  6:10  warning  'useTheme' is defined but never used  @typescript-eslint/no-unused-vars

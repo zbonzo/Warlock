@@ -6,7 +6,6 @@ import {
   RaceAttributes,
   RacialAbility,
   UsageLimit,
-  validateRacesConfig,
   safeValidateRacesConfig
 } from '../schemas/race.schema.js';
 
@@ -87,7 +86,7 @@ export class RaceLoader {
 
     for (const [race, attributes] of Object.entries(this.racesConfig.raceAttributes)) {
       for (const className of attributes.compatibleClasses) {
-        if (!mapping[className]) {
+        if (!Object.prototype.hasOwnProperty.call(mapping, className)) {
           mapping[className] = [];
         }
         mapping[className].push(race);
@@ -127,7 +126,8 @@ export class RaceLoader {
    */
   public getRaceAttributes(raceName: string): RaceAttributes | null {
     this.reloadIfChanged();
-    return this.racesConfig.raceAttributes[raceName] || null;
+    const attributes = this.racesConfig.raceAttributes[raceName];
+    return attributes || null;
   }
 
   /**
@@ -135,7 +135,8 @@ export class RaceLoader {
    */
   public getRacialAbility(raceName: string): RacialAbility | null {
     this.reloadIfChanged();
-    return this.racesConfig.racialAbilities[raceName] || null;
+    const ability = this.racesConfig.racialAbilities[raceName];
+    return ability || null;
   }
 
   /**
@@ -151,7 +152,8 @@ export class RaceLoader {
    */
   public getCompatibleRaces(className: string): string[] {
     this.reloadIfChanged();
-    return this.classRaceCompatibility[className] || [];
+    const races = this.classRaceCompatibility[className];
+    return races || [];
   }
 
   /**
@@ -215,7 +217,7 @@ export class RaceLoader {
     this.reloadIfChanged();
 
     return this.racesConfig.availableRaces.filter(raceName => {
-      const ability = this.racesConfig.racialAbilities[raceName];
+      const ability = this.racesConfig.racialAbilities[raceName] || null;
       return ability && ability.usageLimit === usageLimit;
     });
   }
@@ -262,8 +264,8 @@ export class RaceLoader {
     const abilityTypes = { passive: 0, perGame: 0, perRound: 0, perTurn: 0 };
 
     races.forEach(raceName => {
-      const attributes = this.racesConfig.raceAttributes[raceName];
-      const ability = this.racesConfig.racialAbilities[raceName];
+      const attributes = this.racesConfig.raceAttributes[raceName] || null;
+      const ability = this.racesConfig.racialAbilities[raceName] || null;
 
       if (attributes) {
         totalHp += attributes.hpModifier;
@@ -333,7 +335,8 @@ export class RaceLoader {
     // Find orphaned classes (classes with very few race options)
     const classRaceCounts: { [className: string]: number } = {};
     Array.from(allMentionedClasses).forEach(className => {
-      classRaceCounts[className] = this.getCompatibleRaces(className).length;
+      const compatibleRaces = this.getCompatibleRaces(className);
+      classRaceCounts[className] = compatibleRaces.length;
     });
 
     const orphanedClasses = Object.entries(classRaceCounts)

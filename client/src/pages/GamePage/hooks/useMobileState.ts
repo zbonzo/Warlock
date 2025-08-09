@@ -68,7 +68,7 @@ export const useMobileState = (me?: Player): UseMobileStateReturn => {
       setShowMobileActionWizard(false);
       setActiveTab('players'); // Switch to players tab
     }
-  }, [isMobile, activeTab, showMobileActionWizard, me?.['isAlive'], me?.['statusEffects']?.['stunned']]);
+  }, [isMobile, activeTab, showMobileActionWizard, me]);
 
   /**
    * Handle tab change for mobile navigation
@@ -107,7 +107,7 @@ export const useMobileState = (me?: Player): UseMobileStateReturn => {
         setShowMobileActionWizard(false);
       }
     }
-  }, [isMobile, me?.['isAlive'], me?.['statusEffects']?.['stunned'], showMobileActionWizard]);
+  }, [isMobile, me, showMobileActionWizard]);
 
   /**
    * Close mobile action wizard

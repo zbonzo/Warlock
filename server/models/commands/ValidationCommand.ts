@@ -6,7 +6,6 @@
 import { PlayerActionCommand, CommandOptions, GameContext, CommandResult } from './PlayerActionCommand.js';
 import { EventTypes } from '../events/EventTypes.js';
 
-import logger from '../../utils/logger.js';
 
 /**
  * Validation types enumeration

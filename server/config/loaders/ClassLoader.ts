@@ -6,7 +6,6 @@ import {
   ClassAttributes,
   AbilityProgression,
   ClassCategory,
-  validateClassesConfig,
   safeValidateClassesConfig
 } from '../schemas/class.schema.js';
 import { abilityLoader } from './AbilityLoader.js';

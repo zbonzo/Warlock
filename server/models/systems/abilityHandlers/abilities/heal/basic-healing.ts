@@ -4,7 +4,6 @@
  */
 
 import { createActionLog, createHealLog } from '../../../../../utils/logEntry.js';
-import { secureId } from '../../../../../utils/secureRandom.js';
 import type { Player, Monster, Ability } from '../../../../../types/generated.js';
 import type {
   AbilityHandler,
@@ -14,8 +13,6 @@ import type {
 import type { GameSystems } from '../../../SystemsFactory.js';
 import { applyThreatForAbility } from '../../abilityRegistryUtils.js';
 
-import config from '../../../../../config/index.js';
-import messages from '../../../../../config/messages/index.js';
 
 /**
  * Handle basic healing abilities
@@ -33,7 +30,7 @@ export const handleHeal: AbilityHandler = (
   }
 
   // Can only heal players
-  if (!(target as any).hasOwnProperty('isAlive')) {
+  if (!Object.prototype.hasOwnProperty.call(target, 'isAlive')) {
     return false;
   }
 

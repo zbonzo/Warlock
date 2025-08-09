@@ -2,8 +2,7 @@
  * @fileoverview Updated tutorial modal with new game mechanics
  * Mobile-optimized with concise content and better UX
  */
-import React, { useState, useEffect } from 'react';
-import { useTheme } from '@contexts/ThemeContext';
+import React, { useState, useEffect, useCallback } from 'react';
 import { TUTORIAL_STEPS } from './constants';
 import './GameTutorialModal.css';
 
@@ -13,9 +12,32 @@ export interface GameTutorialModalProps {
 }
 
 const GameTutorialModal: React.FC<GameTutorialModalProps> = ({ isOpen, onComplete }) => {
-  const theme = useTheme();
   const [step, setStep] = useState(0);
   const [exiting, setExiting] = useState(false);
+
+  const handleComplete = useCallback(() => {
+    setExiting(true);
+
+    setTimeout(() => {
+      setExiting(false);
+      setStep(0);
+      onComplete();
+    }, 300);
+  }, [onComplete]);
+
+  const nextStep = useCallback(() => {
+    if (step < TUTORIAL_STEPS.length - 1) {
+      setStep(step + 1);
+    } else {
+      handleComplete();
+    }
+  }, [step, handleComplete]);
+
+  const prevStep = useCallback(() => {
+    if (step > 0) {
+      setStep(step - 1);
+    }
+  }, [step]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -33,33 +55,9 @@ const GameTutorialModal: React.FC<GameTutorialModalProps> = ({ isOpen, onComplet
     }
 
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, step]);
+  }, [isOpen, handleComplete, prevStep, nextStep]);
 
   if (!isOpen) return null;
-
-  const prevStep = () => {
-    if (step > 0) {
-      setStep(step - 1);
-    }
-  };
-
-  const nextStep = () => {
-    if (step < TUTORIAL_STEPS.length - 1) {
-      setStep(step + 1);
-    } else {
-      handleComplete();
-    }
-  };
-
-  const handleComplete = () => {
-    setExiting(true);
-
-    setTimeout(() => {
-      setExiting(false);
-      setStep(0);
-      onComplete();
-    }, 300);
-  };
 
   const renderStepContent = (stepData: typeof TUTORIAL_STEPS[0]) => {
     const {

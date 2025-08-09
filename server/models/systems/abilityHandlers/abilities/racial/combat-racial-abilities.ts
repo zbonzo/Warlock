@@ -3,6 +3,7 @@
  * Handles racial abilities that enhance combat performance
  */
 
+import { createActionLog } from '../../../../../utils/logEntry.js';
 import { secureId } from '../../../../../utils/secureRandom.js';
 import type { Player, Monster, Ability } from '../../../../../types/generated.js';
 import type {
@@ -11,9 +12,7 @@ import type {
   LogEntry
 } from '../../abilityRegistryUtils.js';
 import type { GameSystems } from '../../../SystemsFactory.js';
-import { applyThreatForAbility } from '../../abilityRegistryUtils.js';
 
-import config from '../../../../../config/index.js';
 import messages from '../../../../../config/messages/index.js';
 
 /**
@@ -25,7 +24,7 @@ export const handleBloodRage: AbilityHandler = (
   ability: Ability,
   log: LogEntry[],
   systems: GameSystems,
-  coordinationInfo?: CoordinationInfo
+  _coordinationInfo?: CoordinationInfo
 ): boolean => {
   if (!actor || !ability) {
     return false;
@@ -40,21 +39,19 @@ export const handleBloodRage: AbilityHandler = (
   // Check if actor has enough health
   const currentHp = (actor as any).hp || 0;
   if (currentHp <= healthCost) {
-    log.push({
-      id: secureId('blood-rage-insufficient-hp'),
-      timestamp: Date.now(),
-      type: 'action',
-      source: actor.id,
-      message: messages.getAbilityMessage('racial', 'blood_rage_insufficient_health') || `${actor.name} doesn't have enough health for Blood Rage (needs ${healthCost}, has ${currentHp})!`,
-      details: {
-        healthCost,
-        currentHp,
-        reason: 'insufficient_health'
-      },
-      public: true,
-      isPublic: true,
-      priority: 'medium'
-    });
+    log.push(createActionLog(
+      actor.id,
+      '',
+      messages.getAbilityMessage('racial', 'blood_rage_insufficient_health') || `${actor.name} doesn't have enough health for Blood Rage (needs ${healthCost}, has ${currentHp})!`,
+      {
+        details: {
+          healthCost,
+          currentHp,
+          reason: 'insufficient_health'
+        },
+        priority: 'medium'
+      }
+    ));
     return false;
   }
 
@@ -67,18 +64,15 @@ export const handleBloodRage: AbilityHandler = (
   });
 
   if (healthCostResult.success) {
-    log.push({
-      id: secureId('blood-rage-health-cost'),
-      timestamp: Date.now(),
-      type: 'action',
-      source: actor.id,
-      target: actor.id,
-      message: messages.getAbilityMessage('racial', 'blood_rage_health_cost') || `${actor.name} pays ${healthCostResult?.finalDamage || healthCost} health to activate Blood Rage!`,
-      details: { healthCost: healthCostResult.finalDamage },
-      isPublic: true,
-      public: true,
-      priority: 'medium'
-    });
+    log.push(createActionLog(
+      actor.id,
+      actor.id,
+      messages.getAbilityMessage('racial', 'blood_rage_health_cost') || `${actor.name} pays ${healthCostResult?.finalDamage || healthCost} health to activate Blood Rage!`,
+      {
+        details: { healthCost: healthCostResult.finalDamage },
+        priority: 'medium'
+      }
+    ));
   }
 
   // Apply blood rage buff
@@ -95,21 +89,19 @@ export const handleBloodRage: AbilityHandler = (
   });
 
   if (statusResult.success) {
-    log.push({
-      id: secureId('blood-rage-success'),
-      timestamp: Date.now(),
-      type: 'action',
-      source: actor.id,
-      message: messages.getAbilityMessage('blood_rage', 'success') || `${actor.name} enters Blood Rage! +${Math.round(damageBonus * 100)}% damage for ${duration} rounds`,
-      details: {
-        damageBonus,
-        duration,
-        healthCost: healthCostResult?.finalDamage || healthCost
-      },
-      isPublic: true,
-      public: true,
-      priority: 'high'
-    });
+    log.push(createActionLog(
+      actor.id,
+      '',
+      messages.getAbilityMessage('blood_rage', 'success') || `${actor.name} enters Blood Rage! +${Math.round(damageBonus * 100)}% damage for ${duration} rounds`,
+      {
+        details: {
+          damageBonus,
+          duration,
+          healthCost: healthCostResult?.finalDamage || healthCost
+        },
+        priority: 'high'
+      }
+    ));
 
     return true;
   }
@@ -126,7 +118,7 @@ export const handleUndying: AbilityHandler = (
   ability: Ability,
   log: LogEntry[],
   systems: GameSystems,
-  coordinationInfo?: CoordinationInfo
+  _coordinationInfo?: CoordinationInfo
 ): boolean => {
   if (!actor || !ability) {
     return false;
@@ -143,20 +135,18 @@ export const handleUndying: AbilityHandler = (
 
   // Check if health is low enough to activate undying
   if (healthRatio > healthThreshold) {
-    log.push({
-      id: secureId('undying-health-too-high'),
-      timestamp: Date.now(),
-      type: 'action',
-      source: actor.id,
-      message: messages.getAbilityMessage('undying', 'health_too_high') || `${actor.name} has too much health (${Math.round(healthRatio * 100)}%) to activate Undying (requires <${Math.round(healthThreshold * 100)}%)`,
-      details: {
-        currentHealthRatio: healthRatio,
-        requiredThreshold: healthThreshold
-      },
-      isPublic: true,
-      public: true,
-      priority: 'medium'
-    });
+    log.push(createActionLog(
+      actor.id,
+      '',
+      messages.getAbilityMessage('undying', 'health_too_high') || `${actor.name} has too much health (${Math.round(healthRatio * 100)}%) to activate Undying (requires <${Math.round(healthThreshold * 100)}%)`,
+      {
+        details: {
+          currentHealthRatio: healthRatio,
+          requiredThreshold: healthThreshold
+        },
+        priority: 'medium'
+      }
+    ));
     return false;
   }
 
@@ -175,21 +165,19 @@ export const handleUndying: AbilityHandler = (
   });
 
   if (statusResult.success) {
-    log.push({
-      id: secureId('undying-success'),
-      timestamp: Date.now(),
-      type: 'action',
-      source: actor.id,
-      message: messages.getAbilityMessage('undying', 'success') || `${actor.name} activates Undying! ${Math.round(damageReduction * 100)}% damage reduction for ${duration} rounds`,
-      details: {
-        damageReduction,
-        duration,
-        healthWhenActivated: healthRatio
-      },
-      isPublic: true,
-      public: true,
-      priority: 'critical'
-    });
+    log.push(createActionLog(
+      actor.id,
+      '',
+      messages.getAbilityMessage('undying', 'success') || `${actor.name} activates Undying! ${Math.round(damageReduction * 100)}% damage reduction for ${duration} rounds`,
+      {
+        details: {
+          damageReduction,
+          duration,
+          healthWhenActivated: healthRatio
+        },
+        priority: 'high'
+      }
+    ));
 
     return true;
   }
@@ -208,7 +196,7 @@ export const handleStoneArmor: AbilityHandler = (
   ability: Ability,
   log: LogEntry[],
   systems: GameSystems,
-  coordinationInfo?: CoordinationInfo
+  _coordinationInfo?: CoordinationInfo
 ): boolean => {
   if (!actor || !ability) {
     return false;
@@ -234,21 +222,19 @@ export const handleStoneArmor: AbilityHandler = (
   });
 
   if (statusResult.success) {
-    log.push({
-      id: secureId('stone-armor-success'),
-      timestamp: Date.now(),
-      type: 'action',
-      source: actor.id,
-      message: messages.getAbilityMessage('stone_armor', 'enhanced') || `${actor.name}'s Stone Armor enhanced! +${armorBonus} armor, ${Math.round(damageReduction * 100)}% damage reduction for ${duration} rounds`,
-      details: {
-        armorBonus,
-        damageReduction,
-        duration
-      },
-      isPublic: true,
-      public: true,
-      priority: 'high'
-    });
+    log.push(createActionLog(
+      actor.id,
+      '',
+      messages.getAbilityMessage('stone_armor', 'enhanced') || `${actor.name}'s Stone Armor enhanced! +${armorBonus} armor, ${Math.round(damageReduction * 100)}% damage reduction for ${duration} rounds`,
+      {
+        details: {
+          armorBonus,
+          damageReduction,
+          duration
+        },
+        priority: 'high'
+      }
+    ));
 
     return true;
   }

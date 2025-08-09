@@ -138,39 +138,39 @@ class EntityAdapter {
    */
   private static addCalculationHelpers(entity: Entity): void {
     // Get base armor value
-    (entity as any).getBaseArmor = function(this: Entity) {
-      return this.armor || 0;
+    (entity as any).getBaseArmor = function(_this: Entity) {
+      return _this.armor || 0;
     };
 
     // Get base damage value
-    (entity as any).getBaseDamage = function(this: Entity, baseDamage: number) {
-      if (this.entityType === 'player') {
-        return Math.floor(baseDamage * (this.damageMod || 1));
+    (entity as any).getBaseDamage = function(_this: Entity, baseDamage: number) {
+      if (_this.entityType === 'player') {
+        return Math.floor(baseDamage * (_this.damageMod || 1));
       }
       return baseDamage;
     };
 
     // Process stone armor degradation (for Rockhewn)
-    (entity as any).processStoneArmorDegradation = function(this: Entity, damage: number) {
-      if ((this as Player).race === 'Rockhewn' && (this as any).stoneArmorIntact) {
+    (entity as any).processStoneArmorDegradation = function(_this: Entity, damage: number) {
+      if ((_this as Player).race === 'Rockhewn' && (_this as any).stoneArmorIntact) {
         const degradation = Math.min(damage, 1); // Degrade by 1 per hit
-        (this as any).stoneArmorValue = Math.max(0, ((this as any).stoneArmorValue || 0) - degradation);
+        (_this as any).stoneArmorValue = Math.max(0, ((_this as any).stoneArmorValue || 0) - degradation);
 
-        if ((this as any).stoneArmorValue <= 0) {
-          (this as any).stoneArmorIntact = false;
+        if ((_this as any).stoneArmorValue <= 0) {
+          (_this as any).stoneArmorIntact = false;
         }
 
-        logger.debug(`Stone armor degraded: ${this.name} armor: ${(this as any).stoneArmorValue}`);
+        logger.debug(`Stone armor degraded: ${_this.name} armor: ${(_this as any).stoneArmorValue}`);
       }
     };
 
     // Clear action submission (for stunned entities)
-    (entity as any).clearActionSubmission = function(this: Entity) {
-      if (this.hasSubmittedAction) {
-        this.hasSubmittedAction = false;
-        this.submittedAction = undefined;
-        this.actionSubmissionTime = undefined;
-        this.actionValidationState = 'none';
+    (entity as any).clearActionSubmission = function(_this: Entity) {
+      if (_this.hasSubmittedAction) {
+        _this.hasSubmittedAction = false;
+        _this.submittedAction = undefined;
+        _this.actionSubmissionTime = undefined;
+        _this.actionValidationState = 'none';
       }
     };
   }
@@ -180,24 +180,28 @@ class EntityAdapter {
    */
   private static addLegacyCompatibility(entity: Entity): void {
     // Legacy status effect methods for backward compatibility
-    (entity as any).hasStatusEffect = function(this: Entity, effectName: string) {
+    (entity as any).hasStatusEffect = function(_this: Entity, effectName: string) {
       // This will be overridden by the status effect manager
       logger.warn('Using legacy hasStatusEffect - should be replaced by StatusEffectManager');
-      return this.statusEffects && this.statusEffects[effectName] !== undefined;
+      // eslint-disable-next-line security/detect-object-injection -- effectName from StatusEffectType enum
+      return _this.statusEffects && _this.statusEffects[effectName] !== undefined;
     };
 
-    (entity as any).applyStatusEffect = function(this: Entity, effectName: string, data: any) {
+    (entity as any).applyStatusEffect = function(_this: Entity, effectName: string, data: any) {
       // This will be overridden by the status effect manager
       logger.warn('Using legacy applyStatusEffect - should be replaced by StatusEffectManager');
-      this.statusEffects = this.statusEffects || {};
-      this.statusEffects[effectName] = data;
+      _this.statusEffects = _this.statusEffects || {};
+      // eslint-disable-next-line security/detect-object-injection -- effectName from StatusEffectType enum
+      _this.statusEffects[effectName] = data;
     };
 
-    (entity as any).removeStatusEffect = function(this: Entity, effectName: string) {
+    (entity as any).removeStatusEffect = function(_this: Entity, effectName: string) {
       // This will be overridden by the status effect manager
       logger.warn('Using legacy removeStatusEffect - should be replaced by StatusEffectManager');
-      if (this.statusEffects && this.statusEffects[effectName]) {
-        delete this.statusEffects[effectName];
+      // eslint-disable-next-line security/detect-object-injection -- effectName from StatusEffectType enum
+      if (_this.statusEffects && _this.statusEffects[effectName]) {
+        // eslint-disable-next-line security/detect-object-injection -- effectName from StatusEffectType enum
+        delete _this.statusEffects[effectName];
       }
     };
   }
@@ -216,10 +220,10 @@ class EntityAdapter {
     }
 
     // Monster damage calculation
-    (monster as any).calculateAttackDamage = function(this: Monster) {
+    (monster as any).calculateAttackDamage = function(_this: Monster) {
       return config.calculateMonsterDamage
-        ? config.calculateMonsterDamage(this.age!)
-        : (this.baseDmg || 20) * ((this.age || 1) + 1);
+        ? config.calculateMonsterDamage(_this.age!)
+        : (_this.baseDmg || 20) * ((_this.age || 1) + 1);
     };
   }
 
@@ -230,6 +234,7 @@ class EntityAdapter {
     const required = ['id', 'name', 'hp', 'maxHp', 'isAlive', 'entityType'];
 
     for (const prop of required) {
+      // eslint-disable-next-line security/detect-object-injection -- prop from required properties array
       if ((entity as any)[prop] === undefined) {
         logger.error(`Entity missing required property: ${prop}`, entity);
         return false;

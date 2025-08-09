@@ -103,7 +103,9 @@ router.get('/compatibility', (req: Request, res: Response) => {
   const racesToClasses: Record<string, string[]> = Object.entries(config.classRaceCompatibility as Record<string, string[]>).reduce(
     (acc: Record<string, string[]>, [cls, races]: [string, string[]]) => {
       races.forEach((race: string) => {
+        // eslint-disable-next-line security/detect-object-injection -- race from config.races array
         if (!acc[race]) acc[race] = [];
+        // eslint-disable-next-line security/detect-object-injection -- race from config.races array
         acc[race].push(cls);
       });
       return acc;
@@ -149,6 +151,7 @@ router.get('/racial-abilities', (req: Request, res: Response) => {
   // Create a mapping of race to racial ability
   const racialAbilities: Record<string, any> = {};
   config.races.forEach((race: string) => {
+    // eslint-disable-next-line security/detect-object-injection -- race from config.races array
     racialAbilities[race] = config.getRacialAbility(race);
   });
 

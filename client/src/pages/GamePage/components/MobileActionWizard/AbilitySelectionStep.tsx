@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef } from 'react';
 import './AbilitySelectionStep.css';
 import MobilePlayerHeader from './MobilePlayerHeader';
 import { useConfig } from '../../../../contexts/ConfigContext';
-import AbilityCard from '../../../../components/game/AbilityCard/AbilityCard';
 import RacialAbilityCard from '../../../../components/game/RacialAbilityCard/RacialAbilityCard';
 import type { Player, Ability } from '../../../../types/shared';
 
@@ -80,7 +79,7 @@ const AbilitySelectionStep: React.FC<AbilitySelectionStepProps> = ({
     if (me.class) {
       fetchAllAbilities();
     }
-  }, [me.class, getClassAbilities, unlocked]);
+  }, [me, getClassAbilities, unlocked]);
   
   // Measure header height and update padding
   useEffect(() => {

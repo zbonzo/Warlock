@@ -56,7 +56,6 @@ export const useCharacterUtils = (
         
         // Add 1-3 combining characters
         const numAbove = Math.floor(Math.random() * 3) + 1;
-        const numBelow = Math.floor(Math.random() * 3) + 1;
         
         for (let i = 0; i < numAbove; i++) {
           const charType = Math.floor(Math.random() * 2);
@@ -91,7 +90,7 @@ export const useCharacterUtils = (
   const healthPercent = useMemo((): number => {
     if (!me?.['hp'] || !me?.['maxHp']) return 0;
     return (me['hp'] / me['maxHp']) * 100;
-  }, [me?.['hp'], me?.['maxHp']]);
+  }, [me]);
 
   /**
    * Get alive players count

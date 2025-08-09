@@ -2,8 +2,7 @@
  * client/src/pages/CharacterSelectPage/CharacterSelectPage.tsx
  * Updated to use the ConfigContext for race and class data
  */
-import React, { useState, useEffect, ReactElement } from 'react';
-import { useTheme } from '@contexts/ThemeContext';
+import React, { useState, useEffect } from 'react';
 import { useConfig } from '@contexts/ConfigContext';
 import { ICONS } from '../../config/constants';
 import './CharacterSelectPage.css';
@@ -60,7 +59,7 @@ const RaceIcon: React.FC<RaceIconProps> = ({ race }) => {
   return (
     <div className="card-icon">
       {!loaded && !error && <div className="icon-loader">...</div>}
-      {error && <div className="icon-fallback">{emojiFallbacks[race.id] || '❓'}</div>}
+      {error && <div className="icon-fallback">{emojiFallbacks[race.id] ?? '❓'}</div>}
       <img 
         src={race.icon} 
         alt={`${race.label} icon`}
@@ -99,7 +98,7 @@ const ClassIcon: React.FC<ClassIconProps> = ({ cls }) => {
   return (
     <div className="card-icon">
       {!loaded && !error && <div className="icon-loader">...</div>}
-      {error && <div className="icon-fallback" style={{ color: cls.color }}>{emojiFallbacks[cls.id] || '❓'}</div>}
+      {error && <div className="icon-fallback" style={{ color: cls.color }}>{emojiFallbacks[cls.id] ?? '❓'}</div>}
       <img 
         src={cls.icon} 
         alt={`${cls.label} icon`}
@@ -125,12 +124,9 @@ const CharacterSelectPage: React.FC<CharacterSelectPageProps> = ({
   onSelectClass,
   onConfirm,
 }) => {
-  const theme = useTheme();
   // Get race and class data from ConfigContext
   const { loading, error, config } = useConfig();
 
-  const [suggestedRace, setSuggestedRace] = useState<string | null>(null);
-  const [suggestedClass, setSuggestedClass] = useState<string | null>(null);
   const [lastTouched, setLastTouched] = useState<'race' | 'class' | null>(null);
 
   // On mount, suggest a random valid combination if nothing is selected
@@ -148,8 +144,6 @@ const CharacterSelectPage: React.FC<CharacterSelectPageProps> = ({
             validRaces[Math.floor(Math.random() * validRaces.length)];
 
           if (randomRace && randomClassName) {
-            setSuggestedRace(randomRace);
-            setSuggestedClass(randomClassName);
             onSelectRace(randomRace);
             onSelectClass(randomClassName);
           }
@@ -264,9 +258,9 @@ const CharacterSelectPage: React.FC<CharacterSelectPageProps> = ({
 
   // Check if the current selection is valid for confirmation
   const canConfirm: boolean =
-    selectedRace &&
+    (selectedRace &&
     selectedClass &&
-    config.compatibility?.classToRaces[selectedClass]?.includes(selectedRace) || false;
+    config.compatibility?.classToRaces[selectedClass]?.includes(selectedRace)) || false;
 
   return (
     <div className="character-select-container">
@@ -358,9 +352,9 @@ const CharacterSelectPage: React.FC<CharacterSelectPageProps> = ({
             </span>
           ) : (
             <span>
-              {!selectedRace && selectedClass
+              {(!selectedRace && selectedClass)
                 ? `Please select a race compatible with ${selectedClass}`
-                : !selectedClass && selectedRace
+                : (!selectedClass && selectedRace)
                   ? `Please select a class compatible with ${selectedRace}`
                   : 'This race and class combination is not compatible'}
             </span>

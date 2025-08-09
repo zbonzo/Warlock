@@ -2,7 +2,6 @@
  * @fileoverview Card component for displaying an individual ability
  */
 import React from 'react';
-import { useTheme } from '@contexts/ThemeContext';
 import { ABILITY_CATEGORIES, DEFAULT_CATEGORY, type AbilityCategory } from '../constants';
 import type { Ability } from '../../../../types/shared';
 import './AbilityCard.css';
@@ -13,8 +12,6 @@ export interface AbilityCardProps {
 }
 
 const AbilityCard: React.FC<AbilityCardProps> = ({ ability, onSelect }) => {
-  const theme = useTheme();
-  
   const getCategoryInfo = (category?: string): AbilityCategory => {
     return (category && ABILITY_CATEGORIES[category]) || DEFAULT_CATEGORY;
   };

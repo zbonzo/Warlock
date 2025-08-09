@@ -57,13 +57,16 @@ export default function useSocket(
   
   // Set up socket connection only once on mount
   useEffect(() => {
+    // Copy ref value to variable at start of effect
+    const currentUrl = stableUrl.current;
+    
     // Prevent multiple socket creation attempts
     if (hasInitialized.current || socketRef.current) {
       return;
     }
 
     // Check if we already have a socket for this URL
-    const cacheKey = stableUrl.current;
+    const cacheKey = currentUrl;
     const existingSocket = globalSocketCache.get(cacheKey);
     
     if (existingSocket && existingSocket.connected) {
@@ -150,16 +153,16 @@ export default function useSocket(
     // Cleanup on unmount - IMPORTANT: only execute on actual component unmount
     return () => {
       console.log("Socket hook unmounting, cleaning up connection");
-      if (socketRef.current) {
+      const socket = socketRef.current;
+      if (socket) {
         // Remove from global cache if it's the same instance
-        const cacheKey = stableUrl.current;
-        if (globalSocketCache.get(cacheKey) === socketRef.current) {
-          globalSocketCache.delete(cacheKey);
+        if (globalSocketCache.get(currentUrl) === socket) {
+          globalSocketCache.delete(currentUrl);
         }
         
         // Remove all listeners first to prevent any callbacks during disconnect
-        socketRef.current.removeAllListeners();
-        socketRef.current.disconnect();
+        socket.removeAllListeners();
+        socket.disconnect();
         socketRef.current = null;
       }
       hasInitialized.current = false;

@@ -11,18 +11,7 @@ import {
   getAbilityIcon,
   getRacialStatus,
   getEffectDescription,
-  type DamageInfo,
-  type HealingInfo
 } from '@/utils/abilityUtils';
-import {
-  calculateDamageInfo,
-  calculateHealingInfo,
-  calculateDamagePerHit,
-  calculateShieldInfo,
-  getDamageText,
-  getHealingText,
-  getPoisonDamageText
-} from '@/utils/damageCalculations';
 import './AbilityCard.css';
 
 interface AbilityCardProps {

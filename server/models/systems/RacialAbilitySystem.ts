@@ -35,7 +35,7 @@ export interface Player {
   };
   canUseRacialAbility(): boolean;
   useRacialAbility(): void;
-  hasStatusEffect?(effectName: string): boolean;
+  hasStatusEffect?(_effectName: string): boolean;
 }
 
 export interface PendingRacialAction {
@@ -45,7 +45,7 @@ export interface PendingRacialAction {
 }
 
 export interface GameStateUtils {
-  getRandomTarget(options: {
+  getRandomTarget(_options: {
     actorId: string;
     excludeIds?: string[];
     onlyPlayers?: boolean;
@@ -58,7 +58,7 @@ export interface StatusEffectManager {
 }
 
 export interface AbilityRegistry {
-  hasRacialAbility(abilityType: string): boolean;
+  hasRacialAbility(_abilityType: string): boolean;
   [key: string]: any;
 }
 

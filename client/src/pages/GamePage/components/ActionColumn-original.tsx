@@ -3,7 +3,6 @@
  * Handles ability selection, targeting, and action submission
  */
 import React, { useState, useEffect, useRef } from 'react';
-import { useTheme } from '@contexts/ThemeContext';
 import RacialAbilityCard from '@components/game/RacialAbilityCard';
 import TargetSelector from '@components/game/TargetSelector';
 import EventsLog from '@components/game/EventsLog';
