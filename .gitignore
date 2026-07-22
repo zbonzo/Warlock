@@ -77,7 +77,3 @@ build/Release
 .github/copilot-instructions.md
 .codacy/cli.sh
 .codacy/codacy.yaml
-
-# TypeScript build info
-tsconfig.tsbuildinfo
-**/*.tsbuildinfo
