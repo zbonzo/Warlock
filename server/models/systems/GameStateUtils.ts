@@ -333,7 +333,7 @@ class GameStateUtils {
         groups[value] = [];
       }
       if (value) {
-        groups[value].push(player);
+        groups[value]!.push(player);
       }
     }
 

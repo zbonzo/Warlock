@@ -352,7 +352,7 @@ const ActionColumn: React.FC<ActionColumnProps> = ({
       return monster && monster['hp'] > 0;
     } else {
       const targetPlayer = alivePlayers.find((p) => p['id'] === selectedTarget);
-      return targetPlayer && targetPlayer['isAlive'];
+      return !!(targetPlayer && targetPlayer['isAlive']);
     }
   };
 

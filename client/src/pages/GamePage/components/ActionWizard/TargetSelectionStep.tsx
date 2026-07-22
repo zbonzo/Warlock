@@ -194,7 +194,7 @@ const TargetSelectionStep: React.FC<TargetSelectionStepProps> = ({
 
   const handleMonsterSelect = (): void => {
     if (monster && canTargetMonster) {
-      onTargetSelect('monster');
+      onTargetSelect('__monster__');
     }
   };
 
@@ -279,7 +279,7 @@ const TargetSelectionStep: React.FC<TargetSelectionStepProps> = ({
             <div className="monster-target">
               <h4>Monster</h4>
               <div
-                className={`target-option monster-option ${selectedTarget === 'monster' ? 'selected' : ''}`}
+                className={`target-option monster-option ${selectedTarget === '__monster__' ? 'selected' : ''}`}
                 onClick={handleMonsterSelect}
               >
                 <div className="monster-card">

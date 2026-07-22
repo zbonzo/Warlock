@@ -154,7 +154,7 @@ function AppContent(): React.ReactElement {
   
   // Show warning during active game or when in lobby/character select with other players
   // But disable in development mode for easier testing
-  const shouldWarn = process.env['NODE_ENV'] !== 'development' && 
+  const shouldWarn = !import.meta.env.DEV &&
     (isInActiveGame || (isInLobby && players.length > 1));
   
   const getWarningMessage = useCallback((): string | undefined => {

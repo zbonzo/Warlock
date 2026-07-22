@@ -59,11 +59,11 @@ export const handleAttack: AbilityHandler = (
     }
   }
 
-  // Calculate base damage
-  const baseDamage = Number(ability['damage']) || 0;
+  // Calculate base damage — config stores damage in ability.params.damage
+  const baseDamage = Number((ability as any).params?.damage || ability['damage']) || 0;
 
-  // Apply actor's damage modifiers (race, class, level, etc.)
-  const damageModifiers = systems.calculateDamageModifiers?.(actor, target, ability) || 0;
+  // Use actor's damageMod for scaling
+  const damageMod = (actor as any).damageMod || 1.0;
 
   // Apply coordination bonus BEFORE applying damage
   let finalDamage: number = baseDamage;
@@ -104,16 +104,23 @@ export const handleAttack: AbilityHandler = (
     }
   }
 
-  // Apply damage modifiers
-  finalDamage = Math.floor(Number(finalDamage) * Number(damageModifiers || 1));
+  // Apply actor's damage modifier
+  finalDamage = Math.floor(Number(finalDamage) * damageMod);
 
-  // Apply the damage
-  const damageResult = systems.combatSystem?.applyDamage?.(target, finalDamage, {
-    source: actor.id,
-    type: 'physical',
-    ability: ability['id'],
-    coordinationBonus
-  }) || { success: true, finalDamage, error: null };
+  // Apply the damage directly to the target
+  let actualDamage = 0;
+  if (target && typeof (target as any).takeDamage === 'function') {
+    actualDamage = (target as any).takeDamage(finalDamage);
+  } else if (target) {
+    const currentHp = (target as any).hp || 0;
+    const armor = (target as any).armor || 0;
+    actualDamage = Math.max(1, finalDamage - armor);
+    (target as any).hp = Math.max(0, currentHp - actualDamage);
+    if ((target as any).hp <= 0) {
+      (target as any).isAlive = false;
+    }
+  }
+  const damageResult = { success: true, finalDamage: actualDamage, error: null };
 
   if (!damageResult.success) {
     log.push(createErrorLog(
@@ -136,7 +143,7 @@ export const handleAttack: AbilityHandler = (
         baseDamage,
         finalDamage: damageResult.finalDamage,
         coordinationBonus,
-        modifiers: damageModifiers
+        modifiers: damageMod
       },
       priority: 'high'
     }

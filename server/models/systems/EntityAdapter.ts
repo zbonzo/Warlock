@@ -151,28 +151,34 @@ class EntityAdapter {
     };
 
     // Process stone armor degradation (for Rockhewn)
-    (entity as any).processStoneArmorDegradation = function(_this: Entity, damage: number) {
-      if ((_this as Player).race === 'Rockhewn' && (_this as any).stoneArmorIntact) {
-        const degradation = Math.min(damage, 1); // Degrade by 1 per hit
-        (_this as any).stoneArmorValue = Math.max(0, ((_this as any).stoneArmorValue || 0) - degradation);
+    // Only add if entity doesn't already have this method (Player has its own implementation via prototype)
+    if (!(entity as any).processStoneArmorDegradation) {
+      (entity as any).processStoneArmorDegradation = function(damage: number) {
+        if ((entity as Player).race === 'Rockhewn' && (entity as any).stoneArmorIntact) {
+          const degradation = Math.min(damage, 1);
+          (entity as any).stoneArmorValue = Math.max(0, ((entity as any).stoneArmorValue || 0) - degradation);
 
-        if ((_this as any).stoneArmorValue <= 0) {
-          (_this as any).stoneArmorIntact = false;
+          if ((entity as any).stoneArmorValue <= 0) {
+            (entity as any).stoneArmorIntact = false;
+          }
+
+          logger.debug(`Stone armor degraded: ${entity.name} armor: ${(entity as any).stoneArmorValue}`);
         }
-
-        logger.debug(`Stone armor degraded: ${_this.name} armor: ${(_this as any).stoneArmorValue}`);
-      }
-    };
+      };
+    }
 
     // Clear action submission (for stunned entities)
-    (entity as any).clearActionSubmission = function(_this: Entity) {
-      if (_this.hasSubmittedAction) {
-        _this.hasSubmittedAction = false;
-        _this.submittedAction = undefined;
-        _this.actionSubmissionTime = undefined;
-        _this.actionValidationState = 'none';
-      }
-    };
+    // Only add if entity doesn't already have this method (Player has its own implementation via prototype)
+    if (!(entity as any).clearActionSubmission) {
+      (entity as any).clearActionSubmission = function() {
+        if (entity.hasSubmittedAction) {
+          entity.hasSubmittedAction = false;
+          entity.submittedAction = undefined;
+          entity.actionSubmissionTime = undefined;
+          entity.actionValidationState = 'none';
+        }
+      };
+    }
   }
 
   /**

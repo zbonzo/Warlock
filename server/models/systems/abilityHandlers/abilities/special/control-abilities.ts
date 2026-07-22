@@ -163,7 +163,7 @@ export const handleSpiritGuard: AbilityHandler = (
   }
 
   const params = ability.params || {};
-  const protectionAmount = params['protectionAmount'] || 20;
+  const protectionAmount = Number(params['damageReduction']) || Number(params['protectionAmount']) || 0.5;
   const duration = params['duration'] || 4;
 
   // Apply spirit guard protection

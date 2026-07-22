@@ -168,7 +168,7 @@ class ValidationMiddleware {
    * Create middleware function for Socket.IO events
    */
   socket<T>(schema: z.ZodSchema<T>): (_socket: Socket) => SocketMiddlewareFunction {
-    return (_socket: Socket) => {
+    return (socket: Socket) => {
       return (eventData: unknown, callback?: (_error?: Error | null, _data?: any) => void): void => {
         const result = this.validate(eventData, schema);
 

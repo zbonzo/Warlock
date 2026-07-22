@@ -95,26 +95,23 @@ function getFormattedMessage(level: string, eventKey: string, context: LogContex
   // eslint-disable-next-line security/detect-object-injection -- level is internal log level, not user input
   let messageTemplate = (serverLogMessages as any)[level]?.[eventKey] || eventKey;
 
-  for (const key in context) {
-    if (Object.prototype.hasOwnProperty.call(context, key)) {
-      const placeholder = `{${key}}`;
-      // eslint-disable-next-line security/detect-object-injection -- key from internal context object
-      let value = context[key];
-      if (typeof value === 'object' && value !== null) {
-        if (Array.isArray(value)) {
-          value = value.join(', ');
-        } else if (value instanceof Error) {
-          value = value.message;
-        } else {
-          // For console, a brief summary for objects might be better
-          // For file log, the full object is in context
-          value = '[Object]';
+  if (typeof context === 'object' && context !== null) {
+    for (const key in context) {
+      if (Object.prototype.hasOwnProperty.call(context, key)) {
+        const placeholder = `{${key}}`;
+        // eslint-disable-next-line security/detect-object-injection -- key from internal context object
+        let value = context[key];
+        if (typeof value === 'object' && value !== null) {
+          if (Array.isArray(value)) {
+            value = value.join(', ');
+          } else if (value instanceof Error) {
+            value = value.message;
+          } else {
+            value = '[Object]';
+          }
         }
+        messageTemplate = messageTemplate.split(placeholder).join(String(value));
       }
-      messageTemplate = messageTemplate.replace(
-        new RegExp(placeholder, 'g'),
-        String(value)
-      );
     }
   }
   return messageTemplate;
@@ -184,13 +181,15 @@ function processLog(level: string, eventKey: string, context: LogContext = {}, g
   };
 
   // Add context properties except for conflicting ones
-  Object.keys(context).forEach(key => {
-    if (key !== 'message') {
-      // Dynamic property assignment needed for flexible logging context
-      // eslint-disable-next-line security/detect-object-injection -- key from internal context object
-      (fileLogEntry as any)[key] = context[key];
-    }
-  });
+  if (typeof context === 'object' && context !== null) {
+    Object.keys(context).forEach(key => {
+      if (key !== 'message') {
+        // Dynamic property assignment needed for flexible logging context
+        // eslint-disable-next-line security/detect-object-injection -- key from internal context object
+        (fileLogEntry as any)[key] = context[key];
+      }
+    });
+  }
 
   if (context.error) {
     const errorObj = context.error instanceof Error ? context.error : new Error(String(context.error));

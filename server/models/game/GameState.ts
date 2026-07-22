@@ -487,7 +487,7 @@ export class GameState {
    * @returns Monster state
    */
   getMonster(): MonsterState {
-    return { ...this.monster };
+    return this.monster;
   }
 
   /**

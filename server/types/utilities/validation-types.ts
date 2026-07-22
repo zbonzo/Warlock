@@ -9,7 +9,7 @@
 export type ValidationSuccess<T> = {
   success: true;
   data: T;
-  errors: never;
+  errors?: never;
 };
 
 export type ValidationError = {

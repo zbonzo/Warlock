@@ -8,7 +8,7 @@ export const SOCKET_URL = (() => {
   const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
 
   // In development with different ports for client (4000) and server (4001)
-  if (process.env['NODE_ENV'] === 'development') {
+  if (import.meta.env.DEV) {
     // Always use the current hostname with port 4001 for the socket server
     return `${protocol === 'wss:' ? 'https:' : 'http:'}//${window.location.hostname}:4001`;
   }
@@ -20,12 +20,12 @@ export const SOCKET_URL = (() => {
 // API base URL - FIXED FOR PRODUCTION
 export const API_URL = (() => {
   // If explicitly set via environment variable, use that
-  if (process.env['REACT_APP_API_URL']) {
-    return process.env['REACT_APP_API_URL'];
+  if (import.meta.env['VITE_API_URL']) {
+    return import.meta.env['VITE_API_URL'] as string;
   }
 
   // In development, use the hostname from the browser
-  if (process.env['NODE_ENV'] === 'development') {
+  if (import.meta.env.DEV) {
     // Use the current hostname but with port 4001 for the API
     const protocol = window.location.protocol;
     const hostname = window.location.hostname;

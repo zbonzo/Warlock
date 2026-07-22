@@ -34,9 +34,10 @@ const GameHeader: React.FC<GameHeaderProps> = ({
     const aliveWarlocks = players.filter(p => p['isAlive'] && p['isWarlock']).length;
     
     if (player.isWarlock) {
+      const fellowCount = aliveWarlocks - 1;
       return {
-        count: aliveWarlocks - 1,
-        text: `${aliveWarlocks - 1} fellow Warlocks`
+        count: fellowCount,
+        text: fellowCount > 0 ? `${fellowCount} fellow Warlocks` : 'You are the only Warlock'
       };
     } else {
       return {
@@ -117,6 +118,11 @@ const GameHeader: React.FC<GameHeaderProps> = ({
           <span className="player-class">{player.class}</span>
           <span className="player-race">{player.race}</span>
         </div>
+        {player.isWarlock && (
+          <div className="warlock-role-badge">
+            WARLOCK
+          </div>
+        )}
       </div>
 
       <div className="game-info-section">

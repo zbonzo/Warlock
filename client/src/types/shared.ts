@@ -3,30 +3,51 @@
  * This is a workaround until we can properly build the shared types
  */
 
-// Import from the shared types
-import type { Player as BasePlayer, Monster as BaseMonster } from '../../../shared/types';
-
-// Re-export from the shared types
+// Re-export from the shared types (Player/Monster/etc. below shadow these)
 export * from '../../../shared/types';
 
-// Extended client-specific types
-export interface Player extends BasePlayer {
+// Client-side Player type. The server sends players in a flat format with hp/maxHp at the
+// top level (not nested under stats), so we declare this independently rather than extending
+// the Zod-inferred type (which resolves to `any` via z.lazy and adds unwanted index signatures).
+export interface Player {
+  id: string;
+  name: string;
+  race?: string;
+  class?: string;
+  status?: string;
+  role?: string;
+  hp: number;
+  maxHp: number;
+  level?: number;
+  isAlive: boolean;
+  armor?: number;
+  baseArmor?: number;
+  stats?: any;
   unlocked?: any[];
   abilityCooldowns?: Record<string, number>;
   racialAbility?: any;
   racialUsesLeft?: number;
   racialCooldown?: number;
+  hasSubmittedAction?: boolean;
   submissionStatus?: any;
-  // Additional game-specific properties
-  race?: string;
-  class?: string;
-  armor?: number;
   isWarlock?: boolean;
   statusEffects?: any;
   damageMod?: number;
 }
 
-export interface Monster extends BaseMonster {
+// Client-side Monster type with nextDamage field added by server events.
+export interface Monster {
+  id?: string;
+  name?: string;
+  hp: number;
+  maxHp: number;
+  level?: number;
+  attackPower?: number;
+  defensePower?: number;
+  abilities?: string[];
+  statusEffects?: any[];
+  isAlive?: boolean;
+  race?: string;
   nextDamage?: number;
 }
 

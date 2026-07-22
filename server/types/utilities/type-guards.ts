@@ -9,7 +9,8 @@ import type {
   Ability,
   GameRoom,
   StatusEffect,
-  GameEvent
+  GameEvent,
+  GamePhase
 } from '../generated.js';
 
 import type { ValidationResult } from './validation-types.js';

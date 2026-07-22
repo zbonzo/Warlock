@@ -42,10 +42,9 @@ export const handleMultiHitAttack: AbilityHandler = (
 
   // Get hit parameters
   const abilityParams = (ability as any).params || {};
-  const hitCount = Number(abilityParams.hitCount) || 2;
+  const hitCount = Number(abilityParams.hits) || Number(abilityParams.hitCount) || 2;
 
-  // Use damage parameter for single-target, damagePerHit for multi-target
-  const damagePerHit = Number(abilityParams.damagePerHit) || Number(ability['damage']) || 10;
+  const damagePerHit = Number(abilityParams.damage) || Number(abilityParams.damagePerHit) || 10;
 
   if (hitCount <= 0) {
     return false;

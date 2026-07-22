@@ -225,6 +225,7 @@ export class PlayerAbilities {
 
     if (!this.hasSubmittedAction || !this.submittedAction) {
       result.reason = messages.getError('playerNoActionSubmittedForValidation');
+      console.log(`[PlayerAbilities] ${this.playerName}: FAIL no submitted action`);
       this.actionValidationState = 'none';
       return result;
     }
@@ -240,6 +241,7 @@ export class PlayerAbilities {
         messages.getError('playerAbilityNoLongerAvailable'),
         { abilityName: actionType }
       );
+      console.log(`[PlayerAbilities] ${this.playerName}: FAIL ability '${actionType}' not in unlocked [${this.unlocked.map((a: any) => a.id).join(', ')}]`);
       this.invalidateAction(result.reason!);
       return result;
     }
@@ -251,6 +253,7 @@ export class PlayerAbilities {
         messages.getError('playerAbilityNowOnCooldown'),
         { abilityName: selectedAbility.name, turns: cooldown }
       );
+      console.log(`[PlayerAbilities] ${this.playerName}: FAIL ${actionType} on cooldown (${cooldown})`);
       this.invalidateAction(result.reason!);
       return result;
     }
@@ -259,6 +262,7 @@ export class PlayerAbilities {
     if (targetId === config.MONSTER_ID) {
       if (!monster || monster.hp <= 0) {
         result.reason = messages.getError('playerMonsterInvalidTarget');
+        console.log(`[PlayerAbilities] ${this.playerName}: FAIL monster invalid (hp=${monster?.hp})`);
         this.invalidateAction(result.reason!);
         return result;
       }
@@ -266,6 +270,7 @@ export class PlayerAbilities {
       const targetPlayer = alivePlayers.find((p) => p.id === targetId);
       if (!targetPlayer || !targetPlayer.isAlive) {
         result.reason = messages.getError('playerTargetInvalidOrDead');
+        console.log(`[PlayerAbilities] ${this.playerName}: FAIL target '${targetId}' not found/alive in [${alivePlayers.map(p => p.id).join(', ')}]`);
         this.invalidateAction(result.reason!);
         return result;
       }

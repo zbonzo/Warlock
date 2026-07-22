@@ -90,7 +90,7 @@ export const useActionWizard = (me: Player | null): ActionWizardState => {
       }
     } else {
       // Desktop: always show wizard when player can act
-      setIsWizardOpen(shouldShowWizard);
+      setIsWizardOpen(!!shouldShowWizard);
       if (shouldShowWizard && !submitted) {
         // Only reset to step 1 if not already submitted
         /* eslint-disable-next-line no-console */

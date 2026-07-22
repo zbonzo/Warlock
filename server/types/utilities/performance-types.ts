@@ -8,7 +8,7 @@
  */
 export interface Lazy<T> {
   (): T;
-  isLoaded: boolean;
+  isLoaded(): boolean;
   clear(): void;
   peek(): T | undefined;
 }

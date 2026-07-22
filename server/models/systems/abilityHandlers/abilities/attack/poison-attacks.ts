@@ -24,7 +24,7 @@ export const handlePoisonStrike: AbilityHandler = (
   ability: Ability,
   log: LogEntry[],
   systems: GameSystems,
-  _coordinationInfo?: CoordinationInfo
+  coordinationInfo?: CoordinationInfo
 ): boolean => {
   if (!actor || !target || !ability) {
     return false;
@@ -42,7 +42,8 @@ export const handlePoisonStrike: AbilityHandler = (
   }
 
   // First apply regular attack damage with coordination bonuses
-  const baseDamage = Number(ability['damage']) || 0;
+  const abilityParams = (ability as any).params || {};
+  const baseDamage = Number(ability['damage']) || Number(abilityParams.damage) || 0;
   let finalDamage = Number(baseDamage);
 
   // Apply coordination bonus
@@ -64,9 +65,8 @@ export const handlePoisonStrike: AbilityHandler = (
 
   // Then apply poison if attack was successful and target is still alive
   if ((target as any).isAlive !== false && (target as any).hp > 0) {
-    const poisonParams = (ability as any).params || {};
-    const poisonDamage = Number(poisonParams.poisonDamage) || 5;
-    const poisonDuration = Number(poisonParams.poisonDuration) || 3;
+    const poisonDamage = Number(abilityParams.poisonDamage) || Number(abilityParams.poison?.damage) || 5;
+    const poisonDuration = Number(abilityParams.poisonDuration) || Number(abilityParams.poison?.turns) || 3;
 
     // Apply poison status effect
     const statusResult = systems.statusEffectManager?.applyStatusEffect?.(target, {

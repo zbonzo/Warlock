@@ -178,8 +178,9 @@ export const handleRelentlessFury: AbilityHandler = (
   // For now, we'll implement it as an activatable buff
 
   const params = ability.params || {};
-  const damagePercentage = params['damagePercentage'] || 0.1; // 10% of damage taken as bonus
-  const duration = params['duration'] || 6;
+  const damageBonus = Number(params['damagePerLevel']) || Number(params['damageBonus']) || 0.03;
+  const vulnerability = Number(params['vulnerabilityPerLevel']) || Number(params['vulnerability']) || 0.03;
+  const duration = 50; // Passive — lasts the entire game
 
   const statusResult = systems.statusEffectManager.applyStatusEffect(actor, {
     id: secureId('relentless-fury'),
@@ -187,7 +188,8 @@ export const handleRelentlessFury: AbilityHandler = (
     type: 'buff',
     duration,
     params: {
-      damagePercentage,
+      damageBonus,
+      vulnerability,
       sourceId: actor['id'],
       sourceName: actor['name']
     }
@@ -197,11 +199,11 @@ export const handleRelentlessFury: AbilityHandler = (
     log.push(createActionLog(
       actor['id'],
       '',
-      `${actor['name']} activates relentless fury for ${duration} turns (${Math.round(damagePercentage * 100)}% damage conversion)`,
+      `${actor['name']} channels Relentless Fury! +${Math.round(damageBonus * 100)}% damage, +${Math.round(vulnerability * 100)}% vulnerability.`,
       {
         details: {
-          duration,
-          damagePercentage
+          damageBonus,
+          vulnerability
         },
         priority: 'high'
       }
@@ -229,8 +231,8 @@ export const handleThirstyBlade: AbilityHandler = (
   }
 
   const params = ability.params || {};
-  const healPercentage = params['healPercentage'] || 0.3; // 30% of damage dealt as healing
-  const duration = params['duration'] || 5;
+  const healPercentage = Number(params['lifeSteal']) || Number(params['healPercentage']) || 0.15;
+  const duration = Number(params['duration']) || 3;
 
   const statusResult = systems.statusEffectManager.applyStatusEffect(actor, {
     id: secureId('thirsty-blade'),
@@ -273,7 +275,7 @@ export const handleSweepingStrike: AbilityHandler = (
   ability: Ability,
   log: LogEntry[],
   systems: GameSystems,
-  _coordinationInfo?: CoordinationInfo
+  coordinationInfo?: CoordinationInfo
 ): boolean => {
   if (!actor || !ability) {
     return false;
@@ -310,7 +312,8 @@ export const handleSweepingStrike: AbilityHandler = (
     return false;
   }
 
-  const baseDamage = ability['damage'] || 0;
+  const sweepParams = (ability as any).params || {};
+  const baseDamage = Number(ability['damage']) || Number(sweepParams.damage) || 0;
   let coordinationBonus = 0;
 
   if (coordinationInfo && coordinationInfo.isActive) {

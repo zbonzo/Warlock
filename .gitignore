@@ -10,6 +10,12 @@ package-lock.json # (If you prefer not to commit it, though many teams do)
 dist/
 build/
 out/
+server/**/*.js*
+server/**/*.js.map*
+server/**/*.d.ts*
+shared/**/*.js*
+shared/**/*.js.map*
+shared/**/*.d.ts*
 
 # Logs
 logs/
@@ -71,3 +77,7 @@ build/Release
 .github/copilot-instructions.md
 .codacy/cli.sh
 .codacy/codacy.yaml
+
+# TypeScript build info
+tsconfig.tsbuildinfo
+**/*.tsbuildinfo

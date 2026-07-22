@@ -208,7 +208,7 @@ export const handleArtisanCrafting: AbilityHandler = (
   ability: Ability,
   log: LogEntry[],
   systems: GameSystems,
-  _coordinationInfo?: CoordinationInfo
+  coordinationInfo?: CoordinationInfo
 ): boolean => {
   if (!actor || !ability) {
     return false;

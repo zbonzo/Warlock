@@ -135,9 +135,9 @@ const testUtilityTypes = () => {
 
   // API response types
   const successResponse: ApiResponse<Player> = {
-    status: 'success',
+    success: true,
     data: {} as Player,
-    timestamp: new Date().toISOString()
+    timestamp: new Date()
   };
 
   if (successResponse.success) {
@@ -259,7 +259,7 @@ const testSystemInterfaces = async () => {
       targetId: 'test',
       damage: 10,
       damageType: 'physical',
-      timestamp: new Date().toISOString()
+      timestamp: new Date()
     }
   };
   const validationResult = combatSystem.validate(testEvent);
@@ -296,7 +296,7 @@ class TestGameSystem extends AbstractGameSystem<GameState, GameEvent> {
     return {
       success: true,
       data: _event
-    };
+    } as ValidationResult<GameEvent>;
   }
 
   canHandle(_event: GameEvent): boolean {

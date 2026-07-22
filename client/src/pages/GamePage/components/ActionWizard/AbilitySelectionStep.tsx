@@ -78,8 +78,8 @@ const UnifiedAbilityCard: React.FC<UnifiedAbilityCardProps> = ({
       {/* Content overlay */}
       <div className={`ability-content-overlay ability-${ability.category?.toLowerCase()}`}>
         <div className="ability-name">{ability.name}</div>
-        {ability.description && (
-          <div className="ability-description">{ability.description}</div>
+        {(ability.flavorText || ability.description) && (
+          <div className="ability-description">{ability.flavorText || ability.description}</div>
         )}
         {ability.params?.damage && (
           <div className="ability-damage">Damage: {ability.params.damage}</div>

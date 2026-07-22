@@ -50,30 +50,31 @@ export const handleEyeOfFate: AbilityHandler = (
   // Check if target is a warlock
   const isTargetWarlock = targetPlayer.isWarlock || false;
 
-  if (isTargetWarlock) {
-    // Warlock detected!
-    log.push(createActionLog(
-      actor['id'],
-      target['id'],
-      messages.getAbilityMessage('eye_of_fate', 'warlock_detected') || 'Warlock detected!',
-      {
-        details: {
-          detectedWarlock: true,
-          targetId: target['id']
-        },
-        priority: 'high'
-      }
-    ));
+  // Generic public message — doesn't reveal the result to other players
+  log.push(createActionLog(
+    actor['id'],
+    target['id'],
+    `${actor.name} uses Eye of Fate on ${targetPlayer.name}!`,
+    {
+      details: {
+        targetId: target['id']
+      },
+      priority: 'medium',
+      public: true
+    }
+  ));
 
-    // Add private message to actor with more details
+  if (isTargetWarlock) {
+    // Private warlock-detected message to actor only
     log.push(createActionLog(
       actor['id'],
       target['id'],
-      'Target is a Warlock!',
+      messages.formatMessage(messages.abilities.special.eyeOfFateWarlockFound, { targetName: targetPlayer.name }),
       {
         details: {
           isPrivate: true,
           recipientId: actor['id'],
+          detectedWarlock: true,
           detectedRole: 'Warlock'
         },
         public: false,
@@ -82,29 +83,16 @@ export const handleEyeOfFate: AbilityHandler = (
       }
     ));
   } else {
-    // Not a warlock
+    // Private not-warlock message to actor only
     log.push(createActionLog(
       actor['id'],
       target['id'],
-      messages.getAbilityMessage('eye_of_fate', 'not_warlock') || 'No warlock detected.',
-      {
-        details: {
-          detectedWarlock: false,
-          targetId: target['id']
-        },
-        priority: 'high'
-      }
-    ));
-
-    // Private confirmation to actor
-    log.push(createActionLog(
-      actor['id'],
-      target['id'],
-      'Target is not a Warlock.',
+      messages.formatMessage(messages.abilities.special.eyeOfFateWarlockNotFound, { targetName: targetPlayer.name }),
       {
         details: {
           isPrivate: true,
           recipientId: actor['id'],
+          detectedWarlock: false,
           detectedRole: 'Good'
         },
         public: false,
@@ -128,7 +116,7 @@ export const handlePrimalRoar: AbilityHandler = (
   target: Player | Monster,
   ability: Ability,
   log: LogEntry[],
-  _systems: GameSystems,
+  systems: GameSystems,
   _coordinationInfo?: CoordinationInfo
 ): boolean => {
   if (!actor || !ability) {
@@ -218,7 +206,7 @@ export const handleSanctuaryOfTruth: AbilityHandler = (
   target: Player | Monster,
   ability: Ability,
   log: LogEntry[],
-  _systems: GameSystems,
+  systems: GameSystems,
   _coordinationInfo?: CoordinationInfo
 ): boolean => {
   if (!actor || !ability) {

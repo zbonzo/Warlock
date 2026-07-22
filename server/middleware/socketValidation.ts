@@ -80,7 +80,7 @@ export class SocketValidationMiddleware {
       customErrorMessage = 'Invalid data received'
     } = options;
 
-    return (_socket: Socket, _next: Function): SocketEventHandler => {
+    return (socket: Socket, _next: Function): SocketEventHandler => {
       return (eventData: any, callback?: Function): any => {
         try {
           // Use partial validation if requested
@@ -246,7 +246,7 @@ export class SocketValidationMiddleware {
    * Validate multiple fields in event data with field name whitelisting
    */
   validateFields(fieldSchemas: FieldSchemas, _options: ValidationOptions = {}): SocketMiddleware {
-    return (_socket: Socket, _next: Function): SocketEventHandler => {
+    return (socket: Socket, _next: Function): SocketEventHandler => {
       return (eventData: any, callback?: Function): any => {
         const errors: string[] = [];
         const validatedData: any = {};

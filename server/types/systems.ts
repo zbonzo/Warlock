@@ -147,8 +147,9 @@ export interface CombatSystemInterface extends EventDrivenSystem<GameRoom> {
    */
   applyDamage<T extends Player | Monster>(
     _target: T,
-    _damage: number
-  ): T;
+    _damage: number,
+    _options?: any
+  ): { success: boolean; finalDamage: number; error: any };
 
   /**
    * Calculate healing amount

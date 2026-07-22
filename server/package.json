@@ -5,35 +5,27 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "start": "babel-node index.js --trace-warnings",
-    "dev": "nodemon --exec babel-node index.js",
-    "dev-regular": "nodemon index.js",
     "test": "jest --selectProjects server",
     "test:watch": "jest --selectProjects server --watch",
     "test:coverage": "jest --selectProjects server --coverage",
     "build:ts": "npx tsc --build",
+    "dev": "nodemon --config nodemon.ts.json --exec \"tsx index.ts\"",
     "dev:ts": "nodemon --config nodemon.ts.json --exec \"tsx index.ts\"",
+    "start": "tsx index.ts",
     "start:ts": "tsx index.ts"
   },
   "dependencies": {
-    "@babel/core": "^7.23.0",
-    "@babel/node": "^7.22.0",
-    "@babel/preset-env": "^7.23.0",
-    "babel-plugin-module-resolver": "^5.0.0",
     "cors": "^2.8.5",
     "express": "^5.1.0",
-    "module-alias": "^2.2.3",
-    "nodemon": "^3.1.10",
     "socket.io": "^4.8.1",
+    "uuid": "^11.0.0",
     "zod": "^3.25.76"
   },
   "devDependencies": {
-    "@babel/preset-typescript": "^7.27.1",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.3",
-    "@types/module-alias": "^2.0.4",
     "@types/node": "^24.1.0",
-    "ts-node": "^10.9.2",
+    "nodemon": "^3.1.10",
     "typescript": "^5.8.3"
   }
 }

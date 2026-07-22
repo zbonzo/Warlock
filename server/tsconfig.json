@@ -27,13 +27,6 @@
     "resolveJsonModule": true,
     "incremental": true,
     "tsBuildInfoFile": "./dist/.tsbuildinfo",
-    "baseUrl": "./",
-    "paths": {
-      "@/*": ["./*"],
-      "@models/*": ["./models/*"],
-      "@systems/*": ["./models/systems/*"],
-      "@shared/*": ["../shared/*"]
-    }
   },
   "ts-node": {
     "esm": true

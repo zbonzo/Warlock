@@ -38,7 +38,7 @@ export class EndOfRoundProcessor {
   /**
    * Process all end-of-round effects
    */
-  async processEndOfRoundEffects(_log: CombatLogEntry[], _summary: RoundSummary): Promise<void> {
+  async processEndOfRoundEffects(log: CombatLogEntry[], summary: RoundSummary): Promise<void> {
     // Process status effects (DoT, HoT, buffs, debuffs)
     await this.processStatusEffects(log, summary);
 
@@ -77,7 +77,7 @@ export class EndOfRoundProcessor {
   /**
    * Process status effects (DoT, HoT, etc.)
    */
-  private async processStatusEffects(_log: CombatLogEntry[], _summary: RoundSummary): Promise<void> {
+  private async processStatusEffects(log: CombatLogEntry[], summary: RoundSummary): Promise<void> {
     for (const [_playerId, player] of this.players.entries()) {
       if (!player.isAlive) continue;
 
@@ -103,7 +103,7 @@ export class EndOfRoundProcessor {
   /**
    * Process racial ability end-of-round effects
    */
-  private async processRacialEndOfRoundEffects(_log: CombatLogEntry[], _summary: RoundSummary): Promise<void> {
+  private async processRacialEndOfRoundEffects(log: CombatLogEntry[], summary: RoundSummary): Promise<void> {
     for (const [_playerId, player] of this.players.entries()) {
       if (!player.isAlive) continue;
 
@@ -130,7 +130,7 @@ export class EndOfRoundProcessor {
   /**
    * Process warlock corruption effects
    */
-  private async processWarlockEffects(_log: CombatLogEntry[], _summary: RoundSummary): Promise<void> {
+  private async processWarlockEffects(log: CombatLogEntry[], summary: RoundSummary): Promise<void> {
     if (!this.warlockSystem) return;
 
     // Get current warlock count
@@ -175,7 +175,7 @@ export class EndOfRoundProcessor {
   /**
    * Apply level bonuses to a player
    */
-  private async applyLevelBonuses(_player: Player, level: number): Promise<void> {
+  private async applyLevelBonuses(player: Player, level: number): Promise<void> {
     const bonuses = this.calculateLevelBonuses(level);
 
     // Apply HP bonus
@@ -231,11 +231,11 @@ export class EndOfRoundProcessor {
    * Apply DoT damage to player
    */
   private async applyDotDamage(
-    _player: Player,
+    player: Player,
     damage: number,
     effect: any,
-    _log: CombatLogEntry[],
-    _summary: RoundSummary
+    log: CombatLogEntry[],
+    summary: RoundSummary
   ): Promise<void> {
     player.hp = Math.max(0, player.hp - damage);
 
@@ -276,11 +276,11 @@ export class EndOfRoundProcessor {
    * Apply HoT healing to player
    */
   private async applyHotHealing(
-    _player: Player,
+    player: Player,
     healing: number,
     effect: any,
-    _log: CombatLogEntry[],
-    _summary: RoundSummary
+    log: CombatLogEntry[],
+    summary: RoundSummary
   ): Promise<void> {
     const actualHealing = Math.min(healing, player.maxHp - player.hp);
     player.hp += actualHealing;
@@ -303,7 +303,7 @@ export class EndOfRoundProcessor {
   /**
    * Process timed effects (buffs, debuffs)
    */
-  private async processTimedEffects(_player: Player, _log: CombatLogEntry[]): Promise<void> {
+  private async processTimedEffects(player: Player, _log: CombatLogEntry[]): Promise<void> {
     // Get all active effects
     const activeEffects = await this.statusEffectManager.getActiveEffects(player.id);
 
@@ -346,9 +346,9 @@ export class EndOfRoundProcessor {
    * Process Lich-specific end-of-round effects
    */
   private async processLichEndOfRoundEffects(
-    _player: Player,
-    _log: CombatLogEntry[],
-    _summary: RoundSummary
+    player: Player,
+    log: CombatLogEntry[],
+    summary: RoundSummary
   ): Promise<void> {
     // Lich slowly regenerates HP
     const regenAmount = Math.floor(player.maxHp * 0.05); // 5% of max HP
@@ -374,8 +374,8 @@ export class EndOfRoundProcessor {
    * Process Orc-specific end-of-round effects
    */
   private async processOrcEndOfRoundEffects(
-    _player: Player,
-    _log: CombatLogEntry[],
+    player: Player,
+    log: CombatLogEntry[],
     _summary: RoundSummary
   ): Promise<void> {
     // Orcs get rage stacks based on damage taken
@@ -408,8 +408,8 @@ export class EndOfRoundProcessor {
    * Process Kinfolk-specific end-of-round effects
    */
   private async processKinfolkEndOfRoundEffects(
-    _player: Player,
-    _log: CombatLogEntry[],
+    player: Player,
+    log: CombatLogEntry[],
     _summary: RoundSummary
   ): Promise<void> {
     // Kinfolk get pack bonuses based on nearby allies
@@ -468,10 +468,10 @@ export class EndOfRoundProcessor {
    * Apply corruption damage
    */
   private async applyCorruptionDamage(
-    _player: Player,
+    player: Player,
     damage: number,
-    _log: CombatLogEntry[],
-    _summary: RoundSummary
+    log: CombatLogEntry[],
+    summary: RoundSummary
   ): Promise<void> {
     player.hp = Math.max(0, player.hp - damage);
 
@@ -497,7 +497,7 @@ export class EndOfRoundProcessor {
   /**
    * Get damage taken by player this round
    */
-  private getDamageTakenThisRound(_player: Player): number {
+  private getDamageTakenThisRound(player: Player): number {
     // This would track damage taken this round
     return (player as any).damageTakenThisRound || 0;
   }
@@ -505,7 +505,7 @@ export class EndOfRoundProcessor {
   /**
    * Get nearby allies for pack bonuses
    */
-  private getNearbyAllies(_player: Player): Player[] {
+  private getNearbyAllies(player: Player): Player[] {
     // For simplicity, consider all alive players as "nearby"
     return Array.from(this.players.values()).filter(p =>
       p.id !== player.id && p.isAlive

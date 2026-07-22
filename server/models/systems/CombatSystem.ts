@@ -39,6 +39,8 @@ export interface CombatRoundResult {
   monsterAction?: import('../../types/generated.js').Monster;
   roundSummary: RoundSummary;
   round?: number;
+  levelUp?: number;
+  winner?: string | null;
 }
 
 export interface CombatLogEntry {
@@ -60,6 +62,7 @@ export interface RoundSummary {
   playersKilled: string[];
   abilitiesUsed: number;
   coordinatedActions: number;
+  levelUp?: number;
 }
 
 export interface CombatSystemDependencies {
@@ -161,8 +164,36 @@ export class CombatSystem extends AbstractGameSystem<GameRoom, GameEvent> implem
         playerActions.set(playerId, action);
       }
 
-      // Phase 3: Process monster action
-      monsterAction = await this.processMonsterAction(log, roundSummary);
+      // Phase 3: Process monster action (only if monster survived player attacks)
+      const monsterAfterAttacks = this.getMonster();
+      const monsterDiedThisRound = monsterAfterAttacks && (monsterAfterAttacks as any).hp <= 0;
+      if (monsterDiedThisRound) {
+        // Advance level (each monster kill = one level)
+        const oldLevel = (gameRoom as any).level || 1;
+        const newLevel = oldLevel + 1;
+        if (gameRoom.gameState && typeof gameRoom.gameState.levelUp === 'function') {
+          gameRoom.gameState.levelUp(newLevel);
+        } else {
+          (gameRoom as any).level = newLevel;
+        }
+
+        // Level up all alive players
+        for (const player of this.getAlivePlayers()) {
+          this.applyLevelBonuses(player, newLevel);
+        }
+        roundSummary.levelUp = newLevel;
+
+        log.push({
+          type: 'announcement',
+          message: `The monster has been defeated! The party reaches level ${newLevel}!`,
+          public: true
+        });
+
+        // Respawn a stronger monster
+        this.respawnMonster(gameRoom, newLevel);
+      } else {
+        monsterAction = await this.processMonsterAction(log, roundSummary);
+      }
 
       // Phase 4: Apply end-of-round effects
       await this.processEndOfRoundEffects(log, roundSummary);
@@ -186,7 +217,8 @@ export class CombatSystem extends AbstractGameSystem<GameRoom, GameEvent> implem
         playerActions,
         monsterAction,
         roundSummary,
-        round: gameRoom.round
+        round: gameRoom.round,
+        levelUp: roundSummary.levelUp
       };
 
     } catch (error) {
@@ -239,8 +271,10 @@ export class CombatSystem extends AbstractGameSystem<GameRoom, GameEvent> implem
       });
 
       if (hasSubmitted) {
-        const validationResult = (player as any).validateSubmittedAction(alivePlayers, (this.monsterController as any)['monster']);
+        const monster = (this.monsterController as any)['monster'];
+        const validationResult = (player as any).validateSubmittedAction(alivePlayers, monster);
 
+        console.log(`[CombatSystem] Validation: ${(player as any)['name']} (${(submittedAction as any)?.['actionType']} -> ${(submittedAction as any)?.['targetId']}) valid=${validationResult.valid} errors=${JSON.stringify(validationResult.errors)} monsterHp=${monster?.hp}`);
         logger.info('[CombatSystem] Validation result:', {
           playerId: (player as any)['id'],
           valid: validationResult.valid,
@@ -403,8 +437,8 @@ export class CombatSystem extends AbstractGameSystem<GameRoom, GameEvent> implem
 
     const player = actionData.player;
     if (player) {
-      const currentHP = (player as any)['currentHP'] || 0;
-      const maxHP = (player as any)['maxHP'] || 1;
+      const currentHP = (player as any)['hp'] || 0;
+      const maxHP = (player as any)['maxHp'] || 1;
       const healthPercentage = currentHP / maxHP;
 
       // Last Stand: player at very low health (< 20%)
@@ -494,8 +528,21 @@ export class CombatSystem extends AbstractGameSystem<GameRoom, GameEvent> implem
       return null;
     }
 
-    const alivePlayers = this.getAlivePlayers();
+    const allAlivePlayers = this.getAlivePlayers();
+    // Exclude invisible players — they are untargetable by the monster
+    const alivePlayers = allAlivePlayers.filter(
+      (p: any) => !(p.statusEffects && (p.statusEffects as any).invisible)
+    );
+    // If every player is invisible, monster skips its action
     if (alivePlayers.length === 0) {
+      log.push({
+        type: 'action',
+        message: 'The monster lunges forward but finds no one to attack!',
+        public: true,
+        source: 'monster',
+        targetId: '',
+        details: { reason: 'all_players_invisible' }
+      } as any);
       return null;
     }
 
@@ -526,6 +573,40 @@ export class CombatSystem extends AbstractGameSystem<GameRoom, GameEvent> implem
   }
 
   /**
+   * Respawn the monster with scaled stats for the new level
+   */
+  private respawnMonster(gameRoom: any, level: number = 1): void {
+    const monster = this.getMonster();
+    if (!monster) return;
+
+    const monsterConfig = (config as any)['gameBalance']?.['monster'] || {};
+    const baseHp: number = monsterConfig['baseHp'] || 100;
+    const baseDamage: number = monsterConfig['baseDamage'] || 25;
+    const hpPerLevel: number = monsterConfig['hpPerLevel'] || 0;
+    const useExponentialScaling: boolean = monsterConfig['useExponentialScaling'] ?? true;
+    const hpScalingMultiplier: number = monsterConfig['hpScalingMultiplier'] || 1.5;
+    const dmgAgeMultiplier: number = monsterConfig['damageScaling']?.['ageMultiplier'] || 1;
+
+    // Scale HP using the config's chosen method
+    let newMaxHp: number;
+    if (useExponentialScaling) {
+      newMaxHp = Math.floor(baseHp * Math.pow(hpScalingMultiplier, level - 1));
+    } else {
+      newMaxHp = Math.floor(baseHp + hpPerLevel * (level - 1));
+    }
+
+    // Scale attack power using damageScaling.ageMultiplier per level
+    const newAttackPower = Math.floor(baseDamage * Math.pow(dmgAgeMultiplier || 1, level - 1));
+
+    (monster as any).maxHp = newMaxHp;
+    (monster as any).hp = newMaxHp;
+    (monster as any).isAlive = true;
+    (monster as any).attackPower = newAttackPower;
+
+    logger.info(`[CombatSystem] Monster respawned at level ${level}: HP=${newMaxHp}, ATK=${newAttackPower}`);
+  }
+
+  /**
    * Process end-of-round effects
    */
   private async processEndOfRoundEffects(log: CombatLogEntry[], summary: RoundSummary): Promise<void> {
@@ -550,8 +631,12 @@ export class CombatSystem extends AbstractGameSystem<GameRoom, GameEvent> implem
    * Update game state after round processing
    */
   private async updateGameState(gameRoom: any, summary: RoundSummary): Promise<void> {
-    // Update round counter
-    (gameRoom as any)['round']++;
+    // Update round counter via GameState's method to ensure it persists through property delegation
+    if (gameRoom.gameState && typeof gameRoom.gameState.nextRound === 'function') {
+      gameRoom.gameState.nextRound();
+    } else {
+      (gameRoom as any)['round'] = ((gameRoom as any)['round'] || 0) + 1;
+    }
 
     // Update player statistics
     for (const player of this.players.values()) {
@@ -597,25 +682,44 @@ export class CombatSystem extends AbstractGameSystem<GameRoom, GameEvent> implem
   }
 
   /**
-   * Apply level bonuses to a player
+   * Apply level bonuses to a player on monster kill
    */
   private applyLevelBonuses(player: Player, level: number): void {
-    const bonuses = (config as any)['gameBalance']?.['progression']?.['levelBonuses'];
-    if (!bonuses) return;
+    const levelUpConfig = (config as any)['gameBalance']?.['player']?.['levelUp'];
 
-    // Apply damage modifier increase
-    if ((bonuses as any)['damagePerLevel']) {
-      (player as any)['damageMod'] += (bonuses as any)['damagePerLevel'];
+    // Increase max HP by hpIncrease % (default 8%)
+    const hpIncrease = levelUpConfig?.['hpIncrease'] ?? 0.08;
+    const hpBonus = Math.floor((player as any)['maxHp'] * hpIncrease);
+    (player as any)['maxHp'] = ((player as any)['maxHp'] || 100) + hpBonus;
+
+    // Increase damage modifier by damageIncrease multiplier (default 1.15x)
+    const dmgMultiplier = levelUpConfig?.['damageIncrease'] ?? 1.15;
+    (player as any)['damageMod'] = ((player as any)['damageMod'] || 1) * dmgMultiplier;
+
+    // Full heal on level up
+    if (levelUpConfig?.['fullHealOnLevelUp'] !== false) {
+      (player as any)['hp'] = (player as any)['maxHp'];
+    } else {
+      (player as any)['hp'] = Math.min((player as any)['hp'] + hpBonus, (player as any)['maxHp']);
     }
 
-    // Apply health bonus
-    if ((bonuses as any)['healthPerLevel']) {
-      const healthBonus = (bonuses as any)['healthPerLevel'];
-      (player as any)['maxHp'] += healthBonus;
-      (player as any)['hp'] += healthBonus; // Also heal current HP
+    logger.info(`[CombatSystem] Player ${(player as any)['name']} leveled up to ${level}: maxHp=${(player as any)['maxHp']}, damageMod=${((player as any)['damageMod'] || 1).toFixed(2)}`);
+
+    // Unlock abilities for the new level
+    const allAbilities = ((player as any)['abilities'] || []) as any[];
+    const currentUnlocked = ((player as any)['unlocked'] || []) as any[];
+    const unlockedIds = new Set(currentUnlocked.map((a: any) => a.id || a.type));
+    const newlyUnlocked = allAbilities.filter((ability: any) => {
+      const unlockAt = (ability.unlockAt || 1) as number;
+      return unlockAt <= level && !unlockedIds.has(ability.id || ability.type);
+    });
+    if (newlyUnlocked.length > 0) {
+      (player as any)['unlocked'] = [...currentUnlocked, ...newlyUnlocked];
+      for (const ability of newlyUnlocked) {
+        logger.info(`[CombatSystem] Player ${(player as any)['name']} unlocked: ${ability.name || ability.id} (level ${level})`);
+      }
     }
 
-    // Notify player of level up
     (player as any)['updateRelentlessFuryLevel']?.(level);
   }
 
@@ -743,45 +847,46 @@ export class CombatSystem extends AbstractGameSystem<GameRoom, GameEvent> implem
       const abilityRegistry = gameRoom?.systems?.abilityRegistry;
       const actionType = (action as any)?.actionType || (action as any)?.type;
 
-      if (abilityRegistry && actionType) {
-        const handler = abilityRegistry.getHandler(actionType);
-        if (handler) {
-          logger.info('[CombatSystem] Found ability handler for:', actionType);
+      let registryHandledLog = false;
+      if (actionType && abilityRegistry?.hasClassAbility?.(actionType)) {
+        // Use the ability registry with correct handler signature: (actor, target, ability, log, systems, coordinationInfo?)
+        const target = this.getActionTarget(action, gameRoom);
+        const ability = ((player as any).unlocked || []).find((a: any) => a.type === actionType) || null;
+        const monster = (this.monsterController as any)?.monster || null;
 
-          // Execute the ability
-          const abilityResult = await handler({
-            action,
-            player,
-            game: gameRoom,
-            coordinationBonus
-          });
+        // Provide a game context that handlers need for game.players / game.monster access
+        const systems = {
+          ...gameRoom.systems,
+          game: { players: this.players, monster }
+        };
 
-          logger.info('[CombatSystem] Ability result:', {
-            damage: abilityResult?.damage || 0,
-            healing: abilityResult?.healing || 0,
-            success: abilityResult?.success
-          });
+        const monsterHpBefore = monster?.hp ?? 0;
+        const logLengthBefore = log.length;
 
-          result = {
-            damage: abilityResult?.damage || 0,
-            healing: abilityResult?.healing || 0,
-            logEntries: abilityResult?.logEntries || []
-          };
-        } else {
-          logger.warn('[CombatSystem] No handler found for ability:', actionType);
-        }
-      } else {
-        logger.warn('[CombatSystem] No ability registry or action type', {
-          hasRegistry: !!abilityRegistry,
+        logger.info('[CombatSystem] Executing ability via registry:', { actionType, hasTarget: !!target, hasAbility: !!ability });
+        abilityRegistry.executeClassAbility(
           actionType,
-          actionKeys: Object.keys(action || {})
-        });
+          player,
+          target,
+          ability,
+          log,
+          systems,
+          coordinationBonus > 1 ? { isActive: true, bonusMultiplier: coordinationBonus } : undefined
+        );
 
-        // Fallback: Create basic damage result for common attack abilities
-        if (actionType && this.isAttackAbility(actionType)) {
+        const monsterHpAfter = monster?.hp ?? 0;
+        registryHandledLog = log.length > logLengthBefore;
+        result = {
+          damage: Math.max(0, monsterHpBefore - monsterHpAfter),
+          healing: 0,
+          logEntries: []
+        };
+      } else if (actionType) {
+        // Fallback: registry has no handler — use basic damage calculation
+        logger.warn('[CombatSystem] No registry handler for ability, using fallback:', actionType);
+        if (this.isAttackAbility(actionType)) {
           const baseDamage = this.calculateBasicAttackDamage(player, actionType);
           const target = this.getActionTarget(action, gameRoom);
-
           if (target) {
             const finalDamage = this.applyDamageToTarget(target, baseDamage);
             result = {
@@ -789,13 +894,14 @@ export class CombatSystem extends AbstractGameSystem<GameRoom, GameEvent> implem
               healing: 0,
               logEntries: [{
                 type: 'attack',
-                message: `${(player as any)['name']} attacks ${(target as any).name || 'the target'} with ${actionType} for ${finalDamage} damage!`,
+                message: `${(player as any)['name']} attacks ${(target as any).name || 'the Monster'} with ${actionType} for ${finalDamage} damage!`,
                 public: true
               }]
             };
-            logger.info('[CombatSystem] Applied fallback attack damage:', { damage: finalDamage });
           }
         }
+      } else {
+        logger.warn('[CombatSystem] No action type', { actionType, actionKeys: Object.keys(action || {}) });
       }
 
       // Update summary with action results
@@ -819,8 +925,8 @@ export class CombatSystem extends AbstractGameSystem<GameRoom, GameEvent> implem
       if ((result as any)['logEntries'] && (result as any)['logEntries'].length > 0) {
         log.push(...(result as any)['logEntries']);
         logger.info('[CombatSystem] Added log entries:', (result as any)['logEntries'].length);
-      } else {
-        // Create a basic log entry if none provided
+      } else if (!registryHandledLog) {
+        // Create a basic log entry only when the registry handler didn't write to log directly
         const basicEntry = {
           type: 'action',
           message: `${(player as any)['name']} used ${actionType || 'unknown action'}`,
@@ -842,10 +948,12 @@ export class CombatSystem extends AbstractGameSystem<GameRoom, GameEvent> implem
       }
 
     } catch (error) {
+      console.error(`[CombatSystem] CATCH in processSingleAction: ${error instanceof Error ? error.message : String(error)}`);
+      console.error(error instanceof Error ? error.stack : '');
       logger.error('[CombatSystem] Error processing single action:', {
         error: error instanceof Error ? error.message : String(error),
-        playerId: player.id,
-        actionType: action.actionType || action.type
+        playerId: (player as any)?.id,
+        actionType: (action as any)?.actionType || (action as any)?.type
       });
 
       log.push({
@@ -1064,11 +1172,21 @@ export class CombatSystem extends AbstractGameSystem<GameRoom, GameEvent> implem
   /**
    * Apply damage to an entity
    */
-  applyDamage<T extends Player | Monster>(target: T, damage: number): T {
-    if ('takeDamage' in (target as object)) {
-      (target as any).takeDamage(damage);
+  applyDamage<T extends Player | Monster>(target: T, damage: number, _options?: any): { success: boolean; finalDamage: number; error: any } {
+    try {
+      if ('takeDamage' in (target as object) && typeof (target as any).takeDamage === 'function') {
+        (target as any).takeDamage(damage);
+      } else {
+        const finalDamage = Math.max(1, Math.floor(damage));
+        (target as any).hp = Math.max(0, ((target as any).hp || 0) - finalDamage);
+        if ((target as any).hp <= 0) {
+          (target as any).isAlive = false;
+        }
+      }
+      return { success: true, finalDamage: damage, error: null };
+    } catch (error) {
+      return { success: false, finalDamage: 0, error };
     }
-    return target;
   }
 
   /**
@@ -1089,8 +1207,8 @@ export class CombatSystem extends AbstractGameSystem<GameRoom, GameEvent> implem
     }
 
     // Cap healing at max health
-    if ('health' in target && 'maxHealth' in target) {
-      const maxHealable = (target as any)['maxHealth'] - (target as any)['health'];
+    if ('hp' in target && 'maxHp' in target) {
+      const maxHealable = (target as any)['maxHp'] - (target as any)['hp'];
       finalHealing = Math.min(finalHealing, maxHealable);
     }
 
@@ -1103,11 +1221,11 @@ export class CombatSystem extends AbstractGameSystem<GameRoom, GameEvent> implem
   canAttack(attacker: Player | Monster, target: Player | Monster): boolean {
     // Check if attacker is alive
     const attackerAlive = 'isAlive' in attacker ? (attacker as any)['isAlive'] :
-                         'health' in attacker ? (attacker as any)['health'] > 0 : false;
+                         'hp' in attacker ? (attacker as any)['hp'] > 0 : false;
 
     // Check if target is alive
     const targetAlive = 'isAlive' in target ? (target as any)['isAlive'] :
-                       'health' in target ? (target as any)['health'] > 0 : false;
+                       'hp' in target ? (target as any)['hp'] > 0 : false;
 
     if (!attackerAlive || !targetAlive) {
       return false;
@@ -1131,9 +1249,20 @@ export class CombatSystem extends AbstractGameSystem<GameRoom, GameEvent> implem
    * Check if an action is an attack ability (fallback method)
    */
   private isAttackAbility(actionType: string): boolean {
+    try {
+      const abilityDef = (config as any).getAbility?.(actionType);
+      if (abilityDef?.category) {
+        return abilityDef.category === 'Attack' || abilityDef.category === 'Special';
+      }
+    } catch (e) { /* ignore */ }
+
     const attackAbilities = [
       'attack', 'lightningBolt', 'fireball', 'backstab', 'preciseShot',
-      'pistolShot', 'psychicBolt', 'strike', 'slash', 'pierce'
+      'pistolShot', 'psychicBolt', 'strike', 'slash', 'pierce',
+      'clawSwipe', 'poisonStrike', 'holyBolt', 'magicMissile',
+      'recklessStrike', 'twinStrike', 'aimedShot', 'barbedArrow',
+      'shiv', 'deathMark', 'sweepingStrike', 'chainLightning',
+      'meteorShower', 'infernoBlast', 'arcaneBarrage', 'pyroblast', 'ricochetRound'
     ];
     return attackAbilities.includes(actionType);
   }
@@ -1142,28 +1271,19 @@ export class CombatSystem extends AbstractGameSystem<GameRoom, GameEvent> implem
    * Calculate basic attack damage (fallback method)
    */
   private calculateBasicAttackDamage(player: Player, actionType: string): number {
-    const baseDamage = (player as any)['attackPower'] || 20;
     const damageMod = (player as any)['damageMod'] || 1.0;
 
-    // Different abilities have different base multipliers
-    let abilityMultiplier = 1.0;
-    switch (actionType) {
-      case 'fireball':
-      case 'lightningBolt':
-        abilityMultiplier = 1.2;
-        break;
-      case 'backstab':
-        abilityMultiplier = 1.5;
-        break;
-      case 'preciseShot':
-        abilityMultiplier = 1.1;
-        break;
-      default:
-        abilityMultiplier = 1.0;
-        break;
-    }
+    // Try to use the ability's actual damage from config
+    try {
+      const abilityDef = (config as any).getAbility?.(actionType);
+      if (abilityDef?.params?.damage) {
+        return Math.floor(abilityDef.params.damage * damageMod);
+      }
+    } catch (e) { /* ignore */ }
 
-    return Math.floor(baseDamage * damageMod * abilityMultiplier);
+    // Fallback to generic base damage
+    const baseDamage = (player as any)['attackPower'] || 20;
+    return Math.floor(baseDamage * damageMod);
   }
 
   /**
@@ -1174,7 +1294,7 @@ export class CombatSystem extends AbstractGameSystem<GameRoom, GameEvent> implem
     if (!targetId) return null;
 
     // Check if targeting monster
-    if (targetId === 'monster') {
+    if (targetId === config.MONSTER_ID || targetId === 'monster') {
       return (gameRoom as any)?.monster || this.getMonster();
     }
 

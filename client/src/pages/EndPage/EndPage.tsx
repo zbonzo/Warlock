@@ -32,6 +32,8 @@ interface Player {
   class?: string;
   isWarlock: boolean;
   isAlive: boolean;
+  hp: number;
+  maxHp: number;
   stats?: any;
 }
 
@@ -67,7 +69,9 @@ const EndPage: React.FC<EndPageProps> = ({
       race: p['race'],
       class: p['class'],
       isWarlock: p['role'] === 'Warlock' || p['role'] === 'Evil',
-      isAlive: p['status'] === 'alive',
+      isAlive: p['isAlive'],
+      hp: p['hp'],
+      maxHp: p['maxHp'],
       stats: p['stats']
     }));
   }, [rawPlayers]);

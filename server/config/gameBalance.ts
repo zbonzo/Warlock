@@ -656,8 +656,8 @@ export function calculateStats(race: string, className: string): PlayerStats | n
   // Get race and class modifiers
   const raceAttributeMap = new Map(Object.entries(characterConfig.raceAttributes || {}));
   const classAttributeMap = new Map(Object.entries(characterConfig.classAttributes || {}));
-  const raceAttributes = raceAttributeMap.get(race) || {};
-  const classAttributes = classAttributeMap.get(className) || {};
+  const raceAttributes = (raceAttributeMap.get(race) || {}) as { hpModifier?: number; armorModifier?: number; damageModifier?: number };
+  const classAttributes = (classAttributeMap.get(className) || {}) as { hpModifier?: number; armorModifier?: number; damageModifier?: number };
 
   // Calculate final stats
   const hpModifier =

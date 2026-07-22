@@ -575,7 +575,7 @@ export class GameRoom {
       // Reset player actions on failure to allow resubmission
       if (this.players) {
         for (const player of this.players.values()) {
-          (player as any).clearActionSubmission();
+          if (player) (player as any).clearActionSubmission?.();
         }
         (logger as any).error(`Round processing failed for game ${this.code}. Resetting player actions.`);
       }
@@ -642,10 +642,10 @@ export class GameRoom {
 
     return {
       code: this.code,
-      players: Array.from(this.players.values()) as any,
+      players: players as any,
       monster: (this.gameState as any).monster,
       phase: this.gamePhase.getCurrentPhase() as any,
-      round: (this.gameState as any).round,
+      round: this.gameState.getRound(),
       level: (this.gameState as any).level,
       started: (this.gameState as any).started,
       ended: (this.gameState as any).ended,
@@ -777,12 +777,16 @@ export class GameRoom {
         // Reset player actions for the next round
         this.combatDebug.info(`✅ Resetting player actions for next round in game ${this.code}`);
         for (const player of this.players.values()) {
-          (player as any).clearActionSubmission();
+          if (player) (player as any).clearActionSubmission?.();
         }
 
         // Change phase back to action for next round
         this.phaseDebug.info(`Phase transition: results → action (game ${this.code})`);
-        this.gamePhase.setPhase('action');
+        try {
+          this.gamePhase.setPhase('action');
+        } catch (phaseErr) {
+          console.error(`[GameRoom] setPhase threw:`, phaseErr instanceof Error ? phaseErr.message : phaseErr);
+        }
 
         // Emit results and new phase
         if (this.socketEventRouter) {
@@ -814,10 +818,14 @@ export class GameRoom {
             round: roundResult.data?.round || roundResult.data?.turn || 'unknown'
           });
 
-          this.io.to(this.code).emit('round:results', {
-            results: roundResult.data,
-            newPhase: 'action'
-          });
+          try {
+            this.io.to(this.code).emit('round:results', {
+              results: roundResult.data,
+              newPhase: 'action'
+            });
+          } catch (emitErr) {
+            console.error(`[GameRoom] round:results emit threw:`, emitErr instanceof Error ? emitErr.message : emitErr);
+          }
 
           this.roundResultsDebug.info(`✅ Successfully broadcasted round:results for game ${this.code}`);
         } else {
@@ -828,6 +836,8 @@ export class GameRoom {
         this.combatDebug.info(`📢 Broadcasting updated game state after round for game ${this.code}`);
         if (this.io) {
           for (const playerId of this.players.keys()) {
+            const player = this.players.get(playerId);
+            if (!player) continue;
             const personalizedGameData = this.toClientData(playerId);
             this.io.to(playerId).emit('gameStateUpdate', personalizedGameData);
           }
@@ -839,7 +849,7 @@ export class GameRoom {
 
         // Reset all player actions
         for (const player of this.players.values()) {
-          (player as any).clearActionSubmission();
+          if (player) (player as any).clearActionSubmission?.();
         }
 
         // Change phase back to action

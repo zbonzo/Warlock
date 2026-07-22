@@ -48,7 +48,7 @@ export const handleHeal: AbilityHandler = (
   }
 
   // Calculate base healing
-  const baseHealing = Number(ability['healing']) || Number((ability as any).params?.healing) || 20;
+  const baseHealing = Number((ability as any).params?.amount) || Number((ability as any).params?.healing) || Number(ability['healing']) || 20;
   let finalHealing = Number(baseHealing);
 
   // Apply coordination bonus
@@ -141,7 +141,7 @@ export const handleMultiHeal: AbilityHandler = (
     return false;
   }
 
-  const baseHealing = Number(ability['healing']) || Number((ability as any).params?.healing) || 15;
+  const baseHealing = Number((ability as any).params?.amount) || Number((ability as any).params?.healing) || Number(ability['healing']) || 15;
   let coordinationBonus = 0;
 
   if (coordinationInfo && coordinationInfo.isActive) {

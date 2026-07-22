@@ -153,8 +153,11 @@ function appReducer(state: AppState, action: AppAction): AppState {
       return { ...state, players: action.payload };
     
     case ACTION_TYPES.ADD_EVENT_LOG:
-      return { 
-        ...state, 
+      if (state.eventsLog.some(r => r.turn === action.payload.turn)) {
+        return state;
+      }
+      return {
+        ...state,
         eventsLog: [...state.eventsLog, action.payload]
       };
       

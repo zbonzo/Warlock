@@ -42,7 +42,7 @@ export const handleShieldWall: AbilityHandler = (
   }
 
   const params = (ability as any).params || {};
-  const shieldAmount = Number(params.shieldAmount) || 15;
+  const shieldAmount = Number(params.armor) || Number(params.shieldAmount) || 15;
   const duration = Number(params.duration) || 3;
   const damageReduction = Number(params.damageReduction) || 0.3; // 30% damage reduction
 
@@ -112,7 +112,7 @@ export const handleMultiProtection: AbilityHandler = (
   }
 
   const params = (ability as any).params || {};
-  const protectionAmount = Number(params.protectionAmount) || 10;
+  const protectionAmount = Number(params.armor) || Number(params.protectionAmount) || 10;
   const duration = Number(params.duration) || 4;
   const effectName = ability['name']?.toLowerCase().replace(/\s/g, '_') || 'protection';
 

@@ -465,13 +465,16 @@ export class CombatSystemRefactored extends AbstractGameSystem<GameRoom, GameEve
     };
   }
 
-  applyDamage<T extends Player | Monster>(target: T, damage: number): T {
-    const updated = JSON.parse(JSON.stringify(target)) as T;
-    (updated as any).hp = Math.max(0, (updated as any).hp - damage);
-    if ((updated as any).hp === 0) {
-      (updated as any).isAlive = false;
+  applyDamage<T extends Player | Monster>(target: T, damage: number, _options?: any): { success: boolean; finalDamage: number; error: any } {
+    try {
+      (target as any).hp = Math.max(0, (target as any).hp - damage);
+      if ((target as any).hp === 0) {
+        (target as any).isAlive = false;
+      }
+      return { success: true, finalDamage: damage, error: null };
+    } catch (error) {
+      return { success: false, finalDamage: 0, error };
     }
-    return updated;
   }
 
   calculateHealing(_healer: Player | Monster, _target: Player | Monster, baseHealing: number): number {

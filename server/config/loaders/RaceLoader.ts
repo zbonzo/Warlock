@@ -89,7 +89,7 @@ export class RaceLoader {
         if (!Object.prototype.hasOwnProperty.call(mapping, className)) {
           mapping[className] = [];
         }
-        mapping[className].push(race);
+        mapping[className]!.push(race);
       }
     }
 

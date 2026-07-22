@@ -500,14 +500,18 @@ export class MonsterController extends BaseController<Monster, any, Partial<Mons
    * Select target based on threat values
    */
   private selectTargetByThreat(alivePlayers: Player[]): Player | null {
-    if (alivePlayers.length === 0) return null;
+    // Never target invisible players
+    const visiblePlayers = alivePlayers.filter(
+      (p: any) => !(p.statusEffects && (p.statusEffects as any).invisible)
+    );
+    if (visiblePlayers.length === 0) return null;
 
     const threatEntries = Array.from(this.threatTable.values())
-      .filter(entry => alivePlayers.some(p => p.id === entry.playerId));
+      .filter(entry => visiblePlayers.some(p => p.id === entry.playerId));
 
     if (threatEntries.length === 0) {
       // Fallback to random selection using secure randomness
-      return secureRandomChoice(alivePlayers) || null;
+      return secureRandomChoice(visiblePlayers) || null;
     }
 
     // Calculate selection weights based on threat using secure randomness
@@ -522,19 +526,19 @@ export class MonsterController extends BaseController<Monster, any, Partial<Mons
     let random = secureRandomFloat() * totalWeight;
 
     for (let i = 0; i < threatEntries.length; i++) {
-      const weight = weights.at(i) || 0;
+      const weight = weights[i] || 0;
       random -= weight;
       if (random <= 0) {
-        const selectedEntry = threatEntries.at(i);
+        const selectedEntry = threatEntries[i];
         const selectedPlayerId = selectedEntry?.playerId;
         if (selectedPlayerId) {
-          return alivePlayers.find(p => p.id === selectedPlayerId) || null;
+          return visiblePlayers.find(p => p.id === selectedPlayerId) || null;
         }
       }
     }
 
     // Fallback
-    return alivePlayers[0] || null;
+    return visiblePlayers[0] || null;
   }
 
   /**

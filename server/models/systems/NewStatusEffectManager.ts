@@ -230,7 +230,7 @@ class NewStatusEffectManager {
 
     if (effectIndex === -1) return false;
 
-    const effect = effects.at(effectIndex);
+    const effect = effects[effectIndex];
     if (effect) {
       // Mark effect as expired and let normal processing handle removal
       effect.isActive = false;

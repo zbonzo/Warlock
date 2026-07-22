@@ -56,8 +56,12 @@ export const handleVulnerabilityStrike: AbilityHandler = (
   // If attack successful and target is a player, apply vulnerability
   if (Object.prototype.hasOwnProperty.call(target, 'isAlive') && (target as any).hp > 0) {
     const vulnParams = (ability as any).params || {};
-    const vulnerabilityMultiplier = Number(vulnParams.vulnerabilityMultiplier) || 1.5;
-    const duration = Number(vulnParams.duration) || 2;
+    // JSON stores vulnerability as { damageIncrease: 25, turns: 2 } (percent) — convert to multiplier
+    const vulnIncrease = vulnParams.vulnerability?.damageIncrease;
+    const vulnerabilityMultiplier = vulnIncrease
+      ? (1 + Number(vulnIncrease) / 100)
+      : (Number(vulnParams.vulnerabilityMultiplier) || 1.25);
+    const duration = Number(vulnParams.vulnerability?.turns) || Number(vulnParams.duration) || 2;
 
     const statusResult = systems.statusEffectManager?.applyStatusEffect?.(target, {
       id: secureId('vulnerability'),
@@ -138,20 +142,18 @@ export const handleRecklessStrike: AbilityHandler = (
     }
   }
 
-  // Calculate reckless damage (higher than normal)
-  const baseDamage: number = Number(ability['damage']) || 0;
-  const recklessMultiplier = 1.5; // 50% more damage
-  const recklessDamage = Math.floor(baseDamage * recklessMultiplier);
-  let finalDamage: number = recklessDamage;
+  // Calculate reckless damage — params.damage is the base, no extra multiplier needed
+  const recklessParams = (ability as any).params || {};
+  const baseDamage: number = Number(ability['damage']) || Number(recklessParams.damage) || 0;
+  let finalDamage: number = baseDamage;
 
   if (coordinationInfo?.isActive) {
-    const coordinationBonus = Math.floor(recklessDamage * Number(coordinationInfo.bonusMultiplier || 1));
+    const coordinationBonus = Math.floor(baseDamage * Number(coordinationInfo.bonusMultiplier || 1));
     finalDamage += coordinationBonus;
   }
 
-  // Calculate self-damage (percentage of damage dealt)
-  const selfDamagePercent = 0.2; // 20% of damage dealt
-  const selfDamage = Math.floor(finalDamage * selfDamagePercent);
+  // Self-damage from params (flat value), fallback to 20% of damage dealt
+  const selfDamage: number = Number(recklessParams.selfDamage) || Math.floor(finalDamage * 0.2);
 
   // Apply damage modifiers
   const damageModifiers = systems.calculateDamageModifiers?.(actor, target, ability) || 1;
@@ -176,7 +178,7 @@ export const handleRecklessStrike: AbilityHandler = (
       {
         details: {
           damage: damageResult.finalDamage,
-          recklessBonus: recklessDamage - baseDamage,
+          recklessBonus: 0,
           selfDamage,
           wasCritical: false
         },

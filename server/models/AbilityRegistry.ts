@@ -125,7 +125,8 @@ class AbilityRegistry {
     }
 
     try {
-      return handler(ability, actor, target, null, systems, null, log, coordinationInfo);
+      // Handler signature: (actor, target, ability, log, systems, coordinationInfo?)
+      return handler(actor, target, ability, log, systems, coordinationInfo) as boolean;
     } catch (error) {
       logger.error(`Error executing class ability ${abilityType}:`, error as any);
       throw error;

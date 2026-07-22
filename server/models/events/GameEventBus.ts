@@ -347,6 +347,8 @@ export class GameEventBus {
           }
         }
       } catch (error) {
+        console.error(`[GameEventBus] ASYNC Listener error in game ${this.gameCode}: event=${event.type} listenerId=${listener.id} error=${error instanceof Error ? error.message : String(error)}`);
+        console.error(error instanceof Error ? error.stack : '');
         logger.error(`Listener error in game ${this.gameCode}:`, {
           eventType: event.type,
           error: error instanceof Error ? error.message : 'Unknown error',
@@ -376,6 +378,8 @@ export class GameEventBus {
           toRemove.push(listener);
         }
       } catch (error) {
+        console.error(`[GameEventBus] SYNC Listener error in game ${this.gameCode}: event=${event.type} listenerId=${listener.id} error=${error instanceof Error ? error.message : String(error)}`);
+        console.error(error instanceof Error ? error.stack : '');
         logger.error(`Listener error in game ${this.gameCode}:`, {
           eventType: event.type,
           error: error instanceof Error ? error.message : 'Unknown error',

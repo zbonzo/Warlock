@@ -1,7 +1,7 @@
 /**
  * @fileoverview Refactored GamePage component using custom hooks for better separation of concerns
  */
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useTheme } from '@contexts/ThemeContext';
 import PlayerColumn from './components/PlayerColumn';
 import HistoryColumn from './components/HistoryColumn';
@@ -57,18 +57,6 @@ const GamePage: React.FC<GamePageProps> = ({
   // Game state
   const [phase, setPhase] = useState<'action' | 'results'>('action');
   const [readyClicked, setReadyClicked] = useState<boolean>(false);
-
-  // Debug logging for re-renders
-  useEffect(() => {
-    console.log('🔍 GamePage render:', {
-      meId: me?.['id'],
-      meName: me?.['name'],
-      hasSubmittedAction: me?.['hasSubmittedAction'],
-      submissionStatus: me?.['submissionStatus'],
-      phase,
-      trigger: 'GamePage render'
-    });
-  });
 
   // Custom hooks for state management
   const racialAbilities = useRacialAbilities();
