@@ -4,7 +4,7 @@
  */
 
 import { createActionLog, createDamageLog } from '../../../../../utils/logEntry.js';
-import { secureId } from '../../../../../utils/secureRandom.js';
+import { secureId, secureRandomFloat } from '../../../../../utils/secureRandom.js';
 import type { Player as BasePlayer, Monster, Ability as BaseAbility } from '../../../../../types/generated.js';
 import type {
   AbilityHandler,
@@ -314,6 +314,8 @@ export const handleSweepingStrike: AbilityHandler = (
 
   const sweepParams = (ability as any).params || {};
   const baseDamage = Number(ability['damage']) || Number(sweepParams.damage) || 0;
+  const stunChance = Number(sweepParams.stunChance) || 0;
+  const stunDuration = Number(sweepParams.stunDuration) || 1;
   let coordinationBonus = 0;
 
   if (coordinationInfo && coordinationInfo.isActive) {
@@ -344,10 +346,26 @@ export const handleSweepingStrike: AbilityHandler = (
         sweepTarget['id'],
         damageResult.finalDamage,
         `${actor['name']} hits ${targetName} with sweeping strike for ${damageResult.finalDamage} damage`,
-        {
-          priority: 'high'
-        }
+        { priority: 'high' }
       ));
+
+      // Roll for stun
+      if (stunChance > 0 && systems.statusEffectManager && secureRandomFloat() < stunChance) {
+        systems.statusEffectManager.applyStatusEffect?.(sweepTarget, {
+          id: secureId('stun'),
+          name: 'stunned',
+          type: 'debuff',
+          duration: stunDuration,
+          params: { sourceId: actor['id'], sourceName: actor['name'] }
+        });
+
+        log.push(createActionLog(
+          actor['id'],
+          sweepTarget['id'],
+          `${targetName} is stunned by the sweeping strike!`,
+          { type: 'status', details: { stunDuration }, priority: 'high', public: true }
+        ));
+      }
     }
   }
 

@@ -4,6 +4,7 @@
  */
 
 import { createActionLog, createHealLog } from '../../../../../utils/logEntry.js';
+import { secureId } from '../../../../../utils/secureRandom.js';
 import type { Player, Monster, Ability } from '../../../../../types/generated.js';
 import type {
   AbilityHandler,
@@ -105,6 +106,30 @@ export const handleHeal: AbilityHandler = (
 
     // Apply threat for healing (generates some threat for helping)
     applyThreatForAbility(actor, target, ability, 0, Number(healingResult.finalHealing), systems);
+
+    // Apply healing-over-time if params.hot is defined
+    const hotParams = (ability as any).params?.hot;
+    if (hotParams) {
+      const healingPerTurn = Number(hotParams.amount) || Number(hotParams.damage) || 0;
+      const hotDuration = Number(hotParams.turns) || Number(hotParams.duration) || 2;
+
+      if (healingPerTurn > 0) {
+        systems.statusEffectManager?.applyStatusEffect?.(target, {
+          id: secureId('hot'),
+          name: 'healingOverTime',
+          type: 'buff',
+          duration: hotDuration,
+          params: { amount: healingPerTurn, sourceId: actor.id, sourceName: actor.name }
+        });
+
+        log.push(createActionLog(
+          actor.id,
+          target.id,
+          `${actor.name}'s ${ability['name']} also grants ${targetPlayer.name} ${healingPerTurn} HP/turn for ${hotDuration} turns!`,
+          { details: { healingPerTurn, hotDuration }, priority: 'medium', public: true }
+        ));
+      }
+    }
 
     return true;
   }

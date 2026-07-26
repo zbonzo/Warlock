@@ -628,7 +628,7 @@ export const validateAction = (
   }
 
   // Handle monster target
-  if (targetId === '__monster__') {
+  if (targetId === config.MONSTER_ID) {
     // Always allow monster targeting (monster existence is checked in GameRoom)
     return true;
   }
@@ -701,7 +701,7 @@ export const validateActionWithCooldown = (
   }
 
   // Handle monster target
-  if (targetId === '__monster__') {
+  if (targetId === config.MONSTER_ID) {
     // Always allow monster targeting (monster existence is checked in GameRoom)
     return true;
   }

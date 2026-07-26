@@ -95,6 +95,18 @@ export interface WarlockConversionConfig {
   aoeModifier: number;
   randomModifier: number;
   untargetedModifier: number;
+  /** Per-interaction conversion chances (calibrated for playerScaling.baseline players) */
+  triggerChances: {
+    warlockAttackPlayer: number;
+    playerHealsWarlock: number;
+    monsterPassthrough: number;
+  };
+  /** Scaling envelope for player-count adjustment */
+  playerScaling: {
+    baseline: number;
+    minScale: number;
+    maxScale: number;
+  };
 }
 
 export interface WarlockCorruptionConfig {
@@ -331,9 +343,22 @@ export const warlock: WarlockConfig = {
     corruptionCooldown: 1, // Rounds before a player can corrupt again
 
     // Modifiers for different scenarios
-    aoeModifier: 0.3, // Reduced from 0.5
-    randomModifier: 0.3, // Reduced from 0.5
-    untargetedModifier: 0.3, // Reduced from 0.5
+    aoeModifier: 0.3,
+    randomModifier: 0.3,
+    untargetedModifier: 0.3,
+
+    // Per-interaction trigger chances (calibrated for the baseline player count below)
+    triggerChances: {
+      warlockAttackPlayer: 0.30, // warlock attacks a non-warlock player
+      playerHealsWarlock: 0.50,  // non-warlock heals a warlock (corrupts the healer)
+      monsterPassthrough: 0.10,  // warlock attacked monster; monster then attacks that player
+    },
+    // How trigger chances scale relative to player count
+    playerScaling: {
+      baseline: 8,   // chances above are tuned for this many players
+      minScale: 0.25,
+      maxScale: 1.5,
+    },
   },
 
   // NEW: Warlock detection penalties
@@ -684,9 +709,11 @@ export function calculateStats(race: string, className: string): PlayerStats | n
  * @param playerCount - Total number of players in the game
  * @returns Number of warlocks that should be active
  */
-export function calculateWarlockCount(playerCount: number): number {
-  const scalingConfig = warlock.scaling;
-
+/**
+ * Pure computation extracted so GameBalanceLoader can delegate to it
+ * with its own (potentially hot-reloaded) config rather than duplicating the logic.
+ */
+export function computeWarlockCount(playerCount: number, scalingConfig: WarlockScalingConfig): number {
   if (!scalingConfig.enabled) {
     return scalingConfig.minimumWarlocks;
   }
@@ -695,37 +722,30 @@ export function calculateWarlockCount(playerCount: number): number {
 
   switch (scalingConfig.scalingMethod) {
     case 'linear':
-      // Linear scaling: every X players adds 1 warlock
-      warlockCount =
-        Math.floor((playerCount - 1) / scalingConfig.playersPerWarlock) + 1;
+      warlockCount = Math.floor((playerCount - 1) / scalingConfig.playersPerWarlock) + 1;
       break;
-
     case 'exponential':
-      // Exponential scaling (for future use)
       warlockCount = Math.floor(Math.sqrt(playerCount)) + 1;
       break;
-
     case 'custom':
-      // Custom scaling table
       warlockCount = scalingConfig.minimumWarlocks;
-      for (const [threshold, count] of Object.entries(
-        scalingConfig.customScaling
-      )) {
+      for (const [threshold, count] of Object.entries(scalingConfig.customScaling)) {
         if (playerCount >= parseInt(threshold)) {
           warlockCount = count;
         }
       }
       break;
-
     default:
       warlockCount = scalingConfig.minimumWarlocks;
   }
 
-  // Apply min/max constraints
   warlockCount = Math.max(scalingConfig.minimumWarlocks, warlockCount);
   warlockCount = Math.min(scalingConfig.maximumWarlocks, warlockCount);
-
   return warlockCount;
+}
+
+export function calculateWarlockCount(playerCount: number): number {
+  return computeWarlockCount(playerCount, warlock.scaling);
 }
 
 export function calculateThreatGeneration(

@@ -98,7 +98,7 @@ class EntityAdapter {
   static adaptMonster(monster: Partial<Monster>): Monster {
     // Ensure required properties exist
     if (!monster.id) {
-      monster.id = '__monster__';
+      monster.id = config.MONSTER_ID;
     }
 
     if (!monster.name) {

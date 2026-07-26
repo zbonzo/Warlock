@@ -155,6 +155,9 @@ export class CombatSystem extends AbstractGameSystem<GameRoom, GameEvent> implem
     };
 
     try {
+      // Reset per-round warlock tracking (conversion, monster-attack records, detection cooldowns)
+      this._warlockSystem?.resetRoundTracking?.();
+
       // Phase 1: Validate all submitted actions
       const validationResults = await this.validateSubmittedActions();
 
@@ -193,6 +196,7 @@ export class CombatSystem extends AbstractGameSystem<GameRoom, GameEvent> implem
         this.respawnMonster(gameRoom, newLevel);
       } else {
         monsterAction = await this.processMonsterAction(log, roundSummary);
+        this.checkMonsterPassthroughConversion(monsterAction, log);
       }
 
       // Phase 4: Apply end-of-round effects
@@ -381,27 +385,28 @@ export class CombatSystem extends AbstractGameSystem<GameRoom, GameEvent> implem
   }
 
   /**
-   * Analyze coordination bonuses across all actions
+   * Analyze coordination bonuses across all actions targeting the same enemy
    */
   private analyzeCoordinationBonuses(allActions: any[]): Map<string, any> {
     const coordinationBonuses = new Map();
-    const actionTypeCounts = new Map();
+    const targetCounts = new Map();
 
-    // Count actions by type
+    // Count actions by target (only actions that have an explicit target)
     for (const actionData of allActions) {
-      const actionType = actionData.action.actionType;
-      if (!actionTypeCounts.has(actionType)) {
-        actionTypeCounts.set(actionType, []);
+      const targetId = actionData.action.targetId;
+      if (!targetId) continue;
+      if (!targetCounts.has(targetId)) {
+        targetCounts.set(targetId, []);
       }
-      actionTypeCounts.get(actionType).push(actionData);
+      targetCounts.get(targetId).push(actionData);
     }
 
-    // Generate bonuses for coordinated actions (2+ of same type)
-    for (const [actionType, actions] of actionTypeCounts) {
+    // Generate bonuses for coordinated attacks (2+ players targeting same enemy)
+    for (const [targetId, actions] of targetCounts) {
       if (actions.length > 1) {
-        coordinationBonuses.set(actionType, {
+        coordinationBonuses.set(targetId, {
           count: actions.length,
-          bonus: this.calculateBatchCoordinationBonus(actionType, actions.length),
+          bonus: this.calculateBatchCoordinationBonus(actions.length),
           actions: actions
         });
       }
@@ -476,20 +481,26 @@ export class CombatSystem extends AbstractGameSystem<GameRoom, GameEvent> implem
       });
     }
 
-    // Get coordination bonus if applicable
-    const coordBonus = coordinationBonuses.get(actionType);
+    // Get coordination bonus if applicable (bonus applies when multiple players target the same enemy)
+    const coordBonus = action.targetId ? coordinationBonuses.get(action.targetId) : undefined;
     const coordinationMultiplier = coordBonus ? coordBonus.bonus : 1.0;
 
     // Process the action with context
     if (coordBonus && coordBonus.count > 1) {
-      // This is a coordinated action
+      // This is a coordinated attack on the same target
       await this.processSingleAction(actionData, log, summary, coordinationMultiplier, gameRoom);
 
-      // Log coordination on first action of this type
+      // Log coordination on first action against this target
       if (coordBonus.actions[0] === actionData) {
+        const coordAbilityDef = (config as any).getAbility?.(actionType);
+        const isHealAction = coordAbilityDef?.category === 'Heal';
+        const bonusPct = Math.round((coordinationMultiplier - 1) * 100);
+        const coordMsg = isHealAction
+          ? `${coordBonus.count} players focus their healing on the same ally! (+${bonusPct}% healing)`
+          : `${coordBonus.count} players focus their attacks on the same target! (+${bonusPct}% damage)`;
         log.push({
           type: 'coordination',
-          message: `${coordBonus.count} players coordinate their ${actionType} attacks! (${Math.round((coordinationMultiplier - 1) * 100)}% bonus)`,
+          message: coordMsg,
           public: true
         });
       }
@@ -515,9 +526,9 @@ export class CombatSystem extends AbstractGameSystem<GameRoom, GameEvent> implem
   /**
    * Calculate coordination bonus multiplier for batched processing
    */
-  private calculateBatchCoordinationBonus(_actionType: string, count: number): number {
-    // Base coordination bonus: 10% per additional player (2 players = 110%, 3 = 120%, etc.)
-    return 1.0 + ((count - 1) * 0.1);
+  private calculateBatchCoordinationBonus(count: number): number {
+    const bonusPerPlayer = config.gameBalance.coordinationBonus.damageBonus / 100;
+    return 1.0 + ((count - 1) * bonusPerPlayer);
   }
 
   /**
@@ -610,8 +621,8 @@ export class CombatSystem extends AbstractGameSystem<GameRoom, GameEvent> implem
    * Process end-of-round effects
    */
   private async processEndOfRoundEffects(log: CombatLogEntry[], summary: RoundSummary): Promise<void> {
-    // Process status effects - using any type assertion since method doesn't exist
-    await (this.effectManager as any)['processEndOfRoundEffects']?.(log, summary) || Promise.resolve();
+    // Process all timed status effects (poison, bleed, burning, healingOverTime, etc.)
+    this._statusEffectManager?.processTimedEffects?.(log);
 
     // Process cooldowns
     for (const player of this.players.values()) {
@@ -723,101 +734,6 @@ export class CombatSystem extends AbstractGameSystem<GameRoom, GameEvent> implem
     (player as any)['updateRelentlessFuryLevel']?.(level);
   }
 
-  /**
-   * Group validation results by action type for coordination detection
-   */
-  private groupActionsByType(validationResults: any[]): Map<string, any[]> {
-    const groups = new Map<string, any[]>();
-
-    logger.info('[CombatSystem] Grouping actions by type:', {
-      validationResultsCount: validationResults.length,
-      validResults: validationResults.filter(r => r.valid).length
-    });
-
-    for (const result of validationResults) {
-      logger.info('[CombatSystem] Processing validation result:', {
-        playerId: (result as any)['playerId'],
-        valid: result.valid,
-        hasPlayerId: !!(result as any)['playerId']
-      });
-
-      if (result.valid && (result as any)['playerId']) {
-        const player = this.players.get((result as any)['playerId']);
-        const submittedAction = player ? (player as any)['submittedAction'] : null;
-
-        logger.info('[CombatSystem] Player and action details:', {
-          playerId: (result as any)['playerId'],
-          playerExists: !!player,
-          submittedActionExists: !!submittedAction,
-          submittedActionKeys: submittedAction ? Object.keys(submittedAction) : [],
-          actionType: submittedAction ? submittedAction['actionType'] : 'none'
-        });
-
-        if (player && submittedAction) {
-          const actionType = submittedAction['actionType'];
-
-          if (!groups.has(actionType)) {
-            groups.set(actionType, []);
-          }
-
-          groups.get(actionType)!.push({
-            playerId: (result as any)['playerId'],
-            player,
-            action: submittedAction,
-            validation: result
-          });
-
-          logger.info('[CombatSystem] Added action to group:', {
-            actionType,
-            playerId: (result as any)['playerId'],
-            groupSize: groups.get(actionType)!.length
-          });
-        }
-      }
-    }
-
-    logger.info('[CombatSystem] Action grouping completed:', {
-      groupCount: groups.size,
-      groups: Array.from(groups.entries()).map(([type, actions]) => ({
-        type,
-        count: actions.length
-      }))
-    });
-
-    return groups;
-  }
-
-  /**
-   * Process coordinated actions with bonuses
-   */
-  private async processCoordinatedActions(
-    actionType: string,
-    actions: any[],
-    log: CombatLogEntry[],
-    summary: RoundSummary,
-    gameRoom?: any
-  ): Promise<void> {
-    const coordinationBonus = this.calculateCoordinationBonus(actions.length);
-
-    for (const actionData of actions) {
-      await this.processSingleAction(actionData, log, summary, coordinationBonus, gameRoom);
-    }
-
-    // Add coordination log entry
-    log.push({
-      type: 'coordination',
-      message: (config as any).formatMessage ?
-        (config as any).formatMessage(
-          'Coordinated {actionType} by {playerCount} players! (+{bonus}% effectiveness)',
-          {
-            actionType,
-            playerCount: actions.length,
-            bonus: Math.round(coordinationBonus * 100)
-          }
-        ) : `Coordinated ${actionType} by ${actions.length} players! (+${Math.round(coordinationBonus * 100)}% effectiveness)`,
-      public: true
-    });
-  }
 
   /**
    * Process a single player action
@@ -846,12 +762,20 @@ export class CombatSystem extends AbstractGameSystem<GameRoom, GameEvent> implem
       // Get the ability handler from the ability registry
       const abilityRegistry = gameRoom?.systems?.abilityRegistry;
       const actionType = (action as any)?.actionType || (action as any)?.type;
+      const actorId: string = (player as any)['id'];
+
+      // Capture log length before ability execution so we can tag entries afterward
+      const logLengthBeforeAction = log.length;
+
+      // Resolve target and ability once so conversion hooks can use them in both paths
+      const target = actionType ? this.getActionTarget(action, gameRoom) : null;
+      const abilityObj = ((player as any).unlocked || []).find((a: any) => a.type === actionType) || null;
+      const abilityCategory: string | null =
+        abilityObj?.category || (config as any).getAbility?.(actionType)?.category || null;
 
       let registryHandledLog = false;
       if (actionType && abilityRegistry?.hasClassAbility?.(actionType)) {
         // Use the ability registry with correct handler signature: (actor, target, ability, log, systems, coordinationInfo?)
-        const target = this.getActionTarget(action, gameRoom);
-        const ability = ((player as any).unlocked || []).find((a: any) => a.type === actionType) || null;
         const monster = (this.monsterController as any)?.monster || null;
 
         // Provide a game context that handlers need for game.players / game.monster access
@@ -863,12 +787,12 @@ export class CombatSystem extends AbstractGameSystem<GameRoom, GameEvent> implem
         const monsterHpBefore = monster?.hp ?? 0;
         const logLengthBefore = log.length;
 
-        logger.info('[CombatSystem] Executing ability via registry:', { actionType, hasTarget: !!target, hasAbility: !!ability });
+        logger.info('[CombatSystem] Executing ability via registry:', { actionType, hasTarget: !!target, hasAbility: !!abilityObj });
         abilityRegistry.executeClassAbility(
           actionType,
           player,
           target,
-          ability,
+          abilityObj,
           log,
           systems,
           coordinationBonus > 1 ? { isActive: true, bonusMultiplier: coordinationBonus } : undefined
@@ -886,7 +810,6 @@ export class CombatSystem extends AbstractGameSystem<GameRoom, GameEvent> implem
         logger.warn('[CombatSystem] No registry handler for ability, using fallback:', actionType);
         if (this.isAttackAbility(actionType)) {
           const baseDamage = this.calculateBasicAttackDamage(player, actionType);
-          const target = this.getActionTarget(action, gameRoom);
           if (target) {
             const finalDamage = this.applyDamageToTarget(target, baseDamage);
             result = {
@@ -895,7 +818,8 @@ export class CombatSystem extends AbstractGameSystem<GameRoom, GameEvent> implem
               logEntries: [{
                 type: 'attack',
                 message: `${(player as any)['name']} attacks ${(target as any).name || 'the Monster'} with ${actionType} for ${finalDamage} damage!`,
-                public: true
+                public: false,
+                playerId: actorId
               }]
             };
           }
@@ -903,6 +827,39 @@ export class CombatSystem extends AbstractGameSystem<GameRoom, GameEvent> implem
       } else {
         logger.warn('[CombatSystem] No action type', { actionType, actionKeys: Object.keys(action || {}) });
       }
+
+      // Reactive poison trap: if attacker targeted a player who has poisonTrap, poison the attacker
+      if (
+        target &&
+        Object.prototype.hasOwnProperty.call(target, 'isAlive') &&
+        (target as any).isAlive !== false &&
+        abilityCategory === 'Attack' &&
+        this._statusEffectManager?.hasEffect?.((target as any).id, 'poisonTrap')
+      ) {
+        const trapEffects = this._statusEffectManager?.getEffectsByType?.((target as any).id, 'poisonTrap') || [];
+        const trapEffect = trapEffects[0];
+        const poisonDamage = Number(trapEffect?.params?.damage) || Number(trapEffect?.params?.damagePerTurn) || 20;
+        const poisonDuration = Number(trapEffect?.params?.turns) || Number(trapEffect?.params?.duration) || 2;
+        this._statusEffectManager?.applyEffect?.(
+          (player as any).id,
+          'poison',
+          { damage: poisonDamage, turns: poisonDuration },
+          (target as any).id,
+          (target as any).name,
+          log
+        );
+        this._statusEffectManager?.removeEffectsByType?.((target as any).id, 'poisonTrap', log);
+        log.push({
+          type: 'status',
+          message: `${(player as any).name} triggers ${(target as any).name}'s poison trap and is poisoned for ${poisonDamage} damage/turn!`,
+          public: true,
+          playerId: (player as any).id,
+          targetId: (target as any).id
+        });
+      }
+
+      // Warlock conversion triggers (runs regardless of which path handled the action)
+      this.checkWarlockConversionTriggers(player, action, target, abilityCategory, log);
 
       // Update summary with action results
       if ((result as any)['damage']) {
@@ -930,10 +887,29 @@ export class CombatSystem extends AbstractGameSystem<GameRoom, GameEvent> implem
         const basicEntry = {
           type: 'action',
           message: `${(player as any)['name']} used ${actionType || 'unknown action'}`,
-          public: true
+          public: false,
+          playerId: actorId
         };
         log.push(basicEntry);
         logger.info('[CombatSystem] Added basic log entry:', basicEntry);
+      }
+
+      // Apply cooldown for abilities that require it
+      if (actionType) {
+        const abilityCooldown = (config as any).getAbility?.(actionType)?.cooldown ?? 0;
+        if (abilityCooldown > 0) {
+          (player as any)['putAbilityOnCooldown']?.(actionType, abilityCooldown);
+        }
+      }
+
+      // Tag all ability-generated log entries with the acting player's ID (for warlock vision filtering)
+      for (let i = logLengthBeforeAction; i < log.length; i++) {
+        const entry = log[i]!;
+        if (!entry.playerId) {
+          entry.playerId = actorId;
+          // Ability actions are private by default; only public announcements remain visible to all
+          entry.public = false;
+        }
       }
 
       // Emit action processed event
@@ -963,16 +939,6 @@ export class CombatSystem extends AbstractGameSystem<GameRoom, GameEvent> implem
         public: true
       });
     }
-  }
-
-  /**
-   * Calculate coordination bonus based on number of coordinating players
-   */
-  private calculateCoordinationBonus(playerCount: number): number {
-    const baseBonus = (config as any)['gameBalance']?.['coordination']?.['baseBonus'] || 0.1;
-    const bonusPerPlayer = (config as any)['gameBalance']?.['coordination']?.['bonusPerPlayer'] || 0.05;
-
-    return baseBonus + ((playerCount - 1) * bonusPerPlayer);
   }
 
   /**
@@ -1186,6 +1152,27 @@ export class CombatSystem extends AbstractGameSystem<GameRoom, GameEvent> implem
       return { success: true, finalDamage: damage, error: null };
     } catch (error) {
       return { success: false, finalDamage: 0, error };
+    }
+  }
+
+  /**
+   * Apply healing to an entity, capping at maxHp
+   */
+  applyHealing<T extends Player | Monster>(
+    target: T,
+    amount: number,
+    _options?: any
+  ): { success: boolean; finalHealing: number; wasOverhealing: boolean } {
+    try {
+      const currentHp: number = (target as any).hp ?? 0;
+      const maxHp: number = (target as any).maxHp ?? currentHp;
+      const room = maxHp - currentHp;
+      const actualHealing = Math.min(Math.max(0, Math.floor(amount)), room);
+      const wasOverhealing = actualHealing < Math.floor(amount);
+      (target as any).hp = currentHp + actualHealing;
+      return { success: true, finalHealing: actualHealing, wasOverhealing };
+    } catch (error) {
+      return { success: false, finalHealing: 0, wasOverhealing: false };
     }
   }
 
@@ -1417,6 +1404,114 @@ export class CombatSystem extends AbstractGameSystem<GameRoom, GameEvent> implem
 
   isReady(): boolean {
     return true;
+  }
+
+  /**
+   * Check and trigger warlock conversion after a player action resolves.
+   *
+   * Trigger 1 — warlock attacks a non-warlock player:   30% base chance (scaled)
+   * Trigger 2 — non-warlock heals a warlock:            50% base chance (scaled, corrupts the healer)
+   * Trigger 3a — warlock attacks the monster:           records for passthrough check later
+   */
+  private checkWarlockConversionTriggers(
+    player: any,
+    action: any,
+    target: any,
+    abilityCategory: string | null,
+    log: CombatLogEntry[]
+  ): void {
+    const ws = this._warlockSystem;
+    if (!ws) return;
+
+    const targetId: string | undefined = (target as any)?.id;
+    if (!targetId) return;
+
+    const totalPlayers = this.players.size;
+    const actorIsWarlock = !!(player as any).isWarlock;
+    const targetIsPlayer = this.players.has(targetId);
+    const targetPlayer = targetIsPlayer ? (this.players.get(targetId) as any) : null;
+    const targetIsWarlock = !!targetPlayer?.isWarlock;
+    const targetIsMonster = !targetIsPlayer;
+
+    const isAttack =
+      abilityCategory === 'Attack' ||
+      (abilityCategory === null && this.isAttackAbility((action as any)?.actionType || (action as any)?.type));
+    const isHeal = abilityCategory === 'Heal';
+
+    const triggerChances = config.gameBalance.warlock.conversion.triggerChances;
+
+    // Trigger 1: warlock attacks a living non-warlock player
+    if (actorIsWarlock && targetIsPlayer && !targetIsWarlock && targetPlayer?.isAlive && isAttack) {
+      const chance = ws.getScaledChance(triggerChances.warlockAttackPlayer, totalPlayers);
+      const result = ws.attemptCorruption((player as any).id, targetId, chance);
+      if (result.success) {
+        log.push({
+          type: 'warlock_conversion',
+          message: `${targetPlayer.name} has been corrupted by ${(player as any).name}'s attack!`,
+          public: false,
+          playerId: (player as any).id,
+          details: { trigger: 'warlock_attack', targetId }
+        } as any);
+      }
+    }
+
+    // Trigger 2: non-warlock heals a warlock — the healer gets corrupted
+    if (!actorIsWarlock && targetIsPlayer && targetIsWarlock && isHeal) {
+      const chance = ws.getScaledChance(triggerChances.playerHealsWarlock, totalPlayers);
+      // targetId is the warlock; actor (healer) is the corruption target
+      const result = ws.attemptCorruption(targetId, (player as any).id, chance);
+      if (result.success) {
+        log.push({
+          type: 'warlock_conversion',
+          message: `${(player as any).name} has been corrupted through healing the warlock!`,
+          public: false,
+          playerId: targetId,
+          details: { trigger: 'heal_warlock', targetId: (player as any).id }
+        } as any);
+      }
+    }
+
+    // Trigger 3a: warlock attacks the monster — record for passthrough check after monster acts
+    if (actorIsWarlock && targetIsMonster && isAttack) {
+      ws.recordWarlockMonsterAttack((player as any).id);
+    }
+  }
+
+  /**
+   * Trigger 3b — after the monster attacks, check if any warlock attacked the monster this round.
+   * If so, each player the monster hit has a 10% base chance (scaled) of being corrupted.
+   */
+  private checkMonsterPassthroughConversion(monsterAction: any, log: CombatLogEntry[]): void {
+    const ws = this._warlockSystem;
+    if (!ws) return;
+
+    const warlockAttackers = ws.getWarlockMonsterAttackers();
+    if (warlockAttackers.size === 0) return;
+
+    const attackedPlayerIds: string[] = monsterAction?.targets || [];
+    if (attackedPlayerIds.length === 0) return;
+
+    const totalPlayers = this.players.size;
+    const chance = ws.getScaledChance(config.gameBalance.warlock.conversion.triggerChances.monsterPassthrough, totalPlayers);
+
+    for (const targetPlayerId of attackedPlayerIds) {
+      const targetPlayer = this.players.get(targetPlayerId) as any;
+      if (!targetPlayer?.isAlive || targetPlayer?.isWarlock) continue;
+
+      for (const warlockId of warlockAttackers) {
+        const result = ws.attemptCorruption(warlockId, targetPlayerId, chance);
+        if (result.success) {
+          log.push({
+            type: 'warlock_conversion',
+            message: `The monster's attack on ${targetPlayer.name} resonated with dark energy...`,
+            public: false,
+            playerId: warlockId,
+            details: { trigger: 'monster_passthrough', targetId: targetPlayerId, warlockId }
+          } as any);
+          break; // one conversion per targeted player per round is enough
+        }
+      }
+    }
   }
 }
 

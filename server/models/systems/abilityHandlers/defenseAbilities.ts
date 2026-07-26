@@ -34,6 +34,7 @@ import {
 export function register(registry: AbilityRegistry): void {
   // Base protection ability handlers
   registry.registerClassAbility('shieldWall', handleShieldWall);
+  registry.registerClassAbility('arcaneShield', handleShieldWall);
   registry.registerClassAbility('shadowVeil', handleInvisibility);
 
   // Register all 'Defense' category abilities to use appropriate handlers based on effect
@@ -53,11 +54,29 @@ export function register(registry: AbilityRegistry): void {
     }
   );
 
-  // Register invisibility abilities
+  // Register invisibility abilities (Self-targeted: smokeBomb, camouflage, etc.)
   registerAbilitiesByEffectAndTarget(
     registry,
     'invisible',
     'Self',
+    (actor, target, ability, log, systems, coordinationInfo) => {
+      return registry.executeClassAbility(
+        'shadowVeil',
+        actor,
+        target,
+        ability,
+        log,
+        systems,
+        coordinationInfo
+      );
+    }
+  );
+
+  // Register Single-target invisibility abilities (smokeScreen — applies to an ally)
+  registerAbilitiesByEffectAndTarget(
+    registry,
+    'invisible',
+    'Single',
     (actor, target, ability, log, systems, coordinationInfo) => {
       return registry.executeClassAbility(
         'shadowVeil',

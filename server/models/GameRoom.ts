@@ -543,9 +543,10 @@ export class GameRoom {
         logLength: (result?.log || result?.eventsLog)?.length || 0
       });
 
-      // Check win conditions
-      const warlockCount = (this.systems as any).warlockSystem.getWarlockCount();
-      const aliveCount = (this.gameState as any).getAliveCount();
+      // Check win conditions using live player state (counters can be stale after combat deaths)
+      const alivePlayers = this.getAlivePlayers();
+      const aliveCount = alivePlayers.length;
+      const warlockCount = alivePlayers.filter((p: any) => p.isWarlock).length;
       this.combatDebug.verbose(`Win condition check: warlocks=${warlockCount}, alive=${aliveCount}`);
 
       const winner = (this.systems as any).gameStateUtils.checkWinConditions(warlockCount, aliveCount);
@@ -748,7 +749,7 @@ export class GameRoom {
       allSubmitted
     });
 
-    if (allSubmitted && this.gamePhase.getCurrentPhase() === 'action') {
+    if (allSubmitted && this.gamePhase.getCurrentPhase() === 'action' && !this.gameState.getEnded()) {
       this.combatDebug.info(`🎯 All players have submitted actions in game ${this.code}. Processing round...`);
 
       // Change phase to results
@@ -774,6 +775,36 @@ export class GameRoom {
       });
 
       if (roundResult.success) {
+        const gameEnded = this.gameState.getEnded();
+
+        if (gameEnded) {
+          // Game ended this round — broadcast final state and stop the loop
+          this.combatDebug.info(`🏁 Game ${this.code} has ended. Broadcasting final state.`);
+          if (this.io) {
+            const fullLog: any[] = roundResult.data?.log || [];
+            for (const [playerId, player] of this.players) {
+              const filteredLog = (player as any).isWarlock
+                ? fullLog
+                : fullLog.filter((entry: any) => entry.public !== false || entry.playerId === playerId);
+              try {
+                this.io.to(playerId).emit('round:results', {
+                  results: { ...roundResult.data, log: filteredLog },
+                  newPhase: 'ended'
+                });
+              } catch (emitErr) {
+                console.error(`[GameRoom] round:results emit threw for ${playerId}:`, emitErr instanceof Error ? emitErr.message : emitErr);
+              }
+              const finalGameData = this.toClientData(playerId);
+              this.io.to(playerId).emit('gameStateUpdate', finalGameData);
+              this.io.to(playerId).emit('game:ended', {
+                winner: this.gameState.getWinner(),
+                gameCode: this.code
+              });
+            }
+          }
+          return; // Do not reset actions or transition back to action phase
+        }
+
         // Reset player actions for the next round
         this.combatDebug.info(`✅ Resetting player actions for next round in game ${this.code}`);
         for (const player of this.players.values()) {
@@ -788,48 +819,29 @@ export class GameRoom {
           console.error(`[GameRoom] setPhase threw:`, phaseErr instanceof Error ? phaseErr.message : phaseErr);
         }
 
-        // Emit results and new phase
-        if (this.socketEventRouter) {
-          this.roundResultsDebug.info(`📢 Broadcasting round:results to all players in game ${this.code}`);
-          this.roundResultsDebug.verbose('Round results data structure:', {
-            hasLog: !!(roundResult.data?.log || roundResult.data?.eventsLog),
-            logLength: (roundResult.data?.log || roundResult.data?.eventsLog)?.length || 0,
-            hasWinner: !!roundResult.data?.winner,
-            hasPlayers: !!roundResult.data?.players,
-            playerCount: roundResult.data?.players?.length || 0,
-            round: roundResult.data?.round || roundResult.data?.turn || 'unknown'
-          });
-
-          this.socketEventRouter.broadcastToGame('round:results', {
-            results: roundResult.data,
-            newPhase: 'action'
-          });
-
-          this.roundResultsDebug.info(`✅ Successfully broadcasted round:results for game ${this.code}`);
-        } else if (this.io) {
-          // Fallback to direct io broadcast when socketEventRouter is not available
-          this.roundResultsDebug.info(`📢 Broadcasting round:results using direct io for game ${this.code}`);
-          this.roundResultsDebug.verbose('Round results data structure:', {
-            hasLog: !!(roundResult.data?.log || roundResult.data?.eventsLog),
-            logLength: (roundResult.data?.log || roundResult.data?.eventsLog)?.length || 0,
-            hasWinner: !!roundResult.data?.winner,
-            hasPlayers: !!roundResult.data?.players,
-            playerCount: roundResult.data?.players?.length || 0,
-            round: roundResult.data?.round || roundResult.data?.turn || 'unknown'
-          });
-
-          try {
-            this.io.to(this.code).emit('round:results', {
-              results: roundResult.data,
-              newPhase: 'action'
-            });
-          } catch (emitErr) {
-            console.error(`[GameRoom] round:results emit threw:`, emitErr instanceof Error ? emitErr.message : emitErr);
+        // Emit results per-player so the log can be filtered by warlock status
+        if (this.io) {
+          this.roundResultsDebug.info(`📢 Broadcasting round:results per-player for game ${this.code}`);
+          const fullLog: any[] = roundResult.data?.log || [];
+          for (const [playerId, player] of this.players) {
+            // Warlocks see all log entries; non-warlocks only see public entries or their own
+            const filteredLog = (player as any).isWarlock
+              ? fullLog
+              : fullLog.filter((entry: any) =>
+                  entry.public !== false || entry.playerId === playerId
+                );
+            try {
+              this.io.to(playerId).emit('round:results', {
+                results: { ...roundResult.data, log: filteredLog },
+                newPhase: 'action'
+              });
+            } catch (emitErr) {
+              console.error(`[GameRoom] round:results emit threw for ${playerId}:`, emitErr instanceof Error ? emitErr.message : emitErr);
+            }
           }
-
           this.roundResultsDebug.info(`✅ Successfully broadcasted round:results for game ${this.code}`);
         } else {
-          this.roundResultsDebug.error(`❌ No socketEventRouter or io available to broadcast round:results for game ${this.code}`);
+          this.roundResultsDebug.error(`❌ No io available to broadcast round:results for game ${this.code}`);
         }
 
         // Broadcast updated game state after round processing

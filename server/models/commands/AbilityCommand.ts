@@ -10,6 +10,7 @@ import { getCurrentTimestamp } from '../../utils/timestamp.js';
 
 import { lenientValidator } from '../validation/ValidationMiddleware.js';
 import logger from '../../utils/logger.js';
+import config from '../../config/index.js';
 
 /**
  * Ability-specific command options
@@ -344,12 +345,12 @@ export class AbilityCommand extends PlayerActionCommand {
           return;
         }
 
-        if (this.targetId === '__monster__' || this.targetId === 'monster') {
+        if (this.targetId === config.MONSTER_ID || this.targetId === 'monster') {
           if (!(game as Game).monster || (game as Game).monster!.hp <= 0) {
             this.validationErrors.push('Cannot target dead or non-existent monster');
           }
           // Normalize to internal monster ID
-          Object.defineProperty(this, 'targetId', { value: '__monster__', configurable: true });
+          Object.defineProperty(this, 'targetId', { value: config.MONSTER_ID, configurable: true });
         } else {
           const target = (game as Game).getPlayerById(this.targetId);
           if (!target) {
@@ -369,7 +370,7 @@ export class AbilityCommand extends PlayerActionCommand {
         if (!(game as Game).monster || (game as Game).monster!.hp <= 0) {
           this.validationErrors.push('Cannot target dead or non-existent monster');
         }
-        Object.defineProperty(this, 'targetId', { value: '__monster__', configurable: true });
+        Object.defineProperty(this, 'targetId', { value: config.MONSTER_ID, configurable: true });
         break;
 
       default:
@@ -436,7 +437,7 @@ export class AbilityCommand extends PlayerActionCommand {
   private _resolveTarget(gameContext: GameContext): Player | Player[] | any {
     const { game } = gameContext;
 
-    if (this.targetId === '__monster__' || this.targetId === 'monster') {
+    if (this.targetId === config.MONSTER_ID || this.targetId === 'monster') {
       return (game as Game).monster;
     }
 

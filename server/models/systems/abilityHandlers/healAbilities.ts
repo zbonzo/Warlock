@@ -39,6 +39,7 @@ export function register(registry: AbilityRegistry): void {
   registry.registerClassAbility('bandage', handleHeal);
   registry.registerClassAbility('cauterize', handleHeal);
   registry.registerClassAbility('ancestralHeal', handleHeal);
+  registry.registerClassAbility('rejuvenation', handleHeal);
 
   // Register multi-heal abilities
   registry.registerClassAbility('groupHeal', handleMultiHeal);
@@ -97,14 +98,14 @@ export function register(registry: AbilityRegistry): void {
     }
   );
 
-  // Register healing over time abilities
+  // Register healing over time abilities (effect: healingOverTime)
   registerAbilitiesByEffectAndTarget(
     registry,
-    'regeneration',
+    'healingOverTime',
     'Single',
     (actor, target, ability, log, systems, coordinationInfo) => {
       return registry.executeClassAbility(
-        'regeneration',
+        'heal',
         actor,
         target,
         ability,

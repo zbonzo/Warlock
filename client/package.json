@@ -16,7 +16,7 @@
     "start": "vite",
     "build": "tsc -b && vite build",
     "preview": "vite preview",
-    "test": "echo \"No tests configured\"",
+    "test": "jest --selectProjects client --config ../jest.config.js",
     "dev:ts": "vite",
     "build:ts": "tsc -b && vite build"
   },

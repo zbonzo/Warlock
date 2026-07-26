@@ -236,24 +236,55 @@
         "refreshed": "{playerName}'s Sanctuary protection is renewed for {turns} turns.",
         "expired": "{playerName} leaves the Sanctuary."
       }
+    },
+    "burning": {
+      "default": {
+        "damage": 3,
+        "turns": 3
+      },
+      "stackable": false,
+      "refreshable": true,
+      "canCauseDeath": true,
+      "messages": {
+        "applied": "{playerName} is burning for {damage} damage per turn for {turns} turn(s).",
+        "refreshed": "{playerName} continues burning for {turns} more turn(s).",
+        "damage": "{playerName} takes {damage} burn damage.",
+        "expired": "The flames burning {playerName} have gone out."
+      }
+    },
+    "poisonTrap": {
+      "default": {
+        "damage": 20,
+        "turns": 2
+      },
+      "stackable": false,
+      "refreshable": true,
+      "isReactive": true,
+      "messages": {
+        "applied": "{playerName} sets a poison trap.",
+        "triggered": "{attackerName} triggers {playerName}'s poison trap and is poisoned!",
+        "expired": "{playerName}'s poison trap dissipates."
+      }
     }
   },
   "processingOrder": {
     "poison": 1,
     "bleed": 2,
-    "stoneArmor": 3,
-    "shielded": 4,
-    "spiritGuard": 5,
-    "sanctuary": 6,
-    "vulnerable": 7,
-    "weakened": 8,
-    "enraged": 9,
-    "invisible": 10,
-    "stunned": 11,
-    "healingOverTime": 12,
-    "lifeBond": 13,
-    "moonbeam": 13,
-    "undying": 14
+    "burning": 3,
+    "stoneArmor": 4,
+    "shielded": 5,
+    "spiritGuard": 6,
+    "sanctuary": 7,
+    "vulnerable": 8,
+    "weakened": 9,
+    "enraged": 10,
+    "invisible": 11,
+    "stunned": 12,
+    "healingOverTime": 13,
+    "poisonTrap": 14,
+    "lifeBond": 15,
+    "moonbeam": 15,
+    "undying": 16
   },
   "global": {
     "maxEffectsPerPlayer": 10,

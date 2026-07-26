@@ -46,9 +46,8 @@ export const handleAttack: AbilityHandler = (
   }
 
   // If target is a player (not monster) and is invisible, attack should fail
-  if (Object.prototype.hasOwnProperty.call(target, 'isAlive') && (target as any)['statusEffects']) {
-    const targetPlayer = target as Player;
-    if (targetPlayer.statusEffects && (targetPlayer.statusEffects as any)['invisible']) {
+  if (Object.prototype.hasOwnProperty.call(target, 'isAlive')) {
+    if (systems.statusEffectManager?.hasEffect?.(target.id, 'invisible')) {
       log.push(createActionLog(
         actor.id,
         target.id,

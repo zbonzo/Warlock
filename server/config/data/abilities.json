@@ -834,5 +834,369 @@
     "cooldown": 6,
     "flavorText": "Manipulate time to hasten ability recovery.",
     "tags": ["time", "support", "hidden"]
+  },
+
+  "acidSplash": {
+    "id": "acidSplash",
+    "name": "Acid Splash",
+    "category": "Attack",
+    "effect": "poison",
+    "target": "Single",
+    "params": { "damage": 18, "poison": { "damage": 14, "turns": 3 } },
+    "order": 1015,
+    "cooldown": 0,
+    "flavorText": "Hurl a vial of corrosive acid at your target.",
+    "tags": ["magic", "poison", "dot", "alchemist"],
+    "buttonText": { "ready": "Hurl Acid", "submitted": "Acid Thrown" }
+  },
+
+  "regeneration": {
+    "id": "regeneration",
+    "name": "Regeneration",
+    "category": "Heal",
+    "effect": "healingOverTime",
+    "target": "Self",
+    "params": { "healingPerTurn": 15, "duration": 3 },
+    "order": 10150,
+    "cooldown": 2,
+    "flavorText": "Channel nature's vitality to heal wounds over time.",
+    "tags": ["nature", "hot", "druid"],
+    "buttonText": { "ready": "Regenerate", "submitted": "Healing" }
+  },
+
+  "shapeshift": {
+    "id": "shapeshift",
+    "name": "Shapeshift",
+    "category": "Special",
+    "effect": "rage",
+    "target": "Self",
+    "params": { "damageBoost": 1.5, "damageResistance": 0.2, "duration": 3 },
+    "order": 510,
+    "cooldown": 5,
+    "flavorText": "Transform into a powerful beast form to enhance your capabilities.",
+    "tags": ["transformation", "druid", "beast"],
+    "buttonText": { "ready": "Shapeshift", "submitted": "Shifted" }
+  },
+
+  "holyShield": {
+    "id": "holyShield",
+    "name": "Holy Shield",
+    "category": "Defense",
+    "effect": "shielded",
+    "target": "Self",
+    "params": { "armor": 8, "duration": 2 },
+    "order": 22,
+    "cooldown": 2,
+    "flavorText": "Channel divine light into a protective radiant barrier.",
+    "tags": ["holy", "armor", "priest"],
+    "buttonText": { "ready": "Holy Shield", "submitted": "Shield Glows" }
+  },
+
+  "massHeal": {
+    "id": "massHeal",
+    "name": "Mass Heal",
+    "category": "Heal",
+    "effect": null,
+    "target": "Multi",
+    "params": { "amount": 35 },
+    "order": 10350,
+    "cooldown": 3,
+    "flavorText": "Channel divine energy to restore the health of all allies.",
+    "tags": ["holy", "aoe", "priest"],
+    "buttonText": { "ready": "Mass Heal", "submitted": "Light Spreads" }
+  },
+
+  "divineBlessing": {
+    "id": "divineBlessing",
+    "name": "Divine Blessing",
+    "category": "Heal",
+    "effect": null,
+    "target": "Multi",
+    "params": { "amount": 50 },
+    "order": 10450,
+    "cooldown": 4,
+    "flavorText": "Call upon divine power to fully restore all allies.",
+    "tags": ["holy", "aoe", "priest", "ultimate"],
+    "buttonText": { "ready": "Divine Blessing", "submitted": "Blessed" }
+  },
+
+  "rage": {
+    "id": "rage",
+    "name": "Rage",
+    "category": "Special",
+    "effect": "rage",
+    "target": "Self",
+    "params": { "damageBoost": 1.5, "damageResistance": 0.3, "duration": 3, "selfDamagePercent": 0.25 },
+    "order": 490,
+    "cooldown": 4,
+    "flavorText": "Enter a berserk state of pure savage fury.",
+    "tags": ["berserker", "barbarian", "damage-boost"],
+    "buttonText": { "ready": "Enter Rage", "submitted": "Enraged" }
+  },
+
+  "bloodthirst": {
+    "id": "bloodthirst",
+    "name": "Bloodthirst",
+    "category": "Attack",
+    "effect": null,
+    "target": "Single",
+    "params": { "damage": 30, "lifeSteal": 0.3 },
+    "order": 1045,
+    "cooldown": 1,
+    "flavorText": "Strike with savage fury, drawing life from your enemy.",
+    "tags": ["melee", "lifesteal", "barbarian"],
+    "buttonText": { "ready": "Bloodthirst", "submitted": "Blade Drinks" }
+  },
+
+  "intimidate": {
+    "id": "intimidate",
+    "name": "Intimidate",
+    "category": "Special",
+    "effect": "stun",
+    "target": "Single",
+    "params": { "stunDuration": 1, "chance": 0.8 },
+    "order": 410,
+    "cooldown": 3,
+    "flavorText": "Strike fear into your enemy, leaving them unable to act.",
+    "tags": ["control", "fear", "barbarian"],
+    "buttonText": { "ready": "Intimidate", "submitted": "Fear Cast" }
+  },
+
+  "berserkerFury": {
+    "id": "berserkerFury",
+    "name": "Berserker Fury",
+    "category": "Special",
+    "effect": "rage",
+    "target": "Self",
+    "params": { "damageBoost": 2.0, "damageResistance": 0.1, "duration": 3, "selfDamagePercent": 0.4 },
+    "order": 520,
+    "cooldown": 6,
+    "flavorText": "Unleash your full berserker potential, doubling your damage output.",
+    "tags": ["berserker", "barbarian", "ultimate"],
+    "buttonText": { "ready": "Berserker Fury", "submitted": "Fury Unleashed" }
+  },
+
+  "earthShield": {
+    "id": "earthShield",
+    "name": "Earth Shield",
+    "category": "Defense",
+    "effect": "shielded",
+    "target": "Self",
+    "params": { "armor": 7, "duration": 3 },
+    "order": 32,
+    "cooldown": 2,
+    "flavorText": "Cloak yourself in the enduring strength of the earth.",
+    "tags": ["nature", "armor", "shaman"],
+    "buttonText": { "ready": "Earth Shield", "submitted": "Shield Active" }
+  },
+
+  "spiritLink": {
+    "id": "spiritLink",
+    "name": "Spirit Link",
+    "category": "Defense",
+    "effect": "spiritGuard",
+    "target": "Self",
+    "params": { "damageReduction": 0.4, "duration": 3 },
+    "order": 42,
+    "cooldown": 4,
+    "flavorText": "Link your spirit to the land, gaining ancestral protection.",
+    "tags": ["spiritual", "shaman", "protection"],
+    "buttonText": { "ready": "Spirit Link", "submitted": "Linked" }
+  },
+
+  "foresight": {
+    "id": "foresight",
+    "name": "Foresight",
+    "category": "Defense",
+    "effect": "shielded",
+    "target": "Self",
+    "params": { "armor": 5, "duration": 2 },
+    "order": 18,
+    "cooldown": 2,
+    "flavorText": "Glimpse into the future to dodge incoming attacks.",
+    "tags": ["evasion", "oracle", "prediction"],
+    "buttonText": { "ready": "See Future", "submitted": "Foreseen" }
+  },
+
+  "divination": {
+    "id": "divination",
+    "name": "Divination",
+    "category": "Special",
+    "effect": "reveal",
+    "target": "Single",
+    "params": { "duration": 3 },
+    "order": 110,
+    "cooldown": 3,
+    "flavorText": "Gaze into the mystic to reveal hidden truths about your target.",
+    "tags": ["detection", "oracle", "information"],
+    "buttonText": { "ready": "Divine Truth", "submitted": "Divining" }
+  },
+
+  "prophecy": {
+    "id": "prophecy",
+    "name": "Prophecy",
+    "category": "Special",
+    "effect": "sanctuary",
+    "target": "Self",
+    "params": { "damageReduction": 0.3, "duration": 2 },
+    "order": 310,
+    "cooldown": 6,
+    "flavorText": "Foretell your fate and achieve untouchable divine immunity.",
+    "tags": ["prediction", "oracle", "immunity"],
+    "buttonText": { "ready": "Prophesy", "submitted": "Prophecy Active" }
+  },
+
+  "healingPotion": {
+    "id": "healingPotion",
+    "name": "Healing Potion",
+    "category": "Heal",
+    "effect": null,
+    "target": "Self",
+    "params": { "amount": 45 },
+    "order": 10250,
+    "cooldown": 2,
+    "flavorText": "Drink a carefully crafted elixir to restore your health.",
+    "tags": ["alchemy", "potion", "alchemist"],
+    "buttonText": { "ready": "Drink Potion", "submitted": "Drinking" }
+  },
+
+  "poisonBomb": {
+    "id": "poisonBomb",
+    "name": "Poison Bomb",
+    "category": "Attack",
+    "effect": "poison",
+    "target": "Multi",
+    "params": { "damage": 16, "poison": { "damage": 12, "turns": 2 } },
+    "order": 1085,
+    "cooldown": 3,
+    "flavorText": "Lob a bomb that poisons all enemies in the area.",
+    "tags": ["area", "poison", "alchemist"],
+    "buttonText": { "ready": "Throw Bomb", "submitted": "Bomb Away" }
+  },
+
+  "transmutation": {
+    "id": "transmutation",
+    "name": "Transmutation",
+    "category": "Special",
+    "effect": "controlMonster",
+    "target": "Self",
+    "params": { "skipChance": 0.35 },
+    "order": 260,
+    "cooldown": 6,
+    "flavorText": "Transform the nature of the monster, weakening its resolve.",
+    "tags": ["alchemy", "control", "monster"],
+    "buttonText": { "ready": "Transmute", "submitted": "Transmuting" }
+  },
+
+  "quickDraw": {
+    "id": "quickDraw",
+    "name": "Quick Draw",
+    "category": "Attack",
+    "effect": null,
+    "target": "Single",
+    "params": { "damage": 30 },
+    "order": 940,
+    "cooldown": 0,
+    "flavorText": "Draw and fire in a single fluid motion.",
+    "tags": ["ranged", "physical", "fast", "gunslinger"],
+    "buttonText": { "ready": "Quick Draw", "submitted": "Drawn" }
+  },
+
+  "ricochet": {
+    "id": "ricochet",
+    "name": "Ricochet",
+    "category": "Attack",
+    "effect": null,
+    "target": "Single",
+    "params": { "damage": 22, "hits": 2 },
+    "order": 1055,
+    "cooldown": 1,
+    "flavorText": "A bullet that bounces between enemies.",
+    "tags": ["ranged", "multi-hit", "gunslinger"],
+    "buttonText": { "ready": "Ricochet", "submitted": "Shot Fired" }
+  },
+
+  "fanning": {
+    "id": "fanning",
+    "name": "Fanning",
+    "category": "Attack",
+    "effect": null,
+    "target": "Multi",
+    "params": { "damage": 18 },
+    "order": 1045,
+    "cooldown": 2,
+    "flavorText": "Fan the hammer to spray bullets at all enemies.",
+    "tags": ["ranged", "area", "gunslinger"],
+    "buttonText": { "ready": "Fan Hammer", "submitted": "Fanning" }
+  },
+
+  "deadEye": {
+    "id": "deadEye",
+    "name": "Dead Eye",
+    "category": "Attack",
+    "effect": null,
+    "target": "Single",
+    "params": { "damage": 50 },
+    "order": 1700,
+    "cooldown": 4,
+    "flavorText": "A perfectly aimed shot that cannot miss.",
+    "tags": ["ranged", "physical", "precision", "gunslinger"],
+    "buttonText": { "ready": "Take Aim", "submitted": "Aimed" }
+  },
+
+  "huntersMark": {
+    "id": "huntersMark",
+    "name": "Hunter's Mark",
+    "category": "Special",
+    "effect": "reveal",
+    "target": "Single",
+    "params": { "duration": 3 },
+    "order": 105,
+    "cooldown": 2,
+    "flavorText": "Mark your prey for death, ensuring they cannot escape.",
+    "tags": ["marking", "tracker", "debuff"],
+    "buttonText": { "ready": "Hunter's Mark", "submitted": "Marked" }
+  },
+
+  "trap": {
+    "id": "trap",
+    "name": "Trap",
+    "category": "Special",
+    "effect": "poisonTrap",
+    "target": "Self",
+    "params": { "damage": 22, "duration": 3 },
+    "order": 210,
+    "cooldown": 3,
+    "flavorText": "Set a deadly trap that triggers when enemies attack you.",
+    "tags": ["trap", "retaliation", "tracker"],
+    "buttonText": { "ready": "Set Trap", "submitted": "Trap Set" }
+  },
+
+  "animalCompanion": {
+    "id": "animalCompanion",
+    "name": "Animal Companion",
+    "category": "Special",
+    "effect": "controlMonster",
+    "target": "Self",
+    "params": { "skipChance": 0.4 },
+    "order": 255,
+    "cooldown": 5,
+    "flavorText": "Call upon your animal companion to aid in battle.",
+    "tags": ["summon", "companion", "tracker"],
+    "buttonText": { "ready": "Call Companion", "submitted": "Called" }
+  },
+
+  "masterHunter": {
+    "id": "masterHunter",
+    "name": "Master Hunter",
+    "category": "Attack",
+    "effect": null,
+    "target": "Single",
+    "params": { "damage": 45 },
+    "order": 1800,
+    "cooldown": 3,
+    "flavorText": "The ultimate strike of a seasoned hunter.",
+    "tags": ["ranged", "physical", "precision", "tracker"],
+    "buttonText": { "ready": "Hunter Strike", "submitted": "Strike Ready" }
   }
 }

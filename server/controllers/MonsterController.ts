@@ -500,9 +500,17 @@ export class MonsterController extends BaseController<Monster, any, Partial<Mons
    * Select target based on threat values
    */
   private selectTargetByThreat(alivePlayers: Player[]): Player | null {
+    // If a forced target has been set (by Tame Beast / Control Animal), use it this turn
+    const forcedTargetId = (this.monster as any).forcedTargetId;
+    if (forcedTargetId) {
+      (this.monster as any).forcedTargetId = null; // Consume the forced target
+      const forcedTarget = alivePlayers.find(p => p.id === forcedTargetId && p.isAlive !== false);
+      if (forcedTarget) return forcedTarget;
+    }
+
     // Never target invisible players
     const visiblePlayers = alivePlayers.filter(
-      (p: any) => !(p.statusEffects && (p.statusEffects as any).invisible)
+      (p: any) => !this.statusEffectManager.hasEffect(p.id, 'invisible')
     );
     if (visiblePlayers.length === 0) return null;
 

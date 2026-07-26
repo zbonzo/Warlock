@@ -44,6 +44,9 @@ class WarlockSystem {
   private corruptionCooldowns: Map<string, number>;
   private totalCorruptionsThisGame: number;
 
+  // Per-round tracking: warlocks that attacked the monster (for passthrough conversion)
+  private roundWarlockMonsterAttackers: Set<string>;
+
   // Detection tracking
   private detectedWarlocks: Set<string>;
   private detectionPenalties: Map<string, number>;
@@ -61,6 +64,7 @@ class WarlockSystem {
     this.playerCorruptions = new Map();
     this.corruptionCooldowns = new Map();
     this.totalCorruptionsThisGame = 0;
+    this.roundWarlockMonsterAttackers = new Set();
 
     // Detection tracking
     this.detectedWarlocks = new Set();
@@ -73,9 +77,36 @@ class WarlockSystem {
   resetRoundTracking(): void {
     this.roundCorruptions = 0;
     this.playerCorruptions.clear();
+    this.roundWarlockMonsterAttackers.clear();
     // Clear detection penalties that have expired
     this.processDetectionPenalties();
     logger.debug('WarlockRoundTrackingReset', {});
+  }
+
+  /**
+   * Record that a warlock attacked the monster this round (for passthrough conversion)
+   */
+  recordWarlockMonsterAttack(warlockId: string): void {
+    this.roundWarlockMonsterAttackers.add(warlockId);
+  }
+
+  /**
+   * Get the set of warlocks that attacked the monster this round
+   */
+  getWarlockMonsterAttackers(): ReadonlySet<string> {
+    return this.roundWarlockMonsterAttackers;
+  }
+
+  /**
+   * Scale a conversion chance relative to the 8-player baseline.
+   * Fewer players → lower rates (gives good players more time to investigate).
+   * Caps at the configured maxChance.
+   */
+  getScaledChance(baseChance: number, totalPlayerCount: number): number {
+    const { baseline, minScale, maxScale } = config.gameBalance.warlock.conversion.playerScaling;
+    const scale = Math.min(maxScale, Math.max(minScale, totalPlayerCount / baseline));
+    const maxChance = config.gameBalance.warlock.conversion.maxChance;
+    return Math.min(maxChance, baseChance * scale);
   }
 
   /**

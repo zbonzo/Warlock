@@ -285,9 +285,11 @@ class NewStatusEffectManager {
       .sort((a, b) => a.priority - b.priority);
 
     for (const effect of sortedEffects) {
-      // Ensure entity has proper isAlive property
-      const entityWithAlive = { ...entity, isAlive: entity.isAlive ?? true };
-      const result = effect.processTurn(entityWithAlive, log);
+      // Ensure entity has proper isAlive property — mutate in place so HP changes persist
+      if (entity.isAlive === undefined) {
+        (entity as any).isAlive = true;
+      }
+      const result = effect.processTurn(entity as Entity & { isAlive: boolean }, log);
 
       // Handle any side effects
       for (const sideEffect of result.effects || []) {
@@ -639,6 +641,24 @@ class NewStatusEffectManager {
    */
   applyEffectLegacy(targetId: string, effectType: string, params: LegacyEffectParams, log: any[] = []): StatusEffect | null {
     return this.applyEffect(targetId, effectType, params, 'System', 'Combat', log);
+  }
+
+  /**
+   * Bridge for ability handlers calling statusEffectManager.applyStatusEffect(target, effectObj).
+   * Translates the handler calling convention into applyEffect.
+   */
+  applyStatusEffect(
+    target: { id: string; name?: string },
+    effectObj: { id?: string; name: string; type?: string; duration?: number; params?: Record<string, any> }
+  ): { success: boolean } {
+    const effectParams: LegacyEffectParams = {
+      ...(effectObj.params || {}),
+      duration: effectObj.duration,
+    };
+    const sourceId: string | null = effectObj.params?.['sourceId'] ?? null;
+    const sourceName: string | null = effectObj.params?.['sourceName'] ?? null;
+    const result = this.applyEffect(target.id, effectObj.name, effectParams, sourceId, sourceName, []);
+    return { success: result !== null };
   }
 
   /**

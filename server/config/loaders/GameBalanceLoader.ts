@@ -9,6 +9,7 @@ import {
   CombatConfig,
   safeValidateGameBalanceConfig
 } from '../schemas/gameBalance.schema.js';
+import { computeWarlockCount } from '../gameBalance.js';
 
 // ES module __dirname equivalent
 const __filename = fileURLToPath(import.meta.url);
@@ -210,49 +211,13 @@ export class GameBalanceLoader {
   }
 
   /**
-   * Calculate the number of warlocks needed based on player count
+   * Calculate the number of warlocks needed based on player count.
+   * Delegates to the shared computeWarlockCount so the logic lives in one place.
+   * Hot-reload is preserved because we pass our own (reloaded) scalingConfig.
    */
   public calculateWarlockCount(playerCount: number): number {
     this.reloadIfChanged();
-    const scalingConfig = this.balanceConfig.warlock.scaling;
-
-    if (!scalingConfig.enabled) {
-      return scalingConfig.minimumWarlocks;
-    }
-
-    let warlockCount: number;
-
-    switch (scalingConfig.scalingMethod) {
-      case 'linear':
-        // Linear scaling: every X players adds 1 warlock
-        warlockCount =
-          Math.floor((playerCount - 1) / scalingConfig.playersPerWarlock) + 1;
-        break;
-
-      case 'exponential':
-        // Exponential scaling
-        warlockCount = Math.floor(Math.sqrt(playerCount)) + 1;
-        break;
-
-      case 'custom':
-        // Custom scaling table
-        warlockCount = scalingConfig.minimumWarlocks;
-        for (const [threshold, count] of Object.entries(scalingConfig.customScaling)) {
-          if (playerCount >= parseInt(threshold)) {
-            warlockCount = count;
-          }
-        }
-        break;
-
-      default:
-        warlockCount = scalingConfig.minimumWarlocks;
-    }
-
-    // Apply min/max constraints
-    warlockCount = Math.max(scalingConfig.minimumWarlocks, warlockCount);
-    warlockCount = Math.min(scalingConfig.maximumWarlocks, warlockCount);
-
-    return warlockCount;
+    return computeWarlockCount(playerCount, this.balanceConfig.warlock.scaling);
   }
 
   /**

@@ -103,6 +103,16 @@ const ConversionSchema = z.object({
   aoeModifier: z.number().min(0).max(1),
   randomModifier: z.number().min(0).max(1),
   untargetedModifier: z.number().min(0).max(1),
+  triggerChances: z.object({
+    warlockAttackPlayer: z.number().min(0).max(1),
+    playerHealsWarlock: z.number().min(0).max(1),
+    monsterPassthrough: z.number().min(0).max(1),
+  }),
+  playerScaling: z.object({
+    baseline: z.number().min(1),
+    minScale: z.number().min(0),
+    maxScale: z.number().min(0),
+  }),
 });
 
 const CorruptionSchema = z.object({

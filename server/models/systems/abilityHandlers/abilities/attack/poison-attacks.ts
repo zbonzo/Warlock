@@ -31,7 +31,7 @@ export const handlePoisonStrike: AbilityHandler = (
   }
 
   // Check if target is invisible
-  if ((target as any).statusEffects && (target as any).statusEffects.invisible) {
+  if (systems.statusEffectManager?.hasEffect?.(target.id, 'invisible')) {
     log.push(createActionLog(
       actor.id,
       target.id,
@@ -75,7 +75,7 @@ export const handlePoisonStrike: AbilityHandler = (
       type: 'debuff',
       duration: poisonDuration,
       params: {
-        damagePerTurn: poisonDamage,
+        damage: poisonDamage,
         sourceId: actor.id,
         sourceName: actor.name
       }
@@ -181,11 +181,11 @@ export const handleDeathMark: AbilityHandler = (
 };
 
 /**
- * Handle poison trap - area effect poison ability
+ * Handle poison trap - sets a reactive trap that poisons anyone who attacks the caster
  */
 export const handlePoisonTrap: AbilityHandler = (
   actor: Player,
-  target: Player | Monster,
+  _target: Player | Monster,
   ability: Ability,
   log: LogEntry[],
   systems: GameSystems,
@@ -195,68 +195,34 @@ export const handlePoisonTrap: AbilityHandler = (
     return false;
   }
 
-  // Get all valid targets for poison trap (usually all enemies)
-  const game = systems.game;
-  if (!game) return false;
-
-  const targets = [];
-
-  // Add all living players except the actor
-  for (const player of game.players.values()) {
-    if (player.id !== actor.id && (player as any).isAlive !== false && (player as any).hp > 0) {
-      targets.push(player);
-    }
-  }
-
-  // Add monster if alive
-  if (game.monster && (game.monster as any).isAlive && (game.monster as any).hp > 0) {
-    targets.push(game.monster);
-  }
-
-  if (targets.length === 0) {
-    return false;
-  }
-
   const params = (ability as any).params || {};
-  const poisonDamage = Number(params.poisonDamage) || 4;
-  const duration = Number(params.duration) || 4;
-  let affectedTargets = 0;
+  const poisonDamage = Number(params.damage) || Number(params.poisonDamage) || 20;
+  const duration = Number(params.duration) || 2;
 
-  // Apply poison to all targets
-  for (const trapTarget of targets) {
-    const statusResult = systems.statusEffectManager?.applyStatusEffect?.(trapTarget, {
-      id: secureId(`poison-trap-${trapTarget.id}`),
-      name: 'poison',
-      type: 'debuff',
-      duration,
-      params: {
-        damagePerTurn: poisonDamage,
-        sourceId: actor.id,
-        sourceName: actor.name
-      }
-    }) || { success: false };
-
-    if (statusResult.success) {
-      affectedTargets++;
+  // Apply poisonTrap reactive marker on self
+  const statusResult = systems.statusEffectManager?.applyStatusEffect?.(actor, {
+    id: secureId('poison-trap'),
+    name: 'poisonTrap',
+    type: 'buff',
+    duration,
+    params: {
+      damagePerTurn: poisonDamage,
+      sourceId: actor.id,
+      sourceName: actor.name
     }
-  }
+  }) || { success: false };
 
-  if (affectedTargets > 0) {
+  if (statusResult.success) {
     log.push(createActionLog(
       actor.id,
-      'multiple',
-      `${actor.name} sets a poison trap, affecting ${affectedTargets} targets with poison (${poisonDamage} damage/turn for ${duration} turns)!`,
+      actor.id,
+      `${actor.name} sets a hidden poison trap! Anyone who attacks them will be poisoned for ${poisonDamage} damage/turn for ${duration} turns!`,
       {
-        details: {
-          affectedTargets: affectedTargets,
-          poisonDamage,
-          duration
-        },
+        details: { poisonDamage, duration },
         priority: 'high',
         public: true
       }
     ));
-
     return true;
   }
 

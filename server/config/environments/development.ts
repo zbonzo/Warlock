@@ -20,7 +20,7 @@ const config: EnvironmentConfig = {
   },
 
   // Development-specific game settings
-  minPlayers: 1, // Allow single player for testing
+  minPlayers: 3, // Require at least 3 players to start
 
   // Rate limiting (more lenient in development)
   rateLimiting: {

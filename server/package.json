@@ -5,9 +5,9 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "test": "jest --selectProjects server",
-    "test:watch": "jest --selectProjects server --watch",
-    "test:coverage": "jest --selectProjects server --coverage",
+    "test": "jest --selectProjects server --config ../jest.config.js",
+    "test:watch": "jest --selectProjects server --config ../jest.config.js --watch",
+    "test:coverage": "jest --selectProjects server --config ../jest.config.js --coverage",
     "build:ts": "npx tsc --build",
     "dev": "nodemon --config nodemon.ts.json --exec \"tsx index.ts\"",
     "dev:ts": "nodemon --config nodemon.ts.json --exec \"tsx index.ts\"",

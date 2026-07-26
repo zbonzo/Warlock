@@ -102,19 +102,12 @@ export function registerAbilitiesByCategory(
 ): string[] {
   const allAbilities: string[] = [];
 
-  // Iterate through all class abilities
-  Object.values(config.classAbilities || {}).forEach((classAbilities: any) => {
-    classAbilities.forEach((ability: any) => {
-      if (
-        ability.category === category &&
-        !registry.hasClassAbility(ability.type)
-      ) {
-        allAbilities.push(ability.type);
-      }
-    });
+  Object.entries(config.abilities || {}).forEach(([id, ability]: [string, any]) => {
+    if (ability.category === category && !registry.hasClassAbility(id)) {
+      allAbilities.push(id);
+    }
   });
 
-  // Register all abilities with this category
   if (allAbilities.length > 0) {
     registry.registerClassAbilities(allAbilities, handler);
   }
@@ -140,21 +133,17 @@ export function registerAbilitiesByEffectAndTarget(
 ): string[] {
   const allAbilities: string[] = [];
 
-  // Iterate through all class abilities
-  Object.values(config.classAbilities || {}).forEach((classAbilities: any) => {
-    classAbilities.forEach((ability: any) => {
-      if (
-        ability.effect === effect &&
-        ability.target === target &&
-        !registry.hasClassAbility(ability.type) &&
-        !excludeTypes.includes(ability.type)
-      ) {
-        allAbilities.push(ability.type);
-      }
-    });
+  Object.entries(config.abilities || {}).forEach(([id, ability]: [string, any]) => {
+    if (
+      ability.effect === effect &&
+      ability.target === target &&
+      !registry.hasClassAbility(id) &&
+      !excludeTypes.includes(id)
+    ) {
+      allAbilities.push(id);
+    }
   });
 
-  // Register all abilities with this effect and target
   if (allAbilities.length > 0) {
     registry.registerClassAbilities(allAbilities, handler);
   }
@@ -178,33 +167,24 @@ export function registerAbilitiesByCriteria(
 ): string[] {
   const allAbilities: string[] = [];
 
-  // Iterate through all class abilities
-  Object.values(config.classAbilities || {}).forEach((classAbilities: any) => {
-    classAbilities.forEach((ability: any) => {
-      // Skip already registered abilities and excluded types
-      if (
-        registry.hasClassAbility(ability.type) ||
-        excludeTypes.includes(ability.type)
-      ) {
-        return;
-      }
+  Object.entries(config.abilities || {}).forEach(([id, ability]: [string, any]) => {
+    if (registry.hasClassAbility(id) || excludeTypes.includes(id)) {
+      return;
+    }
 
-      // Check all criteria
-      let matchesCriteria = true;
-      for (const [key, value] of Object.entries(criteria)) {
-        if (ability[key] !== value) {
-          matchesCriteria = false;
-          break;
-        }
+    let matchesCriteria = true;
+    for (const [key, value] of Object.entries(criteria)) {
+      if (ability[key] !== value) {
+        matchesCriteria = false;
+        break;
       }
+    }
 
-      if (matchesCriteria) {
-        allAbilities.push(ability.type);
-      }
-    });
+    if (matchesCriteria) {
+      allAbilities.push(id);
+    }
   });
 
-  // Register all abilities matching the criteria
   if (allAbilities.length > 0) {
     registry.registerClassAbilities(allAbilities, handler);
   }
@@ -220,12 +200,10 @@ export function registerAbilitiesByCriteria(
 export function findAbilitiesByTypePattern(pattern: string): string[] {
   const allAbilities: string[] = [];
 
-  Object.values(config.classAbilities || {}).forEach((classAbilities: any) => {
-    classAbilities.forEach((ability: any) => {
-      if (ability.type.includes(pattern)) {
-        allAbilities.push(ability.type);
-      }
-    });
+  Object.entries(config.abilities || {}).forEach(([id]: [string, any]) => {
+    if (id.includes(pattern)) {
+      allAbilities.push(id);
+    }
   });
 
   return allAbilities;
@@ -281,35 +259,29 @@ export function getAllAbilities(): AllAbilitiesResponse {
     all: [],
   };
 
-  Object.values(config.classAbilities || {}).forEach((classAbilities: any) => {
-    classAbilities.forEach((ability: any) => {
-      // Add to category
-      if (ability.category) {
-        if (!abilities.byCategory[ability.category as keyof CategoryBreakdown]) {
-          abilities.byCategory[ability.category as keyof CategoryBreakdown] = [];
-        }
-        abilities.byCategory[ability.category as keyof CategoryBreakdown].push(ability.type);
+  Object.entries(config.abilities || {}).forEach(([id, ability]: [string, any]) => {
+    if (ability.category) {
+      if (!abilities.byCategory[ability.category as keyof CategoryBreakdown]) {
+        abilities.byCategory[ability.category as keyof CategoryBreakdown] = [];
       }
+      abilities.byCategory[ability.category as keyof CategoryBreakdown].push(id);
+    }
 
-      // Add to effect
-      if (ability.effect) {
-        if (!abilities.byEffect[ability.effect]) {
-          abilities.byEffect[ability.effect] = [];
-        }
-        abilities.byEffect[ability.effect]?.push(ability.type);
+    if (ability.effect) {
+      if (!abilities.byEffect[ability.effect]) {
+        abilities.byEffect[ability.effect] = [];
       }
+      abilities.byEffect[ability.effect]?.push(id);
+    }
 
-      // Add to target
-      if (ability.target) {
-        if (!abilities.byTarget[ability.target as keyof TargetBreakdown]) {
-          abilities.byTarget[ability.target as keyof TargetBreakdown] = [];
-        }
-        abilities.byTarget[ability.target as keyof TargetBreakdown].push(ability.type);
+    if (ability.target) {
+      if (!abilities.byTarget[ability.target as keyof TargetBreakdown]) {
+        abilities.byTarget[ability.target as keyof TargetBreakdown] = [];
       }
+      abilities.byTarget[ability.target as keyof TargetBreakdown].push(id);
+    }
 
-      // Add to all
-      abilities.all.push(ability.type);
-    });
+    abilities.all.push(id);
   });
 
   return abilities;

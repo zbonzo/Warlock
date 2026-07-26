@@ -53,14 +53,20 @@ export function register(registry: AbilityRegistry): void {
   // 1. Basic single-target attack handler
   registry.registerClassAbility('attack', handleAttack);
 
-  // 2. Register all abilities with category "Attack" to use the basic attack handler
-  // This allows new attack abilities to work automatically
-  registerAbilitiesByCategory(
+  // 2. Register specific handlers BEFORE the category catch-all so they aren't overwritten
+
+  // Poison-based abilities
+  registry.registerClassAbility('poisonStrike', handlePoisonStrike);
+
+  // Register all single-target poison-effect attacks to use the poison handler
+  // (must run before the Attack catch-all so these don't get registered as plain attacks)
+  registerAbilitiesByEffectAndTarget(
     registry,
-    'Attack',
+    'poison',
+    'Single',
     (actor, target, ability, log, systems, coordinationInfo) => {
       return registry.executeClassAbility(
-        'attack',
+        'poisonStrike',
         actor,
         target,
         ability,
@@ -68,13 +74,9 @@ export function register(registry: AbilityRegistry): void {
         systems,
         coordinationInfo
       );
-    }
+    },
+    ['poisonStrike'] // already registered above
   );
-
-  // 3. Register specific ability types that need custom handlers
-
-  // Poison-based abilities
-  registry.registerClassAbility('poisonStrike', handlePoisonStrike);
   registry.registerClassAbility('deathMark', handleDeathMark);
   registry.registerClassAbility('poisonTrap', handlePoisonTrap);
   registry.registerClassAbility('multiHitAttack', handleMultiHitAttack);
@@ -87,7 +89,7 @@ export function register(registry: AbilityRegistry): void {
   registry.registerClassAbility('infernoBlast', handleInfernoBlast);
   registry.registerClassAbility('chainLightning', handleAoeDamage);
 
-  registry.registerClassAbility('shiv', handleVulnerabilityStrike);
+  registry.registerClassAbility('shiv', handleBarbedArrow);
 
   // Register all AoE damage abilities (with null effect and Multi target)
   // Exclude already registered ones

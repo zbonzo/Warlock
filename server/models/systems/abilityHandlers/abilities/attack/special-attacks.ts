@@ -35,7 +35,7 @@ export const handleVulnerabilityStrike: AbilityHandler = (
   }
 
   // First deal normal damage with coordination bonuses
-  const baseDamage: number = Number(ability['damage']) || 0;
+  const baseDamage: number = Number((ability as any).params?.damage) || Number(ability['damage']) || 0;
   let finalDamage: number = baseDamage;
 
   if (coordinationInfo?.isActive) {
@@ -210,7 +210,7 @@ export const handleBarbedArrow: AbilityHandler = (
   }
 
   // Calculate base damage
-  const baseDamage: number = Number(ability['damage']) || 0;
+  const baseDamage: number = Number((ability as any).params?.damage) || Number(ability['damage']) || 0;
   let finalDamage: number = baseDamage;
 
   if (coordinationInfo?.isActive) {
@@ -225,17 +225,18 @@ export const handleBarbedArrow: AbilityHandler = (
   }) || { success: false, finalDamage: 0 };
 
   if (damageResult.success) {
-    // Apply bleeding effect
-    const bleedDamage = Math.floor(baseDamage * 0.3); // 30% of base damage per turn
-    const bleedDuration = 3; // 3 turns
+    // Apply bleeding effect — read from params.bleed, fall back to 30% of base
+    const bleedParams = (ability as any).params?.bleed || {};
+    const bleedDamage = Number(bleedParams.damage) || Math.floor(baseDamage * 0.3);
+    const bleedDuration = Number(bleedParams.turns) || 3;
 
     systems.statusEffectManager?.applyStatusEffect?.(target, {
       id: secureId('bleed'),
-      name: 'bleeding',
+      name: 'bleed',
       type: 'debuff',
       duration: bleedDuration,
       params: {
-        damagePerTurn: bleedDamage,
+        damage: bleedDamage,
         sourceId: actor.id,
         sourceName: actor.name
       }
@@ -290,14 +291,12 @@ export const handlePyroblast: AbilityHandler = (
     return false;
   }
 
-  // Calculate base damage (pyroblast does high damage)
-  const baseDamage: number = Number(ability['damage']) || 0;
-  const pyroMultiplier = 1.8; // 80% more damage than normal
-  const pyroDamage = Math.floor(baseDamage * pyroMultiplier);
-  let finalDamage: number = pyroDamage;
+  // Calculate base damage — use params.damage directly (no multiplier)
+  const baseDamage: number = Number((ability as any).params?.damage) || Number(ability['damage']) || 0;
+  let finalDamage: number = baseDamage;
 
   if (coordinationInfo?.isActive) {
-    const coordinationBonus = Math.floor(pyroDamage * Number(coordinationInfo.bonusMultiplier || 1));
+    const coordinationBonus = Math.floor(baseDamage * Number(coordinationInfo.bonusMultiplier || 1));
     finalDamage += coordinationBonus;
   }
 

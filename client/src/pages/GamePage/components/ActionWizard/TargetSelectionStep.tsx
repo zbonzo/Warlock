@@ -2,7 +2,7 @@
  * @fileoverview Unified Target Selection Step - works for both mobile and desktop
  * No header included - just the target selection interface
  */
-import React, { useEffect, useRef } from 'react';
+import React from 'react';
 import { PlayerCard } from '../../../../components/common/PlayerCard';
 import RuneButton from '../../../../components/ui/RuneButton';
 import { getActionButtonText } from '../../../../utils/actionButtonText';
@@ -13,10 +13,6 @@ interface LastEventData {
   turn: number;
   events: GameEvent[];
   [key: string]: any;
-}
-
-interface MonsterAvatarProps {
-  monster: Monster;
 }
 
 interface TargetSelectionStepProps {
@@ -36,98 +32,6 @@ interface TargetSelectionStepProps {
   submitted?: boolean;
   submittedPlayers?: string[];
 }
-
-/**
- * Draws a menacing Monster avatar with gradient background and glowing effects
- */
-function drawMonsterBadge(canvas: HTMLCanvasElement, monster: Monster): void {
-  const ctx = canvas.getContext('2d');
-  if (!ctx) return;
-
-  const size = Math.min(canvas.width, canvas.height);
-  const cx = size / 2;
-  const cy = size / 2;
-  const r = cx - 2; // 2px padding
-
-  ctx.clearRect(0, 0, size, size);
-
-  // Create gradient background based on monster health
-  const healthPercent = monster['hp'] / monster['maxHp'];
-  const gradient = ctx.createRadialGradient(cx, cy, 0, cx, cy, r);
-
-  if (healthPercent > 0.7) {
-    // Healthy monster - dark red to black
-    gradient.addColorStop(0, '#8B0000');
-    gradient.addColorStop(1, '#2D0000');
-  } else if (healthPercent > 0.3) {
-    // Wounded monster - orange to dark red
-    gradient.addColorStop(0, '#FF4500');
-    gradient.addColorStop(1, '#8B0000');
-  } else {
-    // Nearly defeated - bright red with warning colors
-    gradient.addColorStop(0, '#FF0000');
-    gradient.addColorStop(1, '#8B0000');
-  }
-
-  ctx.fillStyle = gradient;
-  ctx.beginPath();
-  ctx.arc(cx, cy, r, 0, 2 * Math.PI);
-  ctx.fill();
-
-  // Add a glowing outer ring for low health
-  if (healthPercent < 0.3) {
-    ctx.strokeStyle = '#FF0000';
-    ctx.lineWidth = 3;
-    ctx.globalAlpha = 0.7;
-    ctx.beginPath();
-    ctx.arc(cx, cy, r + 1, 0, 2 * Math.PI);
-    ctx.stroke();
-    ctx.globalAlpha = 1.0;
-  }
-
-  // Main circle outline
-  ctx.lineWidth = 2;
-  ctx.strokeStyle = '#000';
-  ctx.beginPath();
-  ctx.arc(cx, cy, r, 0, 2 * Math.PI);
-  ctx.stroke();
-
-  // Monster emoji/symbol
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.font = `${r * 1.4}px serif`;
-
-  let monsterEmoji = '👹'; // Default
-  if (healthPercent < 0.3) {
-    monsterEmoji = '💀'; // Nearly dead
-  } else if (healthPercent < 0.7) {
-    monsterEmoji = '😡'; // Wounded and angry
-  }
-
-  ctx.fillText(monsterEmoji, cx, cy);
-}
-
-/**
- * Monster avatar component
- */
-const MonsterAvatar: React.FC<MonsterAvatarProps> = ({ monster }) => {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-
-  useEffect(() => {
-    if (!canvasRef.current) return;
-    drawMonsterBadge(canvasRef.current, monster);
-  }, [monster]);
-
-  return (
-    <canvas
-      ref={canvasRef}
-      width="40"
-      height="40"
-      className="monster-avatar"
-      style={{ imageRendering: 'crisp-edges' }}
-    />
-  );
-};
 
 /**
  * Target Selection Step component
@@ -274,26 +178,35 @@ const TargetSelectionStep: React.FC<TargetSelectionStepProps> = ({
             </div>
           )}
 
-          {/* Monster target */}
-          {canTargetMonster && monster && (
-            <div className="monster-target">
-              <h4>Monster</h4>
+          {/* Monster card — always visible; greyed out when ability can't target it */}
+          {monster && (
+            <div className="monster-section">
               <div
-                className={`target-option monster-option ${selectedTarget === '__monster__' ? 'selected' : ''}`}
-                onClick={handleMonsterSelect}
+                className={`monster-card-wide${canTargetMonster ? '' : ' non-targetable'}${selectedTarget === '__monster__' ? ' selected' : ''}`}
+                onClick={canTargetMonster ? handleMonsterSelect : undefined}
+                title={!canTargetMonster ? 'This ability cannot target the monster' : undefined}
+                role={canTargetMonster ? 'button' : undefined}
               >
-                <div className="monster-card">
-                  <MonsterAvatar monster={monster} />
-                  <div className="monster-info">
-                    <h5>{monster['name'] || 'Monster'}</h5>
-                    <div className="monster-health">
-                      {monster['hp']}/{monster['maxHp']} HP
-                    </div>
-                    {monster.nextDamage && monster.nextDamage > 0 && (
-                      <div className="monster-damage">
-                        Next damage: {monster.nextDamage}
-                      </div>
-                    )}
+                <img
+                  src="/images/monsters/default.png"
+                  alt={monster.name || 'Monster'}
+                  className="monster-card-image"
+                />
+                <div className="monster-card-info">
+                  <div className="monster-card-name">{monster.name || 'Default Monster'}</div>
+                  <div className="monster-card-ability">Default Monster Ability</div>
+                  <div className="monster-card-hp">{monster.hp} / {monster.maxHp} HP</div>
+                  <div className="monster-card-health-bar">
+                    <div
+                      className={`monster-card-health-fill ${
+                        monster.hp / monster.maxHp > 0.5
+                          ? 'health-high'
+                          : monster.hp / monster.maxHp > 0.25
+                          ? 'health-medium'
+                          : 'health-low'
+                      }`}
+                      style={{ width: `${Math.max(0, Math.min(100, (monster.hp / monster.maxHp) * 100))}%` }}
+                    />
                   </div>
                 </div>
               </div>

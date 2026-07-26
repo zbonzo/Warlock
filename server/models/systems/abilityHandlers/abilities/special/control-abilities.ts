@@ -4,7 +4,7 @@
  */
 
 import { createActionLog } from '../../../../../utils/logEntry.js';
-import { secureId } from '../../../../../utils/secureRandom.js';
+import { secureId, secureRandomChoice } from '../../../../../utils/secureRandom.js';
 import type { Player as BasePlayer, Monster, Ability as BaseAbility } from '../../../../../types/generated.js';
 import type {
   AbilityHandler,
@@ -94,41 +94,34 @@ export const handleControlMonster: AbilityHandler = (
   const params = ability.params || {};
   const controlDuration = params['controlDuration'] || 3;
 
+  // Pick a random alive player as the forced target (including actor)
+  const alivePlayers: Player[] = Array.from(
+    (game as any).players?.values() || []
+  ).filter((p: any) => p.isAlive !== false && p.hp > 0) as Player[];
+  const forcedTarget = alivePlayers.length > 0 ? secureRandomChoice(alivePlayers) : null;
+
   // Set control parameters
   (monster as any).controllerId = actor['id'];
   (monster as any).controllerName = actor['name'];
   (monster as any).controlDuration = controlDuration;
+  (monster as any).forcedTargetId = forcedTarget ? forcedTarget['id'] : null;
   // eslint-disable-next-line no-restricted-syntax
   (monster as any).controlStartTime = Date.now();
 
+  const forcedTargetName = forcedTarget ? forcedTarget['name'] : 'a random player';
   log.push(createActionLog(
     actor['id'],
     monster['id'],
-    `${actor['name']} takes control of ${monster['name']} for ${controlDuration} turns`,
+    `${actor['name']} forces ${monster['name']} to attack ${forcedTargetName}!`,
     {
       details: {
         controllerId: actor['id'],
         controlDuration,
+        forcedTargetId: forcedTarget ? forcedTarget['id'] : null,
         monsterLevel: monster['level']
       },
-      priority: 'high'
-    }
-  ));
-
-  // Private instructions to the controller
-  log.push(createActionLog(
-    actor['id'],
-    '',
-    `You now control ${monster['name']} for ${controlDuration} turns. Use it wisely!`,
-    {
-      details: {
-        isPrivate: true,
-        recipientId: actor['id'],
-        controlDuration
-      },
-      public: false,
-      isPublic: false,
-      priority: 'high'
+      priority: 'high',
+      public: true
     }
   ));
 

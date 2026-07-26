@@ -178,7 +178,7 @@ class GameStateUtils {
     if (numWarlocks <= 0 && aliveCount > 0)
       return winConditions['allWarlocksGone'] || 'Good';
 
-    // Warlocks win if all remaining players are warlocks
+    // Warlocks win if all remaining alive players are warlocks
     if (numWarlocks > 0 && numWarlocks === aliveCount)
       return winConditions['allPlayersWarlocks'] || 'Evil';
 

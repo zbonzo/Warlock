@@ -79,7 +79,17 @@
       "corruptionCooldown": 1,
       "aoeModifier": 0.3,
       "randomModifier": 0.3,
-      "untargetedModifier": 0.3
+      "untargetedModifier": 0.3,
+      "triggerChances": {
+        "warlockAttackPlayer": 0.30,
+        "playerHealsWarlock": 0.50,
+        "monsterPassthrough": 0.10
+      },
+      "playerScaling": {
+        "baseline": 8,
+        "minScale": 0.25,
+        "maxScale": 1.5
+      }
     },
     "corruption": {
       "canCorruptWhenDetected": false,

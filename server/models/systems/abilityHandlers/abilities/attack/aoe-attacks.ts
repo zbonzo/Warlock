@@ -35,8 +35,8 @@ export const handleAoeDamage: AbilityHandler = (
     return false;
   }
 
-  // Get base damage and apply coordination bonus
-  const baseDamage = Number(ability['damage']) || 0;
+  // Get base damage — check params.damage first (abilities.json stores damage in params)
+  const baseDamage = Number((ability as any).params?.damage) || Number(ability['damage']) || 0;
   let finalDamage = Number(baseDamage);
 
   // Apply coordination bonus to base damage
@@ -64,7 +64,7 @@ export const handleAoeDamage: AbilityHandler = (
         (player as any).isAlive !== false &&
         (player as any).hp > 0) {
       // Skip invisible players
-      if (!(player.statusEffects && (player.statusEffects as any).invisible)) {
+      if (!systems.statusEffectManager?.hasEffect?.(player.id, 'invisible')) {
         targets.push(player);
       }
     }
@@ -188,11 +188,11 @@ export const handleInfernoBlast: AbilityHandler = (
 
       const statusResult = systems.statusEffectManager?.applyStatusEffect?.(player, {
         id: secureId(`burn-${player.id}`),
-        name: 'burn',
+        name: 'burning',
         type: 'debuff',
         duration: burnDuration,
         params: {
-          damagePerTurn: burnDamage,
+          damage: burnDamage,
           sourceId: actor.id,
           sourceName: actor.name
         }
