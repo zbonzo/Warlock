@@ -570,6 +570,14 @@ export class GameState {
     this.started = started;
   }
 
+  setEnded(ended: boolean): void {
+    this.ended = ended;
+  }
+
+  setWinner(winner: string | null): void {
+    this.winner = winner;
+  }
+
   /**
    * Set round number
    * @param round - Current round number

@@ -57,6 +57,8 @@ jest.mock('../../../server/config/index', () => ({
         shielded:        { armor: 3,   turns: 2 },
         invisible:       { turns: 2 },
         stunned:         { turns: 1 },
+        undying:         { resurrectedHp: 1 },
+        stoneArmor:      { armor: 6 },
       };
       return defaults[type] || {};
     }),
@@ -70,6 +72,10 @@ jest.mock('../../../server/config/index', () => ({
         invisible:  { stackable: false, refreshable: true },
         shielded:   { stackable: false, refreshable: true },
         stunned:    { stackable: false, refreshable: false },
+        undying:    { stackable: false, refreshable: false },
+        stoneArmor: { stackable: false, refreshable: false },
+        moonbeam:   { stackable: false, refreshable: false },
+        lifeBond:   { stackable: false, refreshable: false },
       },
     },
     gameBalance: {
@@ -92,6 +98,8 @@ jest.mock('../../../server/config/index', () => ({
 import GameStateUtils from '../../../server/models/systems/GameStateUtils';
 import StatusEffect from '../../../server/models/systems/StatusEffect';
 import NewStatusEffectManager from '../../../server/models/systems/NewStatusEffectManager';
+import { PlayerAbilities } from '../../../server/models/player/PlayerAbilities';
+import { PlayerEffects } from '../../../server/models/player/PlayerEffects';
 import { handleAttack } from '../../../server/models/systems/abilityHandlers/abilities/attack/basic-attack';
 import { handleAoeDamage } from '../../../server/models/systems/abilityHandlers/abilities/attack/aoe-attacks';
 import { handlePoisonStrike } from '../../../server/models/systems/abilityHandlers/abilities/attack/poison-attacks';
@@ -478,5 +486,232 @@ describe('Audit: DoT effects use params.damage (not damagePerTurn)', () => {
     e.processTurn(target, []);
     // params.damage = 5 (from getEffectDefaults), not 99
     expect(target.hp).toBe(95);
+  });
+});
+
+// ── Bug fix: validateSubmittedAction passes statusEffectManager ────────────────
+
+describe('Bug fix: invisible check requires statusEffectManager to be forwarded', () => {
+  function makeAbility(id: string, category: string, unlockAt = 1): any {
+    return { id, type: id, name: id, category, unlockAt };
+  }
+
+  it('PlayerAbilities.validateSubmittedAction blocks attack on invisible target when statusEffectManager is provided', () => {
+    const abilities = new PlayerAbilities('attacker', 'Attacker');
+    abilities.setAbilities([makeAbility('psychicBolt', 'Attack')]);
+    abilities.setUnlockedAbilities([makeAbility('psychicBolt', 'Attack')]);
+    abilities.submitAction('psychicBolt', 'target1');
+
+    const alivePlayers: any[] = [
+      { id: 'attacker', name: 'Attacker', isAlive: true },
+      { id: 'target1', name: 'Victim', isAlive: true },
+    ];
+
+    const mockStatusMgr = {
+      hasEffect: jest.fn((id: string, type: string) => id === 'target1' && type === 'invisible'),
+    };
+
+    const result = abilities.validateSubmittedAction(alivePlayers, null, mockStatusMgr);
+    expect(result.isValid).toBe(false);
+    expect(result.reason).toMatch(/invisible/i);
+    expect(mockStatusMgr.hasEffect).toHaveBeenCalledWith('target1', 'invisible');
+  });
+
+  it('PlayerAbilities.validateSubmittedAction allows attack when statusEffectManager returns false', () => {
+    const abilities = new PlayerAbilities('attacker', 'Attacker');
+    abilities.setAbilities([makeAbility('psychicBolt', 'Attack')]);
+    abilities.setUnlockedAbilities([makeAbility('psychicBolt', 'Attack')]);
+    abilities.submitAction('psychicBolt', 'target1');
+
+    const alivePlayers: any[] = [
+      { id: 'attacker', name: 'Attacker', isAlive: true },
+      { id: 'target1', name: 'Victim', isAlive: true },
+    ];
+
+    const mockStatusMgr = { hasEffect: jest.fn(() => false) };
+
+    const result = abilities.validateSubmittedAction(alivePlayers, null, mockStatusMgr);
+    expect(result.isValid).toBe(true);
+  });
+
+  it('PlayerAbilities.validateSubmittedAction allows heal on invisible target', () => {
+    const abilities = new PlayerAbilities('healer', 'Healer');
+    abilities.setAbilities([makeAbility('heal', 'Heal')]);
+    abilities.setUnlockedAbilities([makeAbility('heal', 'Heal')]);
+    abilities.submitAction('heal', 'target1');
+
+    const alivePlayers: any[] = [
+      { id: 'healer', name: 'Healer', isAlive: true },
+      { id: 'target1', name: 'Victim', isAlive: true },
+    ];
+
+    const mockStatusMgr = {
+      hasEffect: jest.fn((id: string, type: string) => id === 'target1' && type === 'invisible'),
+    };
+
+    const result = abilities.validateSubmittedAction(alivePlayers, null, mockStatusMgr);
+    // Heals bypass invisibility
+    expect(result.isValid).toBe(true);
+  });
+
+  it('invisible effect persists across rounds via NewStatusEffectManager', () => {
+    const caster: any = { id: 'blood', name: 'Blood', hp: 100, maxHp: 100, isAlive: true };
+    const entities = new Map<string, any>([['blood', caster]]);
+    const mgr = new NewStatusEffectManager(entities);
+
+    // Apply shadowVeil with duration=2
+    mgr.applyEffect('blood', 'invisible', { turns: 2 }, 'blood', 'Blood', []);
+    expect(mgr.hasEffect('blood', 'invisible')).toBe(true);
+
+    // End of round 1 — effect decrements from 2→1 but stays active
+    mgr.processTimedEffects([]);
+    expect(mgr.hasEffect('blood', 'invisible')).toBe(true);
+
+    // validateSubmittedAction in round 2 WOULD see the effect
+    const abilities = new PlayerAbilities('attacker', 'Wild');
+    abilities.setAbilities([makeAbility('psychicBolt', 'Attack')]);
+    abilities.setUnlockedAbilities([makeAbility('psychicBolt', 'Attack')]);
+    abilities.submitAction('psychicBolt', 'blood');
+
+    const alivePlayers: any[] = [
+      { id: 'attacker', name: 'Wild', isAlive: true },
+      { id: 'blood', name: 'Blood', isAlive: true },
+    ];
+    const result = abilities.validateSubmittedAction(alivePlayers, null, mgr);
+    expect(result.isValid).toBe(false);
+    expect(result.reason).toMatch(/invisible/i);
+
+    // End of round 2 — effect expires
+    mgr.processTimedEffects([]);
+    expect(mgr.hasEffect('blood', 'invisible')).toBe(false);
+  });
+});
+
+// ── Bug fix: Undying Blessing (Lich racial) ───────────────────────────────────
+
+describe('Bug fix: Undying Blessing triggers when Lich reaches 0 HP', () => {
+  it('initializeUndying enables resurrection via triggerUndying', () => {
+    const effects = new PlayerEffects('lich1', 'Lich');
+    effects.initializeUndying(1);
+
+    const result = effects.triggerUndying();
+    expect(result).toBe(1); // resurrectedHp
+  });
+
+  it('triggerUndying returns null when not initialized', () => {
+    const effects = new PlayerEffects('lich1', 'Lich');
+    const result = effects.triggerUndying();
+    expect(result).toBeNull();
+  });
+
+  it('triggerUndying can only fire once (active=false after use)', () => {
+    const effects = new PlayerEffects('lich1', 'Lich');
+    effects.initializeUndying(5);
+
+    expect(effects.triggerUndying()).toBe(5); // first use: alive
+    expect(effects.triggerUndying()).toBeNull(); // second use: already consumed
+  });
+
+  it('_undyingTriggeredThisRound flag absorbs subsequent attacks in the same round', () => {
+    const player: any = {
+      id: 'lich1',
+      name: 'Sorrow',
+      hp: 10,
+      maxHp: 270,
+      isAlive: true,
+      isWarlock: false,
+      armor: 0,
+      playerEffects: new PlayerEffects('lich1', 'Sorrow'),
+      calculateDamageReduction: (d: number) => d,
+    };
+    player.playerEffects.initializeUndying(1);
+    // Bind takeDamage method (simulate Player.takeDamage)
+    player.takeDamage = function(amount: number): number {
+      if (this._undyingTriggeredThisRound) return 0;
+      const finalDamage = this.calculateDamageReduction(amount);
+      this.hp = Math.max(0, this.hp - finalDamage);
+      if (this.hp <= 0) {
+        const resurrectHp = this.playerEffects.triggerUndying?.();
+        if (resurrectHp != null) {
+          this.hp = resurrectHp;
+          this.isAlive = true;
+          this._undyingTriggeredThisRound = true;
+        } else {
+          this.isAlive = false;
+        }
+      }
+      return finalDamage;
+    };
+
+    // First lethal hit — Undying triggers
+    player.takeDamage(500);
+    expect(player.isAlive).toBe(true);
+    expect(player.hp).toBe(1);
+    expect(player._undyingTriggeredThisRound).toBe(true);
+
+    // Second lethal hit in same round — absorbed (returns 0)
+    const absorbed = player.takeDamage(500);
+    expect(absorbed).toBe(0);
+    expect(player.isAlive).toBe(true); // still alive
+    expect(player.hp).toBe(1);         // HP unchanged
+
+    // After round ends, flag is cleared — next round is vulnerable
+    delete player._undyingTriggeredThisRound;
+    player.takeDamage(500);
+    expect(player.isAlive).toBe(false); // no more Undying
+  });
+
+  it('undying status effect is permanent (isPermanent=true prevents auto-expiry)', () => {
+    const entity: any = { id: 'lich1', name: 'Lich', hp: 100, maxHp: 100, isAlive: true };
+    const entities = new Map<string, any>([['lich1', entity]]);
+    const mgr = new NewStatusEffectManager(entities);
+
+    mgr.applyEffect('lich1', 'undying', { resurrectedHp: 1, isPassive: true, isPermanent: true, usesLeft: 1 }, 'lich1', 'Undying', []);
+    expect(mgr.hasEffect('lich1', 'undying')).toBe(true);
+
+    // Should NOT expire after multiple rounds
+    mgr.processTimedEffects([]);
+    mgr.processTimedEffects([]);
+    mgr.processTimedEffects([]);
+    expect(mgr.hasEffect('lich1', 'undying')).toBe(true);
+  });
+});
+
+// ── Audit: racial abilities with passive effects ───────────────────────────────
+
+describe('Audit: racial passive effects are correctly categorized', () => {
+  it('undying StatusEffect has isPermanent=true when applied with isPermanent param', () => {
+    const entity: any = { id: 'p1', name: 'Lich', hp: 100, maxHp: 100, isAlive: true };
+    const entities = new Map<string, any>([['p1', entity]]);
+    const mgr = new NewStatusEffectManager(entities);
+
+    mgr.applyEffect('p1', 'undying', { isPermanent: true, isPassive: true, resurrectedHp: 1 }, 'p1', 'Undying', []);
+    const effects = (mgr as any).effectsByEntity.get('p1') as StatusEffect[];
+    const undying = effects.find(e => e.type === 'undying');
+    expect(undying).toBeDefined();
+    expect(undying!.isPermanent).toBe(true);
+  });
+
+  it('invisible StatusEffect with turns=2 survives one processTimedEffects call', () => {
+    const entity: any = { id: 'p1', name: 'Assassin', hp: 100, maxHp: 100, isAlive: true };
+    const entities = new Map<string, any>([['p1', entity]]);
+    const mgr = new NewStatusEffectManager(entities);
+
+    mgr.applyEffect('p1', 'invisible', { turns: 2 }, 'p1', 'Assassin', []);
+    mgr.processTimedEffects([]);
+    expect(mgr.hasEffect('p1', 'invisible')).toBe(true); // still active after 1 round
+    mgr.processTimedEffects([]);
+    expect(mgr.hasEffect('p1', 'invisible')).toBe(false); // expired after 2nd round
+  });
+
+  it('smokeBomb with turns=1 expires after one round', () => {
+    const entity: any = { id: 'p1', name: 'Rogue', hp: 100, maxHp: 100, isAlive: true };
+    const entities = new Map<string, any>([['p1', entity]]);
+    const mgr = new NewStatusEffectManager(entities);
+
+    mgr.applyEffect('p1', 'invisible', { turns: 1 }, 'p1', 'Rogue', []);
+    expect(mgr.hasEffect('p1', 'invisible')).toBe(true); // active before round end
+    mgr.processTimedEffects([]);
+    expect(mgr.hasEffect('p1', 'invisible')).toBe(false); // expired after 1st round
   });
 });

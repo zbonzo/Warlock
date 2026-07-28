@@ -276,7 +276,7 @@ export class CombatSystem extends AbstractGameSystem<GameRoom, GameEvent> implem
 
       if (hasSubmitted) {
         const monster = (this.monsterController as any)['monster'];
-        const validationResult = (player as any).validateSubmittedAction(alivePlayers, monster);
+        const validationResult = (player as any).validateSubmittedAction(alivePlayers, monster, this._statusEffectManager);
 
         console.log(`[CombatSystem] Validation: ${(player as any)['name']} (${(submittedAction as any)?.['actionType']} -> ${(submittedAction as any)?.['targetId']}) valid=${validationResult.valid} errors=${JSON.stringify(validationResult.errors)} monsterHp=${monster?.hp}`);
         logger.info('[CombatSystem] Validation result:', {
@@ -635,6 +635,11 @@ export class CombatSystem extends AbstractGameSystem<GameRoom, GameEvent> implem
       if ((player as any)['isAlive']) {
         (player as any)['processClassEffects']?.();
       }
+    }
+
+    // Clear per-round Undying protection so the player is vulnerable next round
+    for (const player of this.players.values()) {
+      delete (player as any)._undyingTriggeredThisRound;
     }
   }
 

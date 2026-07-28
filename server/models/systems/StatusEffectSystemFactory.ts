@@ -259,6 +259,8 @@ class StatusEffectSystemFactory {
         manager.applyEffect(entityId, 'undying', {
           resurrectedHp: 1,
           usesLeft: 1,
+          isPassive: true,
+          isPermanent: true,
           name: 'Undying',
           description: 'Return to 1 HP the first time you would die.'
         });

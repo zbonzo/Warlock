@@ -43,31 +43,25 @@ export const handleInvisibility: AbilityHandler = (
 
   const params = (ability as any).params || {};
   const duration = Number(params.duration) || 2;
-  const dodgeChance = Number(params.dodgeChance) || 0.8; // 80% chance to dodge attacks
+  const dodgeChance = Number(params.dodgeChance) || 0.8;
 
-  // Apply invisibility effect
-  const statusResult = systems.statusEffectManager?.applyStatusEffect?.(target, {
-    id: secureId('invisible'),
-    name: 'invisible',
-    type: 'buff',
-    duration,
-    params: {
-      dodgeChance,
-      sourceId: actor.id,
-      sourceName: actor.name
-    }
-  }) || { success: false };
+  // Apply invisibility via NewStatusEffectManager.applyEffect (correct API)
+  const appliedEffect = systems.statusEffectManager?.applyEffect?.(
+    (target as any).id,
+    'invisible',
+    { turns: duration, dodgeChance },
+    actor.id,
+    actor.name,
+    log
+  );
 
-  if (statusResult.success) {
+  if (appliedEffect) {
     log.push(createActionLog(
       actor.id,
       target.id,
-      `${actor.name} casts invisibility on ${targetPlayer.name}, granting ${Math.round(dodgeChance * 100)}% dodge chance for ${duration} turns!`,
+      `${actor.name} fades from sight for ${duration} turn(s).`,
       {
-        details: {
-          duration,
-          dodgeChance
-        },
+        details: { duration, dodgeChance },
         priority: 'high',
         public: true
       }

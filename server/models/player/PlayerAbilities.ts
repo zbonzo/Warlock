@@ -217,7 +217,7 @@ export class PlayerAbilities {
    * @param monster - Monster object
    * @returns Validation result with success status and reason
    */
-  validateSubmittedAction(alivePlayers: Player[], monster: Monster | null): ActionValidationResult {
+  validateSubmittedAction(alivePlayers: Player[], monster: Monster | null, statusEffectManager?: any): ActionValidationResult {
     const result: ActionValidationResult = {
       isValid: false,
       reason: null,
@@ -271,6 +271,15 @@ export class PlayerAbilities {
       if (!targetPlayer || !targetPlayer.isAlive) {
         result.reason = messages.getError('playerTargetInvalidOrDead');
         console.log(`[PlayerAbilities] ${this.playerName}: FAIL target '${targetId}' not found/alive in [${alivePlayers.map(p => p.id).join(', ')}]`);
+        this.invalidateAction(result.reason!);
+        return result;
+      }
+
+      // Block attacks on invisible players (healing abilities can still reach them)
+      const isAttackAbility = selectedAbility['category'] === 'Attack';
+      if (isAttackAbility && statusEffectManager?.hasEffect?.(targetId, 'invisible')) {
+        result.reason = 'Target is invisible and cannot be targeted.';
+        console.log(`[PlayerAbilities] ${this.playerName}: FAIL target '${targetId}' is invisible`);
         this.invalidateAction(result.reason!);
         return result;
       }

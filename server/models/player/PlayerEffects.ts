@@ -677,6 +677,19 @@ export class PlayerEffects {
   }
 
   /**
+   * Check if undying can save the player from death and trigger it.
+   * Returns the HP to resurrect to, or null if undying is not available.
+   */
+  triggerUndying(): number | null {
+    const resurrect = this.racialEffects?.resurrect;
+    if (resurrect?.active) {
+      resurrect.active = false;
+      return resurrect.resurrectedHp || 1;
+    }
+    return null;
+  }
+
+  /**
    * Get status effects
    * @returns Current status effects
    */

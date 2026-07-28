@@ -150,8 +150,10 @@ class StatusEffect {
         result.effects.push(...this.processPoison(target, log));
         break;
       case 'bleed':
-        // Process bleed similar to poison
         result.effects.push(...this.processBleed(target, log));
+        break;
+      case 'burning':
+        result.effects.push(...this.processPoison(target, log));
         break;
       case 'healingOverTime':
         result.effects.push(...this.processHealingOverTime(target, log));

@@ -406,6 +406,7 @@ class NewStatusEffectManager {
         this.applyEffect(entityId, 'undying', {
           resurrectedHp: 1,
           isPassive: true,
+          isPermanent: true,
           usesLeft: 1
         }, entityId, 'Undying', log);
         break;

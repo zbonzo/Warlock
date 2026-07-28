@@ -5,7 +5,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useTheme } from '@contexts/ThemeContext';
 import type { Player as SharedPlayer } from '../../types/shared';
-import type { Socket } from 'socket.io-client';
 import Confetti from './components/Confetti';
 import FinalScoresTable from './components/FinalScoresTable';
 import HistoryColumn from '@pages/GamePage/components/HistoryColumn';
@@ -43,9 +42,10 @@ interface EndPageProps {
   eventsLog?: EventLogEntry[];
   gameCode?: string;
   playerName?: string;
-  socket?: Socket;
   trophyAward?: TrophyAward;
-  onPlayAgain: () => void;
+  onPlayAgain?: () => void;
+  onReopenLobby?: () => void;
+  onRestartWithSamePlayers?: () => void;
 }
 
 /**
@@ -56,10 +56,9 @@ const EndPage: React.FC<EndPageProps> = ({
   players: rawPlayers,
   eventsLog = [],
   gameCode,
-  playerName,
-  socket,
   trophyAward,
-  onPlayAgain,
+  onReopenLobby,
+  onRestartWithSamePlayers,
 }) => {
   // Convert SharedPlayer to local Player format
   const players: Player[] = useMemo(() => {
@@ -75,19 +74,6 @@ const EndPage: React.FC<EndPageProps> = ({
       stats: p['stats']
     }));
   }, [rawPlayers]);
-  const handlePlayAgain = (): void => {
-    if (!socket || !gameCode || !playerName) {
-      console.error('Missing required data for play again');
-      return;
-    }
-
-    // Emit playAgain event with the same game code
-    socket.emit('playAgain', {
-      gameCode: gameCode, // Reuse the same game code
-      playerName: playerName,
-    });
-  };
-
   const theme = useTheme();
   const [showConfetti, setShowConfetti] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
@@ -267,11 +253,18 @@ const EndPage: React.FC<EndPageProps> = ({
         )}
 
         <div className="action-buttons">
-          <RuneButton onClick={handlePlayAgain} variant="secondary">
-            Reawaken the Circle ({gameCode})
-          </RuneButton>
+          {onReopenLobby && (
+            <RuneButton onClick={onReopenLobby} variant="secondary">
+              Change Characters ({gameCode})
+            </RuneButton>
+          )}
+          {onRestartWithSamePlayers && (
+            <RuneButton onClick={onRestartWithSamePlayers} variant="secondary">
+              Play Again ({gameCode})
+            </RuneButton>
+          )}
           <RuneButton onClick={() => window.location.href = '/'}>
-            Forge a New Circle
+            New Game
           </RuneButton>
         </div>
       </div>

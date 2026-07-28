@@ -589,6 +589,62 @@ export class GameRoom {
   }
 
   /**
+   * Reset game for a replay without ending the session.
+   * keepCharacters=true: keep race/class/HP stats, just re-roll warlocks and start.
+   * keepCharacters=false: wipe character selections, send players back to lobby.
+   */
+  resetForReplay(keepCharacters: boolean): void {
+    // Reset game state flags
+    this.gameState.setStarted(false);
+    this.gameState.setRound(0);
+    this.gameState.setEnded(false);
+    this.gameState.setWinner(null);
+    this.gameState.setAliveCount(this.gameState.getPlayerCount());
+
+    // Clear combat systems so startGame() can reinitialize them
+    (this as any).systems = null;
+
+    const baseHp: number = (config as any).player?.baseHp || 250;
+
+    for (const player of this.getPlayers()) {
+      const p = player as any;
+
+      // Reset universal combat state
+      p.isAlive = true;
+      p.isWarlock = false;
+      p.clearActionSubmission?.();
+      (p.playerEffects as any).statusEffects = {};
+      (p.playerEffects as any).racialEffects = {};
+
+      if (keepCharacters) {
+        p.hp = p.maxHp;
+        (p.playerAbilities as any).abilityCooldowns = {};
+        (p.playerAbilities as any).racialEffects = {};
+        // Reinitialize racial ability via Player.setRacialAbility so passive effects
+        // (e.g. Lich's initializeUndying) are properly re-initialized
+        const racialAbilityData = player.race ? (config as any).getRacialAbility(player.race) : null;
+        if (racialAbilityData) {
+          player.setRacialAbility(racialAbilityData);
+        }
+      } else {
+        p.race = null;
+        p.class = null;
+        p.hp = baseHp;
+        p.maxHp = baseHp;
+        p.armor = 0;
+        p.damageMod = 1.0;
+        p.characterSelected = false;
+        (p.playerAbilities as any).setAbilities([]);
+        (p.playerAbilities as any).setUnlockedAbilities([]);
+        (p.playerAbilities as any).racialAbility = null;
+        (p.playerAbilities as any).racialUsesLeft = 0;
+        (p.playerAbilities as any).racialEffects = {};
+        (p.playerAbilities as any).abilityCooldowns = {};
+      }
+    }
+  }
+
+  /**
    * End the game
    */
   async endGame(winner?: string): Promise<void> {

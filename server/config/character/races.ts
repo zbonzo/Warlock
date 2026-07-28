@@ -191,8 +191,8 @@ const racialAbilities: Record<string, RacialAbility> = {
   Lich: {
     type: 'undying',
     name: 'Undying',
-    description: 'Return to 1 HP the first time you would die',
-    usageLimit: 'perGame',
+    description: 'Automatically return to 1 HP the first time you would die',
+    usageLimit: 'passive',
     maxUses: 1,
     cooldown: 0,
     effect: 'resurrect',

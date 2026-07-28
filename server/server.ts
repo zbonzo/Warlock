@@ -36,6 +36,14 @@ interface PlayAgainData {
   playerName: string;
 }
 
+interface ReopenLobbyData {
+  gameCode: string;
+}
+
+interface RestartWithSamePlayersData {
+  gameCode: string;
+}
+
 interface CheckNameData {
   gameCode: string;
   playerName: string;
@@ -324,11 +332,58 @@ io.on('connection', (socket: Socket) => {
     withSocketErrorHandling(
       socket,
       (data: PlayAgainData) =>
-        // TODO: Implement handleGamePlayAgain or use handleGameCreate
         gameController.handleGameCreate(io, socket, { playerName: data.playerName }),
       'starting play again game'
     )
   );
+
+  // Re-open the lobby with same code but clear character selections
+  socket.on('reopenLobby', (data: ReopenLobbyData) => {
+    try {
+      const game = gameService.getGame(data.gameCode);
+      if (!game) {
+        socket.emit('errorMessage', { message: 'Game not found' });
+        return;
+      }
+      game.resetForReplay(false);
+      const players = game.getPlayers().map(p => ({
+        id: p.id,
+        name: p.name,
+        race: p.race,
+        class: p.class,
+        characterSelected: (p as any).characterSelected,
+        isHost: p.id === game.hostId
+      }));
+      io.to(data.gameCode).emit('lobbyReopened', { gameCode: data.gameCode, players });
+    } catch (err) {
+      logger.error('Error in reopenLobby:', err as any);
+      socket.emit('errorMessage', { message: 'Failed to reopen lobby' });
+    }
+  });
+
+  // Restart immediately with same players and same character selections
+  socket.on('restartWithSamePlayers', async (data: RestartWithSamePlayersData) => {
+    try {
+      const game = gameService.getGame(data.gameCode);
+      if (!game) {
+        socket.emit('errorMessage', { message: 'Game not found' });
+        return;
+      }
+      game.resetForReplay(true);
+      const startResult = await game.startGame();
+      if (startResult.success) {
+        for (const [playerId] of (game as any).players) {
+          const personalizedData = (game as any).toClientData(playerId);
+          io.to(playerId).emit('gameStarted', { ...personalizedData, success: true });
+        }
+      } else {
+        socket.emit('game:start_failed', { error: startResult.reason });
+      }
+    } catch (err) {
+      logger.error('Error in restartWithSamePlayers:', err as any);
+      socket.emit('errorMessage', { message: 'Failed to restart game' });
+    }
+  });
 
   socket.on(
     'checkNameAvailability',

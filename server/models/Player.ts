@@ -294,8 +294,8 @@ export class Player {
     };
   }
 
-  validateSubmittedAction(alivePlayers: Player[], monster?: Monster): ValidationResult {
-    const result = this.playerAbilities.validateSubmittedAction(alivePlayers, monster || null);
+  validateSubmittedAction(alivePlayers: Player[], monster?: Monster, statusEffectManager?: any): ValidationResult {
+    const result = this.playerAbilities.validateSubmittedAction(alivePlayers, monster || null, statusEffectManager);
     return {
       valid: result.isValid,
       errors: result.reason ? [result.reason] : [],
@@ -359,9 +359,10 @@ export class Player {
   }
 
   setRacialAbility(abilityData: Ability): void {
+    const effectiveId = abilityData.id || (abilityData as any)['type'];
     // Convert Ability type to RacialAbility type expected by PlayerAbilities
     const racialAbility = {
-      id: abilityData.id,
+      id: effectiveId,
       name: abilityData.name,
       description: abilityData.description,
       usageLimit: (abilityData as any).usageLimit || 'perGame' as const,
@@ -372,9 +373,9 @@ export class Player {
     this.playerAbilities.setRacialAbility(racialAbility);
 
     // Handle special racial effects setup
-    if (abilityData.id === 'undying') {
+    if (effectiveId === 'undying') {
       this.playerEffects.initializeUndying((abilityData as any)['params']?.resurrectedHp || 1);
-    } else if (abilityData.id === 'stoneArmor') {
+    } else if (effectiveId === 'stoneArmor') {
       this.playerEffects.initializeStoneArmor(
         (abilityData as any)['params']?.initialArmor || config.gameBalance?.stoneArmor?.initialValue || 5
       );
@@ -519,6 +520,13 @@ export class Player {
    * Take damage with proper armor calculation
    */
   takeDamage(amount: number): number {
+    // If Undying already saved this player earlier in this same round, absorb
+    // all further damage until end of round (so multi-attack rounds don't
+    // immediately re-kill a just-resurrected player).
+    if ((this as any)._undyingTriggeredThisRound) {
+      return 0;
+    }
+
     // Apply damage resistance from effects
     const modifiedDamage = this.playerEffects.applyDamageResistance(amount, this.class || 'Paladin');
 
@@ -528,9 +536,17 @@ export class Player {
     // Apply the damage
     this.hp = Math.max(0, this.hp - finalDamage);
 
-    // Check if died
+    // Check if died — Undying (Lich racial) auto-triggers to prevent first death
     if (this.hp <= 0) {
-      this.isAlive = false;
+      const resurrectHp = this.playerEffects.triggerUndying?.();
+      if (resurrectHp != null) {
+        this.hp = resurrectHp;
+        this.isAlive = true;
+        (this as any)._undyingTriggeredThisRound = true;
+        logger.info(`[Player] Undying Blessing triggered for ${this.name} — resurrected at ${resurrectHp} HP`);
+      } else {
+        this.isAlive = false;
+      }
     }
 
     return finalDamage;

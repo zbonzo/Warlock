@@ -590,6 +590,13 @@ export class PlayerController extends BaseController<Player, JoinGameRequest, Pa
         logger.info(`Initialized ${level1Abilities.length} abilities for ${player.name} (${className})`);
       }
 
+      // Initialize racial ability (sets up passive effects like Undying for Lich)
+      const racialAbility = (config as any).getRacialAbility(race);
+      if (racialAbility) {
+        player.setRacialAbility(racialAbility);
+        logger.info(`Initialized racial ability for ${player.name} (${race}): ${racialAbility.id || racialAbility.type || 'unknown'}`);
+      }
+
       // Notify all players in the game
       io.to(gameCode).emit('playerList', {
         players: Array.from(game.getPlayers()).map(p => ({

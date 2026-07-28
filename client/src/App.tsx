@@ -315,6 +315,28 @@ function AppContent(): React.ReactElement {
       setTrophyAward(trophyData);
     });
 
+    // Game ended — navigate to end screen
+    const unsubscribeGameEnded = on('game:ended', ({ winner: w }: { winner: Winner; gameCode: string }) => {
+      localStorage.removeItem('lastGameCode');
+      setWinner(w);
+      setScreen(GAME_PHASES.END);
+    });
+
+    // Lobby reopened — navigate back to character select with cleared selections
+    const unsubscribeLobbyReopened = on('lobbyReopened', ({ players: newPlayers }: { players: Player[]; gameCode: string }) => {
+      setPlayers(newPlayers);
+      setWinner(null);
+      setEventsLog([]);
+      setSelectedRace(null as unknown as PlayerRace);
+      setSelectedClass(null as unknown as PlayerClass);
+      setScreen(GAME_PHASES.CHARACTER_SELECT);
+    });
+
+    // Start failed — not enough players or other server rejection
+    const unsubscribeStartFailed = on('game:start_failed', ({ error }: { error: string }) => {
+      alert(error || 'Cannot start game. Make sure all players have selected a character and there are at least 3 players.');
+    });
+
     // Return cleanup function to remove listeners
     return () => {
       unsubscribeGameCreated();
@@ -327,6 +349,9 @@ function AppContent(): React.ReactElement {
       unsubscribeTrophyAwarded();
       unsubscribeGameReconnected();
       unsubscribePlayerJoined();
+      unsubscribeGameEnded();
+      unsubscribeStartFailed();
+      unsubscribeLobbyReopened();
     };
   }, [
     connected,
@@ -340,6 +365,8 @@ function AppContent(): React.ReactElement {
     setScreen,
     setEventsLog,
     setTrophyAward,
+    setSelectedRace,
+    setSelectedClass,
   ]);
 
   // Current player data (derived from players list)
@@ -408,13 +435,18 @@ function AppContent(): React.ReactElement {
   );
 
   const handlePlayAgain = useCallback(() => {
-    // This can just handle any app-level state reset if needed
     resetGame();
-    setGameCode(gameCode); // Keep the same game code
-    setPlayerName(playerName); // Keep the same player name
+    setGameCode(gameCode);
+    setPlayerName(playerName);
   }, [resetGame, gameCode, playerName, setGameCode, setPlayerName]);
 
-  // Play again responses are handled by the existing gameCreated and playerList handlers
+  const handleReopenLobby = useCallback(() => {
+    emit('reopenLobby', { gameCode });
+  }, [gameCode, emit]);
+
+  const handleRestartWithSamePlayers = useCallback(() => {
+    emit('restartWithSamePlayers', { gameCode });
+  }, [gameCode, emit]);
 
   // Render the appropriate screen based on the current state
   const renderScreen = (): React.ReactElement | null => {
@@ -492,9 +524,10 @@ function AppContent(): React.ReactElement {
             eventsLog={eventsLog}
             gameCode={gameCode}
             playerName={playerName}
-            socket={socket || undefined}
             trophyAward={trophyAward || undefined}
             onPlayAgain={handlePlayAgain}
+            onReopenLobby={handleReopenLobby}
+            onRestartWithSamePlayers={handleRestartWithSamePlayers}
           />
         );
       default:

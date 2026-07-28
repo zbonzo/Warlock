@@ -32,11 +32,16 @@ const LobbyPage: React.FC<LobbyPageProps> = ({
   const [copiedCode, setCopiedCode] = useState<boolean>(false);
   const codeInputRef = useRef<HTMLInputElement>(null);
 
+  const MIN_PLAYERS = 3;
+
   // Check if all players have selected a race and class
   const allReady: boolean = players.every((p) => p.race && p.class);
 
   // Count players who have completed character selection
   const readyCount: number = players.filter((p) => p.race && p.class).length;
+
+  const hasEnoughPlayers: boolean = players.length >= MIN_PLAYERS;
+  const canStart: boolean = allReady && hasEnoughPlayers;
 
   /**
    * Fallback copy method using document.execCommand
@@ -129,9 +134,9 @@ const LobbyPage: React.FC<LobbyPageProps> = ({
         {isHost ? (
           <RuneButton
             onClick={onStartGame}
-            disabled={!allReady}
+            disabled={!canStart}
           >
-            {allReady ? 'Begin the Quest' : 'Waiting for all players...'}
+            {canStart ? 'Begin the Quest' : 'Waiting for all players...'}
           </RuneButton>
         ) : (
           <div className="waiting-host-message">
@@ -139,7 +144,13 @@ const LobbyPage: React.FC<LobbyPageProps> = ({
           </div>
         )}
 
-        {!allReady && (
+        {!hasEnoughPlayers && (
+          <div className="player-help-message">
+            At least {MIN_PLAYERS} players are required to start. Currently: {players.length}/{MIN_PLAYERS}.
+          </div>
+        )}
+
+        {hasEnoughPlayers && !allReady && (
           <div className="player-help-message">
             All players must select a race and class before the game can start.
           </div>
