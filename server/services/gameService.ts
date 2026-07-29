@@ -150,7 +150,7 @@ export function broadcastPlayerList(io: SocketIOServer, gameCode: string): void 
   const game = games.get(gameCode);
   if (game) {
     io.to(gameCode).emit('playerList', {
-      players: (game as any).getPlayersInfo(),
+      players: game.gameState.getPlayersInfo(),
       host: game.gameState.getHostId(),
     });
   }
@@ -299,7 +299,7 @@ export function checkGameWinConditions(
       eventsLog: [
         `${disconnectedPlayerName} left the game. All Warlocks are gone.`,
       ],
-      players: (game as any).getPlayersInfo(),
+      players: game.gameState.getPlayersInfo(),
       winner: 'Good',
     };
 
@@ -336,7 +336,7 @@ export function checkGameWinConditions(
   ) {
     const gameResult: GameResult = {
       eventsLog: [`${disconnectedPlayerName} left the game.`],
-      players: (game as any).getPlayersInfo(),
+      players: game.gameState.getPlayersInfo(),
       winner: 'Evil',
     };
 
@@ -390,7 +390,7 @@ function awardRandomTrophy(game: GameRoom, gameResult: GameResult): TrophyAward 
 
     // FIXED: Refresh gameResult with current player data for trophy evaluation
     // The original gameResult.players was created earlier and may have empty stats
-    const playersInfo = (game as any).getPlayersInfo();
+    const playersInfo = game.gameState.getPlayersInfo();
     logger.info('getPlayersInfo returned:', {
       playerCount: playersInfo?.length || 0,
       playersHaveStats: playersInfo?.map((p: any) => ({
