@@ -78,7 +78,7 @@ export const handleBloodRage: AbilityHandler = (
   // Apply blood rage buff
   const statusResult = systems.statusEffectManager.applyStatusEffect(actor, {
     id: secureId('blood-rage'),
-    name: 'blood_rage',
+    name: 'bloodRage',
     type: 'buff',
     duration,
     params: {
@@ -207,10 +207,10 @@ export const handleStoneArmor: AbilityHandler = (
   const duration = params.duration || 5;
   const damageReduction = params.damageReduction || 0.2; // 20% damage reduction
 
-  // Apply enhanced stone armor
+  // Apply enhanced stone armor (re-apply stoneArmor with bonus parameters)
   const statusResult = systems.statusEffectManager.applyStatusEffect(actor, {
     id: secureId('stone-armor-enhanced'),
-    name: 'stone_armor_enhanced',
+    name: 'stoneArmor',
     type: 'buff',
     duration,
     params: {

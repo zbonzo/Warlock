@@ -122,11 +122,11 @@ export const handleMultiProtection: AbilityHandler = (
   for (const protectionTarget of targets) {
     const statusResult = systems.statusEffectManager?.applyStatusEffect?.(protectionTarget as Player, {
       id: secureId(`${effectName}-${(protectionTarget as any).id}`),
-      name: 'protected',
+      name: 'shielded',
       type: 'buff',
       duration,
       params: {
-        protectionAmount,
+        armor: protectionAmount,
         sourceId: actor.id,
         sourceName: actor.name,
         effectName

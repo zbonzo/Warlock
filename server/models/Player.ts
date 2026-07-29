@@ -594,7 +594,7 @@ export class Player {
 
     const racialAbility = (this as any).racialAbility;
     const healAmount = Math.floor(
-      monsterHp * (racialAbility?.params?.healingPercent || 0)
+      monsterHp * (racialAbility?.params?.healingPercent || 0.05)
     );
     const actualHeal = Math.min(healAmount, this.maxHp - this.hp);
 

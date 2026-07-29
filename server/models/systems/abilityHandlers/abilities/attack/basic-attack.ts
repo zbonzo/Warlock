@@ -106,6 +106,20 @@ export const handleAttack: AbilityHandler = (
   // Apply actor's damage modifier
   finalDamage = Math.floor(Number(finalDamage) * damageMod);
 
+  // Apply bloodRage damage bonus if active
+  if (systems.statusEffectManager?.hasEffect?.(actor.id, 'bloodRage')) {
+    const bloodRageEffects = systems.statusEffectManager?.getEffectsByType?.(actor.id, 'bloodRage') || [];
+    const damageBonus = (bloodRageEffects[0]?.params?.['damageBonus'] as number) || 0.4;
+    const bonusDamage = Math.floor(finalDamage * damageBonus);
+    finalDamage += bonusDamage;
+    log.push(createActionLog(
+      actor.id,
+      actor.id,
+      `${actor.name}'s Blood Rage grants +${bonusDamage} bonus damage!`,
+      { details: { bonusDamage, damageBonus }, priority: 'medium' }
+    ));
+  }
+
   // Apply the damage directly to the target
   let actualDamage = 0;
   if (target && typeof (target as any).takeDamage === 'function') {

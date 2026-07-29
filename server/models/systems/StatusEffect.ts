@@ -155,12 +155,16 @@ class StatusEffect {
       case 'burning':
         result.effects.push(...this.processPoison(target, log));
         break;
+      case 'deathMark':
+        result.effects.push(...this.processDeathMark(target, log));
+        break;
       case 'healingOverTime':
         result.effects.push(...this.processHealingOverTime(target, log));
         break;
       case 'vulnerable':
       case 'weakened':
       case 'enraged':
+      case 'bloodRage':
       case 'shielded':
       case 'invisible':
       case 'stunned':
@@ -264,6 +268,46 @@ class StatusEffect {
     }
 
     // Process stone armor degradation for Rockhewn
+    if (target.race === 'Rockhewn' && target.stoneArmorIntact && actualDamage > 0) {
+      if (target.processStoneArmorDegradation) {
+        target.processStoneArmorDegradation(actualDamage);
+      }
+    }
+
+    return effects;
+  }
+
+  /**
+   * Process death mark - growing damage each turn
+   */
+  private processDeathMark(target: Entity, log: any[]): SideEffect[] {
+    const damage = this.params['currentDamage'] || 0;
+    if (damage <= 0) return [];
+
+    const oldHp = target.hp;
+    target.hp = Math.max(0, target.hp - damage);
+    const actualDamage = oldHp - target.hp;
+
+    // Grow damage for next turn
+    const growthRate = this.params['growthRate'] || 2;
+    this.params['currentDamage'] = damage + growthRate;
+
+    log.push({
+      type: 'death_mark_damage',
+      public: true,
+      targetId: target.id,
+      damage: actualDamage,
+      message: `${target.name || 'Target'} suffers ${actualDamage} death mark damage (next turn: ${this.params['currentDamage']}).`,
+    });
+
+    const effects: SideEffect[] = [];
+    if (target.hp <= 0) {
+      target.isAlive = false;
+      target.pendingDeath = true;
+      (target as any).deathAttacker = this.sourceName || 'Death Mark';
+      effects.push({ type: 'death', cause: 'death_mark', attacker: this.sourceName });
+    }
+
     if (target.race === 'Rockhewn' && target.stoneArmorIntact && actualDamage > 0) {
       if (target.processStoneArmorDegradation) {
         target.processStoneArmorDegradation(actualDamage);
@@ -421,6 +465,18 @@ class StatusEffect {
       case 'shielded':
         if (calculationType === 'armor') {
           contribution.additive = this.params.armor || 0;
+        }
+        break;
+
+      case 'bloodRage':
+        if (calculationType === 'damageDealt') {
+          contribution.percentage = (this.params['damageBonus'] || 0.4) * 100;
+        }
+        break;
+
+      case 'spiritGuard':
+        if (calculationType === 'armor') {
+          contribution.additive = this.params.armor || this.params['protectionAmount'] || 3;
         }
         break;
     }

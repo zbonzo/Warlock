@@ -303,7 +303,7 @@ describe('Bug #5: Invisible players cannot be attacked', () => {
 // ── Bug #6: Tame Beast / Control Animal ──────────────────────────────────────
 
 describe('Bug #6: Tame Beast sets monster.forcedTargetId', () => {
-  it('handleControlMonster sets forcedTargetId to a random alive player', () => {
+  it('handleControlMonster sets forcedTargetId to the submitted target player', () => {
     const actor: any = makePlayer('druid', 'Druid');
     const monster = makeMonster();
     const p2: any = makePlayer('p2', 'Warrior');
@@ -313,13 +313,13 @@ describe('Bug #6: Tame Beast sets monster.forcedTargetId', () => {
     const players = new Map<string, any>([['druid', actor], ['p2', p2]]);
     const systems = makeSystems({ game: { players, monster } });
 
-    const result = handleControlMonster(actor, monster as any, ability, log, systems);
+    // Bug fix: player submits p2 as the target (who should the monster attack)
+    const result = handleControlMonster(actor, p2, ability, log, systems);
 
     expect(result).toBe(true);
     expect(monster.controllerId).toBe('druid');
-    // forcedTargetId must be one of the alive players
-    const validIds = ['druid', 'p2'];
-    expect(validIds).toContain(monster.forcedTargetId);
+    // forcedTargetId must be exactly the submitted target (p2)
+    expect(monster.forcedTargetId).toBe('p2');
   });
 
   it('monster.forcedTargetId is consumed by selectTargetByThreat (via hasEffect stub)', () => {

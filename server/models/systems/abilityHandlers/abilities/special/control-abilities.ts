@@ -4,7 +4,7 @@
  */
 
 import { createActionLog } from '../../../../../utils/logEntry.js';
-import { secureId, secureRandomChoice } from '../../../../../utils/secureRandom.js';
+import { secureId } from '../../../../../utils/secureRandom.js';
 import type { Player as BasePlayer, Monster, Ability as BaseAbility } from '../../../../../types/generated.js';
 import type {
   AbilityHandler,
@@ -59,23 +59,6 @@ export const handleControlMonster: AbilityHandler = (
 
   const monster = game.monster;
 
-  // Check if monster is already controlled
-  if ((monster as any).controllerId) {
-    log.push(createActionLog(
-      actor['id'],
-      '',
-      `${actor['name']} cannot control monster - already controlled by ${(monster as any).controllerName}`,
-      {
-        details: {
-          reason: 'already_controlled',
-          currentController: (monster as any).controllerId
-        },
-        priority: 'medium'
-      }
-    ));
-    return false;
-  }
-
   // Check if monster is alive
   if (!(monster as any).isAlive || (monster as any).hp <= 0) {
     log.push(createActionLog(
@@ -94,21 +77,20 @@ export const handleControlMonster: AbilityHandler = (
   const params = ability.params || {};
   const controlDuration = params['controlDuration'] || 3;
 
-  // Pick a random alive player as the forced target (including actor)
-  const alivePlayers: Player[] = Array.from(
-    (game as any).players?.values() || []
-  ).filter((p: any) => p.isAlive !== false && p.hp > 0) as Player[];
-  const forcedTarget = alivePlayers.length > 0 ? secureRandomChoice(alivePlayers) : null;
+  // Use the submitted target as the forced target (player chose who monster attacks)
+  const targetPlayer = target && (target as any)['id'] && (target as any)['id'] !== monster['id']
+    ? (target as Player)
+    : null;
 
   // Set control parameters
   (monster as any).controllerId = actor['id'];
   (monster as any).controllerName = actor['name'];
   (monster as any).controlDuration = controlDuration;
-  (monster as any).forcedTargetId = forcedTarget ? forcedTarget['id'] : null;
+  (monster as any).forcedTargetId = targetPlayer ? targetPlayer['id'] : null;
   // eslint-disable-next-line no-restricted-syntax
   (monster as any).controlStartTime = Date.now();
 
-  const forcedTargetName = forcedTarget ? forcedTarget['name'] : 'a random player';
+  const forcedTargetName = targetPlayer ? targetPlayer['name'] : 'a random player';
   log.push(createActionLog(
     actor['id'],
     monster['id'],
@@ -117,7 +99,7 @@ export const handleControlMonster: AbilityHandler = (
       details: {
         controllerId: actor['id'],
         controlDuration,
-        forcedTargetId: forcedTarget ? forcedTarget['id'] : null,
+        forcedTargetId: targetPlayer ? targetPlayer['id'] : null,
         monsterLevel: monster['level']
       },
       priority: 'high',
@@ -162,7 +144,7 @@ export const handleSpiritGuard: AbilityHandler = (
   // Apply spirit guard protection
   const statusResult = systems.statusEffectManager.applyStatusEffect(target, {
     id: secureId('spirit-guard'),
-    name: 'spirit_guard',
+    name: 'spiritGuard',
     type: 'buff',
     duration,
     params: {

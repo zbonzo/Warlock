@@ -138,13 +138,13 @@ export const handleDeathMark: AbilityHandler = (
 
   // Death mark doesn't do initial damage, just applies the growing poison
   const params = (ability as any).params || {};
-  const initialDamage = Number(params.initialDamage) || 3;
-  const growthRate = Number(params.growthRate) || 2;
+  const initialDamage = Number(params.damage) || Number(params.initialDamage) || 30;
+  const growthRate = Number(params.growthRate) || 20;
   const duration = Number(params.duration) || 5;
 
   const statusResult = systems.statusEffectManager?.applyStatusEffect?.(target, {
     id: secureId('death-mark'),
-    name: 'death_mark',
+    name: 'deathMark',
     type: 'debuff',
     duration,
     params: {

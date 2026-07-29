@@ -265,6 +265,36 @@
         "triggered": "{attackerName} triggers {playerName}'s poison trap and is poisoned!",
         "expired": "{playerName}'s poison trap dissipates."
       }
+    },
+    "deathMark": {
+      "default": {
+        "currentDamage": 30,
+        "growthRate": 20,
+        "turns": 5
+      },
+      "stackable": false,
+      "refreshable": false,
+      "damagePerTurn": true,
+      "growingDamage": true,
+      "canCauseDeath": true,
+      "messages": {
+        "applied": "{playerName} is marked for death! Taking {currentDamage} damage/turn for {turns} turns, growing each round.",
+        "damage": "{playerName} suffers {damage} death mark damage.",
+        "expired": "The death mark on {playerName} has run its course."
+      }
+    },
+    "bloodRage": {
+      "default": {
+        "damageBonus": 0.4,
+        "turns": 4
+      },
+      "stackable": false,
+      "refreshable": false,
+      "affectsDamageCalculation": true,
+      "messages": {
+        "applied": "{playerName} enters Blood Rage! Damage increased for {turns} turns.",
+        "expired": "{playerName}'s Blood Rage subsides."
+      }
     }
   },
   "processingOrder": {
@@ -284,7 +314,9 @@
     "poisonTrap": 14,
     "lifeBond": 15,
     "moonbeam": 15,
-    "undying": 16
+    "undying": 16,
+    "deathMark": 3,
+    "bloodRage": 9
   },
   "global": {
     "maxEffectsPerPlayer": 10,

@@ -637,6 +637,17 @@ export class CombatSystem extends AbstractGameSystem<GameRoom, GameEvent> implem
       }
     }
 
+    // Process Kinfolk Life Bond healing at end of each round
+    const monster = this.getMonster?.();
+    const monsterHp = (monster as any)?.hp || 0;
+    if (monsterHp > 0) {
+      for (const player of this.players.values()) {
+        if ((player as any).isAlive && (player as any).race === 'Kinfolk') {
+          (player as any).processLifeBondHealing?.(monsterHp, log);
+        }
+      }
+    }
+
     // Clear per-round Undying protection so the player is vulnerable next round
     for (const player of this.players.values()) {
       delete (player as any)._undyingTriggeredThisRound;
@@ -1223,15 +1234,10 @@ export class CombatSystem extends AbstractGameSystem<GameRoom, GameEvent> implem
       return false;
     }
 
-    // Check for disabling effects
-    if ('statusEffects' in attacker) {
-      const statusEffects = (attacker as any)['statusEffects'] || [];
-      const isStunned = statusEffects.some(
-        (effect: any) => (effect as any)['type'] === 'debuff' && (effect as any)['name'] === 'Stunned'
-      );
-      if (isStunned) {
-        return false;
-      }
+    // Check for disabling effects via the status effect manager
+    const attackerId = (attacker as any).id;
+    if (attackerId && this._statusEffectManager?.isPlayerStunned?.(attackerId)) {
+      return false;
     }
 
     return true;

@@ -11,9 +11,13 @@ export {
 } from './poison-attacks.js';
 export {
   handleAoeDamage,
-  handleInfernoBlast
+  handleInfernoBlast,
+  handleMeteorShower
 } from './aoe-attacks.js';
-export { handleMultiHitAttack } from './multi-hit-attacks.js';
+export {
+  handleMultiHitAttack,
+  handleRicochetRound
+} from './multi-hit-attacks.js';
 export {
   handleVulnerabilityStrike,
   handleRecklessStrike,

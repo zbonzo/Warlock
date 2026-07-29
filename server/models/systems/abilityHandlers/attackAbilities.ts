@@ -32,9 +32,11 @@ import {
   // AOE attacks
   handleAoeDamage,
   handleInfernoBlast,
+  handleMeteorShower,
 
   // Multi-hit attacks
   handleMultiHitAttack,
+  handleRicochetRound,
 
   // Special attacks
   handleVulnerabilityStrike,
@@ -84,8 +86,8 @@ export function register(registry: AbilityRegistry): void {
   registry.registerClassAbility('pyroblast', handlePyroblast);
   registry.registerClassAbility('vulnerabilityStrike', handleVulnerabilityStrike);
 
-  // AOE damage abilities - FIXED Inferno Blast
-  registry.registerClassAbility('meteorShower', handleAoeDamage);
+  // AOE damage abilities
+  registry.registerClassAbility('meteorShower', handleMeteorShower);
   registry.registerClassAbility('infernoBlast', handleInfernoBlast);
   registry.registerClassAbility('chainLightning', handleAoeDamage);
 
@@ -108,11 +110,12 @@ export function register(registry: AbilityRegistry): void {
         coordinationInfo
       );
     },
-    ['infernoBlast', 'chainLightning'] // Exclude abilities with specific handlers
+    ['infernoBlast', 'chainLightning', 'ricochetRound'] // Exclude abilities with specific handlers
   );
 
   registry.registerClassAbility('arcaneBarrage', handleMultiHitAttack);
   registry.registerClassAbility('twinStrike', handleMultiHitAttack);
+  registry.registerClassAbility('ricochetRound', handleRicochetRound);
 
   registry.registerClassAbility('recklessStrike', handleRecklessStrike);
 

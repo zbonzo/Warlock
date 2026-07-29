@@ -151,6 +151,77 @@ export const handleAoeDamage: AbilityHandler = (
 };
 
 /**
+ * Handle Meteor Shower - AOE with burning DoT (multi-turn effect like Inferno Blast)
+ */
+export const handleMeteorShower: AbilityHandler = (
+  actor: Player,
+  target: Player | Monster,
+  ability: Ability,
+  log: LogEntry[],
+  systems: GameSystems,
+  coordinationInfo?: CoordinationInfo
+): boolean => {
+  const aoeSuccess = handleAoeDamage(actor, target, ability, log, systems, coordinationInfo);
+  if (!aoeSuccess) {
+    return false;
+  }
+
+  const game = systems.game;
+  if (!game) {
+    return aoeSuccess;
+  }
+
+  const burnParams = (ability as any).params || {};
+  const burnDamage = Number(burnParams.burnDamage) || 5;
+  const burnDuration = Number(burnParams.burnDuration) || 3;
+
+  let burnTargets = 0;
+
+  for (const player of game.players.values()) {
+    if (player.id !== actor.id &&
+        (player as any).isAlive !== false &&
+        (player as any).hp > 0) {
+
+      const statusResult = systems.statusEffectManager?.applyStatusEffect?.(player, {
+        id: secureId(`meteor-burn-${player.id}`),
+        name: 'burning',
+        type: 'debuff',
+        duration: burnDuration,
+        params: {
+          damage: burnDamage,
+          sourceId: actor.id,
+          sourceName: actor.name
+        }
+      }) || { success: false };
+
+      if (statusResult.success) {
+        burnTargets++;
+      }
+    }
+  }
+
+  if (burnTargets > 0) {
+    log.push(createActionLog(
+      actor.id,
+      'multiple',
+      `${actor.name}'s Meteor Shower applies burning to ${burnTargets} targets (${burnDamage} damage/turn for ${burnDuration} turns)!`,
+      {
+        type: 'status',
+        details: {
+          burnTargets,
+          burnDamage,
+          burnDuration
+        },
+        priority: 'medium',
+        public: true
+      }
+    ));
+  }
+
+  return true;
+};
+
+/**
  * Handle Inferno Blast - special AOE with potential burn effect
  */
 export const handleInfernoBlast: AbilityHandler = (

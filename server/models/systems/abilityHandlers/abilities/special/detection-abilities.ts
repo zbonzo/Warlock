@@ -241,13 +241,15 @@ export const handleSanctuaryOfTruth: AbilityHandler = (
     }
   ));
 
+  const roleListStr = playerRoles.map(p => `${p.name}: ${p.role}`).join(', ');
+
   // Send detailed role information privately to all players
   for (const player of game.players.values()) {
     if ((player as any).isAlive !== false) {
       log.push(createActionLog(
         actor['id'],
         '',
-        'All roles revealed to you privately',
+        `Sanctuary of Truth reveals: ${roleListStr}`,
         {
           details: {
             isPrivate: true,

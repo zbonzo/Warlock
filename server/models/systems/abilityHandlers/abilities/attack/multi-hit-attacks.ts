@@ -4,6 +4,7 @@
  */
 
 import { createActionLog, createDamageLog } from '../../../../../utils/logEntry.js';
+import { secureRandomChoice } from '../../../../../utils/secureRandom.js';
 import type { Player, Monster, Ability } from '../../../../../types/generated.js';
 import type {
   AbilityHandler,
@@ -200,6 +201,106 @@ export const handleMultiHitAttack: AbilityHandler = (
       });
     }
 
+    return true;
+  }
+
+  return false;
+};
+
+/**
+ * Handle Ricochet Round - bullet bounces from primary target to additional targets
+ */
+export const handleRicochetRound: AbilityHandler = (
+  actor: Player,
+  target: Player | Monster,
+  ability: Ability,
+  log: LogEntry[],
+  systems: GameSystems,
+  coordinationInfo?: CoordinationInfo
+): boolean => {
+  if (!actor || !target || !ability) {
+    return false;
+  }
+
+  const abilityParams = (ability as any).params || {};
+  const baseDamage = Number(abilityParams.damage) || 25;
+  const bounceDamageMultiplier = Number(abilityParams.bounceDamageMultiplier) || 0.6;
+  const bounceCount = Number(abilityParams.bounceCount) || 1;
+
+  let finalDamage = baseDamage;
+  if (coordinationInfo?.isActive) {
+    finalDamage += Math.floor(baseDamage * Number(coordinationInfo.bonusMultiplier));
+  }
+
+  // Hit primary target
+  const primaryResult = systems.combatSystem?.applyDamage?.(target, finalDamage, {
+    source: actor.id,
+    type: 'physical',
+    ability: ability['id']
+  }) || { success: false, finalDamage: 0 };
+
+  if (!primaryResult.success) {
+    return false;
+  }
+
+  const targetName = (target as Player).name || (target as Monster).name;
+  log.push(createDamageLog(
+    actor.id,
+    target.id,
+    primaryResult.finalDamage,
+    `${actor.name} fires a ricochet shot, hitting ${targetName} for ${primaryResult.finalDamage} damage!`,
+    { priority: 'high', public: true }
+  ));
+
+  let totalDamage = primaryResult.finalDamage;
+
+  // Bounce to additional random targets
+  const game = systems.game;
+  if (game && bounceCount > 0) {
+    const bounceDamage = Math.floor(finalDamage * bounceDamageMultiplier);
+    const potentialBounceTargets = (Array.from(game.players.values()) as Player[]).filter(
+      (p: Player) => p.id !== actor.id && p.id !== target.id &&
+           (p as any).isAlive !== false && (p as any).hp > 0 &&
+           !systems.statusEffectManager?.hasEffect?.(p.id, 'invisible')
+    );
+
+    const actualBounces = Math.min(bounceCount, potentialBounceTargets.length);
+    const usedTargets = new Set<string>([target.id]);
+
+    for (let i = 0; i < actualBounces; i++) {
+      const available = potentialBounceTargets.filter((p: Player) => !usedTargets.has(p.id));
+      if (available.length === 0) break;
+
+      const bounceTarget = secureRandomChoice(available) as Player;
+      usedTargets.add(bounceTarget.id);
+
+      const bounceResult = systems.combatSystem?.applyDamage?.(bounceTarget, bounceDamage, {
+        source: actor.id,
+        type: 'physical',
+        ability: ability['id']
+      }) || { success: false, finalDamage: 0 };
+
+      if (bounceResult.success) {
+        totalDamage += bounceResult.finalDamage;
+        log.push(createDamageLog(
+          actor.id,
+          bounceTarget.id,
+          bounceResult.finalDamage,
+          `The bullet ricochets to ${(bounceTarget as any).name} for ${bounceResult.finalDamage} damage!`,
+          { priority: 'medium', public: true }
+        ));
+      }
+    }
+  }
+
+  if (totalDamage > 0) {
+    log.push(createActionLog(
+      actor.id,
+      'multiple',
+      `${actor.name} completes Ricochet Round for ${totalDamage} total damage!`,
+      { details: { totalDamage }, priority: 'high', public: true }
+    ));
+    applyThreatForAbility(actor, target, ability, totalDamage, 0, systems);
     return true;
   }
 
