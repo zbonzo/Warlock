@@ -372,7 +372,7 @@ export function checkGameWinConditions(
 /**
  * Award a random trophy based on player stats and game result
  */
-function awardRandomTrophy(game: GameRoom, gameResult: GameResult): TrophyAward | null {
+export function awardRandomTrophy(game: GameRoom, gameResult: GameResult): TrophyAward | null {
   try {
     // Debug: Check the game state first
     logger.info('Game state during trophy evaluation:', {
@@ -441,7 +441,7 @@ function awardRandomTrophy(game: GameRoom, gameResult: GameResult): TrophyAward 
 
           // Convert gameResult.winner to trophy system format
           const trophyGameResult = {
-            winner: gameResult.winner === 'good' ? 'Good' as const : 'Evil' as const
+            winner: gameResult.winner === 'Good' ? 'Good' as const : 'Evil' as const
           };
           const winner = trophy.getWinner(gameResultPlayers, trophyGameResult);
           logger.info(`Trophy "${trophy.name}" evaluation: ${winner ? `${(winner as any).name} wins!` : 'No winner'}`);

@@ -30,6 +30,7 @@ import {
 } from '../types/generated.js';
 import { Server as SocketIOServer } from 'socket.io';
 import { createDebugLogger } from '../config/debug.config.js';
+import { awardRandomTrophy } from '../services/gameService.js';
 
 export interface AddPlayerResult {
   success: boolean;
@@ -838,6 +839,22 @@ export class GameRoom {
           this.combatDebug.info(`🏁 Game ${this.code} has ended. Broadcasting final state.`);
           if (this.io) {
             const fullLog: any[] = roundResult.data?.log || [];
+
+            // Award a trophy for this game, if any player qualifies
+            try {
+              const winner = this.gameState.getWinner();
+              const trophyAward = awardRandomTrophy(this as any, {
+                eventsLog: fullLog.map((entry: any) => entry?.message || ''),
+                players: this.gameState.getPlayersInfo(),
+                winner: winner || ''
+              });
+              if (trophyAward) {
+                this.io.to(this.code).emit('trophyAwarded', trophyAward);
+              }
+            } catch (trophyErr) {
+              console.error(`[GameRoom] awardRandomTrophy threw for ${this.code}:`, trophyErr instanceof Error ? trophyErr.message : trophyErr);
+            }
+
             for (const [playerId, player] of this.players) {
               const filteredLog = (player as any).isWarlock
                 ? fullLog
