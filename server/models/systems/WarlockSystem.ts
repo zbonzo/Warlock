@@ -231,7 +231,7 @@ class WarlockSystem {
 
     this.numWarlocks = assignedWarlocks.length;
 
-    logger.info('WarlocksAssigned', {
+    logger.debug('WarlocksAssigned', {
       totalWarlocks: assignedWarlocks.length,
       preferredAssigned: assignedWarlocks.filter(w => w.wasPreferred).length,
       randomAssigned: assignedWarlocks.filter(w => !w.wasPreferred).length

@@ -63,8 +63,6 @@ class StatusEffectSystemFactory {
     warlockSystem: WarlockSystem | null = null,
     migrateExisting: boolean = false
   ): StatusEffectSystem {
-    logger.info('Creating new status effect system');
-
     // Create entities map with adapted entities
     const entities = EntityAdapter.createEntitiesMap(players, monster);
 
@@ -88,7 +86,7 @@ class StatusEffectSystemFactory {
     // Replace legacy methods with new system methods
     this.replaceLegacyMethods(entities, manager);
 
-    logger.info(`Status effect system created with ${entities.size} entities`);
+    logger.debug(`Status effect system created with ${entities.size} entities`);
 
     return {
       manager,

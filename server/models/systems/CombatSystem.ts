@@ -182,7 +182,7 @@ export class CombatSystem extends AbstractGameSystem<GameRoom, GameEvent> implem
 
         // Level up all alive players
         for (const player of this.getAlivePlayers()) {
-          this.applyLevelBonuses(player, newLevel);
+          this.applyLevelBonuses(player, newLevel, gameRoom);
         }
         roundSummary.levelUp = newLevel;
 
@@ -257,33 +257,19 @@ export class CombatSystem extends AbstractGameSystem<GameRoom, GameEvent> implem
     const results: any[] = [];
     const alivePlayers = this.getAlivePlayers();
 
-    logger.info('[CombatSystem] Validating submitted actions:', {
-      alivePlayersCount: alivePlayers.length,
-      playersWithActions: alivePlayers.filter(p => p.hasSubmittedAction).length
-    });
-
     for (const player of alivePlayers) {
       const hasSubmitted = player.hasSubmittedAction;
       const submittedAction = player.submittedAction;
-
-      logger.info('[CombatSystem] Player action status:', {
-        playerId: player.id,
-        playerName: player.name,
-        hasSubmitted,
-        submittedActionExists: !!submittedAction,
-        submittedActionKeys: submittedAction ? Object.keys(submittedAction) : []
-      });
 
       if (hasSubmitted) {
         const monster = (this.monsterController as any)['monster'];
         const validationResult = (player as any).validateSubmittedAction(alivePlayers, monster, this._statusEffectManager);
 
-        console.log(`[CombatSystem] Validation: ${(player as any)['name']} (${(submittedAction as any)?.['actionType']} -> ${(submittedAction as any)?.['targetId']}) valid=${validationResult.valid} errors=${JSON.stringify(validationResult.errors)} monsterHp=${monster?.hp}`);
-        logger.info('[CombatSystem] Validation result:', {
-          playerId: (player as any)['id'],
-          valid: validationResult.valid,
-          errors: validationResult.errors || []
-        });
+        if (!validationResult.valid) {
+          logger.warn(
+            `${(player as any)['name']}'s ${(submittedAction as any)?.['actionType']} -> ${(submittedAction as any)?.['targetId']} failed validation: ${(validationResult.errors || []).join(', ')}`
+          );
+        }
 
         results.push({
           ...validationResult,
@@ -302,11 +288,6 @@ export class CombatSystem extends AbstractGameSystem<GameRoom, GameEvent> implem
       }
     }
 
-    logger.info('[CombatSystem] Validation completed:', {
-      totalResults: results.length,
-      validResults: results.filter(r => r.valid).length
-    });
-
     return results;
   }
 
@@ -320,21 +301,20 @@ export class CombatSystem extends AbstractGameSystem<GameRoom, GameEvent> implem
     gameRoom?: any
   ): Promise<Map<string, any>> {
     const processedActions = new Map<string, any>();
+    const gameCode = gameRoom?.code;
 
     // PHASE 1: Collect all valid actions into a single batch
     const allActions = await this.collectAllValidActions(validationResults);
-    logger.info(`[CombatSystem] Collected ${allActions.length} actions for batched processing`);
 
     // PHASE 2: Analyze coordination bonuses across all actions
     const coordinationBonuses = this.analyzeCoordinationBonuses(allActions);
     if (coordinationBonuses.size > 0) {
-      logger.info(`[CombatSystem] Found coordination bonuses:`, Object.fromEntries(coordinationBonuses));
       summary.coordinatedActions = Array.from(coordinationBonuses.values()).reduce((total, bonus) => total + bonus.count, 0);
     }
 
     // PHASE 3: Sort actions by priority order (ability.order property)
+    logger.info(`Sorting batch of ${allActions.length} actions by priority order`, {}, { gameCode });
     const sortedActions = this.sortActionsByPriority(allActions);
-    logger.info(`[CombatSystem] Sorted ${sortedActions.length} actions by priority order`);
 
     // PHASE 4: Process actions in priority order with conditional mechanics
     for (let i = 0; i < sortedActions.length; i++) {
@@ -693,7 +673,7 @@ export class CombatSystem extends AbstractGameSystem<GameRoom, GameEvent> implem
 
       // Apply level bonuses to players
       for (const player of this.getAlivePlayers()) {
-        this.applyLevelBonuses(player, (gameRoom as any)['level']);
+        this.applyLevelBonuses(player, (gameRoom as any)['level'], gameRoom);
       }
 
       // Emit level up event
@@ -711,7 +691,7 @@ export class CombatSystem extends AbstractGameSystem<GameRoom, GameEvent> implem
   /**
    * Apply level bonuses to a player on monster kill
    */
-  private applyLevelBonuses(player: Player, level: number): void {
+  private applyLevelBonuses(player: Player, level: number, gameRoom?: any): void {
     const levelUpConfig = (config as any)['gameBalance']?.['player']?.['levelUp'];
 
     // Increase max HP by hpIncrease % (default 8%)
@@ -730,8 +710,6 @@ export class CombatSystem extends AbstractGameSystem<GameRoom, GameEvent> implem
       (player as any)['hp'] = Math.min((player as any)['hp'] + hpBonus, (player as any)['maxHp']);
     }
 
-    logger.info(`[CombatSystem] Player ${(player as any)['name']} leveled up to ${level}: maxHp=${(player as any)['maxHp']}, damageMod=${((player as any)['damageMod'] || 1).toFixed(2)}`);
-
     // Unlock abilities for the new level
     const allAbilities = ((player as any)['abilities'] || []) as any[];
     const currentUnlocked = ((player as any)['unlocked'] || []) as any[];
@@ -742,10 +720,16 @@ export class CombatSystem extends AbstractGameSystem<GameRoom, GameEvent> implem
     });
     if (newlyUnlocked.length > 0) {
       (player as any)['unlocked'] = [...currentUnlocked, ...newlyUnlocked];
-      for (const ability of newlyUnlocked) {
-        logger.info(`[CombatSystem] Player ${(player as any)['name']} unlocked: ${ability.name || ability.id} (level ${level})`);
-      }
     }
+
+    const unlockedClause = newlyUnlocked.length > 0
+      ? `, Unlocked ${newlyUnlocked.map((a: any) => a.name || a.id).join(', ')}`
+      : '';
+    logger.info(
+      `${(player as any)['name']} leveled up to ${level}. MaxHP=${(player as any)['maxHp']}. damageMod=${((player as any)['damageMod'] || 1).toFixed(2)}${unlockedClause}`,
+      {},
+      { gameCode: gameRoom?.code }
+    );
 
     (player as any)['updateRelentlessFuryLevel']?.(level);
   }
@@ -762,14 +746,7 @@ export class CombatSystem extends AbstractGameSystem<GameRoom, GameEvent> implem
     gameRoom?: any
   ): Promise<void> {
     const { player, action } = actionData;
-
-    logger.info('[CombatSystem] Processing single action:', {
-      playerId: (player as any)['id'],
-      playerName: (player as any)['name'],
-      actionType: (action as any)?.actionType || 'unknown',
-      target: (action as any)?.targetId || 'none',
-      coordinationBonus
-    });
+    const gameCode = gameRoom?.code;
 
     try {
       // Process the action directly since TurnResolver.processPlayerAction doesn't exist
@@ -789,6 +766,15 @@ export class CombatSystem extends AbstractGameSystem<GameRoom, GameEvent> implem
       const abilityCategory: string | null =
         abilityObj?.category || (config as any).getAbility?.(actionType)?.category || null;
 
+      // Snapshot target HP/alive state so we can derive the actual damage/healing dealt
+      // (and tell "already dead when this resolved" apart from "handler had no effect")
+      // regardless of which path (registry handler or fallback) processed the action.
+      const targetHpBefore: number | undefined = target ? (target as any).hp : undefined;
+      const targetWasAlreadyDown: boolean = !!target && (
+        (target as any).isAlive === false || (typeof targetHpBefore === 'number' && targetHpBefore <= 0)
+      );
+      const logLengthForResolution = log.length;
+
       let registryHandledLog = false;
       if (actionType && abilityRegistry?.hasClassAbility?.(actionType)) {
         // Use the ability registry with correct handler signature: (actor, target, ability, log, systems, coordinationInfo?)
@@ -803,7 +789,6 @@ export class CombatSystem extends AbstractGameSystem<GameRoom, GameEvent> implem
         const monsterHpBefore = monster?.hp ?? 0;
         const logLengthBefore = log.length;
 
-        logger.info('[CombatSystem] Executing ability via registry:', { actionType, hasTarget: !!target, hasAbility: !!abilityObj });
         abilityRegistry.executeClassAbility(
           actionType,
           player,
@@ -823,7 +808,7 @@ export class CombatSystem extends AbstractGameSystem<GameRoom, GameEvent> implem
         };
       } else if (actionType) {
         // Fallback: registry has no handler — use basic damage calculation
-        logger.warn('[CombatSystem] No registry handler for ability, using fallback:', actionType);
+        logger.warn(`No ability handler registered for "${actionType}" — using fallback attack calculation`, {}, { gameCode });
         if (this.isAttackAbility(actionType)) {
           const baseDamage = this.calculateBasicAttackDamage(player, actionType);
           if (target) {
@@ -840,8 +825,49 @@ export class CombatSystem extends AbstractGameSystem<GameRoom, GameEvent> implem
             };
           }
         }
-      } else {
-        logger.warn('[CombatSystem] No action type', { actionType, actionKeys: Object.keys(action || {}) });
+      }
+
+      // Per-action resolution log — every submitted action gets a result line, even when
+      // it did nothing (target already dead, immune, stealthed, etc.), so the log shows
+      // what every player attempted each round, not just the ones that landed.
+      if (actionType) {
+        const abilityDisplayName = abilityObj?.name || actionType;
+
+        if (!target) {
+          logger.info(`${(player as any).name}'s ${abilityDisplayName} had no valid target`, {}, { gameCode });
+        } else {
+          const targetHpAfter = (target as any).hp;
+          const targetName = (target as any).name || 'the Monster';
+
+          let amountClause = '';
+          if (typeof targetHpBefore === 'number' && typeof targetHpAfter === 'number') {
+            const delta = targetHpAfter - targetHpBefore;
+            if (delta < 0) amountClause = `did ${-delta} damage`;
+            else if (delta > 0) amountClause = `did ${delta} healing`;
+          }
+
+          const newEntries = log.slice(logLengthForResolution);
+          const effectEntry = newEntries.find((entry: any) => entry.type === 'status' || entry.effectType) as any;
+          const effectClause = effectEntry
+            ? ` and applied ${effectEntry.effectType || 'an effect'} to ${targetName}`
+            : (amountClause ? ` to ${targetName}` : '');
+
+          if (amountClause || effectClause) {
+            const survivalClause = Object.prototype.hasOwnProperty.call(target, 'isAlive')
+              ? ((target as any).isAlive === false || targetHpAfter <= 0 ? `${targetName} Died.` : `${targetName} Survived.`)
+              : (typeof targetHpAfter === 'number' ? (targetHpAfter <= 0 ? `${targetName} Died.` : `${targetName} Survived.`) : '');
+
+            logger.info(
+              `${(player as any).name}'s ${abilityDisplayName} ${amountClause}${effectClause}. ${survivalClause}`.trim(),
+              {},
+              { gameCode }
+            );
+          } else if (targetWasAlreadyDown) {
+            logger.info(`${(player as any).name}'s ${abilityDisplayName} had no effect — ${targetName} was already defeated`, {}, { gameCode });
+          } else {
+            logger.info(`${(player as any).name}'s ${abilityDisplayName} had no effect on ${targetName}`, {}, { gameCode });
+          }
+        }
       }
 
       // Reactive poison trap: if attacker targeted a player who has poisonTrap, poison the attacker
@@ -880,24 +906,15 @@ export class CombatSystem extends AbstractGameSystem<GameRoom, GameEvent> implem
       // Update summary with action results
       if ((result as any)['damage']) {
         summary.totalDamageToMonster += (result as any)['damage'];
-        logger.info('[CombatSystem] Added damage to summary:', {
-          damage: (result as any)['damage'],
-          totalDamageToMonster: summary.totalDamageToMonster
-        });
       }
 
       if ((result as any)['healing']) {
         summary.totalHealing += (result as any)['healing'];
-        logger.info('[CombatSystem] Added healing to summary:', {
-          healing: (result as any)['healing'],
-          totalHealing: summary.totalHealing
-        });
       }
 
       // Add action log entries
       if ((result as any)['logEntries'] && (result as any)['logEntries'].length > 0) {
         log.push(...(result as any)['logEntries']);
-        logger.info('[CombatSystem] Added log entries:', (result as any)['logEntries'].length);
       } else if (!registryHandledLog) {
         // Create a basic log entry only when the registry handler didn't write to log directly
         const basicEntry = {

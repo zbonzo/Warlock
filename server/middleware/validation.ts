@@ -732,37 +732,20 @@ export const validatePlayerNameSocket = (
     const allPlayers = Array.from(game.getPlayers());
     // Filter out the current socket's player to avoid false duplicates
     existingPlayers = allPlayers.filter(player => player.id !== socket.id);
-
-    // DEBUG: Log name checking details for socket validation
-    logger.info('Socket name validation check:', {
-      attemptedName: playerName,
-      socketId: socket.id,
-      gameCode: gameCode,
-      totalPlayersInGame: allPlayers.length,
-      playersAfterFiltering: existingPlayers.length,
-      allPlayerNames: allPlayers.map(p => ({ id: p.id, name: (p as any).name })),
-      existingPlayerNames: existingPlayers.map(p => ({ id: p.id, name: (p as any).name })),
-      isCurrentSocketInGame: allPlayers.some(p => p.id === socket.id)
-    });
   }
 
   // Use the inclusive validation function
   const validation = validatePlayerName(playerName, existingPlayers);
 
-  logger.info('Socket name validation result:', {
-    attemptedName: playerName,
-    gameCode: gameCode,
-    isValid: validation.isValid,
-    error: validation.error
-  });
+  const validityWord = validation.isValid ? 'valid' : 'invalid';
+  const gameContext = gameCode ? { gameCode } : {};
+  if (validation.isValid) {
+    logger.info(`Name ${playerName} has been found to be ${validityWord}`, {}, gameContext);
+  } else {
+    logger.warn(`Name ${playerName} has been found to be ${validityWord}`, { reason: validation.error }, gameContext);
+  }
 
   if (!validation.isValid) {
-    logger.warn('InvalidPlayerNameValidation', {
-      playerName,
-      socketId: socket.id,
-      error: validation.error,
-    });
-
     // Send error with suggestion if available
     const errorData: any = { message: validation.error };
     if (validation.sanitizedName && validation.sanitizedName !== playerName) {

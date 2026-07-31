@@ -272,15 +272,7 @@ export class GameController extends BaseController<GameRoom, CreateGameRequest, 
         const players = (game as any).getPlayers();
         this.debug.verbose('11. Players data:', players.map((p: any) => ({ id: p.id, name: p.name, isAlive: p.isAlive })));
 
-        // Calculate warlock count for log message
-        const warlockCount = players.filter((p: any) => p.isWarlock).length;
-
-        logger.info('GameStarted', {
-          gameCode,
-          hostId: socket.id,
-          playerCount: players.length,
-          warlockCount: warlockCount
-        });
+        // GameState.startGame() already logs the authoritative "GameStarted" line.
 
         this.debug.verbose('12. About to get host player for message formatting...');
         const hostPlayer = (game as any).getPlayer(socket.id);
@@ -767,7 +759,7 @@ export class GameController extends BaseController<GameRoom, CreateGameRequest, 
 
       if (result.success) {
         socket.emit('actionSubmitted', { success: true });
-        logger.info(`[GameController] Player ${player.name} submitted action: ${actionType} -> ${targetId}`);
+        // GameRoom.submitAction already logs the "added to batch" line for this action.
 
         // Send updated game state to all players so they can see submission status
         for (const [playerId] of (game as any).players) {

@@ -135,11 +135,10 @@ export class PlayerController extends BaseController<Player, JoinGameRequest, Pa
 
       logger.info('PlayerJoinedGame', {
         playerName: sanitizedName,
-        gameCode,
         socketId: socket.id,
         playerClass,
         playerRace
-      });
+      }, { gameCode });
 
       // Send success response
       socket.emit('game:joined', {
@@ -174,88 +173,6 @@ export class PlayerController extends BaseController<Player, JoinGameRequest, Pa
     }
   }
 
-  /**
-   * Handle character selection
-   */
-  async handleCharacterSelection(
-    io: SocketIOServer,
-    socket: Socket,
-    request: CharacterSelectionRequest
-  ): Promise<PlayerControllerResult> {
-    try {
-      const { gameCode, class: playerClass, race } = request;
-
-      // Validate game and player
-      const game = validateGameAction(socket, gameCode, true, false, false);
-      if (!game) {
-        return {
-          success: false,
-          error: 'Game not found'
-        };
-      }
-
-      const player = game.getPlayer(socket.id);
-      if (!player) {
-        return {
-          success: false,
-          error: 'Player not found in game'
-        };
-      }
-
-      // Validate character selection is allowed
-      if ((game.gameState as any).started) {
-        return {
-          success: false,
-          error: 'Cannot change character after game has started'
-        };
-      }
-
-      // Apply character selection
-      player.class = playerClass;
-      player.race = race;
-
-      // Apply class and race bonuses - TODO: implement this method
-      // gameService.applyCharacterBonuses(player, playerClass, race);
-
-      logger.info('CharacterSelected', {
-        playerName: player.name,
-        gameCode,
-        class: playerClass,
-        race
-      });
-
-      // Send confirmation to player
-      socket.emit('character:selected', {
-        success: true,
-        player: player.toClientData({ includePrivate: true, requestingPlayerId: player.id })
-      });
-
-      // Notify other players
-      socket.to(gameCode).emit('player:updated', {
-        playerId: player.id,
-        updates: {
-          class: playerClass,
-          race
-        },
-        message: config.formatMessage(
-          'playerSelectedCharacter',
-          { playerName: player.name, class: playerClass, race }
-        )
-      });
-
-      return {
-        success: true,
-        data: { player }
-      };
-
-    } catch (error) {
-      logger.error('Error in handleCharacterSelection:', { error: error instanceof Error ? error.message : String(error) });
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : 'Unknown error'
-      };
-    }
-  }
 
   /**
    * Handle player action submission
@@ -572,8 +489,8 @@ export class PlayerController extends BaseController<Player, JoinGameRequest, Pa
         // Apply damage modifiers
         const damageMultiplier = (raceAttributes.damageModifier || 1.0) * (classAttributes.damageModifier || 1.0);
         player.damageMod = damageMultiplier;
-
-        logger.info(`Applied bonuses for ${player.name}: HP ${player.hp}/${player.maxHp}, Armor ${player.armor}, Damage ${player.damageMod}x`);
+      } else {
+        logger.warn(`Missing race/class attributes for ${player.name} (${race} ${className}) — bonuses not applied`, {}, { gameCode });
       }
 
       // Initialize class abilities
@@ -586,15 +503,16 @@ export class PlayerController extends BaseController<Player, JoinGameRequest, Pa
           (ability: any) => (ability.unlockAt || 1) <= 1
         );
         (player as any).playerAbilities.setUnlockedAbilities(level1Abilities);
-
-        logger.info(`Initialized ${level1Abilities.length} abilities for ${player.name} (${className})`);
+      } else {
+        logger.warn(`No abilities found for class ${className} — ${player.name} has no abilities`, {}, { gameCode });
       }
 
       // Initialize racial ability (sets up passive effects like Undying for Lich)
       const racialAbility = (config as any).getRacialAbility(race);
       if (racialAbility) {
         player.setRacialAbility(racialAbility);
-        logger.info(`Initialized racial ability for ${player.name} (${race}): ${racialAbility.id || racialAbility.type || 'unknown'}`);
+      } else {
+        logger.warn(`No racial ability found for race ${race} — ${player.name} has no racial ability`, {}, { gameCode });
       }
 
       // Notify all players in the game
@@ -609,13 +527,7 @@ export class PlayerController extends BaseController<Player, JoinGameRequest, Pa
         }))
       });
 
-      logger.info('Player selected character', {
-        playerId: socket.id,
-        playerName: player.name,
-        race,
-        class: className,
-        gameCode
-      });
+      logger.info(`${player.name} has selected ${className} ${race}`, {}, { gameCode });
     } catch (error) {
       logger.error('Error in handlePlayerSelectCharacter:', { error: error instanceof Error ? error.message : String(error) });
       socket.emit('errorMessage', {

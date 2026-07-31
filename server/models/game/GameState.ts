@@ -256,10 +256,9 @@ export class GameState {
     const warlockCount = Array.from(this.players.values()).filter((p: any) => p.isWarlock).length;
 
     logger.info('GameStarted', {
-      gameCode: this.code,
       playerCount: this.players.size,
       warlockCount: warlockCount
-    });
+    }, { gameCode: this.code });
   }
 
   /**
@@ -275,7 +274,7 @@ export class GameState {
   end(winner?: string): void {
     this.ended = true;
     this.winner = winner || null;
-    logger.info('GameEnded', { gameCode: this.code, winner: this.winner });
+    logger.info('GameEnded', { winner: this.winner }, { gameCode: this.code });
   }
 
   /**
@@ -294,10 +293,9 @@ export class GameState {
     const oldLevel = this.level;
     this.level = newLevel;
     logger.info('GameLevelUp', {
-      gameCode: this.code,
       oldLevel,
       newLevel: this.level
-    });
+    }, { gameCode: this.code });
   }
 
   /**

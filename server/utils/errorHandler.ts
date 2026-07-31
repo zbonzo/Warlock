@@ -81,7 +81,10 @@ export function withSocketErrorHandling<T extends any[], R>(
     try {
       const result = await fn(...args);
       const duration = performance.now() - startTime;
-      logger.info('SocketActionSuccess', {
+      // Debug-level only: this just means the handler didn't throw, not that the
+      // requested action succeeded (e.g. a rejected join still logs here). The
+      // handler itself logs the actual outcome at info/warn level.
+      logger.debug('SocketActionSuccess', {
         action: actionName,
         socketId: socket.id,
         playerId: socket.playerId, // Assuming playerId is attached to the socket

@@ -373,143 +373,60 @@ export function checkGameWinConditions(
  * Award a random trophy based on player stats and game result
  */
 export function awardRandomTrophy(game: GameRoom, gameResult: GameResult): TrophyAward | null {
+  const gameCode = game.code;
   try {
-    // Debug: Check the game state first
-    logger.info('Game state during trophy evaluation:', {
-      gameCode: game.code,
-      hasPlayers: !!game.gameState.getPlayers(),
-      playersMapSize: game.gameState.getPlayers() ? game.gameState.getPlayers().size : 'undefined',
-      gameStarted: game.gameState.getStarted(),
-      gamePhase: game.gamePhase.getPhase()
-    });
+    // Refresh gameResult with current player data — the original gameResult.players
+    // was created earlier in round processing and may have stale/empty stats.
+    gameResult.players = game.gameState.getPlayersInfo();
 
-    logger.info('Trophy evaluation started', {
-      winner: gameResult.winner,
-      gameCode: game.code
-    });
-
-    // FIXED: Refresh gameResult with current player data for trophy evaluation
-    // The original gameResult.players was created earlier and may have empty stats
-    const playersInfo = game.gameState.getPlayersInfo();
-    logger.info('getPlayersInfo returned:', {
-      playerCount: playersInfo?.length || 0,
-      playersHaveStats: playersInfo?.map((p: any) => ({
-        name: p.name,
-        hasStats: !!p.stats,
-        statsKeys: p.stats ? Object.keys(p.stats) : []
-      }))
-    });
-    gameResult.players = playersInfo;
-
-    // DEBUG: Log the player stats structure for trophy debugging
-    logger.info('Trophy debug - getPlayersInfo structure:', {
-      playerCount: gameResult.players?.length || 0,
-      firstPlayerStats: gameResult.players?.[0]?.stats || 'NO_STATS',
-      firstPlayerName: gameResult.players?.[0]?.name || 'NO_NAME',
-      firstPlayerComplete: gameResult.players?.[0] || 'NO_PLAYER',
-      playerNames: gameResult.players?.map(p => p?.name) || []
-    });
-
-    if (gameResult.players && gameResult.players.length > 0) {
-      logger.info('Using refreshed gameResult player data for trophy evaluation');
-      const gameResultPlayers = gameResult.players;
-
-      gameResultPlayers.forEach((player, index) => {
-        logger.info(`GameResult Player ${index + 1}: ${player.name} - stats: ${JSON.stringify(player.stats)}`);
-      });
-
-      // Use gameResult players for trophy evaluation instead of game.getPlayersInfo()
-      // since the game state might be inconsistent at this point
-      const earnedTrophiesFromResult: EarnedTrophy[] = [];
-
-      // Check each trophy to see if any player qualifies
-      for (const trophy of trophies) {
-        try {
-          if (!trophy || !trophy.getWinner || !trophy.name) {
-            logger.warn('Invalid trophy object:', trophy);
-            continue;
-          }
-
-          // DEBUG: Log first player's stats structure for this trophy
-          if (gameResultPlayers.length > 0) {
-            logger.info(`Trophy "${trophy.name}" debug - First player stats:`, {
-              playerName: gameResultPlayers[0].name,
-              hasStats: !!gameResultPlayers[0].stats,
-              stats: gameResultPlayers[0].stats
-            });
-          }
-
-          // Convert gameResult.winner to trophy system format
-          const trophyGameResult = {
-            winner: gameResult.winner === 'Good' ? 'Good' as const : 'Evil' as const
-          };
-          const winner = trophy.getWinner(gameResultPlayers, trophyGameResult);
-          logger.info(`Trophy "${trophy.name}" evaluation: ${winner ? `${(winner as any).name} wins!` : 'No winner'}`);
-
-          if (winner) {
-            earnedTrophiesFromResult.push({
-              trophy: trophy,
-              winner: winner as any
-            });
-          }
-        } catch (error: any) {
-          logger.warn(`Trophy evaluation error for ${trophy.name}:`, {
-            error: error.message,
-            stack: error.stack
-          });
-        }
-      }
-
-      // If no trophies were earned, return null
-      if (earnedTrophiesFromResult.length === 0) {
-        logger.info('No trophies earned this game - no players qualified for any trophy');
-        return null;
-      }
-
-      logger.info(`${earnedTrophiesFromResult.length} trophies earned: ${earnedTrophiesFromResult.map(t => `${t.trophy.name} (${t.winner.name})`).join(', ')}`);
-
-      // Randomly select one trophy from the earned trophies using secure random
-      const selectedTrophy = secureRandomChoice(earnedTrophiesFromResult);
-
-      if (!selectedTrophy) {
-        logger.info('No trophy selected (empty earned trophies list)');
-        return null;
-      }
-
-      const trophyAward: TrophyAward = {
-        playerName: selectedTrophy.winner.name,
-        trophyName: selectedTrophy.trophy.name,
-        trophyDescription: selectedTrophy.trophy.description,
-      };
-
-      logger.info('Trophy awarded (from gameResult)', {
-        gameCode: game.code,
-        winner: gameResult.winner,
-        trophy: trophyAward.trophyName,
-        recipient: trophyAward.playerName
-      });
-
-      // DEBUG: Log the exact trophy data being returned
-      logger.info('Trophy award data structure:', {
-        trophyAward,
-        winnerObject: selectedTrophy.winner,
-        winnerName: selectedTrophy.winner?.name,
-        winnerType: typeof selectedTrophy.winner?.name
-      });
-
-      return trophyAward;
+    if (!gameResult.players || gameResult.players.length === 0) {
+      logger.warn('No player data available for trophy evaluation', {}, { gameCode });
+      return null;
     }
 
-    // If we reach here, gameResult.players was empty
-    logger.warn('No player data available for trophy evaluation');
-    return null;
+    const gameResultPlayers = gameResult.players;
+    const earnedTrophiesFromResult: EarnedTrophy[] = [];
+    const trophyGameResult = {
+      winner: gameResult.winner === 'Good' ? 'Good' as const : 'Evil' as const
+    };
+
+    for (const trophy of trophies) {
+      try {
+        if (!trophy || !trophy.getWinner || !trophy.name) {
+          logger.warn('Invalid trophy object in trophy config', {}, { gameCode });
+          continue;
+        }
+
+        const winner = trophy.getWinner(gameResultPlayers, trophyGameResult);
+        if (winner) {
+          earnedTrophiesFromResult.push({ trophy, winner: winner as any });
+        }
+      } catch (error: any) {
+        logger.warn(`Trophy evaluation error for ${trophy.name}: ${error.message}`, {}, { gameCode });
+      }
+    }
+
+    if (earnedTrophiesFromResult.length === 0) {
+      return null;
+    }
+
+    // Randomly select one trophy from the earned trophies using secure random
+    const selectedTrophy = secureRandomChoice(earnedTrophiesFromResult);
+    if (!selectedTrophy) {
+      return null;
+    }
+
+    const trophyAward: TrophyAward = {
+      playerName: selectedTrophy.winner.name,
+      trophyName: selectedTrophy.trophy.name,
+      trophyDescription: selectedTrophy.trophy.description,
+    };
+
+    logger.info(`${trophyAward.trophyName} awarded to ${trophyAward.playerName}`, {}, { gameCode });
+
+    return trophyAward;
   } catch (error: any) {
-    logger.error('Error awarding trophy:', {
-      error: error.message,
-      stack: error.stack,
-      gameCode: game?.code,
-      gameResult: gameResult
-    });
+    logger.error(`Error awarding trophy: ${error.message}`, { stack: error.stack }, { gameCode });
     return null;
   }
 }

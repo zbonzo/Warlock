@@ -139,35 +139,15 @@ function processLog(level: string, eventKey: string, context: LogContext = {}, g
   const timestamp = new Date().toISOString();
   const levelUpper = level.toUpperCase();
 
-  // Enhanced format: [dev:server] [timestamp] [LEVEL] [GameCode] [SocketID] [PlayerName] message
-  const gameCode = gameContext.gameCode || 'none';
-  const socketId = gameContext.socketId || 'null';
-  const playerName = gameContext.playerName || 'system  '; // 8 chars
+  // Format: [Timestamp] [LEVEL] [identifier] message
+  // identifier is the game code when the log pertains to a game, otherwise 'system'.
+  const identifier = gameContext.gameCode || 'system';
 
-  // Format socket ID (first 4 chars unless debug)
-  const formattedSocketId = (level === 'debug' ? socketId : socketId.substring(0, 4));
-
-  // Format player name (first 8 chars, padded to 8 if shorter)
-  const formattedPlayerName = level === 'debug'
-    ? playerName
-    : playerName.substring(0, 8).padEnd(8, ' ');
-
-  // Build the enhanced console message
-  let consoleMessage: string;
-  if (gameContext.gameCode || gameContext.socketId || gameContext.playerName) {
-    consoleMessage = `[dev:server] [${timestamp}] [${levelUpper}] [${gameCode}] [${formattedSocketId}] [${formattedPlayerName}] ${getFormattedMessage(
-      level,
-      eventKey,
-      context
-    )}`;
-  } else {
-    // Fallback to original format for backward compatibility
-    consoleMessage = `[${timestamp}] [${levelUpper}] ${getFormattedMessage(
-      level,
-      eventKey,
-      context
-    )}`;
-  }
+  const consoleMessage = `[${timestamp}] [${levelUpper}] [${identifier}] ${getFormattedMessage(
+    level,
+    eventKey,
+    context
+  )}`;
 
   // 2. Prepare structured JSON object for file logging
   const fileLogEntry: FileLogEntry = {

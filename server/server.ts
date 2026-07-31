@@ -396,7 +396,7 @@ io.on('connection', (socket: Socket) => {
           data.gameCode,
           data.playerName
         ),
-      'Name taken in room'
+      'checking name availability'
     )
   );
 

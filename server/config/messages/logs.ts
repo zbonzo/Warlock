@@ -35,7 +35,7 @@ export default {
     GameEnded: 'Game ended. Winner: {winner}',
     GameEndedAllPlayersLeft: 'Game {gameCode} ended. All players left.',
     GameTimedOut: 'Game {gameCode} timed out after inactivity',
-    PlayerJoinedGame: 'Player {playerName} joined game {gameCode}',
+    PlayerJoinedGame: 'Player {playerName} joined',
     PlayerReconnected: 'Player {playerName} reconnected to game {gameCode}',
     PlayerSelectedCharacter:
       'Player {socketId} selected {race} {className} in game {gameCode}',

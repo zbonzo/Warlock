@@ -29,7 +29,6 @@ import {
   Schemas
 } from '../types/generated.js';
 import { Server as SocketIOServer } from 'socket.io';
-import { createDebugLogger } from '../config/debug.config.js';
 import { awardRandomTrophy } from '../services/gameService.js';
 
 export interface AddPlayerResult {
@@ -103,12 +102,6 @@ export class GameRoom {
 
   // Systems (initialized when game starts)
   public systems: any = null;
-
-  // Debug loggers
-  private combatDebug = createDebugLogger('combat', 'GameRoom:Combat');
-  private roundResultsDebug = createDebugLogger('roundResults', 'GameRoom:RoundResults');
-  private phaseDebug = createDebugLogger('phaseTransitions', 'GameRoom:Phase');
-
 
   constructor(code: GameCode, _options: GameRoomOptions = {}) {
     this.code = code;
@@ -417,7 +410,7 @@ export class GameRoom {
       // Assign initial warlocks
       if (this.systems && (this.systems as any).warlockSystem) {
         const warlockAssignments = (this.systems as any).warlockSystem.assignInitialWarlocks();
-        logger.info(`Assigned ${warlockAssignments.length} warlocks for game ${this.code}`);
+        logger.info(`Assigned ${warlockAssignments.length} warlocks`, {}, { gameCode: this.code });
       }
 
       // Start the game state
@@ -467,8 +460,16 @@ export class GameRoom {
       const totalExpected = alivePlayers.length;
       const currentSubmitted = alivePlayers.filter(p => (p as any).hasSubmittedAction).length;
 
-      // Log batch progress instead of immediate processing
-      (logger as any).info(`[GameRoom:${this.code}] Action added to batch. Batch size currently at ${currentSubmitted} of ${totalExpected}`);
+      const abilityName = ((player as any).unlocked || []).find((a: any) => a.id === actionType)?.name || actionType;
+      const targetName = !targetId || targetId === (config as any).MONSTER_ID
+        ? 'the Monster'
+        : (this.getPlayer(targetId) as any)?.name || targetId;
+
+      (logger as any).info(
+        `${(player as any).name}'s ${abilityName} -> ${targetName} has been added to batch. Batch size currently at ${currentSubmitted} of ${totalExpected}`,
+        {},
+        { gameCode: this.code }
+      );
 
       // Emit action submitted event for batch tracking
       this.eventBus.emit((EventTypes as any).ACTION.SUBMITTED, {
@@ -516,63 +517,34 @@ export class GameRoom {
    * Process a game round
    */
   async processRound(): Promise<ActionResult> {
-    this.combatDebug.info(`🎮 Processing round for game ${this.code}...`);
-
     if (!this.systems) {
-      this.combatDebug.error(`❌ Game systems not initialized for game ${this.code}`);
+      (logger as any).error('Game systems not initialized', {}, { gameCode: this.code });
       return {
         success: false,
         reason: 'Game systems not initialized'
       };
     }
 
-    this.combatDebug.verbose('Pre-round game state:', {
-      playersCount: this.players?.size || 0,
-      aliveCount: this.getAlivePlayers().length,
-      round: this.round,
-      phase: this.gamePhase.getCurrentPhase()
-    });
-
     try {
       // Process through combat system
-      this.combatDebug.info(`⚔️ Delegating to combat system for round processing...`);
       const result = await (this.systems as any).combatSystem.processRound(this);
-      this.combatDebug.verbose('Combat system result:', {
-        hasResult: !!result,
-        resultKeys: result ? Object.keys(result) : [],
-        hasLog: !!(result?.log || result?.eventsLog),
-        logLength: (result?.log || result?.eventsLog)?.length || 0
-      });
 
       // Check win conditions using live player state (counters can be stale after combat deaths)
       const alivePlayers = this.getAlivePlayers();
       const aliveCount = alivePlayers.length;
       const warlockCount = alivePlayers.filter((p: any) => p.isWarlock).length;
-      this.combatDebug.verbose(`Win condition check: warlocks=${warlockCount}, alive=${aliveCount}`);
 
       const winner = (this.systems as any).gameStateUtils.checkWinConditions(warlockCount, aliveCount);
       if (winner) {
-        this.combatDebug.info(`🏆 Game winner detected: ${winner}`);
         await this.endGame(winner);
-      } else {
-        this.combatDebug.verbose('No winner detected, game continues');
       }
 
-      this.combatDebug.info(`✅ Round processing completed successfully for game ${this.code}`);
       return { success: true, data: result };
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
       const errorStack = error instanceof Error ? error.stack : '';
 
-      this.combatDebug.error(`🔥 CRITICAL ERROR processing round for game ${this.code}: ${errorMessage}`);
-      this.combatDebug.error('Error details:', {
-        error: errorMessage,
-        stack: errorStack,
-        code: this.code,
-        systemsExists: !!this.systems,
-        playersCount: this.players?.size || 0,
-        gamePhase: (this.gameState as any)?.phase || 'unknown'
-      });
+      (logger as any).error(`Round processing failed: ${errorMessage}`, { stack: errorStack }, { gameCode: this.code });
 
       // Reset player actions on failure to allow resubmission
       if (this.players) {
@@ -757,13 +729,9 @@ export class GameRoom {
   }
 
   // Event handlers
-  private async handlePlayerJoined(event: GameEvent): Promise<void> {
-    // Event structure has changed - playerName is in event.payload
-    const playerName = (event.payload as any)?.playerName || (event as any).playerName;
-    (logger as any).info('PlayerJoinedGame', {
-      playerName: playerName,
-      gameCode: this.code
-    });
+  private async handlePlayerJoined(_event: GameEvent): Promise<void> {
+    // PlayerController already logs "PlayerJoinedGame" with full context (socketId,
+    // class, race) when the join is processed.
   }
 
   private async handlePlayerLeft(event: GameEvent): Promise<void> {
@@ -780,13 +748,12 @@ export class GameRoom {
     (this.gameState as any).updateAliveCount();
   }
 
-  private async handleGameStarted(event: GameEvent): Promise<void> {
-    const playerCount = (event as any).playerCount || this.players.size;
-    (logger as any).info(`Game ${this.code} started with ${playerCount} players`);
+  private async handleGameStarted(_event: GameEvent): Promise<void> {
+    // GameState.startGame() already logs the authoritative "GameStarted" line.
   }
 
-  private async handleGameEnded(event: GameEvent): Promise<void> {
-    (logger as any).info(`Game ${this.code} ended. Winner: ${(event as any).winner || 'None'}`);
+  private async handleGameEnded(_event: GameEvent): Promise<void> {
+    // GameState.end() already logs the authoritative "GameEnded" line with the winner.
   }
 
   private async handlePhaseChanged(event: GameEvent): Promise<void> {
@@ -794,28 +761,16 @@ export class GameRoom {
   }
 
   private async handleActionSubmitted(event: GameEvent): Promise<void> {
-    this.combatDebug.info(`Action ${(event.payload as any)?.actionType || 'unknown'} submitted by ${(event.payload as any)?.playerId || 'unknown'} in game ${this.code}`);
-
     // Check if all alive players have submitted their actions
     const alivePlayers = this.getAlivePlayers();
     const allSubmitted = alivePlayers.every(player => (player as any).hasSubmittedAction);
 
-    this.combatDebug.verbose(`Player action submission status in game ${this.code}:`, {
-      totalAlive: alivePlayers.length,
-      submittedActions: alivePlayers.filter(p => (p as any).hasSubmittedAction).length,
-      allSubmitted
-    });
-
     if (allSubmitted && this.gamePhase.getCurrentPhase() === 'action' && !this.gameState.getEnded()) {
-      this.combatDebug.info(`🎯 All players have submitted actions in game ${this.code}. Processing round...`);
-
       // Change phase to results
-      this.phaseDebug.info(`Phase transition: action → results (game ${this.code})`);
       this.gamePhase.setPhase('results');
 
       // Notify all players that processing is starting
       if (this.socketEventRouter) {
-        this.phaseDebug.verbose('Broadcasting phase:changed event to all players');
         this.socketEventRouter.broadcastToGame('phase:changed', {
           phase: 'results',
           message: 'Processing actions...'
@@ -823,20 +778,13 @@ export class GameRoom {
       }
 
       // Process the round
-      this.combatDebug.info(`🛡️ Starting round processing for game ${this.code}...`);
       const roundResult = await this.processRound();
-      this.combatDebug.info(`🛡️ Round processing completed for game ${this.code}:`, {
-        success: roundResult.success,
-        hasData: !!roundResult.data,
-        dataKeys: roundResult.data ? Object.keys(roundResult.data) : []
-      });
 
       if (roundResult.success) {
         const gameEnded = this.gameState.getEnded();
 
         if (gameEnded) {
           // Game ended this round — broadcast final state and stop the loop
-          this.combatDebug.info(`🏁 Game ${this.code} has ended. Broadcasting final state.`);
           if (this.io) {
             const fullLog: any[] = roundResult.data?.log || [];
 
@@ -855,6 +803,7 @@ export class GameRoom {
               console.error(`[GameRoom] awardRandomTrophy threw for ${this.code}:`, trophyErr instanceof Error ? trophyErr.message : trophyErr);
             }
 
+            (logger as any).info('Broadcasting round results', {}, { gameCode: this.code });
             for (const [playerId, player] of this.players) {
               const filteredLog = (player as any).isWarlock
                 ? fullLog
@@ -879,13 +828,11 @@ export class GameRoom {
         }
 
         // Reset player actions for the next round
-        this.combatDebug.info(`✅ Resetting player actions for next round in game ${this.code}`);
         for (const player of this.players.values()) {
           if (player) (player as any).clearActionSubmission?.();
         }
 
         // Change phase back to action for next round
-        this.phaseDebug.info(`Phase transition: results → action (game ${this.code})`);
         try {
           this.gamePhase.setPhase('action');
         } catch (phaseErr) {
@@ -894,7 +841,7 @@ export class GameRoom {
 
         // Emit results per-player so the log can be filtered by warlock status
         if (this.io) {
-          this.roundResultsDebug.info(`📢 Broadcasting round:results per-player for game ${this.code}`);
+          (logger as any).info('Broadcasting round results', {}, { gameCode: this.code });
           const fullLog: any[] = roundResult.data?.log || [];
           for (const [playerId, player] of this.players) {
             // Warlocks see all log entries; non-warlocks only see public entries or their own
@@ -912,13 +859,11 @@ export class GameRoom {
               console.error(`[GameRoom] round:results emit threw for ${playerId}:`, emitErr instanceof Error ? emitErr.message : emitErr);
             }
           }
-          this.roundResultsDebug.info(`✅ Successfully broadcasted round:results for game ${this.code}`);
         } else {
-          this.roundResultsDebug.error(`❌ No io available to broadcast round:results for game ${this.code}`);
+          (logger as any).error('No io available to broadcast round results', {}, { gameCode: this.code });
         }
 
         // Broadcast updated game state after round processing
-        this.combatDebug.info(`📢 Broadcasting updated game state after round for game ${this.code}`);
         if (this.io) {
           for (const playerId of this.players.keys()) {
             const player = this.players.get(playerId);
@@ -929,8 +874,7 @@ export class GameRoom {
         }
       } else {
         // If round processing failed, reset player actions and go back to action phase
-        this.combatDebug.error(`❌ Round processing FAILED for game ${this.code}. Resetting player actions.`);
-        this.combatDebug.error('Round failure details:', roundResult);
+        (logger as any).error(`Round processing failed: ${roundResult.reason || 'unknown reason'}`, {}, { gameCode: this.code });
 
         // Reset all player actions
         for (const player of this.players.values()) {
@@ -938,12 +882,10 @@ export class GameRoom {
         }
 
         // Change phase back to action
-        this.phaseDebug.warn(`Phase transition: results → action (FAILURE RECOVERY) (game ${this.code})`);
         this.gamePhase.setPhase('action');
 
         // Notify players of the error and phase change
         if (this.socketEventRouter) {
-          this.phaseDebug.error('Broadcasting phase:changed error recovery to all players');
           this.socketEventRouter.broadcastToGame('phase:changed', {
             phase: 'action',
             message: 'Round processing failed. Please submit your actions again.',
