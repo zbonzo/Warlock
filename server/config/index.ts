@@ -137,6 +137,12 @@ const abilityFunctions = {
     return abilityLoader.getAllAbilities();
   },
 
+  // NOTE: `abilities` above is unreliable — messageFunctions below also defines
+  // a same-named `abilities` getter and, since it's spread later into the final
+  // config object, silently wins. Use this instead when you need the real
+  // {abilityId: abilityDef} map.
+  getAbilitiesMap: () => abilityLoader.getAllAbilities(),
+
   // Hot reload function
   reloadAbilities: () => abilityLoader.reloadIfChanged(),
 

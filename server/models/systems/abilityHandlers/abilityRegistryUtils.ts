@@ -8,6 +8,11 @@ import type { Player, Monster, Ability } from '../../../types/generated.js';
 import type { GameSystems } from '../SystemsFactory.js';
 import config from '../../../config/index.js';
 
+// NOTE: config.abilities is NOT the raw ability map — config/index.ts merges
+// abilityFunctions and messageFunctions into one object and both define a
+// `get abilities()` getter with the same key, so the message-templates
+// getter (spread later) silently wins. Use config.getAbilitiesMap() instead.
+
 /**
  * Coordination information for ability execution
  */
@@ -102,7 +107,7 @@ export function registerAbilitiesByCategory(
 ): string[] {
   const allAbilities: string[] = [];
 
-  Object.entries(config.abilities || {}).forEach(([id, ability]: [string, any]) => {
+  Object.entries((config as any).getAbilitiesMap() || {}).forEach(([id, ability]: [string, any]) => {
     if (ability.category === category && !registry.hasClassAbility(id)) {
       allAbilities.push(id);
     }
@@ -133,7 +138,7 @@ export function registerAbilitiesByEffectAndTarget(
 ): string[] {
   const allAbilities: string[] = [];
 
-  Object.entries(config.abilities || {}).forEach(([id, ability]: [string, any]) => {
+  Object.entries((config as any).getAbilitiesMap() || {}).forEach(([id, ability]: [string, any]) => {
     if (
       ability.effect === effect &&
       ability.target === target &&
@@ -167,7 +172,7 @@ export function registerAbilitiesByCriteria(
 ): string[] {
   const allAbilities: string[] = [];
 
-  Object.entries(config.abilities || {}).forEach(([id, ability]: [string, any]) => {
+  Object.entries((config as any).getAbilitiesMap() || {}).forEach(([id, ability]: [string, any]) => {
     if (registry.hasClassAbility(id) || excludeTypes.includes(id)) {
       return;
     }
@@ -200,7 +205,7 @@ export function registerAbilitiesByCriteria(
 export function findAbilitiesByTypePattern(pattern: string): string[] {
   const allAbilities: string[] = [];
 
-  Object.entries(config.abilities || {}).forEach(([id]: [string, any]) => {
+  Object.entries((config as any).getAbilitiesMap() || {}).forEach(([id]: [string, any]) => {
     if (id.includes(pattern)) {
       allAbilities.push(id);
     }
@@ -259,7 +264,7 @@ export function getAllAbilities(): AllAbilitiesResponse {
     all: [],
   };
 
-  Object.entries(config.abilities || {}).forEach(([id, ability]: [string, any]) => {
+  Object.entries((config as any).getAbilitiesMap() || {}).forEach(([id, ability]: [string, any]) => {
     if (ability.category) {
       if (!abilities.byCategory[ability.category as keyof CategoryBreakdown]) {
         abilities.byCategory[ability.category as keyof CategoryBreakdown] = [];

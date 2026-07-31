@@ -7,6 +7,7 @@
 import type { AbilityRegistry, AllAbilitiesResponse } from './abilityRegistryUtils.js';
 import { getAllAbilities } from './abilityRegistryUtils.js';
 import { getCurrentTimestamp } from '../../../utils/timestamp.js';
+import logger from '../../../utils/logger.js';
 
 // Import handler modules - migrated to ES modules
 import * as attackAbilities from './attackAbilities.js';
@@ -85,12 +86,12 @@ function checkUnregisteredAbilities(registry: AbilityRegistry): string[] {
     );
 
     if (unregistered.length > 0) {
-      console.warn(`Warning: The following abilities don't have registered handlers: ${unregistered.join(', ')}`);
+      logger.warn(`The following abilities don't have registered handlers: ${unregistered.join(', ')}`);
     }
 
     return unregistered;
   } catch (error: any) {
-    console.error('Error checking unregistered abilities:', error);
+    logger.error(`Error checking unregistered abilities: ${error.message}`, { stack: error.stack });
     // Don't throw here as this is just for debugging
     return [];
   }

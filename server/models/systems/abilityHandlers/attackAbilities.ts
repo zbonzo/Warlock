@@ -55,7 +55,29 @@ export function register(registry: AbilityRegistry): void {
   // 1. Basic single-target attack handler
   registry.registerClassAbility('attack', handleAttack);
 
-  // 2. Register specific handlers BEFORE the category catch-all so they aren't overwritten
+  // 2. Register all abilities with category "Attack" to use the basic attack handler.
+  // This lets class-specific basic attacks (backstab, preciseShot, holyBolt, etc.)
+  // resolve through handleAttack automatically instead of falling back to
+  // CombatSystem's generic fallback calculation. Runs before the specific
+  // handlers below, which simply overwrite this generic registration for the
+  // few ability IDs that need bespoke behavior.
+  registerAbilitiesByCategory(
+    registry,
+    'Attack',
+    (actor, target, ability, log, systems, coordinationInfo) => {
+      return registry.executeClassAbility(
+        'attack',
+        actor,
+        target,
+        ability,
+        log,
+        systems,
+        coordinationInfo
+      );
+    }
+  );
+
+  // 3. Register specific handlers BEFORE the category catch-all so they aren't overwritten
 
   // Poison-based abilities
   registry.registerClassAbility('poisonStrike', handlePoisonStrike);
