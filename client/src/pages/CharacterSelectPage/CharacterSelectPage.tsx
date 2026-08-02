@@ -75,6 +75,7 @@ const RaceIcon: React.FC<RaceIconProps> = ({ race }) => {
 /**
  * ClassIcon component handles loading states and fallback for class images
  */
+
 const ClassIcon: React.FC<ClassIconProps> = ({ cls }) => {
   const [loaded, setLoaded] = React.useState(false);
   const [error, setError] = React.useState(false);
@@ -102,7 +103,7 @@ const ClassIcon: React.FC<ClassIconProps> = ({ cls }) => {
       <img 
         src={cls.icon} 
         alt={`${cls.label} icon`}
-        className={`race-icon-img ${loaded ? 'loaded' : ''}`}
+        className={`race-icon-img class-icon-img ${loaded ? 'loaded' : ''}`}
         onLoad={() => setLoaded(true)}
         onError={() => setError(true)}
         style={{ display: loaded && !error ? 'block' : 'none' }}

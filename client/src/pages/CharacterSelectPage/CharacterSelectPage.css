@@ -168,6 +168,14 @@
   animation: fadeIn 0.3s ease forwards;
 }
 
+/* Class images vary in aspect ratio (some wider than tall), so scale to fit
+   entirely within the card instead of cropping like the race portraits do */
+.class-icon-img {
+  object-fit: contain;
+  box-sizing: border-box;
+  padding: 8px;
+}
+
 @keyframes fadeIn {
   to {
     opacity: 1;
