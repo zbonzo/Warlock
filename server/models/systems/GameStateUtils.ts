@@ -392,7 +392,7 @@ class GameStateUtils {
   }
 
   /**
-   * Replace player ability (for Artisan Adaptability)
+   * Replace player ability (unused legacy helper; Artisan's racial is now Second Wind)
    */
   replacePlayerAbility(
     playerId: string,

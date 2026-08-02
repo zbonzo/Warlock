@@ -12,7 +12,6 @@ interface GameEventsParams {
   updateBattleResultsData: (data: BattleResultsData) => void;
   resetActionState: () => void;
   resetMobileWizard: () => void;
-  showAdaptabilityModalWithAbilities: (abilities: Ability[]) => void;
   setPhase: (phase: string) => void;
   setReadyClicked: (ready: boolean) => void;
   
@@ -86,7 +85,6 @@ export const useGameEvents = (
     updateBattleResultsData,
     resetActionState,
     resetMobileWizard,
-    showAdaptabilityModalWithAbilities,
     setPhase,
     setReadyClicked,
     
@@ -392,60 +390,6 @@ export const useGameEvents = (
       socket.off('round:results', handleRoundResults);
     };
   }, [socket, setPhase, resetActionState, setReadyClicked, isMobile, showMobileActionWizard, resetMobileWizard, showBattleResultsModal, me, addEventLog]);
-
-  // Handle adaptability modal events
-  useEffect(() => {
-    if (!socket) return;
-
-    const handleAdaptabilityChoose = (data: any) => {
-      /* eslint-disable-next-line no-console */
-      console.log('Received adaptabilityChooseAbility event in GamePage:', data);
-
-      if (data?.abilities) {
-        let abilitiesToShow: Ability[] = [];
-        
-        if (Array.isArray(data.abilities)) {
-          abilitiesToShow = data.abilities;
-        } else if (typeof data.abilities === 'object') {
-          // Handle object format
-          const numericKeys = Object.keys(data.abilities).filter(
-            (key) => !isNaN(parseInt(key))
-          );
-          const allAbilities: Ability[] = [];
-          
-          numericKeys.forEach((level) => {
-            const levelAbilities = data.abilities[level];
-            if (Array.isArray(levelAbilities)) {
-              allAbilities.push(...levelAbilities);
-            }
-          });
-          
-          abilitiesToShow = allAbilities;
-        }
-
-        // Fallback abilities if none found
-        if (abilitiesToShow.length === 0) {
-          abilitiesToShow = getFallbackAbilities();
-        }
-
-        showAdaptabilityModalWithAbilities(abilitiesToShow);
-      }
-    };
-
-    socket.on('adaptabilityChooseAbility', handleAdaptabilityChoose);
-
-    return () => {
-      socket.off('adaptabilityChooseAbility', handleAdaptabilityChoose);
-    };
-  }, [socket, showAdaptabilityModalWithAbilities]);
-
-  // Helper function for fallback abilities
-  const getFallbackAbilities = (): Ability[] => [
-    { type: 'strike', name: 'Strike', category: 'Attack' } as Ability,
-    { type: 'fireball', name: 'Fireball', category: 'Attack' } as Ability,
-    { type: 'heal', name: 'Heal', category: 'Heal' } as Ability,
-    { type: 'shield', name: 'Shield', category: 'Defense' } as Ability,
-  ];
 
   return {
     lastValidActionRef,

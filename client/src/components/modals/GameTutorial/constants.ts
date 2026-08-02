@@ -146,7 +146,7 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
         emoji: '👩‍🌾',
         name: 'Artisan',
         type: 'Glass Cannon',
-        ability: 'Adaptability: Replace one ability',
+        ability: 'Second Wind: Cleanse debuffs and heal',
       },
       {
         emoji: '🧔‍♂️',

@@ -4,10 +4,11 @@
  */
 
 const messages = {
-  // Artisan Adaptability
-  adaptabilityUsed: '{playerName} uses Adaptability to replace one ability.',
-  adaptabilityAvailableAbilities:
-    'Choose an ability to replace with Adaptability.',
+  // Artisan Second Wind
+  secondWindUsed:
+    '{playerName} catches a Second Wind, shaking off their afflictions and recovering {amount} HP!',
+  secondWindNoEffects:
+    '{playerName} catches a Second Wind and recovers {amount} HP!',
 
   // Crestfallen Keen Senses (commented out as it's not currently active)
   // keenSensesUsed: '{playerName} uses Keen Senses to study {targetName} closely.',

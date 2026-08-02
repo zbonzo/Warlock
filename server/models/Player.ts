@@ -369,6 +369,7 @@ export class Player {
       maxUses: (abilityData as any).maxUses,
       cooldown: abilityData.cooldown,
       effects: (abilityData as any).effects,
+      params: (abilityData as any).params,
     };
     this.playerAbilities.setRacialAbility(racialAbility);
 
@@ -587,14 +588,15 @@ export class Player {
   }
 
   /**
-   * Process Kinfolk life bond healing
+   * Process Kinfolk life bond healing - a flat passive heal each round,
+   * scaled off the player's own max HP rather than the monster's HP.
    */
-  processLifeBondHealing(monsterHp: number, log: ActionResult[] = []): number {
-    if ((this.race as any) !== 'Kinfolk' || !this.isAlive || monsterHp <= 0) return 0;
+  processLifeBondHealing(log: ActionResult[] = []): number {
+    if ((this.race as any) !== 'Kinfolk' || !this.isAlive) return 0;
 
     const racialAbility = (this as any).racialAbility;
     const healAmount = Math.floor(
-      monsterHp * (racialAbility?.params?.healingPercent || 0.05)
+      this.maxHp * (racialAbility?.params?.healingPercent || 0.05)
     );
     const actualHeal = Math.min(healAmount, this.maxHp - this.hp);
 

@@ -15,8 +15,8 @@ import type { AbilityRegistry } from './abilityRegistryUtils.js';
 
 // Import modular handlers
 import {
-  // Adaptability abilities
-  handleAdaptability,
+  // Second Wind ability
+  handleSecondWind,
 
   // Combat racial abilities
   handleBloodRage,
@@ -36,8 +36,8 @@ import {
 export function register(registry: AbilityRegistry): void {
   // Register racial abilities with the registry
   if (registry.registerRacialAbility) {
-    // Adaptability abilities
-    registry.registerRacialAbility('adaptability', handleAdaptability);
+    // Second Wind
+    registry.registerRacialAbility('secondWind', handleSecondWind);
 
     // Combat racial abilities
     registry.registerRacialAbility('bloodRage', handleBloodRage);
@@ -51,7 +51,7 @@ export function register(registry: AbilityRegistry): void {
   }
 
   // Also register as class abilities for backward compatibility
-  registry.registerClassAbility('adaptability', handleAdaptability);
+  registry.registerClassAbility('secondWind', handleSecondWind);
   registry.registerClassAbility('bloodRage', handleBloodRage);
   registry.registerClassAbility('undying', handleUndying);
   registry.registerClassAbility('stoneArmor', handleStoneArmor);

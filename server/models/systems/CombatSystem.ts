@@ -617,14 +617,10 @@ export class CombatSystem extends AbstractGameSystem<GameRoom, GameEvent> implem
       }
     }
 
-    // Process Kinfolk Life Bond healing at end of each round
-    const monster = this.getMonster?.();
-    const monsterHp = (monster as any)?.hp || 0;
-    if (monsterHp > 0) {
-      for (const player of this.players.values()) {
-        if ((player as any).isAlive && (player as any).race === 'Kinfolk') {
-          (player as any).processLifeBondHealing?.(monsterHp, log);
-        }
+    // Process Kinfolk Life Bond healing at end of each round (flat % of own max HP)
+    for (const player of this.players.values()) {
+      if ((player as any).isAlive && (player as any).race === 'Kinfolk') {
+        (player as any).processLifeBondHealing?.(log);
       }
     }
 
@@ -762,7 +758,20 @@ export class CombatSystem extends AbstractGameSystem<GameRoom, GameEvent> implem
 
       // Resolve target and ability once so conversion hooks can use them in both paths
       const target = actionType ? this.getActionTarget(action, gameRoom) : null;
-      const abilityObj = ((player as any).unlocked || []).find((a: any) => a.type === actionType) || null;
+      const racialAbility = (player as any).racialAbility;
+      const isRacialAction = !!racialAbility && racialAbility.id === actionType;
+      const abilityObj = ((player as any).unlocked || []).find((a: any) => a.type === actionType) || (
+        isRacialAction
+          ? {
+              id: racialAbility.id,
+              type: racialAbility.id,
+              name: racialAbility.name,
+              category: 'Racial',
+              cooldown: racialAbility.cooldown,
+              params: racialAbility.params || {},
+            }
+          : null
+      );
       const abilityCategory: string | null =
         abilityObj?.category || (config as any).getAbility?.(actionType)?.category || null;
 

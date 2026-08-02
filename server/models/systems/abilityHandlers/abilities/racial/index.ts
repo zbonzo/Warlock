@@ -4,8 +4,8 @@
  */
 
 export {
-  handleAdaptability
-} from './adaptability-abilities.js';
+  handleSecondWind
+} from './second-wind-abilities.js';
 
 export {
   handleBloodRage,

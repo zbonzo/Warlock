@@ -78,20 +78,6 @@ interface UseRacialAbilityData {
   abilityType: string;
 }
 
-interface AdaptabilityReplaceData {
-  gameCode: string;
-  oldAbilityType: string;
-  newAbilityType: string;
-  level: number;
-  newClassName?: string;
-}
-
-interface GetClassAbilitiesData {
-  gameCode: string;
-  className: string;
-  level?: number;
-}
-
 interface PlayerReadyData {
   gameCode: string;
 }
@@ -482,39 +468,14 @@ io.on('connection', (socket: Socket) => {
     )
   );
 
-  // Player uses a racial ability
+  // Player uses a racial ability (submitted as their action for the round)
   socket.on(
     'useRacialAbility',
     withSocketErrorHandling(
       socket,
       (data: UseRacialAbilityData) =>
-        // TODO: Implement handleGameRacialAbility or use handleGameAction
-        gameController.handleGameAction(io, socket, data.gameCode, data.abilityType || 'racialAbility', data.targetId),
+        gameController.handleGameAction(io, socket, data.gameCode, data.abilityType, data.targetId),
       'using racial ability'
-    )
-  );
-
-  // Player uses Artisan Adaptability to replace an ability
-  socket.on(
-    'adaptabilityReplaceAbility',
-    withSocketErrorHandling(
-      socket,
-      (_data: AdaptabilityReplaceData) =>
-        // TODO: Implement handleGameAdaptabilityReplace - currently stubbed
-        Promise.resolve(),
-      'replacing ability with adaptability'
-    )
-  );
-
-  // Receive abilities to pick for Artisan Adaptability
-  socket.on(
-    'getClassAbilities',
-    withSocketErrorHandling(
-      socket,
-      (_data: GetClassAbilitiesData) =>
-        // TODO: Implement handleGameGetAbilities
-        Promise.resolve(),
-      'getting class abilities'
     )
   );
 

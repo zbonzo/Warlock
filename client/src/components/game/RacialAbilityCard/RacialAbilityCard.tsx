@@ -22,7 +22,6 @@ interface RacialAbilityCardProps {
 function getRacialAbilityIcon(ability: Ability): React.ReactElement | string {
   // Map racial ability types to their PNG file names
   const racialImageMap: Record<string, string> = {
-    'adaptability': 'adaptability.png',
     'bloodRage': 'bloodrage.png',
     'stoneArmor': 'stonearmor.png',
     'undying': 'undying.png',
@@ -57,52 +56,54 @@ const RacialAbilityCard: React.FC<RacialAbilityCardProps> = ({
   onUse 
 }) => {
   const theme = useTheme();
-  
+
   // Skip if no ability provided
   if (!ability) return null;
-  
-  // Determine if ability is available
-  const isAvailable = usesLeft > 0 && cooldown === 0 && !disabled;
-  
+
+  const isPassive = ability['usageLimit'] === 'passive';
+
+  // Determine if ability is available (passives are always "on", never clickable)
+  const isAvailable = !isPassive && usesLeft > 0 && cooldown === 0 && !disabled;
+
   // Derive race from ability type
   const race = getRaceFromAbilityType(ability['type']);
-  
+
   // Get status message
-  const statusMessage = getStatusMessage(usesLeft, cooldown, disabled);
-  
+  const statusMessage = isPassive ? 'Always active' : getStatusMessage(usesLeft, cooldown, disabled);
+
   // Card color based on race
   const raceColor = getRaceColor(race, theme);
-  
+
   return (
-    <div 
-      className={`racial-ability-card ${isAvailable ? 'available' : 'unavailable'}`}
+    <div
+      className={`racial-ability-card ${isPassive ? 'passive' : (isAvailable ? 'available' : 'unavailable')}`}
       onClick={() => isAvailable && onUse()}
     >
       <div className="ability-header">
         <div className="ability-title" style={{ backgroundColor: raceColor }}>
           {ability['name']}
         </div>
-        
+
         <div className="ability-icon-container" style={{ backgroundColor: `${raceColor}30` }}>
           {getRacialAbilityIcon(ability)}
         </div>
       </div>
-      
+
       <div className="ability-description">
         {ability['description']}
       </div>
-      
+
       <div className="ability-status">
         <div className="usage-limit">
-          <strong>Limit:</strong> {ability['usageLimit'] === 'perGame' ? 'Once per game' : 'Once per round'}
+          <strong>Limit:</strong> {isPassive ? 'Passive' : (ability['usageLimit'] === 'perGame' ? 'Once per game' : 'Once per round')}
         </div>
-        
-        <div className={`status-indicator ${isAvailable ? 'available' : 'unavailable'}`}>
+
+        <div className={`status-indicator ${isPassive ? 'passive' : (isAvailable ? 'available' : 'unavailable')}`}>
           {statusMessage}
         </div>
       </div>
-      
-      {ability['usageLimit'] === 'perGame' && (
+
+      {!isPassive && ability['usageLimit'] === 'perGame' && (
         <div className="usage-indicators">
           <div className="usage-dots">
             {[...Array((ability as any).maxUses || 1)].map((_, i) => (

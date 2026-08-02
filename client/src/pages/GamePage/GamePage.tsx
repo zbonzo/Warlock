@@ -8,7 +8,6 @@ import HistoryColumn from './components/HistoryColumn';
 import MobileNavigation from './components/MobileNavigation';
 import { ActionWizard } from './components/ActionWizard';
 import { GameStateDrawer } from './components/GameStateDrawer';
-import AdaptabilityModal from '@components/modals/AdaptabilityModal';
 import ReconnectionToggle from '../../components/ui/ReconnectionToggle';
 import BattleResultsModal from '@components/modals/BattleResultsModal';
 import DamageEffects from '@components/game/DamageEffects/DamageEffects';
@@ -77,7 +76,6 @@ const GamePage: React.FC<GamePageProps> = ({
     updateBattleResultsData: modalState.updateBattleResultsData,
     resetActionState: actionWizard.resetWizard,
     resetMobileWizard: actionWizard.resetWizard,
-    showAdaptabilityModalWithAbilities: modalState.showAdaptabilityModalWithAbilities,
     setPhase: (phase: string) => setPhase(phase as 'action' | 'results'),
     setReadyClicked,
     
@@ -98,50 +96,28 @@ const GamePage: React.FC<GamePageProps> = ({
     }
 
     const ability = actionWizard.selectedAbility;
-    const isBloodRageApplied = racialAbilities.bloodRageActive && ability?.category === 'Attack';
-    const isKeenSensesApplied = racialAbilities.keenSensesActive && ability?.category === 'Attack';
 
     console.log('Submitting action:', {
       type: ability.type,
       target: actionWizard.selectedTarget,
-      bloodRage: isBloodRageApplied,
-      keenSenses: isKeenSensesApplied,
     });
 
-    // Check if racial abilities are involved - if so, emit directly to socket
-    if (isBloodRageApplied || isKeenSensesApplied) {
-      socket?.emit('performAction', {
-        gameCode,
-        actionType: ability.type,
-        targetId: actionWizard.selectedTarget,
-        bloodRageActive: isBloodRageApplied,
-        keenSensesActive: isKeenSensesApplied,
-      });
+    onSubmitAction(ability.type, actionWizard.selectedTarget);
+    actionWizard.setSubmitted(true);
+  };
 
-      // Also emit racial ability usage events
-      if (isBloodRageApplied) {
-        socket?.emit('useRacialAbility', {
-          gameCode,
-          targetId: me?.['id'],
-          abilityType: 'bloodRage',
-        });
-        racialAbilities.setBloodRageActive(false);
-      }
+  /**
+   * Handle using an active racial ability (e.g. Blood Rage, Second Wind).
+   * A racial ability use is submitted as the player's entire action for the round.
+   */
+  const handleRacialAbilityUse = (abilityType: string): void => {
+    if (!socket || !me) return;
 
-      if (isKeenSensesApplied) {
-        socket?.emit('useRacialAbility', {
-          gameCode,
-          targetId: actionWizard.selectedTarget,
-          abilityType: 'keenSenses',
-        });
-        racialAbilities.setKeenSensesActive(false);
-      }
-
-      racialAbilities.setRacialSelected(false);
-    } else {
-      // No racial abilities - use the standard submission
-      onSubmitAction(ability.type, actionWizard.selectedTarget);
-    }
+    socket.emit('useRacialAbility', {
+      gameCode,
+      targetId: me['id'],
+      abilityType,
+    });
 
     actionWizard.setSubmitted(true);
   };
@@ -203,7 +179,7 @@ const GamePage: React.FC<GamePageProps> = ({
               racialSelected={racialAbilities.racialSelected}
               onAbilitySelect={actionWizard.handleAbilitySelect}
               onTargetSelect={actionWizard.handleTargetSelect}
-              onRacialAbilityUse={racialAbilities.handleRacialAbilityUse}
+              onRacialAbilityUse={handleRacialAbilityUse}
               onSubmitAction={handleSubmitAction}
               onClose={actionWizard.handleCloseWizard}
               initialStep={actionWizard.currentStep}
@@ -275,18 +251,6 @@ const GamePage: React.FC<GamePageProps> = ({
           eventsLog={eventsLog}
           lastEvent={lastEvent}
           currentPlayerId={me?.['id'] || ''}
-        />
-      )}
-
-      {/* Adaptability Modal */}
-      {modalState.showAdaptabilityModal && (
-        <AdaptabilityModal
-          isOpen={modalState.showAdaptabilityModal}
-          onClose={modalState.closeAdaptabilityModal}
-          socket={socket!}
-          gameCode={gameCode}
-          className={me?.class as any || ''}
-          initialAbilities={modalState.initialModalAbilities as any || undefined}
         />
       )}
 

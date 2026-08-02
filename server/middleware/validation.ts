@@ -299,7 +299,8 @@ export function validatePlayerName(
     'undying',
     'keen senses',
     'keensenses',
-    'adaptability',
+    'second wind',
+    'secondwind',
 
     // Race names
     'human',

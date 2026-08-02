@@ -12,6 +12,7 @@ import type {
 } from '../../abilityRegistryUtils.js';
 import type { GameSystems } from '../../../SystemsFactory.js';
 import { applyThreatForAbility } from '../../abilityRegistryUtils.js';
+import messages from '../../../../../config/messages/index.js';
 
 
 /**
@@ -164,6 +165,31 @@ export const handleAttack: AbilityHandler = (
 
   // Apply threat for this action
   applyThreatForAbility(actor, target, ability, Number(finalDamage), 0, systems);
+
+  // Moonbeam (Crestfallen racial passive): when wounded, being attacked reveals the attacker's corruption
+  if (
+    Object.prototype.hasOwnProperty.call(target, 'isAlive') &&
+    (target as Player).race === 'Crestfallen' &&
+    typeof (target as any).isMoonbeamActive === 'function' &&
+    (target as any).isMoonbeamActive() &&
+    actor.id !== target.id
+  ) {
+    const isAttackerCorrupted = !!(actor as any).isWarlock;
+    const template = isAttackerCorrupted
+      ? messages.combat.moonbeam.warlockDetected
+      : messages.combat.moonbeam.notWarlockDetected;
+
+    log.push(createActionLog(
+      target.id,
+      actor.id,
+      messages.formatMessage(template, { targetName: target.name, attackerName: actor.name }),
+      {
+        details: { isAttackerCorrupted, attackerId: actor.id },
+        priority: 'high',
+        public: true,
+      }
+    ));
+  }
 
   return true;
 };

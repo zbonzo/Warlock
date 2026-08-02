@@ -35,7 +35,7 @@ const raceAttributes: Record<string, RaceAttributes> = {
       'Druid', // Thematic Score: 8 (Adaptable, can learn arcane arts) - ADDED to balance Wizard class
     ],
     description:
-      'Adaptable and versatile, artisans can learn abilities from other classes.',
+      'Adaptable and resilient, artisans recover quickly from adversity.',
   },
   Rockhewn: {
     hpModifier: 1.1,
@@ -117,16 +117,18 @@ const raceAttributes: Record<string, RaceAttributes> = {
  */
 const racialAbilities: Record<string, RacialAbility> = {
   Artisan: {
-    type: 'adaptability',
-    name: 'Adaptability',
+    type: 'secondWind',
+    name: 'Second Wind',
     description:
-      'Once per game, copy any ability used by another player in the previous round',
+      'Once per game, cleanse all negative effects on yourself and recover 30% of your max HP',
     usageLimit: 'perGame',
     maxUses: 1,
     cooldown: 0,
-    effect: 'copyAbility',
+    effect: 'cleanseAndHeal',
     target: 'Self',
-    params: {},
+    params: {
+      healPercent: 0.3,
+    },
   },
 
   Rockhewn: {
@@ -164,20 +166,20 @@ const racialAbilities: Record<string, RacialAbility> = {
     type: 'bloodRage',
     name: 'Blood Rage',
     description:
-      'Double the damage of your next attack, but take 10 damage yourself',
+      'Pay 10 HP to gain +40% damage for your next 4 rounds',
     usageLimit: 'perGame',
     maxUses: 3,
     cooldown: 3,
-    effect: 'doubleDamage',
+    effect: 'damageBuff',
     target: 'Self',
-    params: { selfDamage: 10 },
+    params: { healthCost: 10, damageBonus: 0.4, duration: 4 },
   },
 
   Kinfolk: {
     type: 'lifeBond',
     name: 'Life Bond',
     description:
-      "At the end of each round, heal for 5% of the monster's remaining HP",
+      'At the end of each round, passively heal for 5% of your max HP',
     usageLimit: 'passive',
     maxUses: 0,
     cooldown: 0,

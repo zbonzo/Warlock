@@ -29,6 +29,7 @@ const RacialAbilitySchema = z.object({
   maxUses: z.number().int().min(0).optional(),
   cooldown: z.number().int().min(0).default(0),
   effects: z.record(z.any()).optional(),
+  params: z.record(z.any()).optional(),
 });
 
 const SubmissionStatusSchema = z.object({
@@ -144,38 +145,57 @@ export class PlayerAbilities {
       return result;
     }
 
-    // Validate action type exists in unlocked abilities
-    const selectedAbility = this.unlocked.find(
-      (ability) => ability.id === actionType
-    );
-    if (!selectedAbility) {
-      result.reason = messages.formatMessage(
-        messages.getError('playerAbilityNotAvailable'),
-        { abilityName: actionType }
-      );
-      logger.debug(
-        messages.formatMessage(
-          messages.serverLogMessages.debug.UnavailableAbilityAttempt,
-          { playerName: this.playerName, abilityType: actionType }
-        )
-      );
-      return result;
-    }
+    // Racial abilities (e.g. Blood Rage) are submitted using their own usage/cooldown
+    // tracking instead of the class ability unlock list.
+    const isRacialAction = !!this.racialAbility && this.racialAbility.id === actionType;
 
-    // Check if ability is on cooldown
-    const cooldown = this.getAbilityCooldown(actionType);
-    if (cooldown > 0) {
-      result.reason = messages.formatMessage(
-        messages.getError('playerAbilityOnCooldownDetailed'),
-        { abilityName: selectedAbility.name, turns: cooldown }
+    if (isRacialAction) {
+      if (!this.canUseRacialAbility()) {
+        result.reason = this.racialCooldown > 0
+          ? messages.formatMessage(
+              messages.getError('playerAbilityOnCooldownDetailed'),
+              { abilityName: this.racialAbility!.name, turns: this.racialCooldown }
+            )
+          : messages.formatMessage(
+              messages.getError('playerAbilityNotAvailable'),
+              { abilityName: actionType }
+            );
+        return result;
+      }
+    } else {
+      // Validate action type exists in unlocked abilities
+      const selectedAbility = this.unlocked.find(
+        (ability) => ability.id === actionType
       );
-      logger.debug(
-        messages.formatMessage(
-          messages.serverLogMessages.debug.AbilityOnCooldownAttempt,
-          { playerName: this.playerName, actionType, cooldown }
-        )
-      );
-      return result;
+      if (!selectedAbility) {
+        result.reason = messages.formatMessage(
+          messages.getError('playerAbilityNotAvailable'),
+          { abilityName: actionType }
+        );
+        logger.debug(
+          messages.formatMessage(
+            messages.serverLogMessages.debug.UnavailableAbilityAttempt,
+            { playerName: this.playerName, abilityType: actionType }
+          )
+        );
+        return result;
+      }
+
+      // Check if ability is on cooldown
+      const cooldown = this.getAbilityCooldown(actionType);
+      if (cooldown > 0) {
+        result.reason = messages.formatMessage(
+          messages.getError('playerAbilityOnCooldownDetailed'),
+          { abilityName: selectedAbility.name, turns: cooldown }
+        );
+        logger.debug(
+          messages.formatMessage(
+            messages.serverLogMessages.debug.AbilityOnCooldownAttempt,
+            { playerName: this.playerName, actionType, cooldown }
+          )
+        );
+        return result;
+      }
     }
 
     // Validate target (basic validation - more detailed validation happens during processing)
@@ -198,6 +218,10 @@ export class PlayerAbilities {
     this.actionSubmissionTime = getCurrentTimestamp();
     this.lastValidAction = { ...action };
     this.actionValidationState = 'valid';
+
+    if (isRacialAction) {
+      this.useRacialAbility();
+    }
 
     result.success = true;
     result.action = action;
@@ -231,12 +255,13 @@ export class PlayerAbilities {
     }
 
     const { actionType, targetId } = this.submittedAction;
+    const isRacialAction = !!this.racialAbility && this.racialAbility.id === actionType;
 
     // Re-check ability availability (in case abilities changed)
     const selectedAbility = this.unlocked.find(
       (ability) => ability.id === actionType
     );
-    if (!selectedAbility) {
+    if (!isRacialAction && !selectedAbility) {
       result.reason = messages.formatMessage(
         messages.getError('playerAbilityNoLongerAvailable'),
         { abilityName: actionType }
@@ -246,16 +271,18 @@ export class PlayerAbilities {
       return result;
     }
 
-    // Re-check cooldown status
-    const cooldown = this.getAbilityCooldown(actionType);
-    if (cooldown > 0) {
-      result.reason = messages.formatMessage(
-        messages.getError('playerAbilityNowOnCooldown'),
-        { abilityName: selectedAbility.name, turns: cooldown }
-      );
-      console.log(`[PlayerAbilities] ${this.playerName}: FAIL ${actionType} on cooldown (${cooldown})`);
-      this.invalidateAction(result.reason!);
-      return result;
+    // Re-check cooldown status (racial cooldowns are already enforced at submission time)
+    if (!isRacialAction) {
+      const cooldown = this.getAbilityCooldown(actionType);
+      if (cooldown > 0) {
+        result.reason = messages.formatMessage(
+          messages.getError('playerAbilityNowOnCooldown'),
+          { abilityName: selectedAbility!.name, turns: cooldown }
+        );
+        console.log(`[PlayerAbilities] ${this.playerName}: FAIL ${actionType} on cooldown (${cooldown})`);
+        this.invalidateAction(result.reason!);
+        return result;
+      }
     }
 
     // Validate target still exists and is valid
@@ -276,7 +303,7 @@ export class PlayerAbilities {
       }
 
       // Block attacks on invisible players (healing abilities can still reach them)
-      const isAttackAbility = selectedAbility['category'] === 'Attack';
+      const isAttackAbility = selectedAbility?.['category'] === 'Attack';
       if (isAttackAbility && statusEffectManager?.hasEffect?.(targetId, 'invisible')) {
         result.reason = 'Target is invisible and cannot be targeted.';
         console.log(`[PlayerAbilities] ${this.playerName}: FAIL target '${targetId}' is invisible`);

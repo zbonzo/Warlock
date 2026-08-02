@@ -7,11 +7,11 @@
  * Mapping of races to their corresponding ability types
  */
 export const RACE_TO_ABILITY: Record<string, string> = {
-  'Artisan': 'adaptability',
-  'Rockhewn': 'stoneResolve',
-  'Crestfallen': 'keenSenses',
+  'Artisan': 'secondWind',
+  'Rockhewn': 'stoneArmor',
+  'Crestfallen': 'moonbeam',
   'Orc': 'bloodRage',
-  'Kinfolk': 'forestsGrace',
+  'Kinfolk': 'lifeBond',
   'Lich': 'undying'
 };
 
@@ -19,11 +19,11 @@ export const RACE_TO_ABILITY: Record<string, string> = {
  * Ability type to icon mapping
  */
 export const ABILITY_ICONS: Record<string, string> = {
-  'adaptability': '🔄',
-  'stoneResolve': '🛡️',
-  'keenSenses': '👁️',
+  'secondWind': '🔄',
+  'stoneArmor': '🛡️',
+  'moonbeam': '👁️',
   'bloodRage': '💢',
-  'forestsGrace': '🌿',
+  'lifeBond': '🌿',
   'undying': '💀'
 };
 

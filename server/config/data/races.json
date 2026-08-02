@@ -20,7 +20,7 @@
         "Gunslinger",
         "Druid"
       ],
-      "description": "Adaptable and versatile, artisans can learn abilities from other classes."
+      "description": "Adaptable and resilient, artisans recover quickly from adversity."
     },
     "Rockhewn": {
       "hpModifier": 1.1,
@@ -90,25 +90,27 @@
         "Druid",
         "Wizard"
       ],
-      "description": "At the end of each round, heal for 5% of the monster's remaining HP."
+      "description": "At the end of each round, passively heal for 5% of your max HP."
     }
   },
   "racialAbilities": {
     "Artisan": {
-      "type": "adaptability",
-      "name": "Adaptability",
-      "description": "Change one of your class abilities to another of the same level for the remainder of the game",
+      "type": "secondWind",
+      "name": "Second Wind",
+      "description": "Once per game, cleanse all negative effects on yourself and recover 30% of your max HP",
       "usageLimit": "perGame",
       "maxUses": 1,
       "cooldown": 0,
-      "effect": "changeAbility",
+      "effect": "cleanseAndHeal",
       "target": "Self",
-      "params": {}
+      "params": {
+        "healPercent": 0.3
+      }
     },
     "Rockhewn": {
       "type": "stoneArmor",
       "name": "Stone Armor",
-      "description": "Start with 10 armor that degrades by 1 with each hit taken. Can go negative for increased vulnerability.",
+      "description": "Start with 6 armor that degrades by 1 with each hit taken. Can go negative for increased vulnerability.",
       "usageLimit": "passive",
       "maxUses": 0,
       "cooldown": 0,
@@ -135,20 +137,22 @@
     "Orc": {
       "type": "bloodRage",
       "name": "Blood Rage",
-      "description": "Double the damage of your next attack, but take 10 damage yourself",
+      "description": "Pay 10 HP to gain +40% damage for your next 4 rounds",
       "usageLimit": "perGame",
       "maxUses": 3,
       "cooldown": 3,
-      "effect": "doubleDamage",
+      "effect": "damageBuff",
       "target": "Self",
       "params": {
-        "selfDamage": 10
+        "healthCost": 10,
+        "damageBonus": 0.4,
+        "duration": 4
       }
     },
     "Kinfolk": {
       "type": "lifeBond",
       "name": "Life Bond",
-      "description": "At the end of each round, heal for 5% of the monster's remaining HP",
+      "description": "At the end of each round, passively heal for 5% of your max HP",
       "usageLimit": "passive",
       "maxUses": 0,
       "cooldown": 0,

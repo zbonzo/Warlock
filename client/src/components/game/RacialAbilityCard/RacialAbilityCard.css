@@ -22,6 +22,11 @@
   opacity: 0.7;
 }
 
+.racial-ability-card.passive {
+  background-color: var(--color-neutral);
+  cursor: default;
+}
+
 .racial-ability-card.available:hover {
   transform: translateY(-3px);
   box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
@@ -90,6 +95,11 @@
 .status-indicator.unavailable {
   background-color: rgba(var(--color-danger-rgb), 0.2);
   color: var(--color-danger);
+}
+
+.status-indicator.passive {
+  background-color: rgba(var(--color-accent-rgb), 0.2);
+  color: var(--color-accent);
 }
 
 .usage-indicators {
