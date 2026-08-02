@@ -110,7 +110,7 @@ export const ICONS = {
     Pyromancer: '/images/classes/pyromancer.png',
     Wizard: '/images/classes/wizard.png',
     Assassin: '/images/classes/assassin.png',
-    Alchemist: '/images/classes/alchemist.png',
+    Alchemist: '/images/classes/alchemist.svg',
     Priest: '/images/classes/priest.png',
     Oracle: '/images/classes/oracle.png',
     Barbarian: '/images/classes/barbarian.png',
